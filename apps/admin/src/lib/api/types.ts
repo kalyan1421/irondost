@@ -1,0 +1,33 @@
+import type { components } from "./schema";
+
+type S = components["schemas"];
+
+export type Me = S["MeDto"];
+export type User = S["UserDto"];
+export type Order = S["OrderDto"];
+export type OrderPage = S["OrderPageDto"];
+export type OrderItem = S["OrderItemDto"];
+export type OrderAddress = S["OrderAddressDto"];
+export type OrderEvent = S["OrderEventDto"];
+export type OrderStatus = Order["status"];
+export type TimeSlot = Order["pickupSlot"];
+export type PaymentMethod = Order["paymentMethod"];
+export type PaymentStatus = Order["paymentStatus"];
+export type Quote = S["QuoteDto"];
+export type Payment = S["PaymentDto"];
+export type Refund = S["RefundDto"];
+export type RefundMethod = Refund["method"];
+export type RefundStatus = Refund["status"];
+export type Dashboard = S["DashboardDto"];
+export type Driver = S["DriverListItemDto"];
+export type Customer = S["CustomerListItemDto"];
+export type CustomerPage = S["CustomerPageDto"];
+export type Address = S["AddressDto"];
+export type CatalogCategory = S["CatalogCategoryDto"];
+export type CatalogItem = S["CatalogItemDto"];
+export type Promotion = S["PromotionDto"];
+export type Banner = S["BannerDto"];
+export type BusinessSettings = S["BusinessSettingsDto"];
+export type SlotOption = S["SlotOptionDto"];
+export type Role = User["role"];
+export type DispatchLeg = S["AssignDto"]["leg"];

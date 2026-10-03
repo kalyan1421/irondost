@@ -1,0 +1,7 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" width="64" height="64" role="img" aria-label="IronDost"><title>IronDost</title><rect x="0" y="0" width="64" height="64" rx="14" fill="#FFFFFF"/><g transform="translate(10.84 4.89) scale(0.66)"><g transform="translate(2 6)" stroke-linejoin="round">
+<rect x="2" y="2" width="56" height="66" rx="10" fill="#FFFFFF" stroke="#0E1E3D" stroke-width="4.5"/>
+<path d="M2 18H58" fill="none" stroke="#0E1E3D" stroke-width="4"/>
+<circle cx="30" cy="43" r="16" fill="#BFEAF8"/>
+<path d="M14.13 45Q18.1 41.5 22.07 45T30 45T37.93 45T45.87 45A16 16 0 0 1 14.13 45Z" fill="#3FB8EA"/>
+<circle cx="30" cy="43" r="16" fill="none" stroke="#0E1E3D" stroke-width="4.5"/>
+</g></g></svg>

@@ -1,0 +1,564 @@
+// Laundry platform v2 — PostgreSQL schema.
+// Conventions: UUID primary keys, snake_case tables/columns, money in integer paise,
+// timestamps in UTC. Business dates (pickup/delivery) are calendar dates in Asia/Kolkata.
+
+generator client {
+  provider            = "prisma-client"
+  output              = "../src/generated/prisma"
+  moduleFormat        = "esm"
+  importFileExtension = "js"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+// ───────────────────────────── Enums ─────────────────────────────
+
+enum Role {
+  CUSTOMER
+  DRIVER
+  ADMIN
+  SUPER_ADMIN
+}
+
+/// Pickup / delivery windows in IST: MORNING 07–11, NOON 11–16, EVENING 16–20.
+enum TimeSlot {
+  MORNING
+  NOON
+  EVENING
+}
+
+enum OrderStatus {
+  PENDING
+  PICKUP_ASSIGNED
+  PICKED_UP
+  PROCESSING
+  READY_FOR_DELIVERY
+  DELIVERY_ASSIGNED
+  OUT_FOR_DELIVERY
+  DELIVERED
+  CANCELLED
+}
+
+enum OrderSource {
+  CUSTOMER_APP
+  ADMIN
+}
+
+enum PaymentMethod {
+  COD
+  ONLINE
+}
+
+enum PaymentStatus {
+  UNPAID
+  PARTIALLY_PAID
+  PAID
+  REFUNDED
+}
+
+enum PaymentProvider {
+  RAZORPAY
+  CASH
+}
+
+enum PaymentRecordStatus {
+  CREATED
+  CAPTURED
+  FAILED
+  REFUNDED
+}
+
+/// RAZORPAY goes back through the gateway; CASH / BANK_TRANSFER record money staff returned outside the app.
+enum RefundMethod {
+  RAZORPAY
+  CASH
+  BANK_TRANSFER
+}
+
+enum RefundStatus {
+  PENDING
+  PROCESSED
+  FAILED
+}
+
+enum DispatchLeg {
+  PICKUP
+  DELIVERY
+}
+
+enum OfferStatus {
+  PENDING
+  ACCEPTED
+  REJECTED
+  EXPIRED
+  CANCELLED
+}
+
+enum ItemUnit {
+  PIECE
+  PAIR
+  SET
+  KG
+}
+
+enum DiscountType {
+  PERCENT
+  FLAT
+}
+
+enum DevicePlatform {
+  ANDROID
+  IOS
+  WEB
+}
+
+enum ClientApp {
+  CUSTOMER
+  PARTNER
+  ADMIN
+}
+
+// ───────────────────────────── Identity ─────────────────────────────
+
+model User {
+  id          String    @id @default(uuid()) @db.Uuid
+  /// Firebase Auth UID. Null for staff provisioned by an admin who have not logged in yet.
+  firebaseUid String?   @unique @map("firebase_uid")
+  /// E.164, e.g. +919876543210
+  phone       String    @unique
+  name        String?
+  email       String?
+  role        Role
+  isActive    Boolean   @default(true) @map("is_active")
+  lastLoginAt DateTime? @map("last_login_at")
+  createdAt   DateTime  @default(now()) @map("created_at")
+  updatedAt   DateTime  @updatedAt @map("updated_at")
+  deletedAt   DateTime? @map("deleted_at")
+
+  driver         DriverProfile?
+  addresses      Address[]
+  orders         Order[]         @relation("CustomerOrders")
+  pickupLegs     Order[]         @relation("PickupDriver")
+  deliveryLegs   Order[]         @relation("DeliveryDriver")
+  ordersCreated  Order[]         @relation("OrderCreatedBy")
+  offers         DispatchOffer[]
+  devices        Device[]
+  notifications  Notification[]
+  orderEvents    OrderEvent[]
+  paymentsLogged Payment[]       @relation("PaymentCollectedBy")
+  refundsCreated Refund[]        @relation("RefundCreatedBy")
+  auditLogs      AuditLog[]
+
+  @@index([role, isActive])
+  @@map("users")
+}
+
+model DriverProfile {
+  userId            String    @id @map("user_id") @db.Uuid
+  vehicleNumber     String?   @map("vehicle_number")
+  licenseNumber     String?   @map("license_number")
+  isOnline          Boolean   @default(false) @map("is_online")
+  latitude          Float?
+  longitude         Float?
+  locationUpdatedAt DateTime? @map("location_updated_at")
+  createdAt         DateTime  @default(now()) @map("created_at")
+  updatedAt         DateTime  @updatedAt @map("updated_at")
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([isOnline])
+  @@map("driver_profiles")
+}
+
+model Device {
+  id         String         @id @default(uuid()) @db.Uuid
+  userId     String         @map("user_id") @db.Uuid
+  fcmToken   String         @unique @map("fcm_token")
+  platform   DevicePlatform
+  app        ClientApp
+  lastSeenAt DateTime       @default(now()) @map("last_seen_at")
+  createdAt  DateTime       @default(now()) @map("created_at")
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@map("devices")
+}
+
+// ───────────────────────────── Customer data ─────────────────────────────
+
+model Address {
+  id        String    @id @default(uuid()) @db.Uuid
+  userId    String    @map("user_id") @db.Uuid
+  /// Home / Work / Other or a custom label
+  label     String    @default("Home")
+  houseNo   String    @map("house_no")
+  building  String?
+  street    String
+  area      String?
+  landmark  String?
+  city      String
+  state     String
+  pincode   String
+  latitude  Float?
+  longitude Float?
+  /// At most one primary address per user (partial unique index in migration).
+  isPrimary Boolean   @default(false) @map("is_primary")
+  createdAt DateTime  @default(now()) @map("created_at")
+  updatedAt DateTime  @updatedAt @map("updated_at")
+  deletedAt DateTime? @map("deleted_at")
+
+  user           User    @relation(fields: [userId], references: [id], onDelete: Cascade)
+  pickupOrders   Order[] @relation("PickupAddress")
+  deliveryOrders Order[] @relation("DeliveryAddress")
+
+  @@index([userId])
+  @@map("addresses")
+}
+
+// ───────────────────────────── Catalog ─────────────────────────────
+
+model CatalogCategory {
+  id        String   @id @default(uuid()) @db.Uuid
+  name      String
+  slug      String   @unique
+  imageUrl  String?  @map("image_url")
+  sortOrder Int      @default(0) @map("sort_order")
+  isActive  Boolean  @default(true) @map("is_active")
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  items CatalogItem[]
+
+  @@map("catalog_categories")
+}
+
+model CatalogItem {
+  id              String   @id @default(uuid()) @db.Uuid
+  categoryId      String   @map("category_id") @db.Uuid
+  name            String
+  description     String?
+  unit            ItemUnit @default(PIECE)
+  pricePaise      Int      @map("price_paise")
+  /// Optional discounted price; must be lower than price.
+  offerPricePaise Int?     @map("offer_price_paise")
+  imageUrl        String?  @map("image_url")
+  sortOrder       Int      @default(0) @map("sort_order")
+  isActive        Boolean  @default(true) @map("is_active")
+  createdAt       DateTime @default(now()) @map("created_at")
+  updatedAt       DateTime @updatedAt @map("updated_at")
+
+  category   CatalogCategory @relation(fields: [categoryId], references: [id], onDelete: Restrict)
+  orderItems OrderItem[]
+
+  @@index([categoryId, isActive, sortOrder])
+  @@map("catalog_items")
+}
+
+model Promotion {
+  id               String       @id @default(uuid()) @db.Uuid
+  /// Uppercase promo code, unique.
+  code             String       @unique
+  title            String
+  description      String?
+  discountType     DiscountType @map("discount_type")
+  /// PERCENT: 1–100. FLAT: amount in paise.
+  discountValue    Int          @map("discount_value")
+  minOrderPaise    Int          @default(0) @map("min_order_paise")
+  maxDiscountPaise Int?         @map("max_discount_paise")
+  perCustomerLimit Int?         @map("per_customer_limit")
+  validFrom        DateTime     @map("valid_from")
+  validTo          DateTime     @map("valid_to")
+  imageUrl         String?      @map("image_url")
+  isActive         Boolean      @default(true) @map("is_active")
+  createdAt        DateTime     @default(now()) @map("created_at")
+  updatedAt        DateTime     @updatedAt @map("updated_at")
+
+  orders Order[]
+
+  @@map("promotions")
+}
+
+model Banner {
+  id        String   @id @default(uuid()) @db.Uuid
+  imageUrl  String   @map("image_url")
+  title     String?
+  linkUrl   String?  @map("link_url")
+  sortOrder Int      @default(0) @map("sort_order")
+  isActive  Boolean  @default(true) @map("is_active")
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  @@map("banners")
+}
+
+// ───────────────────────────── Orders ─────────────────────────────
+
+model Order {
+  id          String      @id @default(uuid()) @db.Uuid
+  /// Human-facing number from a Postgres sequence, e.g. LD001042.
+  orderNumber String      @unique @map("order_number")
+  customerId  String      @map("customer_id") @db.Uuid
+  status      OrderStatus @default(PENDING)
+  source      OrderSource @default(CUSTOMER_APP)
+  createdById String?     @map("created_by_id") @db.Uuid
+
+  pickupDate   DateTime @map("pickup_date") @db.Date
+  pickupSlot   TimeSlot @map("pickup_slot")
+  deliveryDate DateTime @map("delivery_date") @db.Date
+  deliverySlot TimeSlot @map("delivery_slot")
+
+  pickupAddressId   String? @map("pickup_address_id") @db.Uuid
+  deliveryAddressId String? @map("delivery_address_id") @db.Uuid
+  /// Address as it was when the order was placed (addresses can later change).
+  pickupAddress     Json    @map("pickup_address")
+  deliveryAddress   Json    @map("delivery_address")
+  pickupLatitude    Float?  @map("pickup_latitude")
+  pickupLongitude   Float?  @map("pickup_longitude")
+  deliveryLatitude  Float?  @map("delivery_latitude")
+  deliveryLongitude Float?  @map("delivery_longitude")
+  instructions      String?
+
+  subtotalPaise    Int           @map("subtotal_paise")
+  discountPaise    Int           @default(0) @map("discount_paise")
+  deliveryFeePaise Int           @default(0) @map("delivery_fee_paise")
+  totalPaise       Int           @map("total_paise")
+  paidPaise        Int           @default(0) @map("paid_paise")
+  /// Sum of PENDING and PROCESSED refunds (never more than paidPaise; CHECK in migration).
+  refundedPaise    Int           @default(0) @map("refunded_paise")
+  promotionId      String?       @map("promotion_id") @db.Uuid
+  promoCode        String?       @map("promo_code")
+  paymentMethod    PaymentMethod @map("payment_method")
+  paymentStatus    PaymentStatus @default(UNPAID) @map("payment_status")
+
+  pickupDriverId   String?   @map("pickup_driver_id") @db.Uuid
+  deliveryDriverId String?   @map("delivery_driver_id") @db.Uuid
+  /// Set when automatic dispatch found no driver; cleared on assignment.
+  dispatchFailedAt DateTime? @map("dispatch_failed_at")
+
+  /// Client-supplied Idempotency-Key from POST /orders; a retry with the same key returns this order.
+  idempotencyKey  String? @map("idempotency_key")
+  /// SHA-256 of the request the key was first used with, to refuse a reused key with a different basket.
+  idempotencyHash String? @map("idempotency_hash")
+
+  cancelReason String?   @map("cancel_reason")
+  pickedUpAt   DateTime? @map("picked_up_at")
+  deliveredAt  DateTime? @map("delivered_at")
+  cancelledAt  DateTime? @map("cancelled_at")
+  createdAt    DateTime  @default(now()) @map("created_at")
+  updatedAt    DateTime  @updatedAt @map("updated_at")
+
+  customer           User       @relation("CustomerOrders", fields: [customerId], references: [id], onDelete: Restrict)
+  createdBy          User?      @relation("OrderCreatedBy", fields: [createdById], references: [id], onDelete: SetNull)
+  pickupDriver       User?      @relation("PickupDriver", fields: [pickupDriverId], references: [id], onDelete: SetNull)
+  deliveryDriver     User?      @relation("DeliveryDriver", fields: [deliveryDriverId], references: [id], onDelete: SetNull)
+  pickupAddressRef   Address?   @relation("PickupAddress", fields: [pickupAddressId], references: [id], onDelete: SetNull)
+  deliveryAddressRef Address?   @relation("DeliveryAddress", fields: [deliveryAddressId], references: [id], onDelete: SetNull)
+  promotion          Promotion? @relation(fields: [promotionId], references: [id], onDelete: SetNull)
+
+  items    OrderItem[]
+  events   OrderEvent[]
+  offers   DispatchOffer[]
+  payments Payment[]
+  refunds  Refund[]
+
+  @@unique([customerId, idempotencyKey])
+  @@index([customerId, createdAt(sort: Desc)])
+  @@index([status, pickupDate])
+  @@index([pickupDriverId, status])
+  @@index([deliveryDriverId, status])
+  @@index([createdAt(sort: Desc)])
+  @@map("orders")
+}
+
+model OrderItem {
+  id             String   @id @default(uuid()) @db.Uuid
+  orderId        String   @map("order_id") @db.Uuid
+  catalogItemId  String?  @map("catalog_item_id") @db.Uuid
+  /// Snapshot of the catalog item at order time.
+  name           String
+  unit           ItemUnit
+  unitPricePaise Int      @map("unit_price_paise")
+  quantity       Int
+  lineTotalPaise Int      @map("line_total_paise")
+
+  order       Order        @relation(fields: [orderId], references: [id], onDelete: Cascade)
+  catalogItem CatalogItem? @relation(fields: [catalogItemId], references: [id], onDelete: SetNull)
+
+  @@index([orderId])
+  @@map("order_items")
+}
+
+model OrderEvent {
+  id         String       @id @default(uuid()) @db.Uuid
+  orderId    String       @map("order_id") @db.Uuid
+  fromStatus OrderStatus? @map("from_status")
+  toStatus   OrderStatus  @map("to_status")
+  actorId    String?      @map("actor_id") @db.Uuid
+  actorRole  Role?        @map("actor_role")
+  note       String?
+  createdAt  DateTime     @default(now()) @map("created_at")
+
+  order Order @relation(fields: [orderId], references: [id], onDelete: Cascade)
+  actor User? @relation(fields: [actorId], references: [id], onDelete: SetNull)
+
+  @@index([orderId, createdAt])
+  @@map("order_events")
+}
+
+model DispatchOffer {
+  id          String      @id @default(uuid()) @db.Uuid
+  orderId     String      @map("order_id") @db.Uuid
+  driverId    String      @map("driver_id") @db.Uuid
+  leg         DispatchLeg
+  round       Int
+  status      OfferStatus @default(PENDING)
+  distanceKm  Float?      @map("distance_km")
+  offeredAt   DateTime    @default(now()) @map("offered_at")
+  expiresAt   DateTime    @map("expires_at")
+  respondedAt DateTime?   @map("responded_at")
+
+  order  Order @relation(fields: [orderId], references: [id], onDelete: Cascade)
+  driver User  @relation(fields: [driverId], references: [id], onDelete: Cascade)
+
+  @@unique([orderId, leg, driverId, round])
+  @@index([driverId, status])
+  @@index([orderId, leg, status])
+  @@map("dispatch_offers")
+}
+
+// ───────────────────────────── Payments ─────────────────────────────
+
+model Payment {
+  id                String              @id @default(uuid()) @db.Uuid
+  orderId           String              @map("order_id") @db.Uuid
+  provider          PaymentProvider
+  status            PaymentRecordStatus @default(CREATED)
+  amountPaise       Int                 @map("amount_paise")
+  razorpayOrderId   String?             @unique @map("razorpay_order_id")
+  razorpayPaymentId String?             @unique @map("razorpay_payment_id")
+  /// Driver or admin who recorded a cash payment.
+  collectedById     String?             @map("collected_by_id") @db.Uuid
+  raw               Json?
+  createdAt         DateTime            @default(now()) @map("created_at")
+  updatedAt         DateTime            @updatedAt @map("updated_at")
+
+  order       Order    @relation(fields: [orderId], references: [id], onDelete: Restrict)
+  collectedBy User?    @relation("PaymentCollectedBy", fields: [collectedById], references: [id], onDelete: SetNull)
+  refunds     Refund[]
+
+  @@index([orderId])
+  @@map("payments")
+}
+
+/// Money returned to the customer, always with a note they see in the app.
+/// Only PENDING and PROCESSED refunds count toward orders.refunded_paise.
+model Refund {
+  id               String       @id @default(uuid()) @db.Uuid
+  orderId          String       @map("order_id") @db.Uuid
+  /// The captured Razorpay payment this refund goes back to (RAZORPAY only).
+  paymentId        String?      @map("payment_id") @db.Uuid
+  method           RefundMethod
+  status           RefundStatus @default(PENDING)
+  amountPaise      Int          @map("amount_paise")
+  /// Shown to the customer. 3–500 characters (CHECK in migration).
+  note             String
+  razorpayRefundId String?      @unique @map("razorpay_refund_id")
+  failureReason    String?      @map("failure_reason")
+  /// Staff member who issued the refund.
+  createdById      String?      @map("created_by_id") @db.Uuid
+  processedAt      DateTime?    @map("processed_at")
+  createdAt        DateTime     @default(now()) @map("created_at")
+  updatedAt        DateTime     @updatedAt @map("updated_at")
+
+  order     Order    @relation(fields: [orderId], references: [id], onDelete: Restrict)
+  payment   Payment? @relation(fields: [paymentId], references: [id], onDelete: Restrict)
+  createdBy User?    @relation("RefundCreatedBy", fields: [createdById], references: [id], onDelete: SetNull)
+
+  @@index([orderId, createdAt])
+  @@index([paymentId])
+  @@map("refunds")
+}
+
+// ───────────────────────────── Notifications & ops ─────────────────────────────
+
+model Notification {
+  id        String    @id @default(uuid()) @db.Uuid
+  userId    String    @map("user_id") @db.Uuid
+  type      String
+  title     String
+  body      String
+  data      Json?
+  readAt    DateTime? @map("read_at")
+  createdAt DateTime  @default(now()) @map("created_at")
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId, createdAt(sort: Desc)])
+  @@map("notifications")
+}
+
+/// Single-row table (id = 1) of business rules editable from the admin.
+model BusinessSettings {
+  id                          Int      @id @default(1)
+  minOrderPaise               Int      @default(0) @map("min_order_paise")
+  deliveryFeePaise            Int      @default(0) @map("delivery_fee_paise")
+  freeDeliveryAbovePaise      Int?     @map("free_delivery_above_paise")
+  /// Minimum hours from pickup slot start to delivery slot start.
+  minTurnaroundHours          Int      @default(20) @map("min_turnaround_hours")
+  /// A pickup slot can be booked until this many minutes before it ends.
+  bookingCutoffMinutes        Int      @default(60) @map("booking_cutoff_minutes")
+  maxAdvanceDays              Int      @default(30) @map("max_advance_days")
+  /// Start looking for a driver this many minutes before the slot starts.
+  dispatchLeadMinutes         Int      @default(60) @map("dispatch_lead_minutes")
+  dispatchBatchSize           Int      @default(3) @map("dispatch_batch_size")
+  offerTimeoutSeconds         Int      @default(20) @map("offer_timeout_seconds")
+  dispatchRetryMinutes        Int      @default(5) @map("dispatch_retry_minutes")
+  driverMaxActiveLegs         Int      @default(3) @map("driver_max_active_legs")
+  /// Ignore drivers whose last location is older than this.
+  driverLocationMaxAgeMinutes Int      @default(15) @map("driver_location_max_age_minutes")
+  supportPhone                String?  @map("support_phone")
+  supportEmail                String?  @map("support_email")
+  /// Service area: a radius around the hub, a PIN code allow-list, or both.
+  /// Centre and radius are set together (CHECK in migration); all null = no radius limit.
+  serviceCenterLatitude       Float?   @map("service_center_latitude")
+  serviceCenterLongitude      Float?   @map("service_center_longitude")
+  serviceRadiusKm             Float?   @map("service_radius_km")
+  /// When not empty, only these 6-digit PIN codes are served.
+  servicePincodes             String[] @default([]) @map("service_pincodes")
+  updatedAt                   DateTime @updatedAt @map("updated_at")
+
+  @@map("business_settings")
+}
+
+model AppVersion {
+  id            String         @id @default(uuid()) @db.Uuid
+  app           ClientApp
+  platform      DevicePlatform
+  minVersion    String         @map("min_version")
+  latestVersion String         @map("latest_version")
+  storeUrl      String?        @map("store_url")
+  message       String?
+  updatedAt     DateTime       @updatedAt @map("updated_at")
+
+  @@unique([app, platform])
+  @@map("app_versions")
+}
+
+model AuditLog {
+  id        String   @id @default(uuid()) @db.Uuid
+  actorId   String?  @map("actor_id") @db.Uuid
+  action    String
+  entity    String
+  entityId  String?  @map("entity_id")
+  data      Json?
+  createdAt DateTime @default(now()) @map("created_at")
+
+  actor User? @relation(fields: [actorId], references: [id], onDelete: SetNull)
+
+  @@index([entity, entityId])
+  @@index([createdAt(sort: Desc)])
+  @@map("audit_logs")
+}

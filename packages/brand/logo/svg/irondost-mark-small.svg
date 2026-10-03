@@ -1,0 +1,18 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="-1 -1 132.27 78" role="img" aria-label="IronDost"><title>IronDost</title><g transform="translate(-2.33 -6.57) scale(1.06)"><g transform="translate(2 6)" stroke-linejoin="round" stroke-linecap="round">
+<rect x="8" y="65" width="9" height="6" rx="2" fill="#0E1E3D"/>
+<rect x="43" y="65" width="9" height="6" rx="2" fill="#0E1E3D"/>
+<rect x="2" y="2" width="56" height="66" rx="9" fill="#FFFFFF"/>
+<path d="M11 2H49Q58 2 58 11V18H2V11Q2 2 11 2Z" fill="#E6EEF8"/>
+<rect x="2" y="2" width="56" height="66" rx="9" fill="none" stroke="#0E1E3D" stroke-width="3.6"/>
+<path d="M2 18H58" fill="none" stroke="#0E1E3D" stroke-width="3.2"/>
+<circle cx="12" cy="10" r="3.8" fill="#1F4FD1" stroke="#0E1E3D" stroke-width="2.6"/>
+<circle cx="30" cy="43" r="18" fill="#DCE4EE" stroke="#0E1E3D" stroke-width="3.6"/>
+<circle cx="30" cy="43" r="12" fill="#BFEAF8"/>
+<path d="M18.09 44.5Q21.07 41.2 24.05 44.5T30 44.5T35.95 44.5T41.91 44.5A12 12 0 0 1 18.09 44.5Z" fill="#3FB8EA"/>
+<circle cx="30" cy="43" r="12" fill="none" stroke="#0E1E3D" stroke-width="3.2"/>
+</g>
+<g transform="translate(43.1 31.4) scale(0.7)" stroke-linejoin="round" stroke-linecap="round">
+<path d="M38 40C41 27 48 14.5 60 13L97 11.5C104 11.5 107.5 15.5 107.5 22L108 40ZM57 36C58.5 29 62 23.5 68 23L94 22.5C96 22.5 97 23.5 97 25.5L97 36Z" fill="#FFFFFF" fill-rule="evenodd" stroke="#0E1E3D" stroke-width="4.8"/>
+<path d="M7 57C12 46 26 37.5 44 36L102 34Q110.5 34 111.5 43L112 57Z" fill="#1F4FD1" stroke="#0E1E3D" stroke-width="4.8"/>
+<path d="M3 61Q8 55 22 54H109Q114 54 114 58.75Q114 63.5 109 63.5H12Q5 63.5 3 61Z" fill="#C9D2DD" stroke="#0E1E3D" stroke-width="4.8"/>
+</g></g></svg>

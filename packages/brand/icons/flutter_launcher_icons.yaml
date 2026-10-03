@@ -1,0 +1,17 @@
+# flutter_launcher_icons config for the IronDost customer and delivery apps.
+# Copy these PNGs into the Flutter app at assets/brand/, add this block to
+# pubspec.yaml (or keep it as flutter_launcher_icons.yaml), then run:
+#   dart run flutter_launcher_icons
+#
+#   icons/ios/AppIcon.appiconset/AppIcon-1024.png -> assets/brand/app-icon-1024.png
+#   icons/android/adaptive-foreground-1024.png    -> assets/brand/adaptive-foreground-1024.png
+#   icons/android/adaptive-monochrome-1024.png    -> assets/brand/adaptive-monochrome-1024.png
+flutter_launcher_icons:
+  image_path: "assets/brand/app-icon-1024.png"
+  android: "ic_launcher"
+  ios: true
+  remove_alpha_ios: true
+  min_sdk_android: 21
+  adaptive_icon_background: "#FFFFFF"
+  adaptive_icon_foreground: "assets/brand/adaptive-foreground-1024.png"
+  adaptive_icon_monochrome: "assets/brand/adaptive-monochrome-1024.png"

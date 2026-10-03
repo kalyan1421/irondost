@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "264618787416",
+    "project_id": "irondost-app",
+    "storage_bucket": "irondost-app.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:264618787416:android:98eb963eae66fd74c7c02d",
+        "android_client_info": {
+          "package_name": "com.cloudironingfactory.customer"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyDnJYTA08GGAbbxLoTXpmC_QUe1PocJJxU"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

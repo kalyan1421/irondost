@@ -1,0 +1,76 @@
+{
+  "colors": {
+    "ink": {
+      "hex": "#0E1E3D",
+      "role": "Text, outlines and dark surfaces"
+    },
+    "royal": {
+      "hex": "#1F4FD1",
+      "role": "Primary: buttons, links and the word Dost"
+    },
+    "sky": {
+      "hex": "#3FB8EA",
+      "role": "Water, fills, accents on dark backgrounds"
+    },
+    "ocean": {
+      "hex": "#1A73B0",
+      "role": "Text-safe partner for sky on light backgrounds"
+    },
+    "sun": {
+      "hex": "#FFC93C",
+      "role": "Highlights, offers and badges, always with ink text"
+    },
+    "mist": {
+      "hex": "#E6EEF8",
+      "role": "Panels and soft surfaces"
+    },
+    "white": {
+      "hex": "#FFFFFF",
+      "role": "Backgrounds, washer and iron bodies"
+    }
+  },
+  "illustration": {
+    "steel": "#C9D2DD",
+    "ring": "#DCE4EE",
+    "glass": "#BFEAF8",
+    "foam": "#D9F4FC",
+    "chrome": "#F1F4F8"
+  },
+  "fonts": {
+    "display": {
+      "family": "Outfit",
+      "weights": [
+        600,
+        700,
+        800
+      ],
+      "use": "Wordmark, headings, numbers in marketing"
+    },
+    "body": {
+      "family": "Figtree",
+      "weights": [
+        400,
+        500,
+        600
+      ],
+      "use": "UI and body text"
+    },
+    "devanagari": {
+      "family": "Noto Sans Devanagari",
+      "weights": [
+        400,
+        600
+      ],
+      "use": "Hindi copy"
+    },
+    "mono": {
+      "family": "Geist Mono",
+      "weights": [
+        400,
+        500
+      ],
+      "use": "Order IDs, codes"
+    }
+  },
+  "appIconBackground": "#FFFFFF"
+}

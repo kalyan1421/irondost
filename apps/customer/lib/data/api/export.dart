@@ -1,0 +1,76 @@
+// coverage:ignore-file
+// GENERATED CODE - DO NOT MODIFY BY HAND
+// ignore_for_file: type=lint, unused_import, invalid_annotation_target, unnecessary_import
+
+// Clients
+export 'clients/auth_client.dart';
+export 'clients/schedule_client.dart';
+export 'clients/config_client.dart';
+export 'clients/me_client.dart';
+export 'clients/addresses_client.dart';
+export 'clients/catalog_client.dart';
+export 'clients/promotions_client.dart';
+export 'clients/banners_client.dart';
+export 'clients/app_versions_client.dart';
+export 'clients/orders_client.dart';
+export 'clients/payments_client.dart';
+// Data classes
+export 'models/client_app.dart';
+export 'models/start_session_dto.dart';
+export 'models/role.dart';
+export 'models/user_dto.dart';
+export 'models/time_slot.dart';
+export 'models/slot_option_dto.dart';
+export 'models/slot_definition_dto.dart';
+export 'models/public_config_dto.dart';
+export 'models/not_serviceable_reason.dart';
+export 'models/service_area_check_dto.dart';
+export 'models/driver_profile_dto.dart';
+export 'models/me_dto.dart';
+export 'models/update_me_dto.dart';
+export 'models/device_platform.dart';
+export 'models/register_device_dto.dart';
+export 'models/remove_device_dto.dart';
+export 'models/address_dto.dart';
+export 'models/create_address_dto.dart';
+export 'models/update_address_dto.dart';
+export 'models/item_unit.dart';
+export 'models/catalog_item_dto.dart';
+export 'models/catalog_category_dto.dart';
+export 'models/discount_type.dart';
+export 'models/promotion_dto.dart';
+export 'models/banner_dto.dart';
+export 'models/upsert_app_version_dto.dart';
+export 'models/app_version_dto.dart';
+export 'models/order_line_input.dart';
+export 'models/quote_request_dto.dart';
+export 'models/quote_line_dto.dart';
+export 'models/quote_dto.dart';
+export 'models/payment_method.dart';
+export 'models/place_order_dto.dart';
+export 'models/order_status.dart';
+export 'models/order_source.dart';
+export 'models/order_address_dto.dart';
+export 'models/order_item_dto.dart';
+export 'models/payment_status.dart';
+export 'models/person_ref_dto.dart';
+export 'models/order_event_dto.dart';
+export 'models/refund_method.dart';
+export 'models/refund_status.dart';
+export 'models/staff_ref_dto.dart';
+export 'models/refund_dto.dart';
+export 'models/order_dto.dart';
+export 'models/order_page_dto.dart';
+export 'models/cancel_order_dto.dart';
+export 'models/checkout_prefill_dto.dart';
+export 'models/checkout_params_dto.dart';
+export 'models/verify_checkout_dto.dart';
+export 'models/payment_status_dto.dart';
+export 'models/notification_dto.dart';
+export 'models/notification_page_dto.dart';
+export 'models/scope.dart';
+export 'models/quote_dto_promo_error.dart';
+export 'models/checkout_params_dto_currency.dart';
+// Root client
+export 'iron_dost_api.dart';
+

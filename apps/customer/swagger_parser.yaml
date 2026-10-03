@@ -1,0 +1,29 @@
+# Generates the typed API client in lib/data/api from the API's OpenAPI contract.
+# Regenerate after `pnpm openapi` in apps/api:  dart run swagger_parser && dart run build_runner build -d
+swagger_parser:
+  schema_path: ../../packages/contracts/openapi.json
+  output_directory: lib/data/api
+  language: dart
+  json_serializer: json_serializable
+  root_client: true
+  root_client_name: IronDostApi
+  put_clients_in_folder: true
+  enums_to_json: true
+  unknown_enum_value: true
+  mark_files_as_generated: true
+  include_if_null: false
+  # Customer-facing endpoints only; staff and partner routes stay out of the app.
+  include_paths:
+    - "/v1/auth/**"
+    - "/v1/me"
+    - "/v1/me/**"
+    - "/v1/orders"
+    - "/v1/orders/**"
+    - "/v1/payments/razorpay/verify"
+    - "/v1/catalog"
+    - "/v1/config"
+    - "/v1/service-area/**"
+    - "/v1/schedule/**"
+    - "/v1/promotions"
+    - "/v1/banners"
+    - "/v1/app-versions"

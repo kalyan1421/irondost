@@ -1,0 +1,5 @@
+{
+  "FLAVOR": "dev",
+  "API_BASE_URL": "http://localhost:4000",
+  "AUTH_MODE": "firebase"
+}

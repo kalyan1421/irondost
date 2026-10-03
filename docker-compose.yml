@@ -1,0 +1,16 @@
+# Local development database. The API only needs PostgreSQL:
+# background jobs (pg-boss) live in the same database.
+services:
+  postgres:
+    image: postgres:16-alpine
+    environment:
+      POSTGRES_USER: laundry
+      POSTGRES_PASSWORD: laundry
+      POSTGRES_DB: laundry_dev
+    ports:
+      - "5433:5432"
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+
+volumes:
+  pgdata:

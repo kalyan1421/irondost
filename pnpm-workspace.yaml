@@ -1,0 +1,17 @@
+packages:
+  - apps/*
+  - packages/*
+
+onlyBuiltDependencies:
+  - sharp
+  - "@nestjs/core"
+  - "@prisma/engines"
+  - prisma
+  - protobufjs
+
+useNodeVersion: 24.21.0
+
+ignoredBuiltDependencies:
+  - "@scarf/scarf"
+  - "@firebase/util"
+  - unrs-resolver

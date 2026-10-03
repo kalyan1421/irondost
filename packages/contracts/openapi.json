@@ -1,0 +1,6280 @@
+{
+  "openapi": "3.0.0",
+  "paths": {
+    "/v1/health": {
+      "get": {
+        "operationId": "HealthController_check",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": ""
+          }
+        },
+        "summary": "Liveness + database check for the load balancer.",
+        "tags": [
+          "health"
+        ]
+      }
+    },
+    "/v1/auth/session": {
+      "post": {
+        "operationId": "AuthController_session",
+        "parameters": [],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/StartSessionDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/UserDto"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Exchange a verified Firebase phone-OTP token for a user record.",
+        "tags": [
+          "auth"
+        ]
+      }
+    },
+    "/v1/schedule/pickup-slots": {
+      "get": {
+        "operationId": "SchedulingController_pickupSlots",
+        "parameters": [
+          {
+            "name": "days",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "minimum": 1,
+              "maximum": 31,
+              "default": 7,
+              "type": "number"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/SlotOptionDto"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "tags": [
+          "schedule"
+        ]
+      }
+    },
+    "/v1/schedule/delivery-slots": {
+      "get": {
+        "operationId": "SchedulingController_deliverySlots",
+        "parameters": [
+          {
+            "name": "days",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "minimum": 1,
+              "maximum": 31,
+              "default": 7,
+              "type": "number"
+            }
+          },
+          {
+            "name": "pickupDate",
+            "required": true,
+            "in": "query",
+            "schema": {
+              "example": "2026-10-05",
+              "type": "string"
+            }
+          },
+          {
+            "name": "pickupSlot",
+            "required": true,
+            "in": "query",
+            "schema": {
+              "$ref": "#/components/schemas/TimeSlot"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/SlotOptionDto"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "tags": [
+          "schedule"
+        ]
+      }
+    },
+    "/v1/config": {
+      "get": {
+        "operationId": "PublicConfigController_get",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PublicConfigDto"
+                }
+              }
+            }
+          }
+        },
+        "tags": [
+          "config"
+        ]
+      }
+    },
+    "/v1/service-area/check": {
+      "get": {
+        "operationId": "ServiceAreaController_check",
+        "parameters": [
+          {
+            "name": "latitude",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "example": 17.4126,
+              "type": "number"
+            }
+          },
+          {
+            "name": "longitude",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "example": 78.4482,
+              "type": "number"
+            }
+          },
+          {
+            "name": "pincode",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "example": "500034",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ServiceAreaCheckDto"
+                }
+              }
+            }
+          }
+        },
+        "summary": "Whether IronDost serves a map pin and/or PIN code. Public, so the website can ask before sign-up.",
+        "tags": [
+          "config"
+        ]
+      }
+    },
+    "/v1/me": {
+      "get": {
+        "operationId": "UsersController_me",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/MeDto"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "tags": [
+          "me"
+        ]
+      },
+      "patch": {
+        "operationId": "UsersController_update",
+        "parameters": [],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UpdateMeDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/MeDto"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "tags": [
+          "me"
+        ]
+      },
+      "delete": {
+        "operationId": "UsersController_deleteAccount",
+        "parameters": [],
+        "responses": {
+          "204": {
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "tags": [
+          "me"
+        ]
+      }
+    },
+    "/v1/me/devices": {
+      "post": {
+        "operationId": "UsersController_registerDevice",
+        "parameters": [],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/RegisterDeviceDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "204": {
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "tags": [
+          "me"
+        ]
+      }
+    },
+    "/v1/me/devices/remove": {
+      "post": {
+        "operationId": "UsersController_removeDevice",
+        "parameters": [],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/RemoveDeviceDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "204": {
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Call on sign-out so the device stops receiving this user's pushes.",
+        "tags": [
+          "me"
+        ]
+      }
+    },
+    "/v1/me/addresses": {
+      "get": {
+        "operationId": "AddressesController_list",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/AddressDto"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "tags": [
+          "addresses"
+        ]
+      },
+      "post": {
+        "operationId": "AddressesController_create",
+        "parameters": [],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CreateAddressDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AddressDto"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Saving is allowed outside the service area; `serviceable` tells the app to show the \"not in your area yet\" state.",
+        "tags": [
+          "addresses"
+        ]
+      }
+    },
+    "/v1/me/addresses/{id}": {
+      "patch": {
+        "operationId": "AddressesController_update",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UpdateAddressDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AddressDto"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "tags": [
+          "addresses"
+        ]
+      },
+      "delete": {
+        "operationId": "AddressesController_remove",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "tags": [
+          "addresses"
+        ]
+      }
+    },
+    "/v1/catalog": {
+      "get": {
+        "operationId": "CatalogController_list",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/CatalogCategoryDto"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "summary": "Active categories and items with prices, for the customer app and website.",
+        "tags": [
+          "catalog"
+        ]
+      }
+    },
+    "/v1/admin/catalog": {
+      "get": {
+        "operationId": "AdminCatalogController_list",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/CatalogCategoryDto"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "tags": [
+          "admin · catalog"
+        ]
+      }
+    },
+    "/v1/admin/catalog/categories": {
+      "post": {
+        "operationId": "AdminCatalogController_createCategory",
+        "parameters": [],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CreateCategoryDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CatalogCategoryDto"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "tags": [
+          "admin · catalog"
+        ]
+      }
+    },
+    "/v1/admin/catalog/categories/{id}": {
+      "patch": {
+        "operationId": "AdminCatalogController_updateCategory",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UpdateCategoryDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CatalogCategoryDto"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "tags": [
+          "admin · catalog"
+        ]
+      },
+      "delete": {
+        "operationId": "AdminCatalogController_deleteCategory",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "tags": [
+          "admin · catalog"
+        ]
+      }
+    },
+    "/v1/admin/catalog/items": {
+      "post": {
+        "operationId": "AdminCatalogController_createItem",
+        "parameters": [],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CreateItemDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CatalogItemDto"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "tags": [
+          "admin · catalog"
+        ]
+      }
+    },
+    "/v1/admin/catalog/items/{id}": {
+      "patch": {
+        "operationId": "AdminCatalogController_updateItem",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UpdateItemDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CatalogItemDto"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "tags": [
+          "admin · catalog"
+        ]
+      },
+      "delete": {
+        "operationId": "AdminCatalogController_deleteItem",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/DeleteResultDto"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Deletes the item, or deactivates it if past orders reference it.",
+        "tags": [
+          "admin · catalog"
+        ]
+      }
+    },
+    "/v1/promotions": {
+      "get": {
+        "operationId": "PromotionsController_active",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/PromotionDto"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "summary": "Promotions currently running, for the home screen. Codes are validated when quoting an order.",
+        "tags": [
+          "promotions"
+        ]
+      }
+    },
+    "/v1/admin/promotions": {
+      "get": {
+        "operationId": "AdminPromotionsController_list",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/PromotionDto"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "tags": [
+          "admin · promotions"
+        ]
+      },
+      "post": {
+        "operationId": "AdminPromotionsController_create",
+        "parameters": [],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CreatePromotionDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PromotionDto"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "tags": [
+          "admin · promotions"
+        ]
+      }
+    },
+    "/v1/admin/promotions/{id}": {
+      "patch": {
+        "operationId": "AdminPromotionsController_update",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UpdatePromotionDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PromotionDto"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "tags": [
+          "admin · promotions"
+        ]
+      },
+      "delete": {
+        "operationId": "AdminPromotionsController_remove",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/DeleteResultDto"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Used promotions are deactivated instead of deleted.",
+        "tags": [
+          "admin · promotions"
+        ]
+      }
+    },
+    "/v1/banners": {
+      "get": {
+        "operationId": "BannersController_active",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/BannerDto"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "tags": [
+          "banners"
+        ]
+      }
+    },
+    "/v1/admin/banners": {
+      "get": {
+        "operationId": "AdminBannersController_list",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/BannerDto"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "tags": [
+          "admin · banners"
+        ]
+      },
+      "post": {
+        "operationId": "AdminBannersController_create",
+        "parameters": [],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CreateBannerDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/BannerDto"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "tags": [
+          "admin · banners"
+        ]
+      }
+    },
+    "/v1/admin/banners/{id}": {
+      "patch": {
+        "operationId": "AdminBannersController_update",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UpdateBannerDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/BannerDto"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "tags": [
+          "admin · banners"
+        ]
+      },
+      "delete": {
+        "operationId": "AdminBannersController_remove",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "tags": [
+          "admin · banners"
+        ]
+      }
+    },
+    "/v1/app-versions": {
+      "get": {
+        "operationId": "AppVersionsController_get",
+        "parameters": [
+          {
+            "name": "app",
+            "required": true,
+            "in": "query",
+            "schema": {
+              "$ref": "#/components/schemas/ClientApp"
+            }
+          },
+          {
+            "name": "platform",
+            "required": true,
+            "in": "query",
+            "schema": {
+              "$ref": "#/components/schemas/DevicePlatform"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object"
+                }
+              }
+            }
+          }
+        },
+        "summary": "Apps call this on launch: below minVersion → force update; below latestVersion → suggest update.",
+        "tags": [
+          "app-versions"
+        ]
+      },
+      "put": {
+        "operationId": "AppVersionsController_upsert",
+        "parameters": [],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UpsertAppVersionDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AppVersionDto"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "tags": [
+          "app-versions"
+        ]
+      }
+    },
+    "/v1/orders/quote": {
+      "post": {
+        "operationId": "OrdersController_quote",
+        "parameters": [],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/QuoteRequestDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/QuoteDto"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Server-side price for a basket, including promo validation. Call before placing.",
+        "tags": [
+          "orders"
+        ]
+      }
+    },
+    "/v1/orders": {
+      "post": {
+        "operationId": "OrdersController_place",
+        "parameters": [
+          {
+            "name": "Idempotency-Key",
+            "in": "header",
+            "description": "One value per checkout attempt (a UUID). Retrying with the same key returns the order the first attempt placed, with the Idempotent-Replayed: true header, instead of placing another.",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/PlaceOrderDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/OrderDto"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "tags": [
+          "orders"
+        ]
+      },
+      "get": {
+        "operationId": "OrdersController_list",
+        "parameters": [
+          {
+            "name": "page",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "minimum": 1,
+              "default": 1,
+              "type": "number"
+            }
+          },
+          {
+            "name": "pageSize",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "minimum": 1,
+              "maximum": 100,
+              "default": 20,
+              "type": "number"
+            }
+          },
+          {
+            "name": "scope",
+            "required": false,
+            "in": "query",
+            "description": "active = not yet delivered or cancelled; past = delivered or cancelled; omit for all",
+            "schema": {
+              "type": "string",
+              "enum": [
+                "active",
+                "past"
+              ]
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/OrderPageDto"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "tags": [
+          "orders"
+        ]
+      }
+    },
+    "/v1/orders/{id}": {
+      "get": {
+        "operationId": "OrdersController_get",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/OrderDto"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "tags": [
+          "orders"
+        ]
+      }
+    },
+    "/v1/orders/{id}/pay-on-delivery": {
+      "post": {
+        "operationId": "OrdersController_payOnDelivery",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/OrderDto"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "For an online order that has not been paid (a failed or abandoned payment): the partner collects the amount at delivery.",
+        "tags": [
+          "orders"
+        ]
+      }
+    },
+    "/v1/orders/{id}/cancel": {
+      "post": {
+        "operationId": "OrdersController_cancel",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CancelOrderDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/OrderDto"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Allowed until the clothes are picked up.",
+        "tags": [
+          "orders"
+        ]
+      }
+    },
+    "/v1/admin/orders": {
+      "get": {
+        "operationId": "AdminOrdersController_list",
+        "parameters": [
+          {
+            "name": "page",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "minimum": 1,
+              "default": 1,
+              "type": "number"
+            }
+          },
+          {
+            "name": "pageSize",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "minimum": 1,
+              "maximum": 100,
+              "default": 20,
+              "type": "number"
+            }
+          },
+          {
+            "name": "status",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "type": "array",
+              "items": {
+                "$ref": "#/components/schemas/OrderStatus"
+              }
+            }
+          },
+          {
+            "name": "search",
+            "required": false,
+            "in": "query",
+            "description": "Order number, customer phone or name",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "pickupFrom",
+            "required": false,
+            "in": "query",
+            "description": "Pickup date from (IST)",
+            "schema": {
+              "example": "2026-10-01",
+              "type": "string"
+            }
+          },
+          {
+            "name": "pickupTo",
+            "required": false,
+            "in": "query",
+            "description": "Pickup date to (IST, inclusive)",
+            "schema": {
+              "example": "2026-10-31",
+              "type": "string"
+            }
+          },
+          {
+            "name": "customerId",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "driverId",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "dispatchFailed",
+            "required": false,
+            "in": "query",
+            "description": "Only orders where automatic dispatch found no driver",
+            "schema": {
+              "type": "boolean"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/OrderPageDto"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "tags": [
+          "admin · orders"
+        ]
+      },
+      "post": {
+        "operationId": "AdminOrdersController_place",
+        "parameters": [],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/AdminPlaceOrderDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/OrderDto"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Place an order on a customer's behalf (phone orders).",
+        "tags": [
+          "admin · orders"
+        ]
+      }
+    },
+    "/v1/admin/orders/{id}": {
+      "get": {
+        "operationId": "AdminOrdersController_get",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/OrderDto"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "tags": [
+          "admin · orders"
+        ]
+      }
+    },
+    "/v1/admin/orders/quote/{customerId}": {
+      "post": {
+        "operationId": "AdminOrdersController_quote",
+        "parameters": [
+          {
+            "name": "customerId",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/QuoteRequestDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/QuoteDto"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "tags": [
+          "admin · orders"
+        ]
+      }
+    },
+    "/v1/admin/orders/{id}/status": {
+      "post": {
+        "operationId": "AdminOrdersController_changeStatus",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ChangeStatusDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/OrderDto"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Move an order along its lifecycle. Driver assignment uses the assign endpoint instead.",
+        "tags": [
+          "admin · orders"
+        ]
+      }
+    },
+    "/v1/admin/orders/{id}/items": {
+      "put": {
+        "operationId": "AdminOrdersController_updateItems",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UpdateItemsDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/OrderDto"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "tags": [
+          "admin · orders"
+        ]
+      }
+    },
+    "/v1/orders/{id}/payments/razorpay": {
+      "post": {
+        "operationId": "PaymentsController_createRazorpayOrder",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "201": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CheckoutParamsDto"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Returns the parameters for Razorpay Checkout on the device.",
+        "tags": [
+          "payments"
+        ]
+      }
+    },
+    "/v1/payments/razorpay/verify": {
+      "post": {
+        "operationId": "PaymentsController_verify",
+        "parameters": [],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/VerifyCheckoutDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PaymentStatusDto"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "tags": [
+          "payments"
+        ]
+      }
+    },
+    "/v1/admin/orders/{id}/payments": {
+      "get": {
+        "operationId": "AdminPaymentsController_list",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/PaymentDto"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "tags": [
+          "admin · payments"
+        ]
+      }
+    },
+    "/v1/admin/orders/{id}/payments/cash": {
+      "post": {
+        "operationId": "AdminPaymentsController_recordCash",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/RecordCashDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "204": {
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "tags": [
+          "admin · payments"
+        ]
+      }
+    },
+    "/v1/admin/orders/{id}/refunds": {
+      "post": {
+        "description": "Errors: NOTHING_TO_REFUND, REFUND_EXCEEDS_PAID and REFUND_EXCEEDS_ONLINE_PAID (409, details.refundablePaise), NO_ONLINE_PAYMENT (409), REFUND_GATEWAY_ERROR (502, with Razorpay's message; nothing is saved).",
+        "operationId": "AdminRefundsController_create",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CreateRefundDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/OrderDto"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Refund money on an order, with a note the customer sees. Works in any status.",
+        "tags": [
+          "admin · orders"
+        ]
+      }
+    },
+    "/v1/driver/online": {
+      "put": {
+        "operationId": "DriverController_setOnline",
+        "parameters": [],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/SetOnlineDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "204": {
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "tags": [
+          "driver"
+        ]
+      }
+    },
+    "/v1/driver/location": {
+      "put": {
+        "operationId": "DriverController_location",
+        "parameters": [],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/LocationDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "204": {
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Send every 30–60 s while online. Drivers without a recent location get no offers.",
+        "tags": [
+          "driver"
+        ]
+      }
+    },
+    "/v1/driver/offers": {
+      "get": {
+        "operationId": "DriverController_offers",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/OfferDto"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "tags": [
+          "driver"
+        ]
+      }
+    },
+    "/v1/driver/offers/{id}/accept": {
+      "post": {
+        "operationId": "DriverController_accept",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/OrderDto"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "tags": [
+          "driver"
+        ]
+      }
+    },
+    "/v1/driver/offers/{id}/reject": {
+      "post": {
+        "operationId": "DriverController_reject",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "tags": [
+          "driver"
+        ]
+      }
+    },
+    "/v1/driver/tasks": {
+      "get": {
+        "operationId": "DriverController_tasks",
+        "parameters": [
+          {
+            "name": "scope",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "default": "active",
+              "type": "string",
+              "enum": [
+                "active",
+                "history"
+              ]
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/OrderDto"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "tags": [
+          "driver"
+        ]
+      }
+    },
+    "/v1/driver/orders/{id}": {
+      "get": {
+        "operationId": "DriverController_order",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/OrderDto"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "tags": [
+          "driver"
+        ]
+      }
+    },
+    "/v1/driver/orders/{id}/items": {
+      "put": {
+        "operationId": "DriverController_updateItems",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UpdateItemsDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/OrderDto"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Correct the item count at the doorstep before confirming pickup.",
+        "tags": [
+          "driver"
+        ]
+      }
+    },
+    "/v1/driver/orders/{id}/picked-up": {
+      "post": {
+        "operationId": "DriverController_pickedUp",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/OrderDto"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "tags": [
+          "driver"
+        ]
+      }
+    },
+    "/v1/driver/orders/{id}/out-for-delivery": {
+      "post": {
+        "operationId": "DriverController_outForDelivery",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/OrderDto"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "tags": [
+          "driver"
+        ]
+      }
+    },
+    "/v1/driver/orders/{id}/delivered": {
+      "post": {
+        "operationId": "DriverController_delivered",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/DeliverDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/OrderDto"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "tags": [
+          "driver"
+        ]
+      }
+    },
+    "/v1/admin/drivers": {
+      "get": {
+        "operationId": "AdminDriversController_list",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/DriverListItemDto"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "tags": [
+          "admin · drivers"
+        ]
+      },
+      "post": {
+        "operationId": "AdminDriversController_create",
+        "parameters": [],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CreateDriverDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/UserDto"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "tags": [
+          "admin · drivers"
+        ]
+      }
+    },
+    "/v1/admin/drivers/{id}": {
+      "patch": {
+        "operationId": "AdminDriversController_update",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UpdateDriverDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/UserDto"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "tags": [
+          "admin · drivers"
+        ]
+      }
+    },
+    "/v1/admin/orders/{id}/assign": {
+      "post": {
+        "operationId": "AdminDriversController_assign",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/AssignDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/OrderDto"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Assign (or reassign) a driver to the pickup or delivery leg of an order.",
+        "tags": [
+          "admin · drivers"
+        ]
+      }
+    },
+    "/v1/admin/orders/{id}/unassign": {
+      "post": {
+        "operationId": "AdminDriversController_unassign",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UnassignDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/OrderDto"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Remove the driver from a leg; automatic dispatch starts looking again.",
+        "tags": [
+          "admin · drivers"
+        ]
+      }
+    },
+    "/v1/me/notifications": {
+      "get": {
+        "operationId": "NotificationsController_list",
+        "parameters": [
+          {
+            "name": "page",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "minimum": 1,
+              "default": 1,
+              "type": "number"
+            }
+          },
+          {
+            "name": "pageSize",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "minimum": 1,
+              "maximum": 100,
+              "default": 20,
+              "type": "number"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/NotificationPageDto"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "tags": [
+          "me"
+        ]
+      }
+    },
+    "/v1/me/notifications/{id}/read": {
+      "post": {
+        "operationId": "NotificationsController_read",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "tags": [
+          "me"
+        ]
+      }
+    },
+    "/v1/me/notifications/read-all": {
+      "post": {
+        "operationId": "NotificationsController_readAll",
+        "parameters": [],
+        "responses": {
+          "204": {
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "tags": [
+          "me"
+        ]
+      }
+    },
+    "/v1/admin/dashboard": {
+      "get": {
+        "operationId": "AdminController_dashboard",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/DashboardDto"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "tags": [
+          "admin · customers"
+        ]
+      }
+    },
+    "/v1/admin/customers": {
+      "get": {
+        "operationId": "AdminController_customers",
+        "parameters": [
+          {
+            "name": "page",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "minimum": 1,
+              "default": 1,
+              "type": "number"
+            }
+          },
+          {
+            "name": "pageSize",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "minimum": 1,
+              "maximum": 100,
+              "default": 20,
+              "type": "number"
+            }
+          },
+          {
+            "name": "search",
+            "required": false,
+            "in": "query",
+            "description": "Name or phone",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CustomerPageDto"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "tags": [
+          "admin · customers"
+        ]
+      },
+      "post": {
+        "operationId": "AdminController_createCustomer",
+        "parameters": [],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CreateCustomerDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/UserDto"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "tags": [
+          "admin · customers"
+        ]
+      }
+    },
+    "/v1/admin/customers/{id}": {
+      "get": {
+        "operationId": "AdminController_customer",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/UserDto"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "tags": [
+          "admin · customers"
+        ]
+      },
+      "patch": {
+        "operationId": "AdminController_updateCustomer",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UpdateCustomerDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/UserDto"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "tags": [
+          "admin · customers"
+        ]
+      }
+    },
+    "/v1/admin/customers/{id}/addresses": {
+      "get": {
+        "operationId": "AdminController_addressesOf",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/AddressDto"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "tags": [
+          "admin · customers"
+        ]
+      },
+      "post": {
+        "operationId": "AdminController_addAddress",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CreateAddressDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AddressDto"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "tags": [
+          "admin · customers"
+        ]
+      }
+    },
+    "/v1/admin/customers/{id}/addresses/{addressId}": {
+      "patch": {
+        "operationId": "AdminController_updateAddress",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "addressId",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UpdateAddressDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AddressDto"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "tags": [
+          "admin · customers"
+        ]
+      },
+      "delete": {
+        "operationId": "AdminController_removeAddress",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "addressId",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "tags": [
+          "admin · customers"
+        ]
+      }
+    },
+    "/v1/admin/settings": {
+      "get": {
+        "operationId": "AdminController_getSettings",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/BusinessSettingsDto"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "tags": [
+          "admin · customers"
+        ]
+      },
+      "patch": {
+        "operationId": "AdminController_updateSettings",
+        "parameters": [],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UpdateSettingsDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/BusinessSettingsDto"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "tags": [
+          "admin · customers"
+        ]
+      }
+    },
+    "/v1/admin/staff": {
+      "get": {
+        "operationId": "AdminStaffController_list",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/UserDto"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "tags": [
+          "admin · staff"
+        ]
+      },
+      "post": {
+        "operationId": "AdminStaffController_create",
+        "parameters": [],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CreateStaffDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/UserDto"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "tags": [
+          "admin · staff"
+        ]
+      }
+    },
+    "/v1/admin/staff/{id}": {
+      "patch": {
+        "operationId": "AdminStaffController_update",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UpdateStaffDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/UserDto"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "tags": [
+          "admin · staff"
+        ]
+      }
+    },
+    "/v1/admin/uploads/images": {
+      "post": {
+        "operationId": "UploadsController_uploadImage",
+        "parameters": [],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "multipart/form-data": {
+              "schema": {
+                "type": "object",
+                "required": [
+                  "file",
+                  "purpose"
+                ],
+                "properties": {
+                  "file": {
+                    "type": "string",
+                    "format": "binary"
+                  },
+                  "purpose": {
+                    "type": "string",
+                    "enum": [
+                      "catalog",
+                      "promotion",
+                      "banner"
+                    ]
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ImageUploadDto"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Upload an image (max 8 MB). It is cleaned, resized and stored as WebP; use the returned URL in imageUrl.",
+        "tags": [
+          "admin · uploads"
+        ]
+      }
+    }
+  },
+  "info": {
+    "title": "Laundry API",
+    "description": "Firebase phone-OTP ID token as Bearer. Money in paise. Dates are IST (YYYY-MM-DD).",
+    "version": "1.0",
+    "contact": {}
+  },
+  "tags": [],
+  "servers": [],
+  "components": {
+    "securitySchemes": {
+      "bearer": {
+        "scheme": "bearer",
+        "bearerFormat": "JWT",
+        "type": "http"
+      }
+    },
+    "schemas": {
+      "ClientApp": {
+        "type": "string",
+        "enum": [
+          "CUSTOMER",
+          "PARTNER",
+          "ADMIN"
+        ]
+      },
+      "StartSessionDto": {
+        "type": "object",
+        "properties": {
+          "app": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/ClientApp"
+              }
+            ]
+          }
+        },
+        "required": [
+          "app"
+        ]
+      },
+      "Role": {
+        "type": "string",
+        "enum": [
+          "CUSTOMER",
+          "DRIVER",
+          "ADMIN",
+          "SUPER_ADMIN"
+        ]
+      },
+      "UserDto": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "phone": {
+            "type": "string",
+            "example": "+919876543210"
+          },
+          "name": {
+            "type": "string",
+            "nullable": true
+          },
+          "email": {
+            "type": "string",
+            "nullable": true
+          },
+          "role": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/Role"
+              }
+            ]
+          },
+          "isActive": {
+            "type": "boolean"
+          },
+          "isProfileComplete": {
+            "type": "boolean",
+            "description": "False until the customer has entered a name."
+          },
+          "createdAt": {
+            "format": "date-time",
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "phone",
+          "name",
+          "email",
+          "role",
+          "isActive",
+          "isProfileComplete",
+          "createdAt"
+        ]
+      },
+      "TimeSlot": {
+        "type": "string",
+        "enum": [
+          "MORNING",
+          "NOON",
+          "EVENING"
+        ]
+      },
+      "SlotOptionDto": {
+        "type": "object",
+        "properties": {
+          "date": {
+            "type": "string",
+            "example": "2026-10-05"
+          },
+          "slot": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/TimeSlot"
+              }
+            ]
+          },
+          "label": {
+            "type": "string",
+            "example": "07:00–11:00"
+          },
+          "startsAt": {
+            "format": "date-time",
+            "type": "string"
+          },
+          "endsAt": {
+            "format": "date-time",
+            "type": "string"
+          },
+          "available": {
+            "type": "boolean"
+          }
+        },
+        "required": [
+          "date",
+          "slot",
+          "label",
+          "startsAt",
+          "endsAt",
+          "available"
+        ]
+      },
+      "SlotDefinitionDto": {
+        "type": "object",
+        "properties": {
+          "slot": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/TimeSlot"
+              }
+            ]
+          },
+          "label": {
+            "type": "string",
+            "example": "07:00–11:00"
+          }
+        },
+        "required": [
+          "slot",
+          "label"
+        ]
+      },
+      "PublicConfigDto": {
+        "type": "object",
+        "properties": {
+          "appName": {
+            "type": "string",
+            "example": "IronDost"
+          },
+          "supportPhone": {
+            "type": "string",
+            "nullable": true
+          },
+          "supportEmail": {
+            "type": "string",
+            "nullable": true
+          },
+          "minOrderPaise": {
+            "type": "number"
+          },
+          "deliveryFeePaise": {
+            "type": "number"
+          },
+          "freeDeliveryAbovePaise": {
+            "type": "number",
+            "nullable": true
+          },
+          "minTurnaroundHours": {
+            "type": "number"
+          },
+          "maxAdvanceDays": {
+            "type": "number"
+          },
+          "slots": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/SlotDefinitionDto"
+            }
+          }
+        },
+        "required": [
+          "appName",
+          "supportPhone",
+          "supportEmail",
+          "minOrderPaise",
+          "deliveryFeePaise",
+          "freeDeliveryAbovePaise",
+          "minTurnaroundHours",
+          "maxAdvanceDays",
+          "slots"
+        ]
+      },
+      "NotServiceableReason": {
+        "type": "string",
+        "enum": [
+          "PINCODE_NOT_SERVED",
+          "OUTSIDE_RADIUS"
+        ]
+      },
+      "ServiceAreaCheckDto": {
+        "type": "object",
+        "properties": {
+          "serviceable": {
+            "type": "boolean"
+          },
+          "reason": {
+            "nullable": true,
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/NotServiceableReason"
+              }
+            ]
+          },
+          "distanceKm": {
+            "type": "number",
+            "nullable": true,
+            "description": "Distance from the hub when a radius applies"
+          }
+        },
+        "required": [
+          "serviceable",
+          "reason",
+          "distanceKm"
+        ]
+      },
+      "DriverProfileDto": {
+        "type": "object",
+        "properties": {
+          "vehicleNumber": {
+            "type": "string",
+            "nullable": true
+          },
+          "licenseNumber": {
+            "type": "string",
+            "nullable": true
+          },
+          "isOnline": {
+            "type": "boolean"
+          },
+          "latitude": {
+            "type": "number",
+            "nullable": true
+          },
+          "longitude": {
+            "type": "number",
+            "nullable": true
+          },
+          "locationUpdatedAt": {
+            "format": "date-time",
+            "type": "string",
+            "nullable": true
+          }
+        },
+        "required": [
+          "vehicleNumber",
+          "licenseNumber",
+          "isOnline",
+          "latitude",
+          "longitude",
+          "locationUpdatedAt"
+        ]
+      },
+      "MeDto": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "phone": {
+            "type": "string",
+            "example": "+919876543210"
+          },
+          "name": {
+            "type": "string",
+            "nullable": true
+          },
+          "email": {
+            "type": "string",
+            "nullable": true
+          },
+          "role": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/Role"
+              }
+            ]
+          },
+          "isActive": {
+            "type": "boolean"
+          },
+          "isProfileComplete": {
+            "type": "boolean",
+            "description": "False until the customer has entered a name."
+          },
+          "createdAt": {
+            "format": "date-time",
+            "type": "string"
+          },
+          "driver": {
+            "nullable": true,
+            "type": "object",
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/DriverProfileDto"
+              }
+            ]
+          }
+        },
+        "required": [
+          "id",
+          "phone",
+          "name",
+          "email",
+          "role",
+          "isActive",
+          "isProfileComplete",
+          "createdAt"
+        ]
+      },
+      "UpdateMeDto": {
+        "type": "object",
+        "properties": {
+          "name": {
+            "type": "string",
+            "example": "Priya Sharma"
+          },
+          "email": {
+            "type": "string",
+            "nullable": true,
+            "example": "priya@example.com"
+          }
+        }
+      },
+      "DevicePlatform": {
+        "type": "string",
+        "enum": [
+          "ANDROID",
+          "IOS",
+          "WEB"
+        ]
+      },
+      "RegisterDeviceDto": {
+        "type": "object",
+        "properties": {
+          "fcmToken": {
+            "type": "string"
+          },
+          "platform": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/DevicePlatform"
+              }
+            ]
+          },
+          "app": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/ClientApp"
+              }
+            ]
+          }
+        },
+        "required": [
+          "fcmToken",
+          "platform",
+          "app"
+        ]
+      },
+      "RemoveDeviceDto": {
+        "type": "object",
+        "properties": {
+          "fcmToken": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "fcmToken"
+        ]
+      },
+      "AddressDto": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "label": {
+            "type": "string"
+          },
+          "houseNo": {
+            "type": "string"
+          },
+          "building": {
+            "type": "string",
+            "nullable": true
+          },
+          "street": {
+            "type": "string"
+          },
+          "area": {
+            "type": "string",
+            "nullable": true
+          },
+          "landmark": {
+            "type": "string",
+            "nullable": true
+          },
+          "city": {
+            "type": "string"
+          },
+          "state": {
+            "type": "string"
+          },
+          "pincode": {
+            "type": "string"
+          },
+          "latitude": {
+            "type": "number",
+            "nullable": true
+          },
+          "longitude": {
+            "type": "number",
+            "nullable": true
+          },
+          "isPrimary": {
+            "type": "boolean"
+          },
+          "formatted": {
+            "type": "string",
+            "description": "One-line address for display."
+          },
+          "serviceable": {
+            "type": "boolean",
+            "description": "Whether pickups can be booked here under the current service area."
+          },
+          "notServiceableReason": {
+            "nullable": true,
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/NotServiceableReason"
+              }
+            ]
+          }
+        },
+        "required": [
+          "id",
+          "label",
+          "houseNo",
+          "building",
+          "street",
+          "area",
+          "landmark",
+          "city",
+          "state",
+          "pincode",
+          "latitude",
+          "longitude",
+          "isPrimary",
+          "formatted",
+          "serviceable",
+          "notServiceableReason"
+        ]
+      },
+      "CreateAddressDto": {
+        "type": "object",
+        "properties": {
+          "label": {
+            "type": "string",
+            "example": "Home",
+            "default": "Home"
+          },
+          "houseNo": {
+            "type": "string",
+            "example": "Flat 302"
+          },
+          "building": {
+            "type": "string",
+            "nullable": true,
+            "example": "Lake View Apartments"
+          },
+          "street": {
+            "type": "string",
+            "example": "Road No. 12"
+          },
+          "area": {
+            "type": "string",
+            "nullable": true,
+            "example": "Banjara Hills"
+          },
+          "landmark": {
+            "type": "string",
+            "nullable": true,
+            "example": "Opposite City Centre Mall"
+          },
+          "city": {
+            "type": "string",
+            "example": "Hyderabad"
+          },
+          "state": {
+            "type": "string",
+            "example": "Telangana"
+          },
+          "pincode": {
+            "type": "string",
+            "example": "500034"
+          },
+          "latitude": {
+            "type": "number",
+            "nullable": true,
+            "example": 17.4126
+          },
+          "longitude": {
+            "type": "number",
+            "nullable": true,
+            "example": 78.4482
+          },
+          "isPrimary": {
+            "type": "boolean",
+            "default": false
+          }
+        },
+        "required": [
+          "houseNo",
+          "street",
+          "city",
+          "state",
+          "pincode"
+        ]
+      },
+      "UpdateAddressDto": {
+        "type": "object",
+        "properties": {
+          "label": {
+            "type": "string",
+            "example": "Home",
+            "default": "Home"
+          },
+          "houseNo": {
+            "type": "string",
+            "example": "Flat 302"
+          },
+          "building": {
+            "type": "string",
+            "nullable": true,
+            "example": "Lake View Apartments"
+          },
+          "street": {
+            "type": "string",
+            "example": "Road No. 12"
+          },
+          "area": {
+            "type": "string",
+            "nullable": true,
+            "example": "Banjara Hills"
+          },
+          "landmark": {
+            "type": "string",
+            "nullable": true,
+            "example": "Opposite City Centre Mall"
+          },
+          "city": {
+            "type": "string",
+            "example": "Hyderabad"
+          },
+          "state": {
+            "type": "string",
+            "example": "Telangana"
+          },
+          "pincode": {
+            "type": "string",
+            "example": "500034"
+          },
+          "latitude": {
+            "type": "number",
+            "nullable": true,
+            "example": 17.4126
+          },
+          "longitude": {
+            "type": "number",
+            "nullable": true,
+            "example": 78.4482
+          },
+          "isPrimary": {
+            "type": "boolean",
+            "default": false
+          }
+        }
+      },
+      "ItemUnit": {
+        "type": "string",
+        "enum": [
+          "PIECE",
+          "PAIR",
+          "SET",
+          "KG"
+        ]
+      },
+      "CatalogItemDto": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "categoryId": {
+            "type": "string"
+          },
+          "name": {
+            "type": "string"
+          },
+          "description": {
+            "type": "string",
+            "nullable": true
+          },
+          "unit": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/ItemUnit"
+              }
+            ]
+          },
+          "pricePaise": {
+            "type": "number"
+          },
+          "offerPricePaise": {
+            "type": "number",
+            "nullable": true
+          },
+          "effectivePricePaise": {
+            "type": "number",
+            "description": "What the customer pays per unit."
+          },
+          "imageUrl": {
+            "type": "string",
+            "nullable": true
+          },
+          "sortOrder": {
+            "type": "number"
+          },
+          "isActive": {
+            "type": "boolean"
+          }
+        },
+        "required": [
+          "id",
+          "categoryId",
+          "name",
+          "description",
+          "unit",
+          "pricePaise",
+          "offerPricePaise",
+          "effectivePricePaise",
+          "imageUrl",
+          "sortOrder",
+          "isActive"
+        ]
+      },
+      "CatalogCategoryDto": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "name": {
+            "type": "string"
+          },
+          "slug": {
+            "type": "string"
+          },
+          "imageUrl": {
+            "type": "string",
+            "nullable": true
+          },
+          "sortOrder": {
+            "type": "number"
+          },
+          "isActive": {
+            "type": "boolean"
+          },
+          "items": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/CatalogItemDto"
+            }
+          }
+        },
+        "required": [
+          "id",
+          "name",
+          "slug",
+          "imageUrl",
+          "sortOrder",
+          "isActive",
+          "items"
+        ]
+      },
+      "CreateCategoryDto": {
+        "type": "object",
+        "properties": {
+          "name": {
+            "type": "string",
+            "example": "Ironing"
+          },
+          "slug": {
+            "type": "string",
+            "example": "ironing"
+          },
+          "imageUrl": {
+            "type": "string",
+            "nullable": true
+          },
+          "sortOrder": {
+            "type": "number",
+            "default": 0
+          },
+          "isActive": {
+            "type": "boolean",
+            "default": true
+          }
+        },
+        "required": [
+          "name",
+          "slug"
+        ]
+      },
+      "UpdateCategoryDto": {
+        "type": "object",
+        "properties": {
+          "name": {
+            "type": "string",
+            "example": "Ironing"
+          },
+          "slug": {
+            "type": "string",
+            "example": "ironing"
+          },
+          "imageUrl": {
+            "type": "string",
+            "nullable": true
+          },
+          "sortOrder": {
+            "type": "number",
+            "default": 0
+          },
+          "isActive": {
+            "type": "boolean",
+            "default": true
+          }
+        }
+      },
+      "CreateItemDto": {
+        "type": "object",
+        "properties": {
+          "categoryId": {
+            "type": "string"
+          },
+          "name": {
+            "type": "string",
+            "example": "Shirt"
+          },
+          "description": {
+            "type": "string",
+            "nullable": true
+          },
+          "unit": {
+            "default": "PIECE",
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/ItemUnit"
+              }
+            ]
+          },
+          "pricePaise": {
+            "type": "number",
+            "example": 1500,
+            "description": "Price in paise (₹15.00 = 1500)"
+          },
+          "offerPricePaise": {
+            "type": "number",
+            "nullable": true,
+            "example": 1200,
+            "description": "Discounted price in paise; must be below pricePaise"
+          },
+          "imageUrl": {
+            "type": "string",
+            "nullable": true
+          },
+          "sortOrder": {
+            "type": "number",
+            "default": 0
+          },
+          "isActive": {
+            "type": "boolean",
+            "default": true
+          }
+        },
+        "required": [
+          "categoryId",
+          "name",
+          "pricePaise"
+        ]
+      },
+      "UpdateItemDto": {
+        "type": "object",
+        "properties": {
+          "categoryId": {
+            "type": "string"
+          },
+          "name": {
+            "type": "string",
+            "example": "Shirt"
+          },
+          "description": {
+            "type": "string",
+            "nullable": true
+          },
+          "unit": {
+            "default": "PIECE",
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/ItemUnit"
+              }
+            ]
+          },
+          "pricePaise": {
+            "type": "number",
+            "example": 1500,
+            "description": "Price in paise (₹15.00 = 1500)"
+          },
+          "offerPricePaise": {
+            "type": "number",
+            "nullable": true,
+            "example": 1200,
+            "description": "Discounted price in paise; must be below pricePaise"
+          },
+          "imageUrl": {
+            "type": "string",
+            "nullable": true
+          },
+          "sortOrder": {
+            "type": "number",
+            "default": 0
+          },
+          "isActive": {
+            "type": "boolean",
+            "default": true
+          }
+        }
+      },
+      "DeleteResultDto": {
+        "type": "object",
+        "properties": {
+          "deleted": {
+            "type": "boolean",
+            "description": "false when the record was kept but deactivated because orders use it"
+          }
+        },
+        "required": [
+          "deleted"
+        ]
+      },
+      "DiscountType": {
+        "type": "string",
+        "enum": [
+          "PERCENT",
+          "FLAT"
+        ]
+      },
+      "PromotionDto": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "code": {
+            "type": "string"
+          },
+          "title": {
+            "type": "string"
+          },
+          "description": {
+            "type": "string",
+            "nullable": true
+          },
+          "discountType": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/DiscountType"
+              }
+            ]
+          },
+          "discountValue": {
+            "type": "number"
+          },
+          "minOrderPaise": {
+            "type": "number"
+          },
+          "maxDiscountPaise": {
+            "type": "number",
+            "nullable": true
+          },
+          "perCustomerLimit": {
+            "type": "number",
+            "nullable": true
+          },
+          "validFrom": {
+            "format": "date-time",
+            "type": "string"
+          },
+          "validTo": {
+            "format": "date-time",
+            "type": "string"
+          },
+          "imageUrl": {
+            "type": "string",
+            "nullable": true
+          },
+          "isActive": {
+            "type": "boolean"
+          }
+        },
+        "required": [
+          "id",
+          "code",
+          "title",
+          "description",
+          "discountType",
+          "discountValue",
+          "minOrderPaise",
+          "maxDiscountPaise",
+          "perCustomerLimit",
+          "validFrom",
+          "validTo",
+          "imageUrl",
+          "isActive"
+        ]
+      },
+      "CreatePromotionDto": {
+        "type": "object",
+        "properties": {
+          "code": {
+            "type": "string",
+            "example": "FIRST50"
+          },
+          "title": {
+            "type": "string",
+            "example": "50% off your first order"
+          },
+          "description": {
+            "type": "string",
+            "nullable": true
+          },
+          "discountType": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/DiscountType"
+              }
+            ]
+          },
+          "discountValue": {
+            "type": "number",
+            "description": "PERCENT: 1–100. FLAT: amount in paise."
+          },
+          "minOrderPaise": {
+            "type": "number",
+            "default": 0
+          },
+          "maxDiscountPaise": {
+            "type": "number",
+            "nullable": true
+          },
+          "perCustomerLimit": {
+            "type": "number",
+            "nullable": true,
+            "description": "How many times one customer can use it"
+          },
+          "validFrom": {
+            "format": "date-time",
+            "type": "string"
+          },
+          "validTo": {
+            "format": "date-time",
+            "type": "string"
+          },
+          "imageUrl": {
+            "type": "string",
+            "nullable": true
+          },
+          "isActive": {
+            "type": "boolean",
+            "default": true
+          }
+        },
+        "required": [
+          "code",
+          "title",
+          "discountType",
+          "discountValue",
+          "validFrom",
+          "validTo"
+        ]
+      },
+      "UpdatePromotionDto": {
+        "type": "object",
+        "properties": {
+          "code": {
+            "type": "string",
+            "example": "FIRST50"
+          },
+          "title": {
+            "type": "string",
+            "example": "50% off your first order"
+          },
+          "description": {
+            "type": "string",
+            "nullable": true
+          },
+          "discountType": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/DiscountType"
+              }
+            ]
+          },
+          "discountValue": {
+            "type": "number",
+            "description": "PERCENT: 1–100. FLAT: amount in paise."
+          },
+          "minOrderPaise": {
+            "type": "number",
+            "default": 0
+          },
+          "maxDiscountPaise": {
+            "type": "number",
+            "nullable": true
+          },
+          "perCustomerLimit": {
+            "type": "number",
+            "nullable": true,
+            "description": "How many times one customer can use it"
+          },
+          "validFrom": {
+            "format": "date-time",
+            "type": "string"
+          },
+          "validTo": {
+            "format": "date-time",
+            "type": "string"
+          },
+          "imageUrl": {
+            "type": "string",
+            "nullable": true
+          },
+          "isActive": {
+            "type": "boolean",
+            "default": true
+          }
+        }
+      },
+      "BannerDto": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "imageUrl": {
+            "type": "string"
+          },
+          "title": {
+            "type": "string",
+            "nullable": true
+          },
+          "linkUrl": {
+            "type": "string",
+            "nullable": true
+          },
+          "sortOrder": {
+            "type": "number"
+          },
+          "isActive": {
+            "type": "boolean"
+          }
+        },
+        "required": [
+          "id",
+          "imageUrl",
+          "title",
+          "linkUrl",
+          "sortOrder",
+          "isActive"
+        ]
+      },
+      "CreateBannerDto": {
+        "type": "object",
+        "properties": {
+          "imageUrl": {
+            "type": "string"
+          },
+          "title": {
+            "type": "string",
+            "nullable": true
+          },
+          "linkUrl": {
+            "type": "string",
+            "nullable": true,
+            "description": "Deep link or web URL opened on tap"
+          },
+          "sortOrder": {
+            "type": "number",
+            "default": 0
+          },
+          "isActive": {
+            "type": "boolean",
+            "default": true
+          }
+        },
+        "required": [
+          "imageUrl"
+        ]
+      },
+      "UpdateBannerDto": {
+        "type": "object",
+        "properties": {
+          "imageUrl": {
+            "type": "string"
+          },
+          "title": {
+            "type": "string",
+            "nullable": true
+          },
+          "linkUrl": {
+            "type": "string",
+            "nullable": true,
+            "description": "Deep link or web URL opened on tap"
+          },
+          "sortOrder": {
+            "type": "number",
+            "default": 0
+          },
+          "isActive": {
+            "type": "boolean",
+            "default": true
+          }
+        }
+      },
+      "UpsertAppVersionDto": {
+        "type": "object",
+        "properties": {
+          "app": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/ClientApp"
+              }
+            ]
+          },
+          "platform": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/DevicePlatform"
+              }
+            ]
+          },
+          "minVersion": {
+            "type": "string",
+            "example": "1.0.0",
+            "description": "Older versions are forced to update"
+          },
+          "latestVersion": {
+            "type": "string",
+            "example": "1.2.0",
+            "description": "Older versions see an optional update prompt"
+          },
+          "storeUrl": {
+            "type": "string"
+          },
+          "message": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "app",
+          "platform",
+          "minVersion",
+          "latestVersion"
+        ]
+      },
+      "AppVersionDto": {
+        "type": "object",
+        "properties": {
+          "app": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/ClientApp"
+              }
+            ]
+          },
+          "platform": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/DevicePlatform"
+              }
+            ]
+          },
+          "minVersion": {
+            "type": "string"
+          },
+          "latestVersion": {
+            "type": "string"
+          },
+          "storeUrl": {
+            "type": "string",
+            "nullable": true
+          },
+          "message": {
+            "type": "string",
+            "nullable": true
+          }
+        },
+        "required": [
+          "app",
+          "platform",
+          "minVersion",
+          "latestVersion",
+          "storeUrl",
+          "message"
+        ]
+      },
+      "OrderLineInput": {
+        "type": "object",
+        "properties": {
+          "catalogItemId": {
+            "type": "string"
+          },
+          "quantity": {
+            "type": "number",
+            "minimum": 1,
+            "maximum": 500
+          }
+        },
+        "required": [
+          "catalogItemId",
+          "quantity"
+        ]
+      },
+      "QuoteRequestDto": {
+        "type": "object",
+        "properties": {
+          "items": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/OrderLineInput"
+            }
+          },
+          "promoCode": {
+            "type": "string",
+            "example": "FIRST50"
+          }
+        },
+        "required": [
+          "items"
+        ]
+      },
+      "QuoteLineDto": {
+        "type": "object",
+        "properties": {
+          "catalogItemId": {
+            "type": "string"
+          },
+          "name": {
+            "type": "string"
+          },
+          "unit": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/ItemUnit"
+              }
+            ]
+          },
+          "unitPricePaise": {
+            "type": "number"
+          },
+          "quantity": {
+            "type": "number"
+          },
+          "lineTotalPaise": {
+            "type": "number"
+          }
+        },
+        "required": [
+          "catalogItemId",
+          "name",
+          "unit",
+          "unitPricePaise",
+          "quantity",
+          "lineTotalPaise"
+        ]
+      },
+      "QuoteDto": {
+        "type": "object",
+        "properties": {
+          "lines": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/QuoteLineDto"
+            }
+          },
+          "subtotalPaise": {
+            "type": "number"
+          },
+          "discountPaise": {
+            "type": "number"
+          },
+          "deliveryFeePaise": {
+            "type": "number"
+          },
+          "totalPaise": {
+            "type": "number"
+          },
+          "promoCode": {
+            "type": "string",
+            "nullable": true
+          },
+          "promoError": {
+            "type": "string",
+            "nullable": true,
+            "description": "Why the promo code was not applied, if it was not.",
+            "enum": [
+              "PROMO_NOT_FOUND",
+              "PROMO_EXPIRED",
+              "PROMO_LIMIT_REACHED",
+              "PROMO_MIN_ORDER"
+            ]
+          },
+          "promoShortfallPaise": {
+            "type": "number",
+            "nullable": true
+          },
+          "minOrderShortfallPaise": {
+            "type": "number",
+            "nullable": true
+          },
+          "canPlaceOrder": {
+            "type": "boolean"
+          }
+        },
+        "required": [
+          "lines",
+          "subtotalPaise",
+          "discountPaise",
+          "deliveryFeePaise",
+          "totalPaise",
+          "promoCode",
+          "promoError",
+          "promoShortfallPaise",
+          "minOrderShortfallPaise",
+          "canPlaceOrder"
+        ]
+      },
+      "PaymentMethod": {
+        "type": "string",
+        "enum": [
+          "COD",
+          "ONLINE"
+        ]
+      },
+      "PlaceOrderDto": {
+        "type": "object",
+        "properties": {
+          "items": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/OrderLineInput"
+            }
+          },
+          "promoCode": {
+            "type": "string",
+            "example": "FIRST50"
+          },
+          "pickupDate": {
+            "type": "string",
+            "example": "2026-10-05",
+            "description": "IST calendar date"
+          },
+          "pickupSlot": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/TimeSlot"
+              }
+            ]
+          },
+          "deliveryDate": {
+            "type": "string",
+            "example": "2026-10-06"
+          },
+          "deliverySlot": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/TimeSlot"
+              }
+            ]
+          },
+          "pickupAddressId": {
+            "type": "string"
+          },
+          "deliveryAddressId": {
+            "type": "string",
+            "description": "Defaults to the pickup address"
+          },
+          "paymentMethod": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/PaymentMethod"
+              }
+            ]
+          },
+          "instructions": {
+            "type": "string",
+            "example": "Please call before arriving"
+          }
+        },
+        "required": [
+          "items",
+          "pickupDate",
+          "pickupSlot",
+          "deliveryDate",
+          "deliverySlot",
+          "pickupAddressId",
+          "paymentMethod"
+        ]
+      },
+      "OrderStatus": {
+        "type": "string",
+        "enum": [
+          "PENDING",
+          "PICKUP_ASSIGNED",
+          "PICKED_UP",
+          "PROCESSING",
+          "READY_FOR_DELIVERY",
+          "DELIVERY_ASSIGNED",
+          "OUT_FOR_DELIVERY",
+          "DELIVERED",
+          "CANCELLED"
+        ]
+      },
+      "OrderSource": {
+        "type": "string",
+        "enum": [
+          "CUSTOMER_APP",
+          "ADMIN"
+        ]
+      },
+      "OrderAddressDto": {
+        "type": "object",
+        "properties": {
+          "label": {
+            "type": "string"
+          },
+          "formatted": {
+            "type": "string"
+          },
+          "houseNo": {
+            "type": "string"
+          },
+          "building": {
+            "type": "string",
+            "nullable": true
+          },
+          "street": {
+            "type": "string"
+          },
+          "area": {
+            "type": "string",
+            "nullable": true
+          },
+          "landmark": {
+            "type": "string",
+            "nullable": true
+          },
+          "city": {
+            "type": "string"
+          },
+          "state": {
+            "type": "string"
+          },
+          "pincode": {
+            "type": "string"
+          },
+          "latitude": {
+            "type": "number",
+            "nullable": true
+          },
+          "longitude": {
+            "type": "number",
+            "nullable": true
+          },
+          "contactName": {
+            "type": "string",
+            "nullable": true
+          },
+          "contactPhone": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "label",
+          "formatted",
+          "houseNo",
+          "building",
+          "street",
+          "area",
+          "landmark",
+          "city",
+          "state",
+          "pincode",
+          "latitude",
+          "longitude",
+          "contactName",
+          "contactPhone"
+        ]
+      },
+      "OrderItemDto": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "catalogItemId": {
+            "type": "string",
+            "nullable": true
+          },
+          "name": {
+            "type": "string"
+          },
+          "unit": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/ItemUnit"
+              }
+            ]
+          },
+          "unitPricePaise": {
+            "type": "number"
+          },
+          "quantity": {
+            "type": "number"
+          },
+          "lineTotalPaise": {
+            "type": "number"
+          }
+        },
+        "required": [
+          "id",
+          "catalogItemId",
+          "name",
+          "unit",
+          "unitPricePaise",
+          "quantity",
+          "lineTotalPaise"
+        ]
+      },
+      "PaymentStatus": {
+        "type": "string",
+        "enum": [
+          "UNPAID",
+          "PARTIALLY_PAID",
+          "PAID",
+          "REFUNDED"
+        ]
+      },
+      "PersonRefDto": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "name": {
+            "type": "string",
+            "nullable": true
+          },
+          "phone": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "name",
+          "phone"
+        ]
+      },
+      "OrderEventDto": {
+        "type": "object",
+        "properties": {
+          "fromStatus": {
+            "nullable": true,
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/OrderStatus"
+              }
+            ]
+          },
+          "toStatus": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/OrderStatus"
+              }
+            ]
+          },
+          "actorRole": {
+            "nullable": true,
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/Role"
+              }
+            ]
+          },
+          "note": {
+            "type": "string",
+            "nullable": true
+          },
+          "createdAt": {
+            "format": "date-time",
+            "type": "string"
+          }
+        },
+        "required": [
+          "fromStatus",
+          "toStatus",
+          "actorRole",
+          "note",
+          "createdAt"
+        ]
+      },
+      "RefundMethod": {
+        "type": "string",
+        "enum": [
+          "RAZORPAY",
+          "CASH",
+          "BANK_TRANSFER"
+        ]
+      },
+      "RefundStatus": {
+        "type": "string",
+        "enum": [
+          "PENDING",
+          "PROCESSED",
+          "FAILED"
+        ],
+        "description": "PENDING: Razorpay is still sending it. Only PENDING and PROCESSED count toward refundedPaise."
+      },
+      "StaffRefDto": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "name": {
+            "type": "string",
+            "nullable": true
+          }
+        },
+        "required": [
+          "id",
+          "name"
+        ]
+      },
+      "RefundDto": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "amountPaise": {
+            "type": "number"
+          },
+          "method": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/RefundMethod"
+              }
+            ]
+          },
+          "status": {
+            "description": "PENDING: Razorpay is still sending it. Only PENDING and PROCESSED count toward refundedPaise.",
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/RefundStatus"
+              }
+            ]
+          },
+          "note": {
+            "type": "string",
+            "description": "Staff note to the customer."
+          },
+          "createdAt": {
+            "format": "date-time",
+            "type": "string"
+          },
+          "processedAt": {
+            "format": "date-time",
+            "type": "string",
+            "nullable": true
+          },
+          "failureReason": {
+            "type": "string",
+            "nullable": true
+          },
+          "createdBy": {
+            "nullable": true,
+            "description": "Staff member who issued it. Admin view only.",
+            "type": "object",
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/StaffRefDto"
+              }
+            ]
+          }
+        },
+        "required": [
+          "id",
+          "amountPaise",
+          "method",
+          "status",
+          "note",
+          "createdAt",
+          "processedAt",
+          "failureReason"
+        ]
+      },
+      "OrderDto": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "orderNumber": {
+            "type": "string",
+            "example": "LD001042"
+          },
+          "status": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/OrderStatus"
+              }
+            ]
+          },
+          "source": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/OrderSource"
+              }
+            ]
+          },
+          "pickupDate": {
+            "type": "string"
+          },
+          "pickupSlot": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/TimeSlot"
+              }
+            ]
+          },
+          "pickupSlotLabel": {
+            "type": "string"
+          },
+          "deliveryDate": {
+            "type": "string"
+          },
+          "deliverySlot": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/TimeSlot"
+              }
+            ]
+          },
+          "deliverySlotLabel": {
+            "type": "string"
+          },
+          "pickupAddress": {
+            "$ref": "#/components/schemas/OrderAddressDto"
+          },
+          "deliveryAddress": {
+            "$ref": "#/components/schemas/OrderAddressDto"
+          },
+          "instructions": {
+            "type": "string",
+            "nullable": true
+          },
+          "items": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/OrderItemDto"
+            }
+          },
+          "subtotalPaise": {
+            "type": "number"
+          },
+          "discountPaise": {
+            "type": "number"
+          },
+          "deliveryFeePaise": {
+            "type": "number"
+          },
+          "totalPaise": {
+            "type": "number"
+          },
+          "paidPaise": {
+            "type": "number"
+          },
+          "refundedPaise": {
+            "type": "number",
+            "description": "Sum of PENDING and PROCESSED refunds."
+          },
+          "refundablePaise": {
+            "type": "number",
+            "description": "What can still be refunded (paidPaise - refundedPaise). Admin view only."
+          },
+          "amountDuePaise": {
+            "type": "number"
+          },
+          "promoCode": {
+            "type": "string",
+            "nullable": true
+          },
+          "paymentMethod": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/PaymentMethod"
+              }
+            ]
+          },
+          "paymentStatus": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/PaymentStatus"
+              }
+            ]
+          },
+          "customer": {
+            "nullable": true,
+            "type": "object",
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/PersonRefDto"
+              }
+            ]
+          },
+          "pickupDriver": {
+            "nullable": true,
+            "type": "object",
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/PersonRefDto"
+              }
+            ]
+          },
+          "deliveryDriver": {
+            "nullable": true,
+            "type": "object",
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/PersonRefDto"
+              }
+            ]
+          },
+          "allowedNextStatuses": {
+            "type": "array",
+            "description": "Statuses the caller is allowed to move this order to.",
+            "items": {
+              "$ref": "#/components/schemas/OrderStatus"
+            }
+          },
+          "dispatchFailedAt": {
+            "format": "date-time",
+            "type": "string",
+            "nullable": true
+          },
+          "cancelReason": {
+            "type": "string",
+            "nullable": true
+          },
+          "pickedUpAt": {
+            "format": "date-time",
+            "type": "string",
+            "nullable": true
+          },
+          "deliveredAt": {
+            "format": "date-time",
+            "type": "string",
+            "nullable": true
+          },
+          "cancelledAt": {
+            "format": "date-time",
+            "type": "string",
+            "nullable": true
+          },
+          "createdAt": {
+            "format": "date-time",
+            "type": "string"
+          },
+          "updatedAt": {
+            "format": "date-time",
+            "type": "string"
+          },
+          "events": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/OrderEventDto"
+            }
+          },
+          "refunds": {
+            "description": "Oldest first. Customer and admin views only.",
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/RefundDto"
+            }
+          }
+        },
+        "required": [
+          "id",
+          "orderNumber",
+          "status",
+          "source",
+          "pickupDate",
+          "pickupSlot",
+          "pickupSlotLabel",
+          "deliveryDate",
+          "deliverySlot",
+          "deliverySlotLabel",
+          "pickupAddress",
+          "deliveryAddress",
+          "instructions",
+          "items",
+          "subtotalPaise",
+          "discountPaise",
+          "deliveryFeePaise",
+          "totalPaise",
+          "paidPaise",
+          "refundedPaise",
+          "amountDuePaise",
+          "promoCode",
+          "paymentMethod",
+          "paymentStatus",
+          "customer",
+          "pickupDriver",
+          "deliveryDriver",
+          "allowedNextStatuses",
+          "dispatchFailedAt",
+          "cancelReason",
+          "pickedUpAt",
+          "deliveredAt",
+          "cancelledAt",
+          "createdAt",
+          "updatedAt"
+        ]
+      },
+      "OrderPageDto": {
+        "type": "object",
+        "properties": {
+          "items": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/OrderDto"
+            }
+          },
+          "page": {
+            "type": "number"
+          },
+          "pageSize": {
+            "type": "number"
+          },
+          "total": {
+            "type": "number"
+          }
+        },
+        "required": [
+          "items",
+          "page",
+          "pageSize",
+          "total"
+        ]
+      },
+      "CancelOrderDto": {
+        "type": "object",
+        "properties": {
+          "reason": {
+            "type": "string",
+            "example": "Changed my plans"
+          }
+        }
+      },
+      "AdminPlaceOrderDto": {
+        "type": "object",
+        "properties": {
+          "items": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/OrderLineInput"
+            }
+          },
+          "promoCode": {
+            "type": "string",
+            "example": "FIRST50"
+          },
+          "pickupDate": {
+            "type": "string",
+            "example": "2026-10-05",
+            "description": "IST calendar date"
+          },
+          "pickupSlot": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/TimeSlot"
+              }
+            ]
+          },
+          "deliveryDate": {
+            "type": "string",
+            "example": "2026-10-06"
+          },
+          "deliverySlot": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/TimeSlot"
+              }
+            ]
+          },
+          "pickupAddressId": {
+            "type": "string"
+          },
+          "deliveryAddressId": {
+            "type": "string",
+            "description": "Defaults to the pickup address"
+          },
+          "paymentMethod": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/PaymentMethod"
+              }
+            ]
+          },
+          "instructions": {
+            "type": "string",
+            "example": "Please call before arriving"
+          },
+          "customerId": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "items",
+          "pickupDate",
+          "pickupSlot",
+          "deliveryDate",
+          "deliverySlot",
+          "pickupAddressId",
+          "paymentMethod",
+          "customerId"
+        ]
+      },
+      "ChangeStatusDto": {
+        "type": "object",
+        "properties": {
+          "status": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/OrderStatus"
+              }
+            ]
+          },
+          "note": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "status"
+        ]
+      },
+      "UpdateItemsDto": {
+        "type": "object",
+        "properties": {
+          "items": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/OrderLineInput"
+            }
+          },
+          "note": {
+            "type": "string",
+            "example": "2 extra shirts counted at pickup"
+          }
+        },
+        "required": [
+          "items"
+        ]
+      },
+      "CheckoutPrefillDto": {
+        "type": "object",
+        "properties": {
+          "name": {
+            "type": "string",
+            "nullable": true
+          },
+          "contact": {
+            "type": "string"
+          },
+          "email": {
+            "type": "string",
+            "nullable": true
+          }
+        },
+        "required": [
+          "name",
+          "contact",
+          "email"
+        ]
+      },
+      "CheckoutParamsDto": {
+        "type": "object",
+        "properties": {
+          "keyId": {
+            "type": "string"
+          },
+          "razorpayOrderId": {
+            "type": "string"
+          },
+          "amountPaise": {
+            "type": "number"
+          },
+          "currency": {
+            "type": "string",
+            "enum": [
+              "INR"
+            ]
+          },
+          "orderNumber": {
+            "type": "string"
+          },
+          "prefill": {
+            "$ref": "#/components/schemas/CheckoutPrefillDto"
+          }
+        },
+        "required": [
+          "keyId",
+          "razorpayOrderId",
+          "amountPaise",
+          "currency",
+          "orderNumber",
+          "prefill"
+        ]
+      },
+      "VerifyCheckoutDto": {
+        "type": "object",
+        "properties": {
+          "razorpayOrderId": {
+            "type": "string"
+          },
+          "razorpayPaymentId": {
+            "type": "string"
+          },
+          "razorpaySignature": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "razorpayOrderId",
+          "razorpayPaymentId",
+          "razorpaySignature"
+        ]
+      },
+      "PaymentStatusDto": {
+        "type": "object",
+        "properties": {
+          "paymentStatus": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "paymentStatus"
+        ]
+      },
+      "PaymentProvider": {
+        "type": "string",
+        "enum": [
+          "RAZORPAY",
+          "CASH"
+        ]
+      },
+      "PaymentRecordStatus": {
+        "type": "string",
+        "enum": [
+          "CREATED",
+          "CAPTURED",
+          "FAILED",
+          "REFUNDED"
+        ]
+      },
+      "PaymentDto": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "provider": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/PaymentProvider"
+              }
+            ]
+          },
+          "status": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/PaymentRecordStatus"
+              }
+            ]
+          },
+          "amountPaise": {
+            "type": "number"
+          },
+          "razorpayPaymentId": {
+            "type": "string",
+            "nullable": true
+          },
+          "createdAt": {
+            "format": "date-time",
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "provider",
+          "status",
+          "amountPaise",
+          "createdAt"
+        ]
+      },
+      "RecordCashDto": {
+        "type": "object",
+        "properties": {
+          "amountPaise": {
+            "type": "number",
+            "description": "Amount received, in paise"
+          }
+        },
+        "required": [
+          "amountPaise"
+        ]
+      },
+      "CreateRefundDto": {
+        "type": "object",
+        "properties": {
+          "amountPaise": {
+            "type": "number",
+            "description": "Amount to refund, in paise. At most what was paid minus earlier refunds.",
+            "minimum": 1
+          },
+          "method": {
+            "description": "RAZORPAY sends the money back to the card/UPI the customer paid with. CASH and BANK_TRANSFER record money staff already returned outside the app.",
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/RefundMethod"
+              }
+            ]
+          },
+          "note": {
+            "type": "string",
+            "minLength": 3,
+            "maxLength": 500,
+            "description": "Shown to the customer in the app and in their notification"
+          }
+        },
+        "required": [
+          "amountPaise",
+          "method",
+          "note"
+        ]
+      },
+      "SetOnlineDto": {
+        "type": "object",
+        "properties": {
+          "isOnline": {
+            "type": "boolean"
+          }
+        },
+        "required": [
+          "isOnline"
+        ]
+      },
+      "LocationDto": {
+        "type": "object",
+        "properties": {
+          "latitude": {
+            "type": "number",
+            "example": 17.4126
+          },
+          "longitude": {
+            "type": "number",
+            "example": 78.4482
+          }
+        },
+        "required": [
+          "latitude",
+          "longitude"
+        ]
+      },
+      "DispatchLeg": {
+        "type": "string",
+        "enum": [
+          "PICKUP",
+          "DELIVERY"
+        ]
+      },
+      "OfferDto": {
+        "type": "object",
+        "properties": {
+          "offerId": {
+            "type": "string"
+          },
+          "orderId": {
+            "type": "string"
+          },
+          "orderNumber": {
+            "type": "string"
+          },
+          "leg": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/DispatchLeg"
+              }
+            ]
+          },
+          "expiresAt": {
+            "format": "date-time",
+            "type": "string"
+          },
+          "distanceKm": {
+            "type": "number",
+            "nullable": true
+          },
+          "area": {
+            "type": "string"
+          },
+          "pincode": {
+            "type": "string"
+          },
+          "date": {
+            "type": "string"
+          },
+          "slot": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/TimeSlot"
+              }
+            ]
+          },
+          "slotLabel": {
+            "type": "string"
+          },
+          "itemCount": {
+            "type": "number"
+          },
+          "totalPaise": {
+            "type": "number"
+          },
+          "paymentMethod": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/PaymentMethod"
+              }
+            ]
+          }
+        },
+        "required": [
+          "offerId",
+          "orderId",
+          "orderNumber",
+          "leg",
+          "expiresAt",
+          "distanceKm",
+          "area",
+          "pincode",
+          "date",
+          "slot",
+          "slotLabel",
+          "itemCount",
+          "totalPaise",
+          "paymentMethod"
+        ]
+      },
+      "DeliverDto": {
+        "type": "object",
+        "properties": {
+          "collectedCash": {
+            "type": "boolean",
+            "description": "Set true when cash for the amount due was collected"
+          },
+          "note": {
+            "type": "string"
+          }
+        }
+      },
+      "DriverListItemDto": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "phone": {
+            "type": "string"
+          },
+          "name": {
+            "type": "string",
+            "nullable": true
+          },
+          "isActive": {
+            "type": "boolean"
+          },
+          "isOnline": {
+            "type": "boolean"
+          },
+          "vehicleNumber": {
+            "type": "string",
+            "nullable": true
+          },
+          "licenseNumber": {
+            "type": "string",
+            "nullable": true
+          },
+          "latitude": {
+            "type": "number",
+            "nullable": true
+          },
+          "longitude": {
+            "type": "number",
+            "nullable": true
+          },
+          "locationUpdatedAt": {
+            "format": "date-time",
+            "type": "string",
+            "nullable": true
+          },
+          "lastLoginAt": {
+            "format": "date-time",
+            "type": "string",
+            "nullable": true
+          },
+          "activeLegs": {
+            "type": "number"
+          }
+        },
+        "required": [
+          "id",
+          "phone",
+          "name",
+          "isActive",
+          "isOnline",
+          "vehicleNumber",
+          "licenseNumber",
+          "latitude",
+          "longitude",
+          "locationUpdatedAt",
+          "lastLoginAt",
+          "activeLegs"
+        ]
+      },
+      "CreateDriverDto": {
+        "type": "object",
+        "properties": {
+          "phone": {
+            "type": "string",
+            "example": "9876543210"
+          },
+          "name": {
+            "type": "string",
+            "example": "Ravi Kumar"
+          },
+          "vehicleNumber": {
+            "type": "string",
+            "nullable": true,
+            "example": "TS09AB1234"
+          },
+          "licenseNumber": {
+            "type": "string",
+            "nullable": true
+          }
+        },
+        "required": [
+          "phone",
+          "name"
+        ]
+      },
+      "UpdateDriverDto": {
+        "type": "object",
+        "properties": {
+          "phone": {
+            "type": "string",
+            "example": "9876543210"
+          },
+          "name": {
+            "type": "string",
+            "example": "Ravi Kumar"
+          },
+          "vehicleNumber": {
+            "type": "string",
+            "nullable": true,
+            "example": "TS09AB1234"
+          },
+          "licenseNumber": {
+            "type": "string",
+            "nullable": true
+          },
+          "isActive": {
+            "type": "boolean"
+          }
+        }
+      },
+      "AssignDto": {
+        "type": "object",
+        "properties": {
+          "leg": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/DispatchLeg"
+              }
+            ]
+          },
+          "driverId": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "leg",
+          "driverId"
+        ]
+      },
+      "UnassignDto": {
+        "type": "object",
+        "properties": {
+          "leg": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/DispatchLeg"
+              }
+            ]
+          }
+        },
+        "required": [
+          "leg"
+        ]
+      },
+      "NotificationDto": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "type": {
+            "type": "string"
+          },
+          "title": {
+            "type": "string"
+          },
+          "body": {
+            "type": "string"
+          },
+          "data": {
+            "type": "object",
+            "nullable": true
+          },
+          "readAt": {
+            "format": "date-time",
+            "type": "string",
+            "nullable": true
+          },
+          "createdAt": {
+            "format": "date-time",
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "type",
+          "title",
+          "body",
+          "data",
+          "readAt",
+          "createdAt"
+        ]
+      },
+      "NotificationPageDto": {
+        "type": "object",
+        "properties": {
+          "items": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/NotificationDto"
+            }
+          },
+          "unread": {
+            "type": "number"
+          },
+          "page": {
+            "type": "number"
+          },
+          "pageSize": {
+            "type": "number"
+          },
+          "total": {
+            "type": "number"
+          }
+        },
+        "required": [
+          "items",
+          "unread",
+          "page",
+          "pageSize",
+          "total"
+        ]
+      },
+      "DashboardDto": {
+        "type": "object",
+        "properties": {
+          "byStatus": {
+            "type": "object",
+            "additionalProperties": {
+              "type": "number"
+            },
+            "description": "Count of orders per status"
+          },
+          "pickupsToday": {
+            "type": "number"
+          },
+          "deliveriesToday": {
+            "type": "number"
+          },
+          "ordersToday": {
+            "type": "number"
+          },
+          "needsAttention": {
+            "type": "number"
+          },
+          "driversOnline": {
+            "type": "number"
+          },
+          "collectedTodayPaise": {
+            "type": "number"
+          },
+          "collectedLast7DaysPaise": {
+            "type": "number"
+          },
+          "collectedLast30DaysPaise": {
+            "type": "number"
+          },
+          "dailyOrders": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "date": {
+                  "type": "string"
+                },
+                "orders": {
+                  "type": "number"
+                },
+                "valuePaise": {
+                  "type": "number"
+                }
+              },
+              "required": [
+                "date",
+                "orders",
+                "valuePaise"
+              ]
+            }
+          }
+        },
+        "required": [
+          "byStatus",
+          "pickupsToday",
+          "deliveriesToday",
+          "ordersToday",
+          "needsAttention",
+          "driversOnline",
+          "collectedTodayPaise",
+          "collectedLast7DaysPaise",
+          "collectedLast30DaysPaise",
+          "dailyOrders"
+        ]
+      },
+      "CustomerListItemDto": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "phone": {
+            "type": "string",
+            "example": "+919876543210"
+          },
+          "name": {
+            "type": "string",
+            "nullable": true
+          },
+          "email": {
+            "type": "string",
+            "nullable": true
+          },
+          "role": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/Role"
+              }
+            ]
+          },
+          "isActive": {
+            "type": "boolean"
+          },
+          "isProfileComplete": {
+            "type": "boolean",
+            "description": "False until the customer has entered a name."
+          },
+          "createdAt": {
+            "format": "date-time",
+            "type": "string"
+          },
+          "orderCount": {
+            "type": "number"
+          },
+          "lastOrderAt": {
+            "format": "date-time",
+            "type": "string",
+            "nullable": true
+          }
+        },
+        "required": [
+          "id",
+          "phone",
+          "name",
+          "email",
+          "role",
+          "isActive",
+          "isProfileComplete",
+          "createdAt",
+          "orderCount",
+          "lastOrderAt"
+        ]
+      },
+      "CustomerPageDto": {
+        "type": "object",
+        "properties": {
+          "items": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/CustomerListItemDto"
+            }
+          },
+          "page": {
+            "type": "number"
+          },
+          "pageSize": {
+            "type": "number"
+          },
+          "total": {
+            "type": "number"
+          }
+        },
+        "required": [
+          "items",
+          "page",
+          "pageSize",
+          "total"
+        ]
+      },
+      "CreateCustomerDto": {
+        "type": "object",
+        "properties": {
+          "phone": {
+            "type": "string",
+            "example": "9876543210"
+          },
+          "name": {
+            "type": "string",
+            "example": "Priya Sharma"
+          },
+          "email": {
+            "type": "string",
+            "nullable": true
+          }
+        },
+        "required": [
+          "phone",
+          "name"
+        ]
+      },
+      "UpdateCustomerDto": {
+        "type": "object",
+        "properties": {
+          "phone": {
+            "type": "string",
+            "example": "9876543210"
+          },
+          "name": {
+            "type": "string",
+            "example": "Priya Sharma"
+          },
+          "email": {
+            "type": "string",
+            "nullable": true
+          },
+          "isActive": {
+            "type": "boolean"
+          }
+        }
+      },
+      "BusinessSettingsDto": {
+        "type": "object",
+        "properties": {
+          "minOrderPaise": {
+            "type": "number"
+          },
+          "deliveryFeePaise": {
+            "type": "number"
+          },
+          "freeDeliveryAbovePaise": {
+            "type": "number",
+            "nullable": true
+          },
+          "minTurnaroundHours": {
+            "type": "number"
+          },
+          "bookingCutoffMinutes": {
+            "type": "number"
+          },
+          "maxAdvanceDays": {
+            "type": "number"
+          },
+          "dispatchLeadMinutes": {
+            "type": "number"
+          },
+          "dispatchBatchSize": {
+            "type": "number"
+          },
+          "offerTimeoutSeconds": {
+            "type": "number"
+          },
+          "dispatchRetryMinutes": {
+            "type": "number"
+          },
+          "driverMaxActiveLegs": {
+            "type": "number"
+          },
+          "driverLocationMaxAgeMinutes": {
+            "type": "number"
+          },
+          "supportPhone": {
+            "type": "string",
+            "nullable": true
+          },
+          "supportEmail": {
+            "type": "string",
+            "nullable": true
+          },
+          "serviceCenterLatitude": {
+            "type": "number",
+            "nullable": true
+          },
+          "serviceCenterLongitude": {
+            "type": "number",
+            "nullable": true
+          },
+          "serviceRadiusKm": {
+            "type": "number",
+            "nullable": true
+          },
+          "servicePincodes": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "updatedAt": {
+            "format": "date-time",
+            "type": "string"
+          }
+        },
+        "required": [
+          "minOrderPaise",
+          "deliveryFeePaise",
+          "freeDeliveryAbovePaise",
+          "minTurnaroundHours",
+          "bookingCutoffMinutes",
+          "maxAdvanceDays",
+          "dispatchLeadMinutes",
+          "dispatchBatchSize",
+          "offerTimeoutSeconds",
+          "dispatchRetryMinutes",
+          "driverMaxActiveLegs",
+          "driverLocationMaxAgeMinutes",
+          "supportPhone",
+          "supportEmail",
+          "serviceCenterLatitude",
+          "serviceCenterLongitude",
+          "serviceRadiusKm",
+          "servicePincodes",
+          "updatedAt"
+        ]
+      },
+      "UpdateSettingsDto": {
+        "type": "object",
+        "properties": {
+          "minOrderPaise": {
+            "type": "number"
+          },
+          "deliveryFeePaise": {
+            "type": "number"
+          },
+          "freeDeliveryAbovePaise": {
+            "type": "number",
+            "nullable": true
+          },
+          "minTurnaroundHours": {
+            "type": "number"
+          },
+          "bookingCutoffMinutes": {
+            "type": "number"
+          },
+          "maxAdvanceDays": {
+            "type": "number"
+          },
+          "dispatchLeadMinutes": {
+            "type": "number"
+          },
+          "dispatchBatchSize": {
+            "type": "number"
+          },
+          "offerTimeoutSeconds": {
+            "type": "number"
+          },
+          "dispatchRetryMinutes": {
+            "type": "number"
+          },
+          "driverMaxActiveLegs": {
+            "type": "number"
+          },
+          "driverLocationMaxAgeMinutes": {
+            "type": "number"
+          },
+          "supportPhone": {
+            "type": "string",
+            "nullable": true,
+            "description": "Send null to clear"
+          },
+          "supportEmail": {
+            "type": "string",
+            "nullable": true,
+            "description": "Send null to clear"
+          },
+          "serviceCenterLatitude": {
+            "type": "number",
+            "nullable": true,
+            "description": "Hub latitude. Set with longitude and radius, or clear all three with null."
+          },
+          "serviceCenterLongitude": {
+            "type": "number",
+            "nullable": true
+          },
+          "serviceRadiusKm": {
+            "type": "number",
+            "nullable": true,
+            "description": "Kilometres from the hub; null serves any distance"
+          },
+          "servicePincodes": {
+            "description": "Served 6-digit PIN codes; empty serves every PIN code",
+            "example": [
+              "500034",
+              "500033"
+            ],
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          }
+        }
+      },
+      "CreateStaffDto": {
+        "type": "object",
+        "properties": {
+          "phone": {
+            "type": "string",
+            "example": "9876543210"
+          },
+          "name": {
+            "type": "string"
+          },
+          "role": {
+            "enum": [
+              "ADMIN",
+              "SUPER_ADMIN"
+            ],
+            "type": "string"
+          }
+        },
+        "required": [
+          "phone",
+          "name",
+          "role"
+        ]
+      },
+      "UpdateStaffDto": {
+        "type": "object",
+        "properties": {
+          "name": {
+            "type": "string"
+          },
+          "role": {
+            "enum": [
+              "ADMIN",
+              "SUPER_ADMIN"
+            ],
+            "type": "string"
+          },
+          "isActive": {
+            "type": "boolean"
+          }
+        }
+      },
+      "ImageUploadDto": {
+        "type": "object",
+        "properties": {
+          "url": {
+            "type": "string",
+            "description": "Public URL to save in imageUrl fields"
+          },
+          "width": {
+            "type": "number"
+          },
+          "height": {
+            "type": "number"
+          },
+          "bytes": {
+            "type": "number",
+            "description": "Stored size in bytes"
+          }
+        },
+        "required": [
+          "url",
+          "width",
+          "height",
+          "bytes"
+        ]
+      }
+    }
+  }
+}

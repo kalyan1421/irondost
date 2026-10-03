@@ -1,0 +1,25 @@
+node_modules/
+dist/
+.next/
+.turbo/
+coverage/
+*.log
+.DS_Store
+
+# env files (commit only the *.example ones)
+.env
+.env.*
+!.env.example
+
+# generated
+apps/api/src/generated/
+
+# Firebase service account keys
+*service-account*.json
+*firebase-adminsdk*.json
+
+# build caches
+*.tsbuildinfo
+
+# Image uploads (local development)
+apps/api/uploads/

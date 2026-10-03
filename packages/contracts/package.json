@@ -1,0 +1,7 @@
+{
+  "name": "@laundry/contracts",
+  "version": "0.0.1",
+  "private": true,
+  "description": "OpenAPI contract exported from apps/api. Regenerate with: pnpm --filter @laundry/api openapi",
+  "files": ["openapi.json"]
+}
