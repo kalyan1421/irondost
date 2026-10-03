@@ -8,6 +8,7 @@ import 'package:irondost_customer/data/api_client.dart';
 import 'package:irondost_customer/features/orders/order_repository.dart';
 import 'package:irondost_customer/features/payment/payment.dart';
 import 'package:irondost_customer/features/payment/payment_repository.dart';
+import 'package:irondost_customer/features/payment/payment_receipt_screen.dart';
 import 'package:irondost_customer/features/payment/payment_screen.dart';
 import 'package:irondost_customer/features/payment/razorpay_checkout.dart';
 
@@ -203,6 +204,74 @@ void main() {
     await tester.pumpAndSettle();
     expect(find.text('HOME PAGE'), findsOneWidget);
   });
+
+  group('paying what was due on an existing order', () {
+    Future<(GoRouter, FakeOrderRepository, FakePaymentRepository)> pumpDue(WidgetTester tester, List<CheckoutResult> results) async {
+      tester.view
+        ..physicalSize = const Size(390 * 3, 844 * 3)
+        ..devicePixelRatio = 3;
+      addTearDown(tester.view.reset);
+      final order = testOrder(status: OrderStatus.processing, method: PaymentMethod.cod, totalPaise: 18000);
+      final orders = FakeOrderRepository()..orders[order.id] = order;
+      final payments = FakePaymentRepository(orders);
+      final router = testRouter(
+        {
+          '/base': () => const Scaffold(body: Text('ORDER PAGE')),
+          Routes.orderPay: () => const _DuePay(),
+          Routes.orderPaid: () => const _Receipt(),
+          Routes.home: () => const Text('HOME PAGE'),
+        },
+        initial: '/base',
+      );
+      await tester.pumpWidget(
+        themedRouter(router, overrides: [
+          orderRepositoryProvider.overrideWithValue(orders),
+          paymentRepositoryProvider.overrideWithValue(payments),
+          razorpayCheckoutProvider.overrideWithValue(FakeRazorpayCheckout(results)),
+          paymentPollingProvider.overrideWithValue(instantPolling),
+        ]),
+      );
+      await tester.pumpAndSettle();
+      unawaited(router.push(Routes.pay(order.id, due: true), extra: order));
+      await tester.pumpAndSettle();
+      return (router, orders, payments);
+    }
+
+    testWidgets('a verified payment ends on a receipt, and Back to order returns to the order', (tester) async {
+      final (router, _, payments) = await pumpDue(tester, [paid]);
+
+      expect(payments.verified, hasLength(1));
+      expect(router.state.matchedLocation, Routes.paid('o-1'));
+      expect(find.text('₹180 paid'), findsOneWidget);
+      expect(find.textContaining('Order ID001046 is fully paid. Nothing to pay at the door.'), findsOneWidget);
+
+      await tester.tap(find.text('Back to order'));
+      await tester.pumpAndSettle();
+      expect(find.text('ORDER PAGE'), findsOneWidget);
+    });
+
+    testWidgets('a failed payment offers the order, not Home, as the way out', (tester) async {
+      await pumpDue(tester, [const CheckoutCancelled()]);
+
+      expect(find.text('Payment cancelled'), findsOneWidget);
+      expect(find.textContaining('still booked'), findsNothing, reason: 'the order was not just booked');
+      expect(find.text('Back to home'), findsNothing);
+
+      await tester.tap(find.text('Back to order'));
+      await tester.pumpAndSettle();
+      expect(find.text('ORDER PAGE'), findsOneWidget);
+    });
+
+    testWidgets('cash instead goes back to the order with a note', (tester) async {
+      final (_, orders, _) = await pumpDue(tester, [const CheckoutCancelled()]);
+      await tester.tap(find.text('Pay cash at delivery instead'));
+      await tester.pumpAndSettle();
+
+      expect(orders.switchedToCash, ['o-1']);
+      expect(find.text('ORDER PAGE'), findsOneWidget);
+      expect(find.textContaining("You'll pay in cash when your clothes are delivered"), findsOneWidget);
+    });
+  });
 }
 
 String istTodayForTest() => DateTime.now().toUtc().add(const Duration(hours: 5, minutes: 30)).toIso8601String().substring(0, 10);
@@ -215,5 +284,25 @@ class _Pay extends StatelessWidget {
   Widget build(BuildContext context) {
     final state = GoRouterState.of(context);
     return PaymentScreen(orderId: state.pathParameters['id']!, initial: state.extra as OrderDto?);
+  }
+}
+
+class _DuePay extends StatelessWidget {
+  const _DuePay();
+
+  @override
+  Widget build(BuildContext context) {
+    final state = GoRouterState.of(context);
+    return PaymentScreen(orderId: state.pathParameters['id']!, initial: state.extra as OrderDto?, due: state.uri.queryParameters['due'] == '1');
+  }
+}
+
+class _Receipt extends StatelessWidget {
+  const _Receipt();
+
+  @override
+  Widget build(BuildContext context) {
+    final state = GoRouterState.of(context);
+    return PaymentReceiptScreen(orderId: state.pathParameters['id']!, initial: state.extra as OrderDto?);
   }
 }

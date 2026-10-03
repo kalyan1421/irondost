@@ -71,6 +71,24 @@ test window use card `4100 2800 0000 1007`, any CVV, expiry 12/26 (the demo bank
 Success or Failure), or UPI `test@razorpay`. The webhook (`RAZORPAY_WEBHOOK_SECRET`) needs a dashboard webhook
 pointing at `/v1/webhooks/razorpay` on a public URL; without it, payments are still confirmed by the app's own check.
 
+## Orders, tracking and notifications
+
+- **Orders tab:** Active / Past, a page at a time. An order opens to its status, a five-step timeline, the partner (with a call button),
+  what is owed and the bill. `order.updated` over Socket.IO (`/v1/realtime`, only while the app is on screen) refreshes the open order,
+  the lists and the inbox, so a status change shows up without pulling to refresh.
+- **Cancel** is offered until the clothes are picked up. **Pay what's due** opens the same Razorpay flow in "due" mode and ends on a
+  receipt. Cancelling a paid order does not refund by itself: staff refund from the admin order page, and are notified (`refund_needed`).
+- **Notifications:** the bell on Home opens the inbox (`GET /v1/me/notifications`). After the first booking the app explains why it wants
+  to send notifications, then shows the system prompt. A push that arrives while the app is open is a banner; tapping one opens its order.
+  Android channels (`order_updates`, `offers`) are created at start.
+
+To try live updates locally, move an order along as staff with the dev admin token (`dev:+919000000000`):
+`POST /v1/admin/orders/{id}/assign` (leg `PICKUP`, a driver id), then `POST /v1/admin/orders/{id}/status`
+(`PICKED_UP`, `PROCESSING`, `READY_FOR_DELIVERY`, …).
+
+On the iOS simulator a push can be tried with `xcrun simctl push booted com.irondost.customer payload.json`
+(include `"gcm.message_id"` and `orderId`/`type` fields next to `aps`).
+
 ## Push notifications (iOS)
 
 `ios/Runner/Runner.entitlements` enables push. For a device or App Store build you also need:
@@ -87,7 +105,7 @@ lib/
   data/      api/ (generated client), api_client.dart (Dio + auth), api_failure.dart
   core/      phone, money, version, order status copy
   features/  auth, startup, system screens, shell, home, addresses, catalogue, basket, schedule, checkout,
-             payment, orders, offers, account, push, support
+             payment, orders, notifications, realtime, offers, account, push, support
 ```
 
 ## Generated code

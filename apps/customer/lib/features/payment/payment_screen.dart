@@ -17,9 +17,13 @@ import 'payment.dart';
 /// through the whole thing (preparing, the Razorpay window, confirming) and ends at the confirmation
 /// when paid, or here with a way forward when not.
 class PaymentScreen extends ConsumerStatefulWidget {
-  const PaymentScreen({super.key, required this.orderId, this.initial});
+  const PaymentScreen({super.key, required this.orderId, this.initial, this.due = false});
 
   final String orderId;
+
+  /// Paying what is still owed on an existing order, not a booking that was just made: ends at the
+  /// receipt, and backing out returns to the order instead of Home.
+  final bool due;
 
   /// The order as just placed or listed, shown at once; fetched again if missing.
   final OrderDto? initial;
@@ -43,7 +47,17 @@ class _PaymentScreenState extends ConsumerState<PaymentScreen> {
     final id = widget.orderId;
     ref.listen(paymentProvider(id), (prev, next) {
       if ((next.phase == PaymentPhase.paid || next.phase == PaymentPhase.cash) && prev?.phase != next.phase) {
-        context.go(Routes.confirmed(id), extra: next.order);
+        if (!widget.due) {
+          context.go(Routes.confirmed(id), extra: next.order);
+        } else if (next.phase == PaymentPhase.paid) {
+          context.pushReplacement(Routes.paid(id), extra: next.order);
+        } else {
+          final messenger = ScaffoldMessenger.of(context);
+          context.pop();
+          messenger
+            ..hideCurrentSnackBar()
+            ..showSnackBar(const SnackBar(content: Text("OK. You'll pay in cash when your clothes are delivered.")));
+        }
       }
     });
     final payment = ref.watch(paymentProvider(id));
@@ -54,7 +68,12 @@ class _PaymentScreenState extends ConsumerState<PaymentScreen> {
       canPop: false,
       onPopInvokedWithResult: (didPop, _) {
         // Never walk away from a payment in progress; once it has ended, back means home.
-        if (!didPop && !payment.busy) context.go(Routes.home);
+        if (didPop || payment.busy) return;
+        if (widget.due) {
+          context.pop();
+        } else {
+          context.go(Routes.home);
+        }
       },
       child: Scaffold(
         body: SafeArea(
@@ -62,6 +81,7 @@ class _PaymentScreenState extends ConsumerState<PaymentScreen> {
             PaymentPhase.failed => _Failed(
                 failure: payment.failure ?? PaymentFailure.other,
                 order: order,
+                due: widget.due,
                 onRetry: controller.start,
                 onCash: () => _cash(controller),
               ),
@@ -215,10 +235,11 @@ class _Working extends StatelessWidget {
 }
 
 class _Failed extends StatelessWidget {
-  const _Failed({required this.failure, required this.order, required this.onRetry, required this.onCash});
+  const _Failed({required this.failure, required this.order, required this.due, required this.onRetry, required this.onCash});
 
   final PaymentFailure failure;
   final OrderDto? order;
+  final bool due;
   final VoidCallback onRetry;
   final VoidCallback onCash;
 
@@ -242,13 +263,13 @@ class _Failed extends StatelessWidget {
       tone: c.dangerSoft,
       title: title,
       body: body,
-      notice: o == null || cancelled ? null : _StillBooked(o),
+      notice: o == null || cancelled || due ? null : _StillBooked(o),
       actions: cancelled
-          ? [IdButton(label: 'Back to home', onPressed: () => context.go(Routes.home))]
+          ? [IdButton(label: due ? 'Back to order' : 'Back to home', onPressed: () => due ? context.pop() : context.go(Routes.home))]
           : [
               if (failure != PaymentFailure.unavailable) IdButton(label: 'Try again$amount', onPressed: onRetry),
               IdButton.outline(label: 'Pay cash at delivery instead', onPressed: onCash),
-              IdButton.text(label: 'Back to home', onPressed: () => context.go(Routes.home)),
+              IdButton.text(label: due ? 'Back to order' : 'Back to home', onPressed: () => due ? context.pop() : context.go(Routes.home)),
             ],
     );
   }

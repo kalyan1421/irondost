@@ -2,7 +2,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../data/api_client.dart';
 import '../orders/order_repository.dart';
-import '../orders/orders_screen.dart';
+import '../orders/orders_list.dart';
 import 'payment_repository.dart';
 import 'razorpay_checkout.dart';
 
@@ -177,7 +177,7 @@ class PaymentController extends Notifier<PaymentState> {
 
   void _paid(OrderDto order) {
     ref.invalidate(orderProvider(orderId));
-    ref.invalidate(activeOrdersProvider);
+    ref.invalidate(ordersListProvider(Scope.active));
     state = PaymentState(phase: PaymentPhase.paid, order: order);
   }
 
@@ -195,7 +195,7 @@ class PaymentController extends Notifier<PaymentState> {
     try {
       final order = await _orders.payOnDelivery(orderId);
       ref.invalidate(orderProvider(orderId));
-      ref.invalidate(activeOrdersProvider);
+      ref.invalidate(ordersListProvider(Scope.active));
       state = PaymentState(phase: PaymentPhase.cash, order: order);
       return true;
     } on ApiFailure catch (e) {

@@ -36,6 +36,9 @@ export interface OrderStatusChangedEvent extends OrderRef {
   actorRole: Role | null;
   /** Driver removed from a leg by this change (unassignment), if any. */
   removedDriverId: string | null;
+  /** Money in hand once the status changed: what was paid and how much of it has gone back. */
+  paidPaise: number;
+  refundedPaise: number;
 }
 
 export interface OrderUpdatedEvent extends OrderRef {

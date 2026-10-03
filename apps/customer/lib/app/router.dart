@@ -19,10 +19,15 @@ import '../features/basket/basket_screen.dart';
 import '../features/catalogue/catalogue_screen.dart';
 import '../features/catalogue/search_screen.dart';
 import '../features/checkout/checkout_screen.dart';
+import '../features/orders/order_bill_screen.dart';
 import '../features/orders/order_confirmed_screen.dart';
+import '../features/push/notification_permission_screen.dart';
+import '../features/orders/order_detail_screen.dart';
+import '../features/payment/payment_receipt_screen.dart';
 import '../features/payment/payment_screen.dart';
 import '../features/schedule/schedule_screen.dart';
 import '../features/home/home_screen.dart';
+import '../features/notifications/notifications_screen.dart';
 import '../features/offers/offers_screen.dart';
 import '../features/orders/orders_screen.dart';
 import '../features/shell/app_shell.dart';
@@ -89,9 +94,27 @@ final routerProvider = Provider<GoRouter>((ref) {
         path: Routes.orderConfirmed,
         builder: (_, state) => OrderConfirmedScreen(orderId: state.pathParameters['id']!, initial: state.extra as OrderDto?),
       ),
+      GoRoute(path: Routes.notificationPermission, builder: (_, _) => const NotificationPermissionScreen()),
+      GoRoute(path: Routes.notifications, builder: (_, _) => const NotificationsScreen()),
+      GoRoute(
+        path: Routes.orderDetail,
+        builder: (_, state) => OrderDetailScreen(orderId: state.pathParameters['id']!, initial: state.extra as OrderDto?),
+      ),
+      GoRoute(
+        path: Routes.orderBill,
+        builder: (_, state) => OrderBillScreen(orderId: state.pathParameters['id']!, initial: state.extra as OrderDto?),
+      ),
       GoRoute(
         path: Routes.orderPay,
-        builder: (_, state) => PaymentScreen(orderId: state.pathParameters['id']!, initial: state.extra as OrderDto?),
+        builder: (_, state) => PaymentScreen(
+          orderId: state.pathParameters['id']!,
+          initial: state.extra as OrderDto?,
+          due: state.uri.queryParameters['due'] == '1',
+        ),
+      ),
+      GoRoute(
+        path: Routes.orderPaid,
+        builder: (_, state) => PaymentReceiptScreen(orderId: state.pathParameters['id']!, initial: state.extra as OrderDto?),
       ),
       StatefulShellRoute.indexedStack(
         builder: (_, _, shell) => AppShell(shell: shell),

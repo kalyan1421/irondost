@@ -136,3 +136,51 @@ class SlotTile extends StatelessWidget {
     );
   }
 }
+
+/// A single-line radio row ("I booked by mistake"), the way the design lists reasons and short choices.
+class ReasonTile extends StatelessWidget {
+  const ReasonTile({super.key, required this.label, required this.selected, required this.onTap});
+
+  final String label;
+  final bool selected;
+  final VoidCallback? onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    final c = context.colors;
+    return Semantics(
+      inMutuallyExclusiveGroup: true,
+      checked: selected,
+      enabled: onTap != null,
+      label: label,
+      excludeSemantics: true,
+      child: Material(
+        color: selected ? c.primarySoft : c.surface,
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(IdRadius.md),
+          side: BorderSide(color: selected ? c.primary : c.border, width: selected ? 2 : 1),
+        ),
+        child: InkWell(
+          borderRadius: BorderRadius.circular(IdRadius.md),
+          onTap: onTap,
+          child: ConstrainedBox(
+            constraints: const BoxConstraints(minHeight: IdSize.touchTarget),
+            child: Padding(
+              padding: const EdgeInsets.symmetric(horizontal: IdSpace.s4, vertical: 12),
+              child: Row(
+                children: [
+                  Expanded(child: Text(label, style: context.text.bodyLg)),
+                  Container(
+                    width: 20,
+                    height: 20,
+                    decoration: BoxDecoration(shape: BoxShape.circle, border: Border.all(color: selected ? c.primary : c.borderStrong, width: selected ? 6 : 2)),
+                  ),
+                ],
+              ),
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+}

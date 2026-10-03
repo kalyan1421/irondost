@@ -139,7 +139,9 @@ Each phase ends with something runnable on a simulator and a device.
    - Catalogue tabs and search, persisted basket with live quote, and promo codes.
    - Pickup and delivery windows, checkout, placing the order (idempotent), Razorpay and cash on delivery, and the confirmation screen.
    - Payment states: confirming, failed (try again or cash at delivery), still confirming.
-4. **Orders and tracking:** order list, details with the timeline and realtime updates, partner call, pay-due sheet, cancel before pickup, notification inbox and push deep links.
+4. **Orders and tracking** (built 3 Oct 2026): order list (Active / Past, paged), details with the timeline and realtime updates,
+   partner call, pay-due sheet and receipt, cancel before pickup, items and bill, "book the same again", notification inbox, the
+   notification-permission prompt after the first booking, in-app push banners and tap-to-open deep links.
 5. **Account and polish:**
    - Offers, account, legal pages, log-out and account deletion.
    - Empty, error and offline states; dark-mode pass; accessibility pass with TalkBack and VoiceOver.
@@ -174,6 +176,9 @@ Each phase ends with something runnable on a simulator and a device.
 - **Service area:** Hyderabad, 25 km around 17.3850, 78.4867 (roughly inside the Outer Ring Road). Other cities can sign up and save addresses but can't book.
 
 - **Pay on delivery (3 Oct 2026):** `POST /v1/orders/{id}/pay-on-delivery` turns an unpaid online order into cash on delivery after a failed or abandoned payment, so the partner collects it at the door. Refused once anything is paid.
+
+- **Refund needed (3 Oct 2026):** when a paid order is cancelled, staff get a `refund_needed` notification. Nothing is refunded
+  automatically; the admin Refund button does it, as decided earlier.
 
 **Done since:** restricted Google Maps keys for iOS and Android; Razorpay test keys.
 

@@ -46,4 +46,12 @@ void main() {
     expect(windowFromLabel('11:00–16:00'), '11 AM – 4 PM');
     expect(windowFromLabel('whenever'), 'whenever');
   });
+
+  test('writes instants on India time whatever the phone\'s zone', () {
+    final nineTwelve = DateTime.utc(2026, 10, 1, 3, 42); // 9:12 AM IST
+    expect(istDayLabel(nineTwelve), 'Thu 1 Oct');
+    expect(istDateTimeLabel(nineTwelve), 'Thu 1 Oct, 9:12 AM');
+    expect(istDateTimeLabel(DateTime.utc(2026, 10, 1, 12, 0)), 'Thu 1 Oct, 5:30 PM');
+    expect(istDateTimeLabel(DateTime.utc(2026, 10, 1, 18, 35)), 'Fri 2 Oct, 12:05 AM', reason: 'past midnight in India is the next day');
+  });
 }

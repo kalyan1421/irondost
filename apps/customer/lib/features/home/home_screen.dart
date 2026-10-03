@@ -12,6 +12,7 @@ import '../../design/widgets/surfaces.dart';
 import '../addresses/addresses_controller.dart';
 import '../addresses/addresses_screen.dart';
 import '../catalogue/catalogue.dart';
+import '../notifications/notifications.dart';
 import '../offers/promotions.dart';
 
 
@@ -29,6 +30,19 @@ class HomeScreen extends ConsumerWidget {
       appBar: AppBar(
         toolbarHeight: 64,
         titleSpacing: IdSpace.s4,
+        actions: [
+          Consumer(
+            builder: (context, ref, _) {
+              final unread = ref.watch(unreadCountProvider);
+              return IconButton(
+                tooltip: unread > 0 ? 'Notifications, $unread unread' : 'Notifications',
+                onPressed: () => context.push(Routes.notifications),
+                icon: Badge(isLabelVisible: unread > 0, smallSize: 8, backgroundColor: c.danger, child: const Icon(LucideIcons.bell)),
+              );
+            },
+          ),
+          const SizedBox(width: IdSpace.s2),
+        ],
         title: Semantics(
           button: true,
           label: 'Pickup address ${address?.label ?? ''}. Tap to change.',

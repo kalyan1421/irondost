@@ -512,6 +512,8 @@ export class OrdersService {
           : to === OrderStatus.READY_FOR_DELIVERY
             ? before.deliveryDriverId
             : null,
+      paidPaise: order.paidPaise,
+      refundedPaise: order.refundedPaise,
     } satisfies OrderStatusChangedEvent);
     if (closed.length) {
       this.events.emit(Events.OffersClosed, {

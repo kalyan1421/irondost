@@ -87,6 +87,18 @@ export class NotificationsListener {
         const drivers = [e.pickupDriverId, e.deliveryDriverId].filter((d): d is string => d !== null);
         await this.inboxAndPush(drivers, 'order_cancelled', 'Order cancelled', `Order ${e.orderNumber} was cancelled.`, { orderId: e.orderId }, ClientApp.PARTNER);
       }
+      // Cancelling does not move money by itself: staff refund from the order page, so tell them it is owed.
+      const owed = e.paidPaise - e.refundedPaise;
+      if (e.to === OrderStatus.CANCELLED && owed > 0) {
+        await this.inboxAndPush(
+          await this.adminIds(),
+          'refund_needed',
+          'Refund needed',
+          `Order ${e.orderNumber} was cancelled after ${rupees(owed)} was paid. Refund it from the order page.`,
+          { orderId: e.orderId },
+          ClientApp.ADMIN,
+        );
+      }
       if (e.removedDriverId) {
         await this.inboxAndPush([e.removedDriverId], 'task_removed', 'Task removed', `Order ${e.orderNumber} is no longer assigned to you.`, { orderId: e.orderId }, ClientApp.PARTNER);
       }

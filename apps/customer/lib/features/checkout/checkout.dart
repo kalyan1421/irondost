@@ -6,7 +6,7 @@ import '../../core/uuid.dart';
 import '../../data/api_client.dart';
 import '../basket/basket.dart';
 import '../orders/order_repository.dart';
-import '../orders/orders_screen.dart';
+import '../orders/orders_list.dart';
 import '../schedule/schedule.dart';
 
 /// Why an order was not placed, in terms of what the customer should do next.
@@ -109,7 +109,7 @@ class CheckoutController extends Notifier<CheckoutState> {
   void _placed() {
     ref.read(basketProvider.notifier).clear();
     ref.read(scheduleChoiceProvider.notifier).clear();
-    ref.invalidate(activeOrdersProvider);
+    ref.invalidate(ordersListProvider(Scope.active));
     _signature = null;
     _key = null;
     state = CheckoutState(method: state.method);

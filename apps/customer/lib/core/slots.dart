@@ -52,3 +52,38 @@ String slotSummary(SlotOptionDto slot, {String? today}) => '${dayLong(slot.date,
 
 /// Today's date in India, "2026-10-03", from the phone's clock. Only for wording ("today"); the API decides what is bookable.
 String istToday([DateTime? now]) => DateFormat('yyyy-MM-dd').format((now ?? DateTime.now()).toUtc().add(const Duration(hours: 5, minutes: 30)));
+
+/// "Thu 1 Oct" for an instant, on India time.
+String istDayLabel(DateTime instant) => DateFormat('EEE d MMM').format(_ist(instant));
+
+/// "Thu 1 Oct, 9:12 AM" for an instant, on India time.
+String istDateTimeLabel(DateTime instant) {
+  final t = _ist(instant);
+  final hour = t.hour % 12 == 0 ? 12 : t.hour % 12;
+  return '${DateFormat('EEE d MMM').format(t)}, $hour:${t.minute.toString().padLeft(2, '0')} ${_meridiem(t.hour)}';
+}
+
+/// For the middle of a sentence: "today", "tomorrow", else "Sat 3 Oct". [today] is the India date, "2026-10-03".
+String dayPhrase(String isoDate, {required String today}) {
+  if (isoDate == today) return 'today';
+  final tomorrow = DateFormat('yyyy-MM-dd').format(DateTime.parse(today).add(const Duration(days: 1)));
+  return isoDate == tomorrow ? 'tomorrow' : dayLong(isoDate);
+}
+
+/// The time on a notification: "3:52 PM" today, "Thu, 5:41 PM" this week, "26 Sep" before that. India time.
+String notificationTime(DateTime at, {DateTime? now}) {
+  final t = _ist(at);
+  final n = _ist(now ?? DateTime.now());
+  final days = DateTime.utc(n.year, n.month, n.day).difference(DateTime.utc(t.year, t.month, t.day)).inDays;
+  final clock = '${t.hour % 12 == 0 ? 12 : t.hour % 12}:${t.minute.toString().padLeft(2, '0')} ${_meridiem(t.hour)}';
+  if (days <= 0) return clock;
+  if (days < 7) return '${DateFormat('EEE').format(t)}, $clock';
+  return DateFormat('d MMM').format(t);
+}
+
+/// Whether [at] is the same India calendar day as [now].
+bool isTodayIst(DateTime at, {DateTime? now}) {
+  final t = _ist(at);
+  final n = _ist(now ?? DateTime.now());
+  return t.year == n.year && t.month == n.month && t.day == n.day;
+}

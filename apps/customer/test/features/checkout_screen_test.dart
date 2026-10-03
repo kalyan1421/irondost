@@ -12,6 +12,7 @@ import 'package:irondost_customer/features/basket/quote.dart';
 import 'package:irondost_customer/features/checkout/checkout_screen.dart';
 import 'package:irondost_customer/features/orders/order_confirmed_screen.dart';
 import 'package:irondost_customer/features/orders/order_repository.dart';
+import 'package:irondost_customer/features/push/push_source.dart';
 import 'package:irondost_customer/features/schedule/schedule.dart';
 
 import '../helpers.dart';
@@ -177,15 +178,27 @@ void main() {
   });
 
   group('confirmation', () {
-    Future<void> show(WidgetTester tester, OrderDto order) async {
+    Future<GoRouter> show(WidgetTester tester, OrderDto order, {PushPermission permission = PushPermission.granted}) async {
       tester.view
         ..physicalSize = const Size(390 * 3, 1300 * 3)
         ..devicePixelRatio = 3;
       addTearDown(tester.view.reset);
       final repo = FakeOrderRepository()..orders[order.id] = order;
-      final router = testRouter({'/c': () => OrderConfirmedScreen(orderId: order.id, initial: order), Routes.orders: () => const Text('ORDERS PAGE'), Routes.home: () => const Text('HOME PAGE')}, initial: '/c');
-      await tester.pumpWidget(themedRouter(router, overrides: [orderRepositoryProvider.overrideWithValue(repo)]));
+      final router = testRouter(
+        {
+          '/c': () => OrderConfirmedScreen(orderId: order.id, initial: order),
+          Routes.orders: () => const Text('ORDERS PAGE'),
+          Routes.orderDetail: () => const Text('DETAIL PAGE'),
+          Routes.home: () => const Text('HOME PAGE'),
+          Routes.notificationPermission: () => Scaffold(body: Builder(builder: (context) => TextButton(onPressed: () => context.pop(), child: const Text('PERMISSION PAGE')))),
+        },
+        initial: '/c',
+      );
+      await tester.pumpWidget(
+        themedRouter(router, overrides: [...await basketOverrides(), orderRepositoryProvider.overrideWithValue(repo), pushSourceProvider.overrideWithValue(_PermissionOnly(permission))]),
+      );
       await tester.pumpAndSettle();
+      return router;
     }
 
     testWidgets('a cash order says when the partner comes and what to pay at the door', (tester) async {
@@ -209,14 +222,47 @@ void main() {
       expect(find.text('Payment pending'), findsOneWidget);
     });
 
+    testWidgets('the first time, leaving offers notifications first, then carries on', (tester) async {
+      await show(tester, testOrder(), permission: PushPermission.notDetermined);
+      await tester.tap(find.text('Back to home'));
+      await tester.pumpAndSettle();
+      expect(find.text('PERMISSION PAGE'), findsOneWidget);
+      expect(find.text('HOME PAGE'), findsNothing);
+
+      await tester.tap(find.text('PERMISSION PAGE'));
+      await tester.pumpAndSettle();
+      expect(find.text('HOME PAGE'), findsOneWidget);
+    });
+
     testWidgets('Track order and Back to home navigate', (tester) async {
       await show(tester, testOrder());
       await tester.tap(find.text('Track order'));
       await tester.pumpAndSettle();
-      expect(find.text('ORDERS PAGE'), findsOneWidget);
+      expect(find.text('DETAIL PAGE'), findsOneWidget, reason: 'the order itself, with the Orders tab underneath');
     });
   });
 }
 
 /// Today in India, from the same clock the screen uses.
 String istTodayForTest() => DateTime.now().toUtc().add(const Duration(hours: 5, minutes: 30)).toIso8601String().substring(0, 10);
+
+/// Push that only knows its permission, for screens that merely ask whether to offer notifications.
+class _PermissionOnly implements PushSource {
+  const _PermissionOnly(this.permissionNow);
+  final PushPermission permissionNow;
+
+  @override
+  Stream<PushMessage> get foreground => const Stream.empty();
+
+  @override
+  Stream<PushMessage> get opened => const Stream.empty();
+
+  @override
+  Future<PushMessage?> launchedBy() async => null;
+
+  @override
+  Future<PushPermission> permission() async => permissionNow;
+
+  @override
+  Future<PushPermission> request() async => permissionNow;
+}

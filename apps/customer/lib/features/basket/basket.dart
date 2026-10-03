@@ -118,6 +118,17 @@ class BasketController extends Notifier<Basket> {
     _set({...state.lines}..remove(itemId));
   }
 
+  /// Starts the basket over with [lines] ("Book the same again"), within the API's limits. Any promo code is dropped.
+  void replaceWith(Map<String, int> lines) {
+    final kept = <String, int>{};
+    for (final e in lines.entries) {
+      if (kept.length >= maxLines) break;
+      if (e.value > 0) kept[e.key] = e.value.clamp(1, maxPerItem);
+    }
+    state = Basket(lines: kept);
+    _save();
+  }
+
   /// Applies [code] (trimmed, upper case), or clears it when null or blank.
   void applyPromo(String? code) {
     final clean = code?.trim().toUpperCase();

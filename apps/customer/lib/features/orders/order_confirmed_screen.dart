@@ -10,6 +10,7 @@ import '../../data/api_client.dart';
 import '../../design/theme.dart';
 import '../../design/widgets/id_button.dart';
 import '../../design/widgets/surfaces.dart';
+import '../push/push_handler.dart';
 import 'order_repository.dart';
 
 /// "Pickup booked": shown after an order is placed (and paid, when paid online).
@@ -87,9 +88,16 @@ class OrderConfirmedScreen extends ConsumerWidget {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.stretch,
                   children: [
-                    IdButton(label: 'Track order', onPressed: () => context.go(Routes.orders)),
+                    IdButton(
+                      label: 'Track order',
+                      onPressed: () => _leave(context, ref, () {
+                        // The Orders tab underneath, so Back from the order lands somewhere sensible.
+                        context.go(Routes.orders);
+                        context.push(Routes.order(orderId), extra: order);
+                      }),
+                    ),
                     const SizedBox(height: IdSpace.s1),
-                    IdButton.text(label: 'Back to home', onPressed: () => context.go(Routes.home)),
+                    IdButton.text(label: 'Back to home', onPressed: () => _leave(context, ref, () => context.go(Routes.home))),
                   ],
                 ),
               ),
@@ -98,6 +106,14 @@ class OrderConfirmedScreen extends ConsumerWidget {
         ),
       ),
     );
+  }
+
+  /// Leaves the confirmation. The first time, it offers notifications on the way out.
+  static Future<void> _leave(BuildContext context, WidgetRef ref, VoidCallback go) async {
+    if (await ref.read(pushOfferProvider).shouldOffer() && context.mounted) {
+      await context.push(Routes.notificationPermission);
+    }
+    if (context.mounted) go();
   }
 
   /// "A partner will come today between 4 and 8 PM."

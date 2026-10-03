@@ -30,7 +30,25 @@ abstract final class Routes {
 
   /// Paying an order online (just placed, or one with an amount still due).
   static const orderPay = '/order/:id/pay';
-  static String pay(String orderId) => '/order/$orderId/pay';
+  static String pay(String orderId, {bool due = false}) => '/order/$orderId/pay${due ? '?due=1' : ''}';
+
+  /// The receipt after paying what was due on an existing order.
+  static const orderPaid = '/order/:id/paid';
+  static String paid(String orderId) => '/order/$orderId/paid';
+
+  /// One order: status, timeline, bill. `extra` may carry the order as the list had it.
+  static const orderDetail = '/order/:id';
+  static String order(String orderId) => '/order/$orderId';
+
+  /// An order's items and bill.
+  static const orderBill = '/order/:id/bill';
+  static String bill(String orderId) => '/order/$orderId/bill';
+
+  /// The reason to allow notifications, offered once after the first booking.
+  static const notificationPermission = '/notifications/allow';
+
+  /// The inbox, opened from the bell on Home.
+  static const notifications = '/notifications';
 
   static const home = '/home';
   static const orders = '/orders';

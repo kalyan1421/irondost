@@ -484,24 +484,35 @@ describe('Laundry API (e2e)', () => {
       expect(nothingDue.body.code).toBe('NOTHING_DUE');
     });
 
-    it('lets an unpaid online order become cash on delivery, but not a paid one or someone else\'s', async () => {
-      const placeOnline = async () => {
-        const res = await http
-          .post('/v1/orders')
-          .set(bearer(PHONES.customer))
-          .send({
-            items: [{ catalogItemId: sareeId, quantity: 1 }],
-            pickupDate: tomorrow,
-            pickupSlot: 'MORNING',
-            deliveryDate: dayAfter,
-            deliverySlot: 'EVENING',
-            pickupAddressId: addressId,
-            paymentMethod: 'ONLINE',
-          })
-          .expect(201);
-        return res.body as { id: string; paymentMethod: string };
-      };
+    const placeOnline = async () => {
+      const res = await http
+        .post('/v1/orders')
+        .set(bearer(PHONES.customer))
+        .send({
+          items: [{ catalogItemId: sareeId, quantity: 1 }],
+          pickupDate: tomorrow,
+          pickupSlot: 'MORNING',
+          deliveryDate: dayAfter,
+          deliverySlot: 'EVENING',
+          pickupAddressId: addressId,
+          paymentMethod: 'ONLINE',
+        })
+        .expect(201);
+      return res.body as { id: string; paymentMethod: string };
+    };
 
+    const payInFull = async (orderId: string, paymentId: string) => {
+      const checkout = await http.post(`/v1/orders/${orderId}/payments/razorpay`).set(bearer(PHONES.customer)).expect(201);
+      const rpOrder = checkout.body.razorpayOrderId as string;
+      const signature = createHmac('sha256', razorpay.keySecret).update(`${rpOrder}|${paymentId}`).digest('hex');
+      await http
+        .post('/v1/payments/razorpay/verify')
+        .set(bearer(PHONES.customer))
+        .send({ razorpayOrderId: rpOrder, razorpayPaymentId: paymentId, razorpaySignature: signature })
+        .expect(200);
+    };
+
+    it('lets an unpaid online order become cash on delivery, but not a paid one or someone else\'s', async () => {
       const unpaid = await placeOnline();
       expect(unpaid.paymentMethod).toBe('ONLINE');
 
@@ -517,18 +528,27 @@ describe('Laundry API (e2e)', () => {
 
       // An online order that has been paid cannot be switched.
       const paid = await placeOnline();
-      const checkout = await http.post(`/v1/orders/${paid.id}/payments/razorpay`).set(bearer(PHONES.customer)).expect(201);
-      const rpOrder = checkout.body.razorpayOrderId as string;
-      const signature = createHmac('sha256', razorpay.keySecret).update(`${rpOrder}|pay_2`).digest('hex');
-      await http
-        .post('/v1/payments/razorpay/verify')
-        .set(bearer(PHONES.customer))
-        .send({ razorpayOrderId: rpOrder, razorpayPaymentId: 'pay_2', razorpaySignature: signature })
-        .expect(200);
+      await payInFull(paid.id, 'pay_2');
       const refused = await http.post(`/v1/orders/${paid.id}/pay-on-delivery`).set(bearer(PHONES.customer)).expect(409);
       expect(refused.body.code).toBe('ALREADY_PAID');
     });
+
+    it('tells staff a refund is owed when a paid order is cancelled', async () => {
+      const order = await placeOnline();
+      await payInFull(order.id, 'pay_3');
+      await http.post(`/v1/orders/${order.id}/cancel`).set(bearer(PHONES.customer)).send({ reason: 'Changed my mind' }).expect(200);
+
+      // Notifications are written by an event handler, a moment after the response.
+      let found = false;
+      for (let attempt = 0; attempt < 20 && !found; attempt++) {
+        const inbox = await http.get('/v1/me/notifications').set(bearer(PHONES.admin)).expect(200);
+        found = inbox.body.items.some((n: { type: string; data: { orderId?: string } }) => n.type === 'refund_needed' && n.data.orderId === order.id);
+        if (!found) await new Promise((resolve) => setTimeout(resolve, 50));
+      }
+      expect(found).toBe(true);
+    });
   });
+
 
   describe('service area, order filters and retries', () => {
     // Hub at Banjara Hills with an 8 km radius.

@@ -16,6 +16,7 @@ import 'package:irondost_customer/features/basket/basket.dart';
 import 'package:irondost_customer/features/basket/quote.dart';
 import 'package:irondost_customer/features/catalogue/catalogue.dart';
 import 'package:irondost_customer/features/offers/promotions.dart';
+import 'package:irondost_customer/features/notifications/notifications.dart';
 import 'package:irondost_customer/features/orders/order_repository.dart';
 import 'package:irondost_customer/features/payment/payment.dart';
 import 'package:irondost_customer/features/payment/payment_repository.dart';
@@ -383,6 +384,15 @@ class FakeScheduleRepository implements ScheduleRepository {
 // ── Orders ─────────────────────────────────────────────────────────────────
 
 OrderDto testOrder({
+  OrderStatus status = OrderStatus.pending,
+  DateTime? pickedUpAt,
+  DateTime? deliveredAt,
+  DateTime? cancelledAt,
+  int refundedPaise = 0,
+  PersonRefDto? pickupDriver,
+  PersonRefDto? deliveryDriver,
+  DateTime? dispatchFailedAt,
+  List<OrderEventDto>? events,
   String id = 'o-1',
   String number = 'ID001046',
   PaymentMethod method = PaymentMethod.cod,
@@ -398,7 +408,7 @@ OrderDto testOrder({
     OrderDto(
       id: id,
       orderNumber: number,
-      status: OrderStatus.pending,
+      status: status,
       source: OrderSource.customerApp,
       instructions: null,
       pickupDate: pickupDate,
@@ -417,20 +427,21 @@ OrderDto testOrder({
       deliveryFeePaise: 0,
       totalPaise: totalPaise,
       paidPaise: paidPaise,
-      refundedPaise: 0,
+      refundedPaise: refundedPaise,
       amountDuePaise: totalPaise - paidPaise,
       promoCode: null,
       paymentMethod: method,
       paymentStatus: paymentStatus,
       customer: null,
-      pickupDriver: null,
-      deliveryDriver: null,
+      pickupDriver: pickupDriver,
+      deliveryDriver: deliveryDriver,
       allowedNextStatuses: const [],
-      dispatchFailedAt: null,
+      dispatchFailedAt: dispatchFailedAt,
       cancelReason: null,
-      pickedUpAt: null,
-      deliveredAt: null,
-      cancelledAt: null,
+      pickedUpAt: pickedUpAt,
+      deliveredAt: deliveredAt,
+      cancelledAt: cancelledAt,
+      events: events,
       createdAt: DateTime.utc(2026, 10, 3, 12),
       updatedAt: DateTime.utc(2026, 10, 3, 12),
     );
@@ -481,8 +492,11 @@ class FakeOrderRepository implements OrderRepository {
   /// Runs on every [get], before it answers: a way for a test to change the world between tries.
   void Function()? getHook;
 
+  int getCount = 0;
+
   @override
   Future<OrderDto> get(String id) async {
+    getCount++;
     getHook?.call();
     if (getFailure != null) throw getFailure!;
     return orders[id] ?? testOrder(id: id);
@@ -490,6 +504,40 @@ class FakeOrderRepository implements OrderRepository {
 
   /// Thrown by [get] while set.
   ApiFailure? getFailure;
+
+  /// The customer's orders, newest first, as [list] serves them.
+  final listed = <OrderDto>[];
+  final listAsked = <(Scope, int)>[];
+  ApiFailure? listFailure;
+
+  @override
+  Future<OrderPageDto> list(Scope scope, {int page = 1, int pageSize = 20}) async {
+    listAsked.add((scope, page));
+    if (listFailure != null) throw listFailure!;
+    bool finished(OrderDto o) => o.status == OrderStatus.delivered || o.status == OrderStatus.cancelled;
+    final pool = [for (final o in listed) if (scope == Scope.past ? finished(o) : !finished(o)) o];
+    return OrderPageDto(items: pool.skip((page - 1) * pageSize).take(pageSize).toList(), page: page, pageSize: pageSize, total: pool.length);
+  }
+  final cancelled = <(String, String?)>[];
+  ApiFailure? cancelFailure;
+
+  @override
+  Future<OrderDto> cancel(String id, {String? reason}) async {
+    if (cancelFailure != null) throw cancelFailure!;
+    cancelled.add((id, reason));
+    final before = orders[id] ?? testOrder(id: id);
+    final order = testOrder(
+      id: id,
+      status: OrderStatus.cancelled,
+      method: before.paymentMethod,
+      paymentStatus: before.paymentStatus,
+      paidPaise: before.paidPaise.toInt(),
+      cancelledAt: DateTime.utc(2026, 10, 3, 9),
+    );
+    orders[id] = order;
+    return order;
+  }
+
   final switchedToCash = <String>[];
   ApiFailure? payOnDeliveryFailure;
 
@@ -569,3 +617,43 @@ class FakeRazorpayCheckout implements RazorpayCheckout {
 
 /// Polls instantly, so "wait for the webhook" tests run without waiting.
 const instantPolling = PaymentPolling(attempts: 3, every: Duration.zero);
+
+// ── Notifications ──────────────────────────────────────────────────────────
+
+NotificationDto testNotification(String id, {String type = 'order_status', String title = 'Partner on the way', String body = 'Ravi is coming to collect order ID001046.', Object? data = const {'orderId': 'o-1', 'status': 'PICKUP_ASSIGNED'}, DateTime? readAt, DateTime? createdAt}) =>
+    NotificationDto(id: id, type: type, title: title, body: body, data: data, readAt: readAt, createdAt: createdAt ?? DateTime.now().toUtc());
+
+/// The inbox, newest first. [unread] is computed from what is in [inbox].
+class FakeNotificationRepository implements NotificationRepository {
+  final inbox = <NotificationDto>[];
+  final listAsked = <int>[];
+  final markedRead = <String>[];
+  int markedAll = 0;
+  ApiFailure? listFailure;
+  ApiFailure? markFailure;
+
+  @override
+  Future<NotificationPageDto> list({int page = 1, int pageSize = 20}) async {
+    listAsked.add(page);
+    if (listFailure != null) throw listFailure!;
+    return NotificationPageDto(
+      items: inbox.skip((page - 1) * pageSize).take(pageSize).toList(),
+      unread: inbox.where((n) => n.readAt == null).length,
+      page: page,
+      pageSize: pageSize,
+      total: inbox.length,
+    );
+  }
+
+  @override
+  Future<void> markRead(String id) async {
+    if (markFailure != null) throw markFailure!;
+    markedRead.add(id);
+  }
+
+  @override
+  Future<void> markAllRead() async {
+    if (markFailure != null) throw markFailure!;
+    markedAll++;
+  }
+}

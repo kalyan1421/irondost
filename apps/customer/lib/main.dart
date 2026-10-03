@@ -7,6 +7,7 @@ import 'package:shared_preferences/shared_preferences.dart';
 import 'app/app.dart';
 import 'app/provider_retry.dart';
 import 'features/basket/basket.dart';
+import 'features/push/notification_channels.dart';
 import 'firebase_options.dart';
 
 Future<void> main() async {
@@ -16,6 +17,7 @@ Future<void> main() async {
     initializeDateFormatting('en_IN'),
     SharedPreferences.getInstance(),
   ).wait;
+  await createNotificationChannels();
   runApp(
     ProviderScope(
       retry: noAutomaticRetry,

@@ -11,6 +11,12 @@ abstract class OrderRepository {
 
   Future<OrderDto> get(String id);
 
+  /// One page of the customer's orders: [Scope.active] (not yet delivered or cancelled) or [Scope.past].
+  Future<OrderPageDto> list(Scope scope, {int page = 1, int pageSize = 20});
+
+  /// Cancels the order. Allowed until the clothes are picked up; the API refuses after that.
+  Future<OrderDto> cancel(String id, {String? reason});
+
   /// An unpaid online order becomes cash on delivery (after a failed or abandoned payment).
   Future<OrderDto> payOnDelivery(String id);
 }
@@ -25,6 +31,13 @@ class ApiOrderRepository implements OrderRepository {
 
   @override
   Future<OrderDto> get(String id) => _guard(() => _api.orders.ordersControllerGet(id: id));
+
+  @override
+  Future<OrderPageDto> list(Scope scope, {int page = 1, int pageSize = 20}) =>
+      _guard(() => _api.orders.ordersControllerList(scope: scope, page: page, pageSize: pageSize));
+
+  @override
+  Future<OrderDto> cancel(String id, {String? reason}) => _guard(() => _api.orders.ordersControllerCancel(id: id, body: CancelOrderDto(reason: reason)));
 
   @override
   Future<OrderDto> payOnDelivery(String id) => _guard(() => _api.orders.ordersControllerPayOnDelivery(id: id));
