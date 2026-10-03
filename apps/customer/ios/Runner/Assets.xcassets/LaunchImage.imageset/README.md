@@ -1,5 +1,4 @@
-# Launch Screen Assets
+# Launch screen
 
-You can customize the launch screen with your own desired assets by replacing the image files in this directory.
-
-You can also do it by opening your Flutter project's Xcode project with `open ios/Runner.xcworkspace`, selecting `Runner/Assets.xcassets` in the Project Navigator and dropping in the desired images.
+The IronDost logo with its tagline, at the size the app's own launch screen draws it (281 x 72 pt), in a light and a dark version.
+The background colour is `LaunchBackground.colorset`. Regenerate from `assets/brand/irondost-logo-tagline*.png`.

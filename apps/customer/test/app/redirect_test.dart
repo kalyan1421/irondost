@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:irondost_customer/app/redirect.dart';
@@ -115,6 +117,35 @@ void main() {
     const signedIn = AsyncData<Session>(SignedIn(complete));
     expect(go(Routes.home, session: signedIn, addresses: const AsyncLoading()), Routes.launch);
     expect(go(Routes.home, session: signedIn, addresses: const AsyncError(ApiFailure(ApiFailureKind.offline), StackTrace.empty)), Routes.unavailable);
+  });
+
+  /// A provider state that is loading again while still holding [previous], as a rebuilt provider's is.
+  Future<AsyncValue<List<AddressDto>>> reloadingFrom(List<AddressDto> previous) async {
+    var first = true;
+    final provider = FutureProvider<List<AddressDto>>((ref) => first ? Future.value(previous) : Completer<List<AddressDto>>().future);
+    final container = ProviderContainer();
+    addTearDown(container.dispose);
+    container.listen(provider, (_, _) {});
+    await container.read(provider.future);
+    first = false;
+    container.invalidate(provider);
+    return container.read(provider);
+  }
+
+  test('does not send a returning customer to setup while their addresses reload after sign-in', () async {
+    const signedIn = AsyncData<Session>(SignedIn(complete));
+    // The list is still the empty one from before sign-in, and the real one is on its way.
+    final reloading = await reloadingFrom(const []);
+    expect(reloading.isLoading, isTrue);
+    expect(reloading.value, isEmpty);
+    expect(go(Routes.loginCode, session: signedIn, addresses: reloading), Routes.launch);
+    expect(go(Routes.setupPin, session: signedIn, addresses: reloading), Routes.launch);
+    expect(go(Routes.launch, session: signedIn, addresses: reloading), isNull);
+    // Once it arrives, they go straight to the tabs.
+    expect(go(Routes.launch, session: signedIn), Routes.home);
+    // A refresh that keeps showing saved addresses does not flash the launch screen.
+    final refreshing = await reloadingFrom(const [home]);
+    expect(go(Routes.home, session: signedIn, addresses: refreshing), isNull);
   });
 
   test('shows the paused screen for disabled accounts', () {

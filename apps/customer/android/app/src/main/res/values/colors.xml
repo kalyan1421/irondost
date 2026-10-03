@@ -2,4 +2,6 @@
 <resources>
     <color name="ic_launcher_background">#FFFFFF</color>
     <color name="irondost_royal">#1F4FD1</color>
+    <!-- Launch screen ground: the app's surface colour. -->
+    <color name="launch_background">#FFFFFF</color>
 </resources>

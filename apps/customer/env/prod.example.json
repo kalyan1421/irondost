@@ -1,0 +1,6 @@
+{
+  "FLAVOR": "prod",
+  "API_BASE_URL": "https://REPLACE-WITH-DEPLOYED-API",
+  "AUTH_MODE": "firebase",
+  "MAPS_ENABLED": "true"
+}

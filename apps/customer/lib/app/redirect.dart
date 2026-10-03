@@ -44,7 +44,9 @@ String? redirectFor({
 
 String? _signedIn(AsyncValue<List<AddressDto>> addresses, String location) {
   if (addresses.hasError && !addresses.isLoading) return location == Routes.unavailable ? null : Routes.unavailable;
-  final list = addresses.value;
+  // Right after sign-in the list is still the empty one from when nobody was signed in, while the real one loads.
+  // Treat that as not loaded yet: otherwise a returning customer is sent to address setup (and asked for location) first.
+  final list = addresses.isLoading && (addresses.value?.isEmpty ?? true) ? null : addresses.value;
   if (list == null) return location == Routes.launch ? null : Routes.launch;
   // Everyone needs a pickup address before the tabs; saving one ends setup by itself.
   if (list.isEmpty) return Routes.setupRoutes.contains(location) ? null : Routes.setupPin;

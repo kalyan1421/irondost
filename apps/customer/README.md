@@ -99,6 +99,12 @@ and refunds, drafted from the old app and kept in `features/account/legal_conten
 - **Delete account** calls `DELETE /v1/me`, then signs this phone out. The API refuses with `ACTIVE_ORDERS` while orders are in
   progress; the sheet then says how many and leads to Orders. A failed deletion never signs the customer out.
 
+## Release
+
+See `docs/customer-app-release.md`: signing, production settings, store listing, privacy answers and the pre-submit checklist.
+Store screenshots are in `store/`. A production build is `flutter build appbundle --release --dart-define-from-file=env/prod.json`
+(Android) or `flutter build ipa --release --dart-define-from-file=env/prod.json` (iOS); start from `env/prod.example.json`.
+
 ## Offline
 
 `lib/data/reachability.dart` learns from real requests whether the API can be reached: a connection failure or timeout means no,

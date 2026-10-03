@@ -1,0 +1,6 @@
+# Copy to android/key.properties (gitignored) and fill in. Never commit the keystore or this file.
+# storeFile is relative to the android/ folder.
+storeFile=../../../secrets/irondost-upload.jks
+storePassword=
+keyAlias=upload
+keyPassword=
