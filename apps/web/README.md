@@ -54,5 +54,16 @@ orders are in progress, and records who did it in the audit log. Check the perso
 
 ## Deploying
 
-Any host that runs Next.js or serves its static output works (Vercel, an S3 and CloudFront bucket with `next build` output, a container).
-Nothing here talks to the API. Before launch: set `NEXT_PUBLIC_SITE_URL`, review the policy text, and confirm the contact details.
+The site is a static export (`output: "export"`), so `pnpm build` writes plain files to `out/`. It is served by Firebase Hosting from the
+`irondost-app` project (site `irondost-app`, **https://irondost-app.web.app**). `firebase.json` and `.firebaserc` here point at that
+project only. Always deploy from this folder, because other Firebase projects on the same machine may be the CLI's default.
+
+```bash
+pnpm --filter @laundry/web deploy                    # builds with the live address and deploys
+SITE_URL=https://www.example.com pnpm --filter @laundry/web deploy   # once a custom domain is connected
+```
+
+`NEXT_PUBLIC_SITE_URL` is baked in at build time (canonical links, link previews, sitemap), so rebuild whenever the address changes.
+To use your own domain: Firebase console → Hosting → Add custom domain, add the DNS records it shows, then deploy with `SITE_URL`.
+
+Before launch: review the policy text and confirm the contact details.

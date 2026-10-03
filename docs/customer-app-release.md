@@ -15,7 +15,7 @@ what I can do in the repo, and what only you can do.
 | Production config (API URL, Maps release key, Razorpay live) | Needs you | you |
 | Store listing copy | Drafted below | you review |
 | App Privacy and Data safety answers | Drafted below; iOS privacy manifest added | you review |
-| Privacy policy and account-deletion web pages | Needs the marketing site | me, after the site |
+| Privacy policy and account-deletion web pages | Live: https://irondost-app.web.app/privacy and /delete-account (move to your own domain later) | you review the text |
 | Store screenshots | Captured: 7 per platform in `apps/customer/store/` | you review |
 | Play internal testing, TestFlight | Needs the steps above | you upload, I prepare builds |
 
@@ -140,8 +140,9 @@ push notifications. Payments are handled by Razorpay's checkout, so card and UPI
   details itself, so check Razorpay's own data-safety guidance before submitting the Play Data safety form.
 - **Permissions shown to the user:** location (when using the map pin or "use my location"), notifications (asked after the
   first booking, not at launch).
-- **Privacy policy URL:** needed by both stores. The in-app text exists but both stores need a public web page, so this waits on the
-  marketing site. The text is drafted from the old app's policy and needs the business to review it.
+- **Privacy policy URL:** `https://irondost-app.web.app/privacy` (or your own domain once connected). The Play Data safety form's
+  account-deletion URL is `https://irondost-app.web.app/delete-account`. The text is drafted from the old app's policy and needs the
+  business to review it.
 
 ## 7. Store screenshots
 

@@ -7,7 +7,8 @@
     "build": "next build",
     "start": "next start --port 3002",
     "lint": "eslint",
-    "typecheck": "next typegen && tsc --noEmit"
+    "typecheck": "next typegen && tsc --noEmit",
+    "deploy": "NEXT_PUBLIC_SITE_URL=\"${SITE_URL:-https://irondost-app.web.app}\" next build && firebase deploy --only hosting --project irondost-app"
   },
   "dependencies": {
     "@laundry/legal": "workspace:*",
