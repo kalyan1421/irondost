@@ -447,6 +447,23 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/v1/orders/{id}/pay-on-delivery": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** For an online order that has not been paid (a failed or abandoned payment): the partner collects the amount at delivery. */
+        post: operations["OrdersController_payOnDelivery"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/v1/orders/{id}/cancel": {
         parameters: {
             query?: never;
@@ -965,7 +982,11 @@ export interface paths {
         get: operations["AdminController_customer"];
         put?: never;
         post?: never;
-        delete?: never;
+        /**
+         * Deletes a customer's account on their request, for people who cannot open the app (the website's delete-account page
+         *     says to ask us). It does what the customer's own deletion does, including refusing while orders are in progress.
+         */
+        delete: operations["AdminController_deleteCustomer"];
         options?: never;
         head?: never;
         patch: operations["AdminController_updateCustomer"];
@@ -2794,6 +2815,27 @@ export interface operations {
             };
         };
     };
+    OrdersController_payOnDelivery: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["OrderDto"];
+                };
+            };
+        };
+    };
     OrdersController_cancel: {
         parameters: {
             query?: never;
@@ -3578,6 +3620,25 @@ export interface operations {
                 content: {
                     "application/json": components["schemas"]["UserDto"];
                 };
+            };
+        };
+    };
+    AdminController_deleteCustomer: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
             };
         };
     };

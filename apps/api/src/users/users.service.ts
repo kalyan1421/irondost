@@ -50,8 +50,11 @@ export class UsersService {
    * In-app account deletion (App Store guideline 5.1.1(v)).
    * Personal data is erased; orders are kept for accounting but no longer
    * linked to a phone number or name.
+   *
+   * [actorId] is who asked for it: the customer themselves in the app, or an administrator acting on a request
+   * made by email or phone (for people who can no longer open the app).
    */
-  async deleteAccount(user: User): Promise<void> {
+  async deleteAccount(user: User, actorId: string = user.id): Promise<void> {
     if (user.role !== Role.CUSTOMER) {
       throw AppError.forbidden('STAFF_ACCOUNT', 'Staff accounts are removed by an administrator');
     }
@@ -86,7 +89,7 @@ export class UsersService {
         },
       }),
       this.prisma.auditLog.create({
-        data: { actorId: user.id, action: 'account.deleted', entity: 'user', entityId: user.id },
+        data: { actorId, action: 'account.deleted', entity: 'user', entityId: user.id },
       }),
     ]);
 

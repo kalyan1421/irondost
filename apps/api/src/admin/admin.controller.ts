@@ -9,6 +9,7 @@ import { Role } from '../generated/prisma/enums.js';
 import { AppError } from '../common/errors.js';
 import { SettingsService } from '../settings/settings.service.js';
 import { toUserDto, UserDto } from '../users/user.dto.js';
+import { UsersService } from '../users/users.service.js';
 import {
   BusinessSettingsDto,
   CreateCustomerDto,
@@ -33,6 +34,7 @@ export class AdminController {
     private readonly addresses: AddressesService,
     private readonly settings: SettingsService,
     private readonly audit: AuditService,
+    private readonly users: UsersService,
   ) {}
 
   @Get('dashboard')
@@ -68,6 +70,16 @@ export class AdminController {
     const user = await this.admin.updateCustomer(id, dto);
     this.audit.log(actor.id, 'customer.updated', 'user', id, dto);
     return toUserDto(user);
+  }
+
+  /**
+   * Deletes a customer's account on their request, for people who cannot open the app (the website's delete-account page
+   * says to ask us). It does what the customer's own deletion does, including refusing while orders are in progress.
+   */
+  @Delete('customers/:id')
+  @HttpCode(204)
+  async deleteCustomer(@CurrentUser() actor: User, @Param('id', ParseUUIDPipe) id: string): Promise<void> {
+    await this.users.deleteAccount(await this.admin.customer(id), actor.id);
   }
 
   @Get('customers/:id/addresses')

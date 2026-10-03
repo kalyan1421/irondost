@@ -23,6 +23,7 @@ const PHONES = {
   customer: '9333333333',
   otherCustomer: '9444444444',
   leaver: '9555555555',
+  asked: '9666666666',
 };
 const bearer = (phone: string) => ({ Authorization: `Bearer dev:${phone}` });
 
@@ -928,6 +929,36 @@ describe('Laundry API (e2e)', () => {
       expect(again.body).toMatchObject({ name: null, email: null });
       const erased = await prisma.user.count({ where: { deletedAt: { not: null }, name: null, phone: { startsWith: 'deleted:' } } });
       expect(erased).toBe(1);
+    });
+
+    describe('on a customer\'s request (website: delete-account)', () => {
+      it('lets an administrator delete a customer who cannot open the app, and records who did it', async () => {
+        // Created by staff, as for a phone order: the session endpoint is rate limited and this suite has used its share.
+        const me = await http
+          .post('/v1/admin/customers')
+          .set(bearer(PHONES.admin))
+          .send({ phone: PHONES.asked, name: 'Requested', email: 'asked@example.com' })
+          .expect(201);
+
+        await http.delete(`/v1/admin/customers/${me.body.id}`).set(bearer(PHONES.admin)).expect(204);
+        const gone = await prisma.user.findUniqueOrThrow({ where: { id: me.body.id } });
+        expect(gone).toMatchObject({ name: null, email: null, isActive: false });
+        expect(gone.phone).toBe(`deleted:${me.body.id}`);
+        const log = await prisma.auditLog.findFirstOrThrow({ where: { action: 'account.deleted', entityId: me.body.id } });
+        const admin = await prisma.user.findFirstOrThrow({ where: { phone: '+919000000001' } });
+        expect(log.actorId).toBe(admin.id);
+
+        // Already gone: not found, not a second deletion.
+        await http.delete(`/v1/admin/customers/${me.body.id}`).set(bearer(PHONES.admin)).expect(404);
+      });
+
+      it('refuses while the customer has orders in progress, and to anyone but staff', async () => {
+        const me = await http.get('/v1/me').set(bearer(PHONES.customer)).expect(200);
+        const res = await http.delete(`/v1/admin/customers/${me.body.id}`).set(bearer(PHONES.admin)).expect(409);
+        expect(res.body.code).toBe('ACTIVE_ORDERS');
+        await http.delete(`/v1/admin/customers/${me.body.id}`).set(bearer(PHONES.customer)).expect(403);
+        await http.delete(`/v1/admin/customers/${me.body.id}`).expect(401);
+      });
     });
   });
 });

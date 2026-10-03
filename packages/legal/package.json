@@ -1,0 +1,9 @@
+{
+  "name": "@laundry/legal",
+  "version": "0.0.1",
+  "private": true,
+  "description": "The text of IronDost's policies, shared by the website and the customer app.",
+  "exports": {
+    "./legal.json": "./legal.json"
+  }
+}

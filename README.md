@@ -8,9 +8,11 @@ This repository replaces the Firebase-based "Cloud Ironing Factory" apps with a 
 |---|---|---|
 | `apps/api` | NestJS 12, Prisma 7, PostgreSQL | Built and tested |
 | `apps/admin` | Next.js 16 | Built: all screens, image uploads (see `apps/admin/README.md`) |
-| `apps/web` (marketing site) | Next.js | Not started |
-| `mobile/customer`, `mobile/partner` | Flutter | Not started |
+| `apps/web` (marketing site) | Next.js 16, static pages | Built: home, support, policies, delete-account (see `apps/web/README.md`) |
+| `apps/customer` | Flutter | Built through Phase 6 (release preparation; see `docs/customer-app-release.md`) |
+| `mobile/partner` | Flutter | Not started |
 | `packages/contracts` | OpenAPI document exported from the API | Generated |
+| `packages/legal` | Policy text shared by the website and the customer app | Needs business review |
 
 ## Architecture
 

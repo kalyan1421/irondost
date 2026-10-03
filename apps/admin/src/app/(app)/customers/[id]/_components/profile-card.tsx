@@ -1,7 +1,9 @@
 "use client";
 
-import { AlertTriangle, Pencil } from "lucide-react";
+import { AlertTriangle, Pencil, Trash2 } from "lucide-react";
+import { useRouter } from "next/navigation";
 import { useState } from "react";
+import { ConfirmDialog } from "@/components/confirm-dialog";
 import { Field } from "@/components/page";
 import { ActiveDot } from "@/components/status";
 import { Alert, AlertDescription } from "@/components/ui/alert";
@@ -11,7 +13,7 @@ import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, D
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Switch } from "@/components/ui/switch";
-import { api, unwrap } from "@/lib/api/client";
+import { api, explainErrors, unwrap } from "@/lib/api/client";
 import { useApiMutation } from "@/lib/api/mutation";
 import type { User } from "@/lib/api/types";
 import { date, phone } from "@/lib/format";
@@ -20,14 +22,41 @@ import { isValidMobile, MOBILE_HINT, MobileInput, toLocalMobile } from "@/compon
 
 export function ProfileCard({ customer }: { customer: User }) {
   const [editing, setEditing] = useState(false);
+  const router = useRouter();
+
+  // For a customer who asked us to delete their account because they cannot open the app (the website's delete-account page).
+  const remove = useApiMutation(
+    () =>
+      explainErrors(unwrap(api.DELETE("/v1/admin/customers/{id}", { params: { path: { id: customer.id } } })), {
+        ACTIVE_ORDERS: "This customer has orders in progress. Deliver or cancel them first, then delete the account.",
+      }),
+    {
+      invalidate: [["customers"]],
+      success: "Account deleted",
+      onSuccess: () => router.replace("/customers"),
+    },
+  );
+
   return (
     <Card>
       <CardHeader>
         <CardTitle className="text-base">Profile</CardTitle>
-        <CardAction>
+        <CardAction className="flex items-center gap-2">
           <Button variant="outline" size="sm" onClick={() => setEditing(true)}>
             <Pencil /> Edit profile
           </Button>
+          <ConfirmDialog
+            destructive
+            title="Delete this customer's account?"
+            confirmLabel="Delete account"
+            description="Use this when the customer has asked us to delete their account and cannot do it in the app. Check it is them first, for example by calling the number on the account. Their name, number, email, addresses and notifications are erased and they are signed out. Past orders stay in the records without their details. This cannot be undone."
+            trigger={
+              <Button variant="outline" size="sm" className="text-destructive">
+                <Trash2 /> Delete account
+              </Button>
+            }
+            onConfirm={() => remove.mutateAsync(undefined)}
+          />
         </CardAction>
       </CardHeader>
       <CardContent>

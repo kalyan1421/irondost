@@ -2809,6 +2809,33 @@
         "tags": [
           "admin · customers"
         ]
+      },
+      "delete": {
+        "operationId": "AdminController_deleteCustomer",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Deletes a customer's account on their request, for people who cannot open the app (the website's delete-account page\nsays to ask us). It does what the customer's own deletion does, including refusing while orders are in progress.",
+        "tags": [
+          "admin · customers"
+        ]
       }
     },
     "/v1/admin/customers/{id}/addresses": {
