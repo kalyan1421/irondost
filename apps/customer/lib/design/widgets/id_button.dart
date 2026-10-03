@@ -50,7 +50,8 @@ class IdButton extends StatelessWidget {
             mainAxisSize: MainAxisSize.min,
             children: [
               if (icon != null && !iconAtEnd) ...[Icon(icon, size: IdSize.iconMd), const SizedBox(width: IdSpace.s2)],
-              Flexible(child: Text(label, overflow: TextOverflow.ellipsis, maxLines: 1)),
+              // Wraps rather than truncating when text is large: a cut-off button label is a button nobody can read.
+              Flexible(child: Text(label, textAlign: TextAlign.center, overflow: TextOverflow.ellipsis, maxLines: 3)),
               if (icon != null && iconAtEnd) ...[const SizedBox(width: IdSpace.s2), Icon(icon, size: IdSize.iconMd)],
             ],
           );

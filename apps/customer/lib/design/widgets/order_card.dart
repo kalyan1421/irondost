@@ -48,7 +48,8 @@ class OrderCard extends StatelessWidget {
             Row(
               children: [
                 Expanded(child: Text(order.orderNumber, style: t.orderId)),
-                StatusChip(order.status),
+                const SizedBox(width: IdSpace.s2),
+                Flexible(child: StatusChip(order.status)),
               ],
             ),
             const SizedBox(height: IdSpace.s1),
@@ -58,16 +59,17 @@ class OrderCard extends StatelessWidget {
               Container(
                 padding: const EdgeInsets.all(IdSpace.s3),
                 decoration: BoxDecoration(color: c.surfaceSoft, borderRadius: BorderRadius.circular(IdRadius.md)),
-                child: Row(
-                  children: [
-                    Expanded(
-                      child: order.pickedUpAt != null
-                          ? _Kv('Picked up', istDayLabel(order.pickedUpAt!))
-                          : _Kv('Pickup', '${dayLong(order.pickupDate, today: today)}, ${windowFromLabel(order.pickupSlotLabel)}'),
-                    ),
-                    const SizedBox(width: IdSpace.s3),
-                    Expanded(child: _Kv('Delivery', '${dayLong(order.deliveryDate, today: today)}, ${windowFromLabel(order.deliverySlotLabel)}')),
-                  ],
+                child: Builder(
+                  builder: (context) {
+                    final pickup = order.pickedUpAt != null
+                        ? _Kv('Picked up', istDayLabel(order.pickedUpAt!))
+                        : _Kv('Pickup', '${dayLong(order.pickupDate, today: today)}, ${windowFromLabel(order.pickupSlotLabel)}');
+                    final delivery = _Kv('Delivery', '${dayLong(order.deliveryDate, today: today)}, ${windowFromLabel(order.deliverySlotLabel)}');
+                    // Side by side until large text leaves each half too narrow to read, then one above the other.
+                    return MediaQuery.textScalerOf(context).scale(1) > 1.3
+                        ? Column(crossAxisAlignment: CrossAxisAlignment.stretch, children: [pickup, const SizedBox(height: IdSpace.s2), delivery])
+                        : Row(crossAxisAlignment: CrossAxisAlignment.start, children: [Expanded(child: pickup), const SizedBox(width: IdSpace.s3), Expanded(child: delivery)]);
+                  },
                 ),
               ),
             ],
@@ -144,14 +146,14 @@ class _PaymentChip extends StatelessWidget {
             ? (c.warningSoft, c.warning, null, '${rupees(order.amountDuePaise)} due')
             : (c.surfaceSoft, c.textMuted, null, 'Pay at delivery');
     return Container(
-      height: 28,
-      padding: const EdgeInsets.symmetric(horizontal: 10),
+      constraints: const BoxConstraints(minHeight: 28),
+      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
       decoration: BoxDecoration(color: bg, borderRadius: BorderRadius.circular(IdRadius.full)),
       child: Row(
         mainAxisSize: MainAxisSize.min,
         children: [
           if (icon != null) ...[Icon(icon, size: IdSize.iconSm, color: fg), const SizedBox(width: IdSpace.s1)],
-          Text(text, style: context.text.labelSm.copyWith(color: fg)),
+          Flexible(child: Text(text, style: context.text.labelSm.copyWith(color: fg))),
         ],
       ),
     );

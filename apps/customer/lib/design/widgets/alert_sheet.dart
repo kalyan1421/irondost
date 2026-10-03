@@ -37,7 +37,7 @@ Future<bool?> showIdAlert(
           explicitChildNodes: true,
           namesRoute: true,
           label: title,
-          child: Padding(
+          child: SingleChildScrollView(
             padding: const EdgeInsets.fromLTRB(IdSpace.s5, IdSpace.s6, IdSpace.s5, IdSpace.s4),
             child: Column(
               mainAxisSize: MainAxisSize.min,

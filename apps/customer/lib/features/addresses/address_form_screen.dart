@@ -11,6 +11,7 @@ import '../../data/api_client.dart';
 import '../../design/theme.dart';
 import '../../design/widgets/address_card.dart';
 import '../../design/widgets/id_button.dart';
+import '../../design/widgets/id_sheet.dart';
 import '../../design/widgets/id_text_field.dart';
 import 'address_args.dart';
 import 'addresses_controller.dart';
@@ -175,25 +176,20 @@ class _AddressFormScreenState extends ConsumerState<AddressFormScreen> {
   Future<void> _delete() async {
     final c = context.colors;
     final t = context.text;
-    final confirmed = await showModalBottomSheet<bool>(
-      context: context,
-      builder: (sheet) => SafeArea(
-        child: Padding(
-          padding: const EdgeInsets.fromLTRB(IdSpace.s4, 0, IdSpace.s4, IdSpace.s4),
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            crossAxisAlignment: CrossAxisAlignment.stretch,
-            children: [
-              Text('Delete this address?', style: t.headline),
-              const SizedBox(height: IdSpace.s2),
-              Text('Past orders keep it. You can add it again any time.', style: t.bodyLg.copyWith(color: c.textMuted)),
-              const SizedBox(height: IdSpace.s5),
-              IdButton.danger(label: 'Delete address', expand: true, onPressed: () => Navigator.pop(sheet, true)),
-              const SizedBox(height: IdSpace.s2),
-              IdButton.outline(label: 'Keep address', expand: true, onPressed: () => Navigator.pop(sheet, false)),
-            ],
-          ),
-        ),
+    final confirmed = await showIdSheet<bool>(
+      context,
+      builder: (sheet) => Column(
+        mainAxisSize: MainAxisSize.min,
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          Text('Delete this address?', style: t.headline),
+          const SizedBox(height: IdSpace.s2),
+          Text('Past orders keep it. You can add it again any time.', style: t.bodyLg.copyWith(color: c.textMuted)),
+          const SizedBox(height: IdSpace.s5),
+          IdButton.danger(label: 'Delete address', expand: true, onPressed: () => Navigator.pop(sheet, true)),
+          const SizedBox(height: IdSpace.s2),
+          IdButton.outline(label: 'Keep address', expand: true, onPressed: () => Navigator.pop(sheet, false)),
+        ],
       ),
     );
     if (confirmed != true || !mounted) return;

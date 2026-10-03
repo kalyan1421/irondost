@@ -7,6 +7,7 @@ import 'package:flutter_riverpod/misc.dart' show Override;
 import 'package:irondost_customer/app/provider_retry.dart';
 import 'package:irondost_customer/design/theme.dart';
 import 'package:irondost_customer/data/api_client.dart';
+import 'package:irondost_customer/features/account/account_repository.dart';
 import 'package:irondost_customer/features/addresses/address_repository.dart';
 import 'package:irondost_customer/features/addresses/location_service.dart';
 import 'package:irondost_customer/features/addresses/place.dart';
@@ -25,11 +26,14 @@ import 'package:irondost_customer/features/schedule/schedule.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 /// Wraps [child] in the IronDost theme (no font downloads) and a ProviderScope.
-Widget themed(Widget child, {List<Override> overrides = const [], Brightness brightness = Brightness.light}) => ProviderScope(
+Widget themed(Widget child, {List<Override> overrides = const [], Brightness brightness = Brightness.light, double textScale = 1}) => ProviderScope(
       retry: noAutomaticRetry,
       overrides: overrides,
-      child: MaterialApp(theme: buildTheme(brightness, font: plainFont), home: child),
+      child: MaterialApp(theme: buildTheme(brightness, font: plainFont), builder: _scaled(textScale), home: child),
     );
+
+/// Makes the app's text [scale] times larger, as the phone's accessibility setting does.
+TransitionBuilder _scaled(double scale) => (context, child) => MediaQuery(data: MediaQuery.of(context).copyWith(textScaler: TextScaler.linear(scale)), child: child!);
 
 /// Like [themed] but with a real router, for screens that navigate. Each of [pages] is a path shown as plain text
 /// (its path), so a test can see where it ended up. [home] is the route the test starts on.
@@ -39,10 +43,10 @@ GoRouter testRouter(Map<String, Widget Function()> screens, {required String ini
       routes: [for (final e in screens.entries) GoRoute(path: e.key, builder: (_, _) => e.value())],
     );
 
-Widget themedRouter(GoRouter router, {List<Override> overrides = const [], Brightness brightness = Brightness.light}) => ProviderScope(
+Widget themedRouter(GoRouter router, {List<Override> overrides = const [], Brightness brightness = Brightness.light, double textScale = 1}) => ProviderScope(
       retry: noAutomaticRetry,
       overrides: overrides,
-      child: MaterialApp.router(theme: buildTheme(brightness, font: plainFont), routerConfig: router),
+      child: MaterialApp.router(theme: buildTheme(brightness, font: plainFont), builder: _scaled(textScale), routerConfig: router),
     );
 
 /// An [AuthRepository] whose answers the test controls.
@@ -158,9 +162,10 @@ class FakeLocation implements LocationService {
   final reversed = <(double, double)>[];
   List<Place> searchResults = const [];
   Completer<Place?>? holdReverse;
+  Completer<LocationAccess>? holdAccess;
 
   @override
-  Future<LocationAccess> requestAccess() async => access;
+  Future<LocationAccess> requestAccess() async => holdAccess != null ? holdAccess!.future : access;
 
   @override
   Future<Place?> currentPlace() async => here;
@@ -304,16 +309,26 @@ class FakeQuoteRepository implements QuoteRepository {
   }
 }
 
-PromotionDto testPromo(String code, String title, {int minOrderPaise = 0, int? maxDiscountPaise}) => PromotionDto(
+PromotionDto testPromo(
+  String code,
+  String title, {
+  int minOrderPaise = 0,
+  int? maxDiscountPaise,
+  DiscountType type = DiscountType.percent,
+  num value = 20,
+  int? limit,
+  String? description,
+}) =>
+    PromotionDto(
       id: 'p-$code',
       code: code,
       title: title,
-      description: null,
-      discountType: DiscountType.percent,
-      discountValue: 20,
+      description: description,
+      discountType: type,
+      discountValue: value,
       minOrderPaise: minOrderPaise,
       maxDiscountPaise: maxDiscountPaise,
-      perCustomerLimit: null,
+      perCustomerLimit: limit,
       validFrom: DateTime(2026, 1, 1),
       validTo: DateTime(2026, 12, 31),
       imageUrl: null,
@@ -655,5 +670,19 @@ class FakeNotificationRepository implements NotificationRepository {
   Future<void> markAllRead() async {
     if (markFailure != null) throw markFailure!;
     markedAll++;
+  }
+}
+
+// ── Account ────────────────────────────────────────────────────────────────
+
+/// Deleting the account: succeeds, or fails as told.
+class FakeAccountRepository implements AccountRepository {
+  ApiFailure? failure;
+  int deleted = 0;
+
+  @override
+  Future<void> deleteAccount() async {
+    if (failure != null) throw failure!;
+    deleted++;
   }
 }

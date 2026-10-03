@@ -109,6 +109,13 @@ class SessionController extends AsyncNotifier<Session> {
     state = AsyncData(SignedIn(Profile.fromMe(me)));
   }
 
+  /// The account was deleted on the server: sign this phone out without asking the API to unregister
+  /// the device (the server already removed it, and the token no longer belongs to anyone).
+  Future<void> accountDeleted() async {
+    await ref.read(authRepositoryProvider).signOut();
+    state = const AsyncData(SignedOut());
+  }
+
   Future<void> signOut() async {
     await ref.read(deviceRegistrarProvider).unregister();
     await ref.read(authRepositoryProvider).signOut();

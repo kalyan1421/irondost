@@ -89,6 +89,29 @@ To try live updates locally, move an order along as staff with the dev admin tok
 On the iOS simulator a push can be tried with `xcrun simctl push booted com.irondost.customer payload.json`
 (include `"gcm.message_id"` and `orderId`/`type` fields next to `aps`).
 
+## Account
+
+The Account tab shows who is signed in, saved addresses, notifications, Help and support, the three policies (Terms, Privacy, Cancellation
+and refunds, drafted from the old app and kept in `features/account/legal_content.dart`), Log out and Delete account.
+
+- **Edit profile** changes name and email. The mobile number signs the customer in, so it is read only.
+- **Log out** stops this phone getting push and signs out.
+- **Delete account** calls `DELETE /v1/me`, then signs this phone out. The API refuses with `ACTIVE_ORDERS` while orders are in
+  progress; the sheet then says how many and leads to Orders. A failed deletion never signs the customer out.
+
+## Offline
+
+`lib/data/reachability.dart` learns from real requests whether the API can be reached: a connection failure or timeout means no,
+any answer (even an error) means yes. While no, the tabs show "You're offline" above the tab bar with a Retry button, and when
+the API answers again the catalogue, offers, notifications and orders reload by themselves. Screens that never loaded keep their own
+"Couldn't load" state with Try again.
+
+## Accessibility
+
+`test/a11y/accessibility_test.dart` draws every screen in light and dark, at normal text and at 200%. At normal size it checks tap
+targets (Android and iOS), labels and text contrast; at 200% it fails on any overflow. Keep new screens in that file. Layouts that
+would not fit at large text change shape (the cart bar stacks, long values wrap, short sheets scroll) rather than clip.
+
 ## Push notifications (iOS)
 
 `ios/Runner/Runner.entitlements` enables push. For a device or App Store build you also need:

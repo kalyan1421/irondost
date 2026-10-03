@@ -81,17 +81,27 @@ class IdListRow extends StatelessWidget {
         constraints: const BoxConstraints(minHeight: 56),
         child: Padding(
           padding: const EdgeInsets.symmetric(horizontal: IdSpace.s4, vertical: IdSpace.s3),
-          child: Row(
-            children: [
-              Icon(icon, size: IdSize.iconMd, color: destructive ? c.danger : c.textMuted),
-              const SizedBox(width: 14),
-              Expanded(child: Text(label, style: t.bodyLg.copyWith(fontWeight: FontWeight.w500, color: fg))),
-              if (value != null) ...[
-                Text(value!, style: t.body.copyWith(color: c.textMuted)),
-                const SizedBox(width: IdSpace.s2),
-              ],
-              if (onTap != null && !destructive) Icon(LucideIcons.chevronRight, size: IdSize.iconSm, color: c.textMuted),
-            ],
+          child: Builder(
+            builder: (context) {
+              final labelText = Text(label, style: t.bodyLg.copyWith(fontWeight: FontWeight.w500, color: fg));
+              final valueText = value == null ? null : Text(value!, style: t.body.copyWith(color: c.textMuted), textAlign: TextAlign.end);
+              // With large text there is no room for the value beside the label, so it goes underneath (as in iOS Settings).
+              final stacked = valueText != null && MediaQuery.textScalerOf(context).scale(1) > 1.3;
+              return Row(
+                children: [
+                  Icon(icon, size: IdSize.iconMd, color: destructive ? c.danger : c.textMuted),
+                  const SizedBox(width: 14),
+                  Expanded(
+                    child: stacked ? Column(crossAxisAlignment: CrossAxisAlignment.start, children: [labelText, valueText]) : labelText,
+                  ),
+                  if (valueText != null && !stacked) ...[
+                    ConstrainedBox(constraints: BoxConstraints(maxWidth: MediaQuery.sizeOf(context).width * 0.4), child: valueText),
+                    const SizedBox(width: IdSpace.s2),
+                  ],
+                  if (onTap != null && !destructive) Icon(LucideIcons.chevronRight, size: IdSize.iconSm, color: c.textMuted),
+                ],
+              );
+            },
           ),
         ),
       ),

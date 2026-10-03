@@ -181,27 +181,26 @@ class _Loading extends StatelessWidget {
     return Semantics(
       label: 'Loading prices',
       child: ExcludeSemantics(
-        child: Padding(
+        // A list that never scrolls, so the placeholder is cut off rather than overflowing when text is large.
+        child: ListView(
+          physics: const NeverScrollableScrollPhysics(),
           padding: const EdgeInsets.all(IdSpace.s4),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Row(children: [block(88, 40, radius: IdRadius.full), const SizedBox(width: IdSpace.s2), block(104, 40, radius: IdRadius.full), const SizedBox(width: IdSpace.s2), block(104, 40, radius: IdRadius.full)]),
-              const SizedBox(height: IdSpace.s6),
-              for (var i = 0; i < 5; i++)
-                Padding(
-                  padding: const EdgeInsets.only(bottom: IdSpace.s4),
-                  child: Row(
-                    children: [
-                      block(IdSize.thumb, IdSize.thumb),
-                      const SizedBox(width: IdSpace.s3),
-                      Expanded(child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [block(150, 16), const SizedBox(height: 8), block(70, 14)])),
-                      block(76, 36, radius: IdRadius.full),
-                    ],
-                  ),
+          children: [
+            Row(children: [block(88, 40, radius: IdRadius.full), const SizedBox(width: IdSpace.s2), block(104, 40, radius: IdRadius.full), const SizedBox(width: IdSpace.s2), block(104, 40, radius: IdRadius.full)]),
+            const SizedBox(height: IdSpace.s6),
+            for (var i = 0; i < 5; i++)
+              Padding(
+                padding: const EdgeInsets.only(bottom: IdSpace.s4),
+                child: Row(
+                  children: [
+                    block(IdSize.thumb, IdSize.thumb),
+                    const SizedBox(width: IdSpace.s3),
+                    Expanded(child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [block(150, 16), const SizedBox(height: 8), block(70, 14)])),
+                    block(76, 36, radius: IdRadius.full),
+                  ],
                 ),
-            ],
-          ),
+              ),
+          ],
         ),
       ),
     );

@@ -118,7 +118,8 @@ class _Items extends ConsumerWidget {
               child: Row(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
-                  if (name != null) Semantics(header: true, child: Text(name, style: t.title)) else const SizedBox.shrink(),
+                  if (name != null) Expanded(child: Semantics(header: true, child: Text(name, style: t.title))) else const Spacer(),
+                  const SizedBox(width: IdSpace.s2),
                   Text(_pieces(lines.fold(0, (a, l) => a + l.quantity)), style: t.caption.copyWith(color: c.textMuted)),
                 ],
               ),

@@ -74,11 +74,14 @@ class MapPinController extends Notifier<MapPinState> {
   Future<Place?> useCurrentLocation() async {
     state = state.copyWith(locating: true);
     final access = await _location.requestAccess();
+    // The customer may have left the screen while the permission prompt or GPS fix was pending.
+    if (!ref.mounted) return null;
     if (access != LocationAccess.granted) {
       state = state.copyWith(access: access, locating: false);
       return null;
     }
     final place = await _location.currentPlace();
+    if (!ref.mounted) return null;
     state = state.copyWith(access: place == null ? LocationAccess.unknown : LocationAccess.granted, locating: false);
     if (place != null) await choose(place);
     return place;
@@ -89,7 +92,7 @@ class MapPinController extends Notifier<MapPinState> {
     final request = ++_request;
     state = state.copyWith(resolving: true);
     final place = await _location.reverse(latitude, longitude);
-    if (request != _request || place == null) return;
+    if (!ref.mounted || request != _request || place == null) return;
     await _resolved(place, request);
   }
 
@@ -109,7 +112,7 @@ class MapPinController extends Notifier<MapPinState> {
     } catch (_) {
       failed = true;
     }
-    if (request != _request) return;
+    if (!ref.mounted || request != _request) return;
     state = state.copyWith(place: place, resolving: false, area: area, areaCheckFailed: failed);
   }
 }

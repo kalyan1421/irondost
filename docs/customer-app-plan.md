@@ -142,9 +142,13 @@ Each phase ends with something runnable on a simulator and a device.
 4. **Orders and tracking** (built 3 Oct 2026): order list (Active / Past, paged), details with the timeline and realtime updates,
    partner call, pay-due sheet and receipt, cancel before pickup, items and bill, "book the same again", notification inbox, the
    notification-permission prompt after the first booking, in-app push banners and tap-to-open deep links.
-5. **Account and polish:**
-   - Offers, account, legal pages, log-out and account deletion.
-   - Empty, error and offline states; dark-mode pass; accessibility pass with TalkBack and VoiceOver.
+5. **Account and polish** (built 3 Oct 2026):
+   - Offers (featured card, copy code, empty and error states), account, edit profile (mobile number locked), help and support,
+     the three policies in the app, log out, and account deletion (blocked while orders are in progress).
+   - Offline banner on the tabs (learned from real API calls) that reloads the data when the connection returns.
+   - Accessibility pass: a test matrix draws every screen in light and dark at normal and 200% text and checks tap targets, labels and contrast.
+     Still to do by hand before release: TalkBack on an Android phone and VoiceOver on an iPhone.
+   - The policy text is drafted from the old app's policies and needs the business to review it before release.
 6. **Release:**
    - Launcher icons and splash from `packages/brand`.
    - Store screenshots from the designs; App Privacy and Data safety forms.

@@ -35,25 +35,28 @@ class CartBar extends StatelessWidget {
                 top: false,
                 child: Padding(
                   padding: const EdgeInsets.fromLTRB(IdSpace.s4, IdSpace.s3, IdSpace.s4, IdSpace.s3),
-                  child: Row(
-                    children: [
-                      Expanded(
-                        child: Semantics(
-                          liveRegion: true,
-                          label: '$count ${count == 1 ? 'item' : 'items'}, ${rupees(totalPaise)}',
-                          excludeSemantics: true,
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            mainAxisSize: MainAxisSize.min,
-                            children: [
-                              Text('$count ${count == 1 ? 'item' : 'items'}', style: t.label.copyWith(color: c.textMuted)),
-                              Text(rupees(totalPaise), style: t.titleLg),
-                            ],
-                          ),
+                  child: Builder(
+                    builder: (context) {
+                      final summary = Semantics(
+                        liveRegion: true,
+                        label: '$count ${count == 1 ? 'item' : 'items'}, ${rupees(totalPaise)}',
+                        excludeSemantics: true,
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            Text('$count ${count == 1 ? 'item' : 'items'}', style: t.label.copyWith(color: c.textMuted)),
+                            Text(rupees(totalPaise), style: t.titleLg),
+                          ],
                         ),
-                      ),
-                      IdButton(label: 'Review basket', icon: LucideIcons.chevronRight, iconAtEnd: true, onPressed: onReview),
-                    ],
+                      );
+                      // With large text the summary and the button no longer fit side by side, so the button goes below, full width.
+                      final stacked = MediaQuery.textScalerOf(context).scale(1) > 1.3;
+                      final button = IdButton(label: 'Review basket', icon: LucideIcons.chevronRight, iconAtEnd: true, expand: stacked, onPressed: onReview);
+                      return stacked
+                          ? Column(crossAxisAlignment: CrossAxisAlignment.stretch, mainAxisSize: MainAxisSize.min, children: [summary, const SizedBox(height: IdSpace.s2), button])
+                          : Row(children: [Expanded(child: summary), button]);
+                    },
                   ),
                 ),
               ),

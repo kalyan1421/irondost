@@ -20,11 +20,13 @@ class DateStrip extends StatelessWidget {
   Widget build(BuildContext context) {
     final c = context.colors;
     final t = context.text;
+    // The chips grow with the text size, so large text is never clipped.
+    final grow = (MediaQuery.textScalerOf(context).scale(1) - 1).clamp(0.0, 2.0);
     return Semantics(
       container: true,
       label: label,
       child: SizedBox(
-        height: 72,
+        height: 72 + grow * 64,
         child: ListView.separated(
           scrollDirection: Axis.horizontal,
           itemCount: dates.length,
@@ -42,7 +44,7 @@ class DateStrip extends StatelessWidget {
                 borderRadius: BorderRadius.circular(IdRadius.md),
                 onTap: () => onSelect(date),
                 child: Container(
-                  width: 64,
+                  width: 64 + grow * 24,
                   padding: const EdgeInsets.symmetric(vertical: 6),
                   decoration: BoxDecoration(
                     color: on ? c.primary : c.surface,

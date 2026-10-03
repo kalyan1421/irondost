@@ -49,7 +49,7 @@ class _MapPinScreenState extends ConsumerState<MapPinScreen> {
 
   Future<void> _useMyLocation() async {
     final place = await ref.read(mapPinProvider.notifier).useCurrentLocation();
-    if (place != null) await _map.moveTo(place.latitude, place.longitude);
+    if (place != null && mounted) await _map.moveTo(place.latitude, place.longitude);
   }
 
   Future<void> _search() async {

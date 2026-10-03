@@ -41,6 +41,21 @@ void main() {
     expect(addresses.checked.single.pincode, '500034');
   });
 
+  test('leaving the screen while the permission prompt is open is harmless', () async {
+    final held = ProviderContainer(overrides: [locationServiceProvider.overrideWithValue(location), addressRepositoryProvider.overrideWithValue(addresses)]);
+    addTearDown(held.dispose);
+    final subscription = held.listen(mapPinProvider, (_, _) {});
+    location.holdAccess = Completer<LocationAccess>();
+
+    final pending = held.read(mapPinProvider.notifier).useCurrentLocation();
+    subscription.close(); // the screen is gone
+    await Future<void>.delayed(Duration.zero);
+    location.holdAccess!.complete(LocationAccess.granted);
+
+    expect(await pending, isNull, reason: 'no state is written once nobody is watching');
+    expect(addresses.checked, isEmpty);
+  });
+
   test('flags a place outside the service area', () async {
     addresses.areaServiceable = false;
     await pin().useCurrentLocation();

@@ -4,6 +4,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../app/env.dart';
 import '../features/auth/auth_repository.dart';
 import 'api/export.dart';
+import 'reachability.dart';
 
 export 'api/export.dart';
 export 'api_failure.dart';
@@ -19,7 +20,14 @@ final dioProvider = Provider<Dio>((ref) {
       headers: {'Accept': 'application/json'},
     ),
   );
-  dio.interceptors.add(_AuthInterceptor(auth, dio));
+  dio.interceptors
+    ..add(_AuthInterceptor(auth, dio))
+    ..add(ReachabilityInterceptor((reached) {
+      // Requests can finish after the app has torn the provider down (tests, sign-out); then there is nobody to tell.
+      if (!ref.mounted) return;
+      final state = ref.read(reachabilityProvider.notifier);
+      reached ? state.reached() : state.lost();
+    }));
   return dio;
 });
 

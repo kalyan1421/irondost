@@ -14,6 +14,7 @@ import '../../data/api_client.dart';
 import '../../design/theme.dart';
 import '../../design/widgets/alert_sheet.dart';
 import '../../design/widgets/id_button.dart';
+import '../../design/widgets/id_sheet.dart';
 import '../../design/widgets/order_timeline.dart';
 import '../../design/widgets/state_view.dart';
 import '../../design/widgets/surfaces.dart';
@@ -279,29 +280,24 @@ Future<void> bookAgain(BuildContext context, WidgetRef ref, OrderDto order) asyn
 /// "Need help with this order?": call or email support, with the order number to quote.
 Future<void> showOrderHelp(BuildContext context, WidgetRef ref, OrderDto order) {
   final support = Support.of(ref);
-  return showModalBottomSheet<void>(
-    context: context,
+  return showIdSheet<void>(
+    context,
     builder: (context) {
       final t = context.text;
-      return SafeArea(
-        child: Padding(
-          padding: const EdgeInsets.fromLTRB(IdSpace.s4, 0, IdSpace.s4, IdSpace.s4),
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            crossAxisAlignment: CrossAxisAlignment.stretch,
-            children: [
-              Semantics(header: true, child: Text('Need help with this order?', style: t.titleLg)),
-              const SizedBox(height: IdSpace.s1),
-              Text('Mention ${order.orderNumber} and we\'ll find it straight away.', style: t.body.copyWith(color: context.colors.textMuted)),
-              const SizedBox(height: IdSpace.s4),
-              IdButton(label: 'Call ${IndianPhone.display(support.phone)}', icon: LucideIcons.phone, expand: true, onPressed: () => Support.dial(support.phone)),
-              if (support.email != null) ...[
-                const SizedBox(height: IdSpace.s2),
-                IdButton.outline(label: 'Email ${support.email}', icon: LucideIcons.mail, expand: true, onPressed: () => Support.mail(support.email!)),
-              ],
-            ],
-          ),
-        ),
+      return Column(
+        mainAxisSize: MainAxisSize.min,
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          Semantics(header: true, child: Text('Need help with this order?', style: t.titleLg)),
+          const SizedBox(height: IdSpace.s1),
+          Text('Mention ${order.orderNumber} and we\'ll find it straight away.', style: t.body.copyWith(color: context.colors.textMuted)),
+          const SizedBox(height: IdSpace.s4),
+          IdButton(label: 'Call ${IndianPhone.display(support.phone)}', icon: LucideIcons.phone, expand: true, onPressed: () => Support.dial(support.phone)),
+          if (support.email != null) ...[
+            const SizedBox(height: IdSpace.s2),
+            IdButton.outline(label: 'Email ${support.email}', icon: LucideIcons.mail, expand: true, onPressed: () => Support.mail(support.email!)),
+          ],
+        ],
       );
     },
   );

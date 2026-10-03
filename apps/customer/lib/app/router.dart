@@ -4,6 +4,10 @@ import 'package:go_router/go_router.dart';
 
 import '../data/api_client.dart';
 import '../features/account/account_screen.dart';
+import '../features/account/edit_profile_screen.dart';
+import '../features/account/help_screen.dart';
+import '../features/account/legal_content.dart';
+import '../features/account/legal_screen.dart';
 import '../features/addresses/address_args.dart';
 import '../features/addresses/address_form_screen.dart';
 import '../features/addresses/addresses_controller.dart';
@@ -93,6 +97,13 @@ final routerProvider = Provider<GoRouter>((ref) {
       GoRoute(
         path: Routes.orderConfirmed,
         builder: (_, state) => OrderConfirmedScreen(orderId: state.pathParameters['id']!, initial: state.extra as OrderDto?),
+      ),
+      GoRoute(path: Routes.editProfile, builder: (_, _) => const EditProfileScreen()),
+      GoRoute(path: Routes.help, builder: (_, _) => const HelpScreen()),
+      GoRoute(
+        path: Routes.legalDoc,
+        redirect: (_, state) => LegalDoc.fromSlug(state.pathParameters['doc']) == null ? Routes.help : null,
+        builder: (_, state) => LegalScreen(doc: LegalDoc.fromSlug(state.pathParameters['doc'])!),
       ),
       GoRoute(path: Routes.notificationPermission, builder: (_, _) => const NotificationPermissionScreen()),
       GoRoute(path: Routes.notifications, builder: (_, _) => const NotificationsScreen()),

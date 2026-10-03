@@ -21,14 +21,14 @@ class StatusChip extends StatelessWidget {
       StatusTone.neutral => (c.surfaceSoft, c.textMuted, null),
     };
     return Container(
-      height: 28,
-      padding: const EdgeInsets.symmetric(horizontal: 10),
+      constraints: const BoxConstraints(minHeight: 28),
+      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
       decoration: BoxDecoration(color: bg, borderRadius: BorderRadius.circular(IdRadius.full)),
       child: Row(
         mainAxisSize: MainAxisSize.min,
         children: [
           if (icon != null) ...[Icon(icon, size: IdSize.iconSm, color: fg), const SizedBox(width: IdSpace.s1)],
-          Text(status.customerLabel, style: context.text.labelSm.copyWith(color: fg)),
+          Flexible(child: Text(status.customerLabel, style: context.text.labelSm.copyWith(color: fg))),
         ],
       ),
     );

@@ -50,6 +50,12 @@ abstract final class Routes {
   /// The inbox, opened from the bell on Home.
   static const notifications = '/notifications';
 
+  /// Account: edit profile, help, policies.
+  static const editProfile = '/profile/edit';
+  static const help = '/help';
+  static const legalDoc = '/legal/:doc';
+  static String legal(String doc) => '/legal/$doc';
+
   static const home = '/home';
   static const orders = '/orders';
   static const offers = '/offers';

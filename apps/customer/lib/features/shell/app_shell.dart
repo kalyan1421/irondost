@@ -3,10 +3,12 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:lucide_icons_flutter/lucide_icons.dart';
 
+import '../../data/reachability.dart';
 import '../../design/theme.dart';
 import '../push/push_handler.dart';
 import '../push/push_source.dart';
 import '../realtime/realtime.dart';
+import 'offline_banner.dart';
 
 /// Bottom navigation: Home, Orders, Offers, Account. Each tab keeps its own back stack;
 /// tapping the current tab returns it to its first screen.
@@ -29,10 +31,19 @@ class AppShell extends ConsumerWidget {
         if (route == null) return;
         ref.read(pushTapProvider.notifier).done();
         context.push(route);
+      })
+      // Back online: reload what the tabs show, so the banner going away leaves current data behind it.
+      ..listen(reachabilityProvider, (was, now) {
+        if (now && was == false) refreshAfterReconnect(ref);
       });
     final c = context.colors;
     return Scaffold(
-      body: shell,
+      body: Column(
+        children: [
+          Expanded(child: shell),
+          const OfflineBanner(),
+        ],
+      ),
       bottomNavigationBar: DecoratedBox(
         decoration: BoxDecoration(border: Border(top: BorderSide(color: c.border))),
         child: NavigationBar(

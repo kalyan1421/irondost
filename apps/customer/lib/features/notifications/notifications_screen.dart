@@ -60,7 +60,12 @@ class _NotificationsScreenState extends ConsumerState<NotificationsScreen> {
         leading: BackButton(onPressed: () => context.canPop() ? context.pop() : context.go(Routes.home)),
         title: Text('Notifications', style: context.text.titleLg),
         actions: [
-          if ((list?.unread ?? 0) > 0) TextButton(onPressed: () => ref.read(notificationsProvider.notifier).markAllRead(), child: const Text('Mark all read')),
+          if ((list?.unread ?? 0) > 0)
+            // With large text the label no longer fits beside the title, so it becomes an icon with the same name.
+            if (MediaQuery.textScalerOf(context).scale(1) > 1.3)
+              IconButton(tooltip: 'Mark all read', icon: const Icon(LucideIcons.checkCheck), onPressed: () => ref.read(notificationsProvider.notifier).markAllRead())
+            else
+              TextButton(onPressed: () => ref.read(notificationsProvider.notifier).markAllRead(), child: const Text('Mark all read')),
         ],
       ),
       body: RefreshIndicator(

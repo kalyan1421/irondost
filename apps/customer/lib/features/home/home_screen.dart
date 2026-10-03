@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:lucide_icons_flutter/lucide_icons.dart';
@@ -13,6 +12,7 @@ import '../addresses/addresses_controller.dart';
 import '../addresses/addresses_screen.dart';
 import '../catalogue/catalogue.dart';
 import '../notifications/notifications.dart';
+import '../offers/promo_code.dart';
 import '../offers/promotions.dart';
 
 
@@ -163,6 +163,8 @@ class _Hero extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final c = context.colors;
     final t = context.text;
+    // With large text the words need the whole card, so the picture and bubbles (decoration only) make way.
+    final large = MediaQuery.textScalerOf(context).scale(1) > 1.3;
     return ClipRRect(
       borderRadius: BorderRadius.circular(IdRadius.xl),
       child: Container(
@@ -171,27 +173,29 @@ class _Hero extends ConsumerWidget {
         child: Stack(
           clipBehavior: Clip.none,
           children: [
-            Positioned(
-              right: -56,
-              bottom: -64,
-              child: ExcludeSemantics(
-                child: Container(
-                  width: 184,
-                  height: 184,
-                  alignment: const Alignment(-0.2, -0.3),
-                  decoration: BoxDecoration(color: c.illoFoam, shape: BoxShape.circle),
-                  child: Image.asset('assets/brand/irondost-mark.png', width: 120),
+            if (!large) ...[
+              Positioned(
+                right: -56,
+                bottom: -64,
+                child: ExcludeSemantics(
+                  child: Container(
+                    width: 184,
+                    height: 184,
+                    alignment: const Alignment(-0.2, -0.3),
+                    decoration: BoxDecoration(color: c.illoFoam, shape: BoxShape.circle),
+                    child: Image.asset('assets/brand/irondost-mark.png', width: 120),
+                  ),
                 ),
               ),
-            ),
-            // Bubbles stay right of the 200dp text column.
-            const Positioned(right: 64, top: 44, child: Bubble(14)),
-            const Positioned(right: 4, top: -4, child: Bubble(40)),
+              // Bubbles stay right of the 200dp text column.
+              const Positioned(right: 64, top: 44, child: Bubble(14)),
+              const Positioned(right: 4, top: -4, child: Bubble(40)),
+            ],
             Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 SizedBox(
-                  width: 200,
+                  width: large ? null : 200,
                   child: Semantics(
                     header: true,
                     child: Text('Fresh clothes, back at your door.', style: t.headline.copyWith(color: c.white)),
@@ -230,6 +234,8 @@ class _Services extends ConsumerWidget {
     final c = context.colors;
     final t = context.text;
     final catalog = ref.watch(servicesProvider);
+    // Three across no longer fits a word like "Dry Cleaning" at large text: one per row, picture beside the words.
+    final large = MediaQuery.textScalerOf(context).scale(1) > 1.3;
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
@@ -253,26 +259,63 @@ class _Services extends ConsumerWidget {
                 IdCard(
                   padding: const EdgeInsets.fromLTRB(IdSpace.s2, IdSpace.s4, IdSpace.s2, 14),
                   onTap: () => startBooking(context, ref, service: cat.slug),
-                  child: Column(
-                    children: [
-                      Container(
-                        width: 48,
-                        height: 48,
-                        decoration: BoxDecoration(color: c.primarySoft, borderRadius: BorderRadius.circular(IdRadius.md)),
-                        child: Icon(_icon(cat.slug), color: c.onPrimarySoft),
-                      ),
-                      const SizedBox(height: IdSpace.s2),
-                      Text(cat.name, style: t.label, textAlign: TextAlign.center, maxLines: 2),
-                      Text(
-                        'from ${rupees(cat.items.map((i) => i.effectivePricePaise).reduce((a, b) => a < b ? a : b))}',
-                        style: t.caption.copyWith(color: c.textMuted),
-                      ),
-                    ],
+                  child: _ServiceCardBody(
+                    large: large,
+                    icon: _icon(cat.slug),
+                    name: cat.name,
+                    from: 'from ${rupees(cat.items.map((i) => i.effectivePricePaise).reduce((a, b) => a < b ? a : b))}',
                   ),
                 ),
             ],
           ),
         ),
+      ],
+    );
+  }
+}
+
+class _ServiceCardBody extends StatelessWidget {
+  const _ServiceCardBody({required this.large, required this.icon, required this.name, required this.from});
+
+  final bool large;
+  final IconData icon;
+  final String name;
+  final String from;
+
+  @override
+  Widget build(BuildContext context) {
+    final c = context.colors;
+    final t = context.text;
+    final tile = Container(
+      width: 48,
+      height: 48,
+      decoration: BoxDecoration(color: c.primarySoft, borderRadius: BorderRadius.circular(IdRadius.md)),
+      child: Icon(icon, color: c.onPrimarySoft),
+    );
+    if (large) {
+      return Row(
+        children: [
+          const SizedBox(width: IdSpace.s2),
+          tile,
+          const SizedBox(width: IdSpace.s3),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(name, style: t.label),
+                Text(from, style: t.caption.copyWith(color: c.textMuted)),
+              ],
+            ),
+          ),
+        ],
+      );
+    }
+    return Column(
+      children: [
+        tile,
+        const SizedBox(height: IdSpace.s2),
+        Text(name, style: t.label, textAlign: TextAlign.center, maxLines: 2),
+        Text(from, style: t.caption.copyWith(color: c.textMuted)),
       ],
     );
   }
@@ -286,7 +329,8 @@ class _ServiceGrid extends StatelessWidget {
   Widget build(BuildContext context) => LayoutBuilder(
         builder: (context, box) {
           const gap = IdSpace.s3;
-          final width = (box.maxWidth - gap * 2) / 3;
+          final columns = MediaQuery.textScalerOf(context).scale(1) > 1.3 ? 1 : 3;
+          final width = (box.maxWidth - gap * (columns - 1)) / columns;
           return Wrap(
             spacing: gap,
             runSpacing: gap,
@@ -336,33 +380,7 @@ class _Offer extends ConsumerWidget {
                   Text(terms, style: t.body.copyWith(color: c.textMuted)),
                 ],
                 const SizedBox(height: IdSpace.s3),
-                Semantics(
-                  button: true,
-                  label: 'Copy code ${promo.code}',
-                  child: InkWell(
-                    borderRadius: BorderRadius.circular(IdRadius.sm),
-                    onTap: () {
-                      Clipboard.setData(ClipboardData(text: promo.code));
-                      ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Code ${promo.code} copied')));
-                    },
-                    child: Container(
-                      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
-                      decoration: BoxDecoration(
-                        color: c.surface,
-                        borderRadius: BorderRadius.circular(IdRadius.sm),
-                        border: Border.all(color: c.text, width: 1.5),
-                      ),
-                      child: Row(
-                        mainAxisSize: MainAxisSize.min,
-                        children: [
-                          Text(promo.code, style: t.orderId),
-                          const SizedBox(width: 6),
-                          Icon(LucideIcons.copy, size: IdSize.iconSm, color: c.text),
-                        ],
-                      ),
-                    ),
-                  ),
-                ),
+                PromoCodeChip(promo.code, onTap: () => copyPromoCode(context, promo.code)),
               ],
             ),
           ],
