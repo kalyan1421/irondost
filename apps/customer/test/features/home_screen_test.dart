@@ -1,8 +1,11 @@
+import 'dart:io';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:irondost_customer/app/routes.dart';
 import 'package:irondost_customer/data/api_client.dart';
 import 'package:irondost_customer/features/addresses/address_repository.dart';
+import 'package:irondost_customer/features/home/banners.dart';
 import 'package:irondost_customer/features/home/home_screen.dart';
 import 'package:irondost_customer/features/orders/order_repository.dart';
 import 'package:irondost_customer/features/auth/welcome_screen.dart';
@@ -44,6 +47,56 @@ void main() {
       expect(tester.takeException(), isNull);
     },
   );
+  testWidgets('Home lists the services before the offers carousel', (
+    tester,
+  ) async {
+    tester.view
+      ..physicalSize = const Size(390 * 2, 1800 * 2)
+      ..devicePixelRatio = 2;
+    addTearDown(tester.view.reset);
+    final bytes = File('test/fixtures/admin-offer-banner.webp')
+        .readAsBytesSync();
+    final router = testRouter({
+      Routes.home: () => const HomeScreen(),
+    }, initial: Routes.home);
+    await tester.pumpWidget(
+      themedRouter(
+        router,
+        overrides: [
+          ...await basketOverrides(
+            banners: [
+              const BannerDto(
+                id: 'b1',
+                imageUrl: 'https://images.example/b1.webp',
+                title: 'Festival offer',
+                linkUrl: null,
+                sortOrder: 0,
+                isActive: true,
+              ),
+            ],
+          ),
+          addressRepositoryProvider.overrideWithValue(
+            FakeAddressRepository([testAddress()]),
+          ),
+          orderRepositoryProvider.overrideWithValue(FakeOrderRepository()),
+          bannerImageProvider.overrideWith((ref, url) => MemoryImage(bytes)),
+        ],
+      ),
+    );
+    await tester.pumpAndSettle();
+
+    expect(find.text('Services'), findsOneWidget);
+    expect(find.text('Offers'), findsOneWidget);
+    expect(
+      tester.getTopLeft(find.text('Services')).dy,
+      lessThan(tester.getTopLeft(find.text('Offers')).dy),
+      reason: 'what we sell comes first; the campaign follows',
+    );
+    expect(
+      tester.getTopLeft(find.text('Book a pickup')).dy,
+      lessThan(tester.getTopLeft(find.text('Services')).dy),
+    );
+  });
   testWidgets(
     'Home shows active orders from the existing provider and opens tracking',
     (tester) async {

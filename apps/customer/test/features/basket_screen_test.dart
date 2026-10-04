@@ -55,6 +55,16 @@ void main() {
     expect(tester.widget<FilledButton>(find.widgetWithText(FilledButton, 'Choose pickup time')).onPressed, isNotNull);
   });
 
+  testWidgets('each line price sits at the right edge of its row, not mid-screen', (tester) async {
+    await pump(tester, saved: {'basket.v1': tenShirtsAndASaree});
+    final screen = tester.getSize(find.byType(Scaffold).first).width;
+
+    // Ten shirts at ₹15. The price must end where the content ends (20 dp gutter), whatever the name's length.
+    final priceRight = tester.getTopRight(find.text('₹150')).dx;
+    expect(priceRight, closeTo(screen - 20, 1));
+    expect(tester.getTopLeft(find.text('₹150')).dx, greaterThan(screen / 2), reason: 'a short price must not start at the row midpoint');
+  });
+
   testWidgets('a burst of taps is priced once, after the pause', (tester) async {
     final (container, quotes) = await pump(tester, saved: {'basket.v1': tenShirtsAndASaree});
     quotes.calls.clear();

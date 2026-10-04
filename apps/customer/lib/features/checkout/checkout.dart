@@ -33,17 +33,24 @@ enum CheckoutProblem {
   failed,
 }
 
+/// The longest note the API accepts (`instructions` is capped at 500 characters).
+const instructionsMaxLength = 500;
+
 class CheckoutState {
-  const CheckoutState({this.method = PaymentMethod.online, this.placing = false, this.problem});
+  const CheckoutState({this.method = PaymentMethod.online, this.placing = false, this.problem, this.instructions = ''});
 
   final PaymentMethod method;
   final bool placing;
   final CheckoutProblem? problem;
 
-  CheckoutState copyWith({PaymentMethod? method, bool? placing, CheckoutProblem? problem, bool clearProblem = false}) => CheckoutState(
+  /// An optional note for the pickup, typed on the checkout screen.
+  final String instructions;
+
+  CheckoutState copyWith({PaymentMethod? method, bool? placing, CheckoutProblem? problem, bool clearProblem = false, String? instructions}) => CheckoutState(
         method: method ?? this.method,
         placing: placing ?? this.placing,
         problem: clearProblem ? null : (problem ?? this.problem),
+        instructions: instructions ?? this.instructions,
       );
 }
 
@@ -65,6 +72,13 @@ class CheckoutController extends Notifier<CheckoutState> {
 
   void dismissProblem() => state = state.copyWith(clearProblem: true);
 
+  /// Keeps the note while the customer types. Editing it clears an old failure message, like
+  /// changing the payment method does.
+  void setInstructions(String text) {
+    if (state.placing) return;
+    state = state.copyWith(instructions: text, clearProblem: true);
+  }
+
   /// Places the order. Returns it, or null with [CheckoutState.problem] set.
   ///
   /// Ignores a second call while one is running, so a double tap places one order.
@@ -76,7 +90,9 @@ class CheckoutController extends Notifier<CheckoutState> {
       return null;
     }
 
+    final note = state.instructions.trim();
     final dto = PlaceOrderDto(
+      instructions: note.isEmpty ? null : note,
       items: basket.items,
       promoCode: basket.promoCode,
       pickupDate: schedule.pickup!.date,

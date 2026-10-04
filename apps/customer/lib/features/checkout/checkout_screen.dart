@@ -11,6 +11,7 @@ import '../../design/theme.dart';
 import '../../design/widgets/alert_sheet.dart';
 import '../../design/widgets/choice_card.dart';
 import '../../design/widgets/id_button.dart';
+import '../../design/widgets/id_text_field.dart';
 import '../../design/widgets/state_view.dart';
 import '../../design/widgets/surfaces.dart';
 import '../../design/widgets/review_row.dart';
@@ -177,6 +178,7 @@ class CheckoutScreen extends ConsumerWidget {
     return Scaffold(
       appBar: appBar,
       body: ListView(
+        keyboardDismissBehavior: ScrollViewKeyboardDismissBehavior.onDrag,
         padding: const EdgeInsets.fromLTRB(
           IdSpace.s5,
           IdSpace.s5,
@@ -189,6 +191,8 @@ class CheckoutScreen extends ConsumerWidget {
             const SizedBox(height: IdSpace.s3),
             _NotServed(address: address),
           ],
+          const SizedBox(height: IdSpace.s6),
+          const _Note(),
           const SizedBox(height: IdSpace.s6),
           Semantics(
             header: true,
@@ -251,6 +255,136 @@ class _Where extends ConsumerWidget {
   }
 }
 
+
+/// Quick phrases for the note. Only things that are about the pickup, never promises about how the
+/// clothes are handled: care requests are typed in the customer's own words.
+const _noteSuggestions = [
+  'Call before arriving',
+  'Leave with security',
+  "Don't ring the bell",
+];
+
+/// An optional note for the pickup. It is sent as the order's `instructions` and shown to staff on
+/// the order page.
+class _Note extends ConsumerStatefulWidget {
+  const _Note();
+
+  @override
+  ConsumerState<_Note> createState() => _NoteState();
+}
+
+class _NoteState extends ConsumerState<_Note> {
+  late final TextEditingController _controller = TextEditingController(
+    text: ref.read(checkoutProvider).instructions,
+  );
+
+  @override
+  void dispose() {
+    _controller.dispose();
+    super.dispose();
+  }
+
+  /// Adds [phrase] after what is already typed, unless it is already there or would not fit.
+  void _add(String phrase) {
+    final text = _controller.text.trim();
+    if (text.contains(phrase)) return;
+    final separator = text.isEmpty ? '' : (text.endsWith('.') ? ' ' : '. ');
+    final next = '$text$separator$phrase';
+    if (next.length > instructionsMaxLength) return;
+    _controller.value = TextEditingValue(
+      text: next,
+      selection: TextSelection.collapsed(offset: next.length),
+    );
+    ref.read(checkoutProvider.notifier).setInstructions(next);
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final placing = ref.watch(checkoutProvider.select((s) => s.placing));
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        IdTextField(
+          label: 'Note for your pickup (optional)',
+          hint: 'e.g. Call before arriving',
+          help: 'IronDost sees this with your order.',
+          controller: _controller,
+          enabled: !placing,
+          minLines: 2,
+          maxLines: 4,
+          maxLength: instructionsMaxLength,
+          textCapitalization: TextCapitalization.sentences,
+          textInputAction: TextInputAction.done,
+          onChanged: ref.read(checkoutProvider.notifier).setInstructions,
+        ),
+        const SizedBox(height: IdSpace.s2),
+        Wrap(
+          spacing: IdSpace.s2,
+          runSpacing: IdSpace.s2,
+          children: [
+            for (final phrase in _noteSuggestions)
+              _Suggestion(
+                label: phrase,
+                onTap: placing ? null : () => _add(phrase),
+              ),
+          ],
+        ),
+      ],
+    );
+  }
+}
+
+/// A neutral outlined control that adds a phrase to the note. At least 48 dp tall, never a filled
+/// primary: the one filled button on this screen is Pay or Place order.
+class _Suggestion extends StatelessWidget {
+  const _Suggestion({required this.label, required this.onTap});
+  final String label;
+  final VoidCallback? onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    final c = context.colors;
+    return Semantics(
+      button: true,
+      label: 'Add "$label" to the note',
+      excludeSemantics: true,
+      enabled: onTap != null,
+      child: Material(
+        color: c.surface,
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(IdRadius.md),
+          side: BorderSide(color: c.borderStrong),
+        ),
+        child: InkWell(
+          onTap: onTap,
+          customBorder: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(IdRadius.md),
+          ),
+          child: ConstrainedBox(
+            constraints: const BoxConstraints(minHeight: IdSize.touchTarget),
+            // widthFactor 1: centre the label vertically in the 48 dp target without stretching
+            // the chip to the full row.
+            child: Center(
+              widthFactor: 1,
+              child: Padding(
+                padding: const EdgeInsets.symmetric(
+                  horizontal: IdSpace.s3,
+                  vertical: IdSpace.s2,
+                ),
+                // No leading icon: with one, the first two phrases are a few dp too wide to share
+                // a row at 390 dp, and the note would push the payment choice off the first screen.
+                child: Text(
+                  label,
+                  style: context.text.label.copyWith(color: c.primary),
+                ),
+              ),
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+}
 
 class _NotServed extends StatelessWidget {
   const _NotServed({required this.address});

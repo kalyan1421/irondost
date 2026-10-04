@@ -111,6 +111,65 @@ void main() {
     expect(orders.placed[0].$2, isNot(orders.placed[1].$2));
   });
 
+  group('the note for the pickup', () {
+    test('is sent as the instructions, trimmed', () async {
+      await setUp();
+      checkout().setInstructions('  Call before arriving  ');
+
+      await checkout().place(schedule: schedule, address: address);
+
+      expect(orders.placed.single.$1.instructions, 'Call before arriving');
+    });
+
+    test('a blank note sends no instructions at all', () async {
+      await setUp();
+      checkout().setInstructions('   ');
+
+      await checkout().place(schedule: schedule, address: address);
+
+      expect(orders.placed.single.$1.instructions, isNull);
+    });
+
+    test('editing it after a failure gets a new key; the note is gone once the order exists', () async {
+      await setUp();
+      orders.failures.add(const ApiFailure(ApiFailureKind.server));
+      checkout().setInstructions('Gate code 4321');
+      await checkout().place(schedule: schedule, address: address);
+      expect(container.read(checkoutProvider).instructions, 'Gate code 4321', reason: 'kept after a failure');
+
+      checkout().setInstructions('Gate code 4321. Call before arriving');
+      await checkout().place(schedule: schedule, address: address);
+
+      expect(orders.placed[0].$2, isNot(orders.placed[1].$2), reason: 'a different request, a different key');
+      expect(orders.placed[1].$1.instructions, 'Gate code 4321. Call before arriving');
+      expect(container.read(checkoutProvider).instructions, isEmpty, reason: 'the next order starts clean');
+    });
+
+    test('retrying with the same note reuses the key', () async {
+      await setUp();
+      orders.failures.add(const ApiFailure(ApiFailureKind.timeout));
+      checkout().setInstructions('Leave with security');
+      await checkout().place(schedule: schedule, address: address);
+
+      await checkout().place(schedule: schedule, address: address);
+
+      expect(orders.placed[0].$2, orders.placed[1].$2);
+    });
+
+    test('cannot be changed while the order is being placed', () async {
+      await setUp();
+      checkout().setInstructions('First note');
+      orders.hold = Completer<void>();
+
+      final placing = checkout().place(schedule: schedule, address: address);
+      checkout().setInstructions('Changed mid-flight');
+      orders.hold!.complete();
+      await placing;
+
+      expect(orders.placed.single.$1.instructions, 'First note');
+    });
+  });
+
   group('what went wrong', () {
     Future<CheckoutProblem?> failWith(ApiFailure failure) async {
       orders.failures.add(failure);

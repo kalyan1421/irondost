@@ -213,7 +213,8 @@ class _BasketRow extends ConsumerWidget {
       Row(crossAxisAlignment: CrossAxisAlignment.start, children: [
         Expanded(child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [Text(line.name, style: t.title), Text('${rupees(line.unitPaise)} each', style: t.caption.copyWith(color: c.textMuted))])),
         const SizedBox(width: IdSpace.s3),
-        Flexible(child: Text(rupees(line.unitPaise * line.quantity), textAlign: TextAlign.end, style: t.label.copyWith(fontFeatures: const [FontFeature.tabularFigures()]))),
+        // Not Flexible: next to the Expanded name it would take half the row and start mid-screen.
+        Text(rupees(line.unitPaise * line.quantity), textAlign: TextAlign.end, style: t.label.copyWith(fontFeatures: const [FontFeature.tabularFigures()])),
       ]),
       const SizedBox(height: IdSpace.s3),
       ItemStepper(name: line.name, quantity: line.quantity, showAddWhenEmpty: false, canAdd: line.quantity < BasketController.maxPerItem,
