@@ -98,6 +98,24 @@ Flows:
 
 Useful apps to name in a query: Washmen, Rinse, Urban Company, Blinkit, Swiggy.
 
+## 7. Status: built and not built
+
+Verified on Flutter 3.47.6: `flutter analyze` clean; 410 tests pass (398 before, 12 added); the 200% text stress suite passes 78/78 at each of 320, 390 and 430 dp. Layout was checked on real-font renders, not just widget tests. The captures in `after/` were **not** regenerated, so they still show the earlier Home, Basket, Checkout and Confirmation layouts.
+
+| Item | State |
+|---|---|
+| 1. Pickup note (checkout) | **Built.** Optional note, three neutral quick phrases, sent as the order's `instructions` (max 500). The helper line says "IronDost sees this with your order": staff see it on the admin order page; there is no driver app yet. Care requests (starch, hanging) are typed freely; I did not add them as one-tap options because I don't know you offer them. |
+| 2. Home: services before offers | **Built.** Services now sit directly under Book a pickup. The trust strip is **not** built: it needs claims you can back. |
+| 4. Confirmation "What happens next" | **Built.** Three steps that only restate things the app already says. |
+| 6. Basket price alignment | **Built.** The price floated mid-row because a `Flexible` and an `Expanded` split the row 50/50. Total in the basket footer is **not** built. |
+| 3. "How we iron" sheet and promise copy | Not built. Needs your content. |
+| 5. Garment glyphs in the catalogue | Not built. Needs artwork. |
+| 4. Tracking status hero and partner card | Not built. |
+| 7. Collapse closed slots; preselect first open | Not built. |
+| 8. Order-card garment summary; Repeat action | Not built. |
+| 9, 10. Signature system, empty-state personality | Not built. |
+| 11 to 14 (map, photo proof, ratings, wallet) | Not built; backend or product decisions. |
+
 ## Sources
 
 Search-result summaries; pages themselves were not opened (see the table at the top).
