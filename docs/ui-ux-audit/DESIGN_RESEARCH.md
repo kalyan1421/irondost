@@ -100,7 +100,7 @@ Useful apps to name in a query: Washmen, Rinse, Urban Company, Blinkit, Swiggy.
 
 ## 7. Status: built and not built
 
-Verified on Flutter 3.47.6: `flutter analyze` clean; 410 tests pass (398 before, 12 added); the 200% text stress suite passes 78/78 at each of 320, 390 and 430 dp. Layout was checked on real-font renders, not just widget tests. The captures in `after/` were **not** regenerated, so they still show the earlier Home, Basket, Checkout and Confirmation layouts.
+Verified on Flutter 3.47.6: `flutter analyze` clean; 416 tests pass (398 before, 18 added); the 200% text stress suite passes 78/78 at each of 320, 390 and 430 dp. Layout was checked on real-font renders, not just widget tests. The captures in `after/` were **not** regenerated, so they still show the earlier Home, Basket, Checkout and Confirmation layouts.
 
 | Item | State |
 |---|---|
@@ -110,7 +110,7 @@ Verified on Flutter 3.47.6: `flutter analyze` clean; 410 tests pass (398 before,
 | 6. Basket price alignment | **Built.** The price floated mid-row because a `Flexible` and an `Expanded` split the row 50/50. Total in the basket footer is **not** built. |
 | 3. "How we iron" sheet and promise copy | Not built. Needs your content. |
 | 5. Garment glyphs in the catalogue | Not built. Needs artwork. |
-| 4. Tracking status hero and partner card | Not built. |
+| 4. Tracking status hero and partner card | **Built.** A five-segment progress bar and a clock icon on the "when" line; a late state (amber icon and bar, plus a "Call us" button) when the delivery estimate has passed, still with the existing words; the partner card now has the same shape before and after a partner accepts, with a "Pickup partner" or "Delivery partner" label. The hero and partner card also moved onto the 20 dp grid the timeline uses. No logic or copy changed. **Known and left alone:** a delivery window like "4 – 8 PM" can wrap at the dash; fixing it needs non-breaking spaces in strings that many tests match on. The live map is not built (needs an API change). |
 | 7. Collapse closed slots; preselect first open | Not built. |
 | 8. Order-card garment summary; Repeat action | Not built. |
 | 9, 10. Signature system, empty-state personality | Not built. |
