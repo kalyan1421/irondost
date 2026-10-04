@@ -43,7 +43,7 @@ class OrderConfirmedScreen extends ConsumerWidget {
                     ? const Center(child: CircularProgressIndicator())
                     : Center(
                         child: SingleChildScrollView(
-                          padding: const EdgeInsets.all(IdSpace.s4),
+                          padding: const EdgeInsets.all(IdSpace.s5),
                           child: Column(
                             mainAxisSize: MainAxisSize.min,
                             crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -59,17 +59,32 @@ class OrderConfirmedScreen extends ConsumerWidget {
                                       Container(
                                         width: 96,
                                         height: 96,
-                                        decoration: BoxDecoration(color: c.successSoft, shape: BoxShape.circle),
-                                        child: ExcludeSemantics(child: Icon(LucideIcons.circleCheck, size: 48, color: c.success)),
+                                        decoration: BoxDecoration(
+                                          color: c.successSoft,
+                                          shape: BoxShape.circle,
+                                        ),
+                                        child: ExcludeSemantics(
+                                          child: Icon(
+                                            LucideIcons.circleCheck,
+                                            size: 48,
+                                            color: c.success,
+                                          ),
+                                        ),
                                       ),
-                                      const Positioned(right: 4, top: 2, child: Bubble(22)),
-                                      const Positioned(right: -6, top: 36, child: Bubble(12)),
                                     ],
                                   ),
                                 ),
                               ),
                               const SizedBox(height: IdSpace.s4),
-                              Semantics(header: true, liveRegion: true, child: Text('Pickup booked', style: t.headline, textAlign: TextAlign.center)),
+                              Semantics(
+                                header: true,
+                                liveRegion: true,
+                                child: Text(
+                                  'Pickup booked',
+                                  style: t.headline,
+                                  textAlign: TextAlign.center,
+                                ),
+                              ),
                               const SizedBox(height: IdSpace.s3),
                               Text(
                                 "${_when(order)} We'll tell you when they're on the way.",
@@ -84,7 +99,12 @@ class OrderConfirmedScreen extends ConsumerWidget {
                       ),
               ),
               Padding(
-                padding: const EdgeInsets.fromLTRB(IdSpace.s4, IdSpace.s3, IdSpace.s4, IdSpace.s4),
+                padding: const EdgeInsets.fromLTRB(
+                  IdSpace.s5,
+                  IdSpace.s3,
+                  IdSpace.s5,
+                  IdSpace.s4,
+                ),
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.stretch,
                   children: [
@@ -97,7 +117,11 @@ class OrderConfirmedScreen extends ConsumerWidget {
                       }),
                     ),
                     const SizedBox(height: IdSpace.s1),
-                    IdButton.text(label: 'Back to home', onPressed: () => _leave(context, ref, () => context.go(Routes.home))),
+                    IdButton.text(
+                      label: 'Back to home',
+                      onPressed: () =>
+                          _leave(context, ref, () => context.go(Routes.home)),
+                    ),
                   ],
                 ),
               ),
@@ -109,7 +133,11 @@ class OrderConfirmedScreen extends ConsumerWidget {
   }
 
   /// Leaves the confirmation. The first time, it offers notifications on the way out.
-  static Future<void> _leave(BuildContext context, WidgetRef ref, VoidCallback go) async {
+  static Future<void> _leave(
+    BuildContext context,
+    WidgetRef ref,
+    VoidCallback go,
+  ) async {
     if (await ref.read(pushOfferProvider).shouldOffer() && context.mounted) {
       await context.push(Routes.notificationPermission);
     }
@@ -120,7 +148,8 @@ class OrderConfirmedScreen extends ConsumerWidget {
   static String _when(OrderDto o) {
     final today = istToday();
     final day = o.pickupDate == today ? 'today' : 'on ${dayLong(o.pickupDate)}';
-    final window = windowFromLabel(o.pickupSlotLabel).replaceFirst(' – ', ' and ');
+    final window = windowFromLabel(o.pickupSlotLabel)
+        .replaceFirst(' – ', ' and ');
     return 'A partner will come $day between $window.';
   }
 }
@@ -134,33 +163,52 @@ class _Summary extends StatelessWidget {
     final c = context.colors;
     final t = context.text;
     final pieces = order.items.fold<num>(0, (a, i) => a + i.quantity).toInt();
-    final where = [order.pickupAddress.label, order.pickupAddress.area ?? order.pickupAddress.city].join(', ');
+    final where = [
+      order.pickupAddress.label,
+      order.pickupAddress.area ?? order.pickupAddress.city,
+    ].join(', ');
     final today = istToday();
 
     return IdCard(
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
-          Row(
+          Wrap(
+            spacing: IdSpace.s3,
+            runSpacing: IdSpace.s2,
+            crossAxisAlignment: WrapCrossAlignment.center,
             children: [
-              Expanded(child: Text(order.orderNumber, style: t.orderId)),
+              Text(order.orderNumber, style: t.orderId),
               _PaymentChip(order),
             ],
           ),
           const SizedBox(height: IdSpace.s3),
           Container(
             padding: const EdgeInsets.all(IdSpace.s3),
-            decoration: BoxDecoration(color: c.surfaceSoft, borderRadius: BorderRadius.circular(IdRadius.md)),
-            child: Row(
+            decoration: BoxDecoration(
+              color: c.surfaceSoft,
+              borderRadius: BorderRadius.circular(IdRadius.md),
+            ),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.stretch,
               children: [
-                Expanded(child: _Kv('Pickup', '${dayLong(order.pickupDate, today: today)}, ${windowFromLabel(order.pickupSlotLabel)}')),
-                const SizedBox(width: IdSpace.s3),
-                Expanded(child: _Kv('Delivery', '${dayLong(order.deliveryDate, today: today)}, ${windowFromLabel(order.deliverySlotLabel)}')),
+                _Kv(
+                  'Pickup',
+                  '${dayLong(order.pickupDate, today: today)}, ${windowFromLabel(order.pickupSlotLabel)}',
+                ),
+                const SizedBox(height: IdSpace.s3),
+                _Kv(
+                  'Delivery',
+                  '${dayLong(order.deliveryDate, today: today)}, ${windowFromLabel(order.deliverySlotLabel)}',
+                ),
               ],
             ),
           ),
           const SizedBox(height: IdSpace.s3),
-          Text('$pieces ${pieces == 1 ? 'item' : 'items'} · $where', style: t.body.copyWith(color: c.textMuted)),
+          Text(
+            '$pieces ${pieces == 1 ? 'item' : 'items'} · $where',
+            style: t.body.copyWith(color: c.textMuted),
+          ),
         ],
       ),
     );
@@ -174,12 +222,15 @@ class _Kv extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) => Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Text(k, style: context.text.caption.copyWith(color: context.colors.textMuted)),
-          Text(v, style: context.text.label.copyWith(fontWeight: FontWeight.w600)),
-        ],
-      );
+    crossAxisAlignment: CrossAxisAlignment.start,
+    children: [
+      Text(
+        k,
+        style: context.text.caption.copyWith(color: context.colors.textMuted),
+      ),
+      Text(v, style: context.text.label.copyWith(fontWeight: FontWeight.w600)),
+    ],
+  );
 }
 
 /// "Paid ₹248", "Pay ₹248 at delivery" or "Payment pending".
@@ -193,19 +244,40 @@ class _PaymentChip extends StatelessWidget {
     final paid = order.paymentStatus == PaymentStatus.paid;
     final cash = order.paymentMethod == PaymentMethod.cod;
     final (bg, fg, icon, text) = paid
-        ? (c.successSoft, c.success, LucideIcons.check, 'Paid ${rupees(order.paidPaise)}')
+        ? (
+            c.successSoft,
+            c.success,
+            LucideIcons.check,
+            'Paid ${rupees(order.paidPaise)}',
+          )
         : cash
-            ? (c.surfaceSoft, c.textMuted, null, 'Pay ${rupees(order.totalPaise)} at delivery')
-            : (c.warningSoft, c.warning, null, 'Payment pending');
+        ? (
+            c.surfaceSoft,
+            c.textMuted,
+            null,
+            'Pay ${rupees(order.totalPaise)} at delivery',
+          )
+        : (c.warningSoft, c.warning, null, 'Payment pending');
     return Container(
-      height: 28,
-      padding: const EdgeInsets.symmetric(horizontal: 10),
-      decoration: BoxDecoration(color: bg, borderRadius: BorderRadius.circular(IdRadius.full)),
+      constraints: const BoxConstraints(minHeight: 28),
+      padding: const EdgeInsets.symmetric(
+        horizontal: IdSpace.s2,
+        vertical: IdSpace.s1,
+      ),
+      decoration: BoxDecoration(
+        color: bg,
+        borderRadius: BorderRadius.circular(IdRadius.full),
+      ),
       child: Row(
         mainAxisSize: MainAxisSize.min,
         children: [
-          if (icon != null) ...[Icon(icon, size: IdSize.iconSm, color: fg), const SizedBox(width: IdSpace.s1)],
-          Text(text, style: context.text.labelSm.copyWith(color: fg)),
+          if (icon != null) ...[
+            Icon(icon, size: IdSize.iconSm, color: fg),
+            const SizedBox(width: IdSpace.s1),
+          ],
+          Flexible(
+            child: Text(text, style: context.text.labelSm.copyWith(color: fg)),
+          ),
         ],
       ),
     );

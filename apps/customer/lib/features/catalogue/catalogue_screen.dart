@@ -7,10 +7,11 @@ import '../../app/routes.dart';
 import '../../data/api_client.dart';
 import '../../design/theme.dart';
 import '../../design/widgets/cart_bar.dart';
-import '../../design/widgets/id_button.dart';
 import '../../design/widgets/surfaces.dart';
+import '../../design/widgets/service_visual.dart';
 import '../basket/basket.dart';
 import 'catalogue.dart';
+import 'catalogue_states.dart';
 import 'item_row.dart';
 
 /// "Choose items": one tab per service (Ironing, Wash & iron, Dry cleaning), prices and the
@@ -38,7 +39,10 @@ class _CatalogueScreenState extends ConsumerState<CatalogueScreen> {
 
     return Scaffold(
       appBar: AppBar(
-        leading: BackButton(onPressed: () => context.canPop() ? context.pop() : context.go(Routes.home)),
+        leading: BackButton(
+          onPressed: () =>
+              context.canPop() ? context.pop() : context.go(Routes.home),
+        ),
         title: Text('Choose items', style: t.titleLg),
         actions: [
           IconButton(
@@ -49,10 +53,17 @@ class _CatalogueScreenState extends ConsumerState<CatalogueScreen> {
         ],
       ),
       body: services.when(
-        loading: () => const _Loading(),
-        error: (e, _) => _LoadFailure(onRetry: () => ref.invalidate(catalogProvider)),
+        loading: () => const CatalogueLoading(),
+        error: (e, _) => CatalogueFailure(
+          failure: ApiFailure.from(e),
+          onRetry: () => ref.invalidate(catalogProvider),
+        ),
         data: (list) {
-          if (list.isEmpty) return const _NoServices();
+          if (list.isEmpty) {
+            return CatalogueEmpty(
+              onRetry: () => ref.invalidate(catalogProvider),
+            );
+          }
           final selected = list.firstWhere(
             (c) => c.slug == (_selectedSlug ?? widget.service),
             orElse: () => list.first,
@@ -69,13 +80,21 @@ class _CatalogueScreenState extends ConsumerState<CatalogueScreen> {
           );
         },
       ),
-      bottomNavigationBar: CartBar(count: count, totalPaise: estimate, onReview: () => context.push(Routes.basket)),
+      bottomNavigationBar: CartBar(
+        count: count,
+        totalPaise: estimate,
+        onReview: () => context.push(Routes.basket),
+      ),
     );
   }
 }
 
 class _ServiceTabs extends StatelessWidget {
-  const _ServiceTabs({required this.services, required this.selected, required this.onSelect});
+  const _ServiceTabs({
+    required this.services,
+    required this.selected,
+    required this.onSelect,
+  });
 
   final List<CatalogCategoryDto> services;
   final CatalogCategoryDto selected;
@@ -86,12 +105,18 @@ class _ServiceTabs extends StatelessWidget {
     final c = context.colors;
     final t = context.text;
     return DecoratedBox(
-      decoration: BoxDecoration(color: c.surface, border: Border(bottom: BorderSide(color: c.border))),
+      decoration: BoxDecoration(
+        color: c.surface,
+        border: Border(bottom: BorderSide(color: c.border)),
+      ),
       child: SizedBox(
         height: 64,
         child: ListView.separated(
           scrollDirection: Axis.horizontal,
-          padding: const EdgeInsets.symmetric(horizontal: IdSpace.s4, vertical: IdSpace.s2),
+          padding: const EdgeInsets.symmetric(
+            horizontal: IdSpace.s5,
+            vertical: IdSpace.s2,
+          ),
           itemCount: services.length,
           separatorBuilder: (_, _) => const SizedBox(width: IdSpace.s2),
           itemBuilder: (_, i) {
@@ -103,19 +128,42 @@ class _ServiceTabs extends StatelessWidget {
               label: category.name,
               excludeSemantics: true,
               child: InkWell(
-                customBorder: const StadiumBorder(),
+                borderRadius: BorderRadius.circular(IdRadius.sm),
                 onTap: () => onSelect(category),
                 child: Center(
                   child: Container(
-                    height: 40,
-                    padding: const EdgeInsets.symmetric(horizontal: IdSpace.s4),
+                    constraints: const BoxConstraints(
+                      minHeight: IdSize.touchTarget,
+                    ),
+                    padding: EdgeInsets.zero,
                     alignment: Alignment.center,
                     decoration: BoxDecoration(
-                      color: on ? c.primary : c.surface,
-                      borderRadius: BorderRadius.circular(IdRadius.full),
-                      border: on ? null : Border.all(color: c.borderStrong),
+                      color: c.surface,
+                      borderRadius: BorderRadius.zero,
+                      border: Border(
+                        bottom: BorderSide(
+                          color: on ? c.primary : c.border,
+                          width: on ? 2 : 1,
+                        ),
+                      ),
                     ),
-                    child: Text(category.name, style: t.labelSm.copyWith(color: on ? c.onPrimary : c.text)),
+                    child: Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        ServiceVisual(
+                          category: category,
+                          size: 28,
+                          color: on ? c.primary : c.textMuted,
+                        ),
+                        const SizedBox(width: IdSpace.s2),
+                        Text(
+                          category.name,
+                          style: t.labelSm.copyWith(
+                            color: on ? c.primary : c.textMuted,
+                          ),
+                        ),
+                      ],
+                    ),
                   ),
                 ),
               ),
@@ -136,23 +184,20 @@ class _Items extends StatelessWidget {
     final c = context.colors;
     final t = context.text;
     return ListView(
-      padding: const EdgeInsets.fromLTRB(IdSpace.s4, IdSpace.s4, IdSpace.s4, IdSpace.s6),
+      padding: const EdgeInsets.fromLTRB(
+        IdSpace.s5,
+        IdSpace.s5,
+        IdSpace.s5,
+        IdSpace.s6,
+      ),
       children: [
-        Container(
-          padding: const EdgeInsets.symmetric(horizontal: 14, vertical: IdSpace.s3),
-          decoration: BoxDecoration(color: c.primarySoft, borderRadius: BorderRadius.circular(IdRadius.md)),
-          child: Row(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Icon(LucideIcons.shirt, size: IdSize.iconMd, color: c.onPrimarySoft),
-              const SizedBox(width: 10),
-              Expanded(child: Text('A rough count is fine. Your partner confirms it at pickup.', style: t.body)),
-            ],
-          ),
+        Text(
+          'A rough count is fine. Your partner confirms it at pickup.',
+          style: t.caption.copyWith(color: c.textMuted),
         ),
         const SizedBox(height: IdSpace.s4),
         IdCard(
-          padding: const EdgeInsets.symmetric(horizontal: IdSpace.s4),
+          padding: EdgeInsets.zero,
           child: Column(
             children: [
               for (final (i, item) in category.items.indexed) ...[
@@ -163,114 +208,6 @@ class _Items extends StatelessWidget {
           ),
         ),
       ],
-    );
-  }
-}
-
-class _Loading extends StatelessWidget {
-  const _Loading();
-
-  @override
-  Widget build(BuildContext context) {
-    final c = context.colors;
-    Widget block(double w, double h, {double radius = IdRadius.sm}) => Container(
-          width: w,
-          height: h,
-          decoration: BoxDecoration(color: c.surfaceSoft, borderRadius: BorderRadius.circular(radius)),
-        );
-    return Semantics(
-      label: 'Loading prices',
-      child: ExcludeSemantics(
-        // A list that never scrolls, so the placeholder is cut off rather than overflowing when text is large.
-        child: ListView(
-          physics: const NeverScrollableScrollPhysics(),
-          padding: const EdgeInsets.all(IdSpace.s4),
-          children: [
-            Row(children: [block(88, 40, radius: IdRadius.full), const SizedBox(width: IdSpace.s2), block(104, 40, radius: IdRadius.full), const SizedBox(width: IdSpace.s2), block(104, 40, radius: IdRadius.full)]),
-            const SizedBox(height: IdSpace.s6),
-            for (var i = 0; i < 5; i++)
-              Padding(
-                padding: const EdgeInsets.only(bottom: IdSpace.s4),
-                child: Row(
-                  children: [
-                    block(IdSize.thumb, IdSize.thumb),
-                    const SizedBox(width: IdSpace.s3),
-                    Expanded(child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [block(150, 16), const SizedBox(height: 8), block(70, 14)])),
-                    block(76, 36, radius: IdRadius.full),
-                  ],
-                ),
-              ),
-          ],
-        ),
-      ),
-    );
-  }
-}
-
-/// "Couldn't load prices": the price list failed. The basket is untouched.
-class _LoadFailure extends StatelessWidget {
-  const _LoadFailure({required this.onRetry});
-  final VoidCallback onRetry;
-
-  @override
-  Widget build(BuildContext context) {
-    final c = context.colors;
-    final t = context.text;
-    return ListView(
-      padding: const EdgeInsets.all(IdSpace.s4),
-      children: [
-        IdCard(
-          padding: const EdgeInsets.symmetric(horizontal: IdSpace.s5, vertical: IdSpace.s8),
-          child: Semantics(
-            liveRegion: true,
-            child: Column(
-              children: [
-                Container(
-                  width: 56,
-                  height: 56,
-                  decoration: BoxDecoration(color: c.dangerSoft, shape: BoxShape.circle),
-                  child: Icon(LucideIcons.circleAlert, size: IdSize.iconLg, color: c.danger),
-                ),
-                const SizedBox(height: IdSpace.s3),
-                Text("Couldn't load prices", style: t.titleLg),
-                const SizedBox(height: IdSpace.s2),
-                Text(
-                  'Check your connection and try again. Items already in your basket are kept.',
-                  style: t.body.copyWith(color: c.textMuted),
-                  textAlign: TextAlign.center,
-                ),
-                const SizedBox(height: IdSpace.s4),
-                IdButton.tonal(label: 'Try again', icon: LucideIcons.refreshCw, onPressed: onRetry),
-              ],
-            ),
-          ),
-        ),
-      ],
-    );
-  }
-}
-
-class _NoServices extends StatelessWidget {
-  const _NoServices();
-
-  @override
-  Widget build(BuildContext context) {
-    final c = context.colors;
-    final t = context.text;
-    return Center(
-      child: Padding(
-        padding: const EdgeInsets.all(IdSpace.s6),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Icon(LucideIcons.shirt, size: 52, color: c.textMuted),
-            const SizedBox(height: IdSpace.s4),
-            Text('No services right now', style: t.titleLg),
-            const SizedBox(height: IdSpace.s2),
-            Text("We're updating our price list. Please check back soon.", style: t.body.copyWith(color: c.textMuted), textAlign: TextAlign.center),
-          ],
-        ),
-      ),
     );
   }
 }

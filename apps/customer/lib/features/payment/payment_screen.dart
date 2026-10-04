@@ -17,7 +17,12 @@ import 'payment.dart';
 /// through the whole thing (preparing, the Razorpay window, confirming) and ends at the confirmation
 /// when paid, or here with a way forward when not.
 class PaymentScreen extends ConsumerStatefulWidget {
-  const PaymentScreen({super.key, required this.orderId, this.initial, this.due = false});
+  const PaymentScreen({
+    super.key,
+    required this.orderId,
+    this.initial,
+    this.due = false,
+  });
 
   final String orderId;
 
@@ -46,7 +51,9 @@ class _PaymentScreenState extends ConsumerState<PaymentScreen> {
   Widget build(BuildContext context) {
     final id = widget.orderId;
     ref.listen(paymentProvider(id), (prev, next) {
-      if ((next.phase == PaymentPhase.paid || next.phase == PaymentPhase.cash) && prev?.phase != next.phase) {
+      if ((next.phase == PaymentPhase.paid ||
+              next.phase == PaymentPhase.cash) &&
+          prev?.phase != next.phase) {
         if (!widget.due) {
           context.go(Routes.confirmed(id), extra: next.order);
         } else if (next.phase == PaymentPhase.paid) {
@@ -56,7 +63,13 @@ class _PaymentScreenState extends ConsumerState<PaymentScreen> {
           context.pop();
           messenger
             ..hideCurrentSnackBar()
-            ..showSnackBar(const SnackBar(content: Text("OK. You'll pay in cash when your clothes are delivered.")));
+            ..showSnackBar(
+              const SnackBar(
+                content: Text(
+                  "OK. You'll pay in cash when your clothes are delivered.",
+                ),
+              ),
+            );
         }
       }
     });
@@ -79,13 +92,16 @@ class _PaymentScreenState extends ConsumerState<PaymentScreen> {
         body: SafeArea(
           child: switch (payment.phase) {
             PaymentPhase.failed => _Failed(
-                failure: payment.failure ?? PaymentFailure.other,
-                order: order,
-                due: widget.due,
-                onRetry: controller.start,
-                onCash: () => _cash(controller),
-              ),
-            PaymentPhase.unconfirmed => _Unconfirmed(order: order, onCheck: controller.checkAgain),
+              failure: payment.failure ?? PaymentFailure.other,
+              order: order,
+              due: widget.due,
+              onRetry: controller.start,
+              onCash: () => _cash(controller),
+            ),
+            PaymentPhase.unconfirmed => _Unconfirmed(
+              order: order,
+              onCheck: controller.checkAgain,
+            ),
             _ => _Working(phase: payment.phase, order: order),
           },
         ),
@@ -98,14 +114,29 @@ class _PaymentScreenState extends ConsumerState<PaymentScreen> {
     if (!ok && mounted) {
       ScaffoldMessenger.of(context)
         ..hideCurrentSnackBar()
-        ..showSnackBar(const SnackBar(content: Text("Couldn't switch to cash on delivery. Please try again.")));
+        ..showSnackBar(
+          const SnackBar(
+            content: Text(
+              "Couldn't switch to cash on delivery. Please try again.",
+            ),
+          ),
+        );
     }
   }
 }
 
 /// A centred message with an icon, and up to two buttons pinned to the bottom (the design's payment screens).
 class _Layout extends StatelessWidget {
-  const _Layout({required this.icon, required this.tone, required this.title, required this.body, this.details, this.notice, this.actions = const [], this.caption});
+  const _Layout({
+    required this.icon,
+    required this.tone,
+    required this.title,
+    required this.body,
+    this.details,
+    this.notice,
+    this.actions = const [],
+    this.caption,
+  });
 
   final Widget icon;
   final Color tone;
@@ -133,14 +164,41 @@ class _Layout extends StatelessWidget {
                   crossAxisAlignment: CrossAxisAlignment.stretch,
                   children: [
                     Center(
-                      child: Container(width: 120, height: 120, decoration: BoxDecoration(color: tone, shape: BoxShape.circle), alignment: Alignment.center, child: icon),
+                      child: Container(
+                        width: 64,
+                        height: 64,
+                        decoration: BoxDecoration(
+                          color: tone,
+                          shape: BoxShape.circle,
+                        ),
+                        alignment: Alignment.center,
+                        child: icon,
+                      ),
                     ),
                     const SizedBox(height: IdSpace.s6),
-                    Semantics(header: true, liveRegion: true, child: Text(title, style: t.headline, textAlign: TextAlign.center)),
+                    Semantics(
+                      header: true,
+                      liveRegion: true,
+                      child: Text(
+                        title,
+                        style: t.headline,
+                        textAlign: TextAlign.center,
+                      ),
+                    ),
                     const SizedBox(height: IdSpace.s3),
-                    Text(body, style: t.bodyLg.copyWith(color: c.textMuted), textAlign: TextAlign.center),
-                    if (notice != null) ...[const SizedBox(height: IdSpace.s4), notice!],
-                    if (details != null) ...[const SizedBox(height: IdSpace.s4), details!],
+                    Text(
+                      body,
+                      style: t.bodyLg.copyWith(color: c.textMuted),
+                      textAlign: TextAlign.center,
+                    ),
+                    if (notice != null) ...[
+                      const SizedBox(height: IdSpace.s4),
+                      notice!,
+                    ],
+                    if (details != null) ...[
+                      const SizedBox(height: IdSpace.s4),
+                      details!,
+                    ],
                   ],
                 ),
               ),
@@ -149,13 +207,27 @@ class _Layout extends StatelessWidget {
         ),
         if (actions.isNotEmpty)
           Padding(
-            padding: const EdgeInsets.fromLTRB(IdSpace.s4, IdSpace.s3, IdSpace.s4, IdSpace.s2),
+            padding: const EdgeInsets.fromLTRB(
+              IdSpace.s5,
+              IdSpace.s3,
+              IdSpace.s5,
+              IdSpace.s2,
+            ),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.stretch,
-              children: [for (final (i, a) in actions.indexed) ...[if (i > 0) const SizedBox(height: IdSpace.s2), a]],
+              children: [
+                for (final (i, a) in actions.indexed) ...[
+                  if (i > 0) const SizedBox(height: IdSpace.s2),
+                  a,
+                ],
+              ],
             ),
           ),
-        if (caption != null) Padding(padding: const EdgeInsets.only(bottom: IdSpace.s4), child: caption),
+        if (caption != null)
+          Padding(
+            padding: const EdgeInsets.only(bottom: IdSpace.s4),
+            child: caption,
+          ),
         if (caption == null) const SizedBox(height: IdSpace.s2),
       ],
     );
@@ -173,7 +245,13 @@ class _RazorpayCaption extends StatelessWidget {
       children: [
         Icon(LucideIcons.shieldCheck, size: IdSize.iconSm, color: c.textMuted),
         const SizedBox(width: 6),
-        Text('Secure payment by Razorpay', style: context.text.caption.copyWith(color: c.textMuted)),
+        Flexible(
+          child: Text(
+            'Secure payment by Razorpay',
+            style: context.text.caption.copyWith(color: c.textMuted),
+            textAlign: TextAlign.center,
+          ),
+        ),
       ],
     );
   }
@@ -191,15 +269,27 @@ class _OrderCard extends StatelessWidget {
     final c = context.colors;
     final t = context.text;
     Widget row(String k, Widget v) => Row(
-          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-          children: [Text(k, style: t.bodyLg.copyWith(color: c.textMuted)), v],
-        );
+      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+      children: [
+        Flexible(
+          child: Text(k, style: t.bodyLg.copyWith(color: c.textMuted)),
+        ),
+        const SizedBox(width: IdSpace.s3),
+        Flexible(child: v),
+      ],
+    );
     return IdCard(
       child: Column(
         children: [
           row('Order', Text(o.orderNumber, style: t.orderId)),
           const SizedBox(height: IdSpace.s2),
-          row('Amount', Text(rupees(o.amountDuePaise > 0 ? o.amountDuePaise : o.totalPaise), style: t.label.copyWith(fontWeight: FontWeight.w600))),
+          row(
+            'Amount',
+            Text(
+              rupees(o.amountDuePaise > 0 ? o.amountDuePaise : o.totalPaise),
+              style: t.label.copyWith(fontWeight: FontWeight.w600),
+            ),
+          ),
         ],
       ),
     );
@@ -216,14 +306,26 @@ class _Working extends StatelessWidget {
   Widget build(BuildContext context) {
     final c = context.colors;
     final (title, body) = switch (phase) {
-      PaymentPhase.preparing => ('Getting your payment ready', 'One moment. Please keep the app open.'),
-      PaymentPhase.inCheckout => ('Complete your payment', 'Finish in the payment window. Please keep the app open.'),
-      _ => ('Confirming your payment', 'This takes a few seconds. Please keep the app open.'),
+      PaymentPhase.preparing => (
+        'Getting your payment ready',
+        'One moment. Please keep the app open.',
+      ),
+      PaymentPhase.inCheckout => (
+        'Complete your payment',
+        'Finish in the payment window. Please keep the app open.',
+      ),
+      _ => (
+        'Confirming your payment',
+        'This takes a few seconds. Please keep the app open.',
+      ),
     };
     return Semantics(
       container: true,
       child: _Layout(
-        icon: SizedBox.square(dimension: 52, child: CircularProgressIndicator(strokeWidth: 4, color: c.primary)),
+        icon: SizedBox.square(
+          dimension: 52,
+          child: CircularProgressIndicator(strokeWidth: 4, color: c.primary),
+        ),
         tone: c.primarySoft,
         title: title,
         body: body,
@@ -235,7 +337,13 @@ class _Working extends StatelessWidget {
 }
 
 class _Failed extends StatelessWidget {
-  const _Failed({required this.failure, required this.order, required this.due, required this.onRetry, required this.onCash});
+  const _Failed({
+    required this.failure,
+    required this.order,
+    required this.due,
+    required this.onRetry,
+    required this.onCash,
+  });
 
   final PaymentFailure failure;
   final OrderDto? order;
@@ -247,29 +355,67 @@ class _Failed extends StatelessWidget {
   Widget build(BuildContext context) {
     final c = context.colors;
     final (title, body) = switch (failure) {
-      PaymentFailure.declined => ("Payment didn't go through", 'Your bank or Razorpay declined it. If any money left your account, your bank returns it automatically.'),
-      PaymentFailure.cancelled => ('Payment cancelled', 'You closed the payment window. Nothing was charged.'),
-      PaymentFailure.offline => ('No connection', "We couldn't reach IronDost. Nothing was charged. Check your connection and try again."),
-      PaymentFailure.unavailable => ("Online payment isn't available", 'You can pay cash at delivery instead, or try again a little later.'),
-      PaymentFailure.orderCancelled => ('This order was cancelled', "There's nothing to pay."),
-      PaymentFailure.other => ("We couldn't confirm the payment", 'If any money left your account, your bank returns it automatically. You can try again or pay cash at delivery.'),
+      PaymentFailure.declined => (
+        "Payment didn't go through",
+        'Your bank or Razorpay declined it. If money was debited, contact support before trying again.',
+      ),
+      PaymentFailure.cancelled => (
+        'Payment cancelled',
+        'You closed the payment window. If money was debited, contact support.',
+      ),
+      PaymentFailure.offline => (
+        'No connection',
+        'We couldn’t reach IronDost. Check your connection. If money was debited, contact support before trying again.',
+      ),
+      PaymentFailure.unavailable => (
+        "Online payment isn't available",
+        'You can pay cash at delivery instead, or try again a little later.',
+      ),
+      PaymentFailure.orderCancelled => (
+        'This order was cancelled',
+        "There's nothing to pay.",
+      ),
+      PaymentFailure.other => (
+        "We couldn't confirm the payment",
+        'If money was debited, contact support before trying again. You can try again or pay cash at delivery.',
+      ),
     };
     final o = order;
-    final amount = o == null ? '' : ' · ${rupees(o.amountDuePaise > 0 ? o.amountDuePaise : o.totalPaise)}';
+    final amount = o == null
+        ? ''
+        : ' · ${rupees(o.amountDuePaise > 0 ? o.amountDuePaise : o.totalPaise)}';
     final cancelled = failure == PaymentFailure.orderCancelled;
 
     return _Layout(
-      icon: Icon(failure == PaymentFailure.offline ? LucideIcons.wifiOff : LucideIcons.circleX, size: 52, color: c.danger),
+      icon: Icon(
+        failure == PaymentFailure.offline
+            ? LucideIcons.wifiOff
+            : LucideIcons.circleX,
+        size: 32,
+        color: c.danger,
+      ),
       tone: c.dangerSoft,
       title: title,
       body: body,
       notice: o == null || cancelled || due ? null : _StillBooked(o),
       actions: cancelled
-          ? [IdButton(label: due ? 'Back to order' : 'Back to home', onPressed: () => due ? context.pop() : context.go(Routes.home))]
+          ? [
+              IdButton(
+                label: due ? 'Back to order' : 'Back to home',
+                onPressed: () => due ? context.pop() : context.go(Routes.home),
+              ),
+            ]
           : [
-              if (failure != PaymentFailure.unavailable) IdButton(label: 'Try again$amount', onPressed: onRetry),
-              IdButton.outline(label: 'Pay cash at delivery instead', onPressed: onCash),
-              IdButton.text(label: due ? 'Back to order' : 'Back to home', onPressed: () => due ? context.pop() : context.go(Routes.home)),
+              if (failure != PaymentFailure.unavailable)
+                IdButton(label: 'Try again$amount', onPressed: onRetry),
+              IdButton.outline(
+                label: 'Pay cash at delivery instead',
+                onPressed: onCash,
+              ),
+              IdButton.text(
+                label: due ? 'Back to order' : 'Back to home',
+                onPressed: () => due ? context.pop() : context.go(Routes.home),
+              ),
             ],
     );
   }
@@ -284,22 +430,34 @@ class _StillBooked extends StatelessWidget {
   Widget build(BuildContext context) {
     final c = context.colors;
     final t = context.text;
-    final day = order.pickupDate == istToday() ? 'today' : dayLong(order.pickupDate);
+    final day = order.pickupDate == istToday()
+        ? 'today'
+        : dayLong(order.pickupDate);
     return Semantics(
       liveRegion: true,
       child: Container(
         padding: const EdgeInsets.all(14),
-        decoration: BoxDecoration(color: c.successSoft, borderRadius: BorderRadius.circular(IdRadius.md)),
+        decoration: BoxDecoration(
+          color: c.successSoft,
+          borderRadius: BorderRadius.circular(IdRadius.md),
+        ),
         child: Row(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Icon(LucideIcons.circleCheck, size: IdSize.iconMd, color: c.success),
+            Icon(
+              LucideIcons.circleCheck,
+              size: IdSize.iconMd,
+              color: c.success,
+            ),
             const SizedBox(width: 10),
             Expanded(
               child: Text.rich(
                 TextSpan(
                   children: [
-                    TextSpan(text: 'Your pickup is still booked for $day, ${windowFromLabel(order.pickupSlotLabel)}. Order '),
+                    TextSpan(
+                      text:
+                          'Your pickup is still booked for $day, ${windowFromLabel(order.pickupSlotLabel)}. Order ',
+                    ),
                     TextSpan(text: order.orderNumber, style: t.orderId),
                     const TextSpan(text: '.'),
                   ],
@@ -325,14 +483,17 @@ class _Unconfirmed extends StatelessWidget {
   Widget build(BuildContext context) {
     final c = context.colors;
     return _Layout(
-      icon: Icon(LucideIcons.clock, size: 52, color: c.warning),
+      icon: Icon(LucideIcons.clock, size: 32, color: c.warning),
       tone: c.warningSoft,
       title: "We're still confirming",
-      body: "If money was taken, your order will show Paid shortly. You don't need to pay again.",
+      body: 'We haven’t confirmed this payment yet. Check again or contact support if it stays pending. Don’t pay again while we check.',
       details: _OrderCard(order),
       actions: [
         IdButton(label: 'Check again', onPressed: onCheck),
-        IdButton.outline(label: 'Go to my orders', onPressed: () => context.go(Routes.orders)),
+        IdButton.outline(
+          label: 'Go to my orders',
+          onPressed: () => context.go(Routes.orders),
+        ),
       ],
       caption: const _RazorpayCaption(),
     );

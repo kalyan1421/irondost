@@ -30,7 +30,10 @@ class _OtpScreenState extends ConsumerState<OtpScreen> {
   void initState() {
     super.initState();
     // Repaints the resend countdown.
-    _ticker = Timer.periodic(const Duration(seconds: 1), (_) => setState(() {}));
+    _ticker = Timer.periodic(
+      const Duration(seconds: 1),
+      (_) => setState(() {}),
+    );
   }
 
   @override
@@ -60,7 +63,11 @@ class _OtpScreenState extends ConsumerState<OtpScreen> {
     ref.listen(sessionProvider, (_, next) {
       if (next.value is WrongApp) {
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('This number belongs to an IronDost staff account. Sign in with another number.')),
+          const SnackBar(
+            content: Text(
+              'This number belongs to an IronDost staff account. Sign in with another number.',
+            ),
+          ),
         );
         _changeNumber();
       }
@@ -74,9 +81,13 @@ class _OtpScreenState extends ConsumerState<OtpScreen> {
           icon: LucideIcons.lock,
           tone: StateTone.warning,
           title: 'Too many tries',
-          body: "To keep your account safe, we've paused codes for ${IndianPhone.format(state.phone, withCode: true)}. "
+          body:
+              "To keep your account safe, we've paused codes for ${IndianPhone.format(state.phone, withCode: true)}. "
               'You can ask for a new one in a little while.',
-          primary: IdButton.outline(label: 'Use a different number', onPressed: _changeNumber),
+          primary: IdButton.outline(
+            label: 'Use a different number',
+            onPressed: _changeNumber,
+          ),
         ),
       );
     }
@@ -84,9 +95,12 @@ class _OtpScreenState extends ConsumerState<OtpScreen> {
     final remaining = state.resendAt?.difference(DateTime.now());
     final canResend = remaining == null || remaining.isNegative;
     final error = switch (state.error) {
-      AuthFailureKind.invalidCode => 'That code is incorrect. Check the SMS and try again.',
-      AuthFailureKind.codeExpired => 'This code has expired. Tap Resend code for a new one.',
-      AuthFailureKind.network => "You're offline. Check your connection and try again.",
+      AuthFailureKind.invalidCode =>
+        'That code is incorrect. Check the SMS and try again.',
+      AuthFailureKind.codeExpired =>
+        'This code has expired. Tap Resend code for a new one.',
+      AuthFailureKind.network =>
+        "You're offline. Check your connection and try again.",
       AuthFailureKind.unknown => "We couldn't check the code. Try again.",
       _ => null,
     };
@@ -100,9 +114,17 @@ class _OtpScreenState extends ConsumerState<OtpScreen> {
           children: [
             Expanded(
               child: ListView(
-                padding: const EdgeInsets.fromLTRB(IdSpace.s4, IdSpace.s6, IdSpace.s4, IdSpace.s6),
+                padding: const EdgeInsets.fromLTRB(
+                  IdSpace.s5,
+                  IdSpace.s6,
+                  IdSpace.s5,
+                  IdSpace.s6,
+                ),
                 children: [
-                  Semantics(header: true, child: Text('Enter the code', style: t.headline)),
+                  Semantics(
+                    header: true,
+                    child: Text('Enter the code', style: t.headline),
+                  ),
                   const SizedBox(height: IdSpace.s2),
                   Wrap(
                     crossAxisAlignment: WrapCrossAlignment.center,
@@ -111,22 +133,40 @@ class _OtpScreenState extends ConsumerState<OtpScreen> {
                         'Sent by SMS to ${IndianPhone.format(state.phone, withCode: true)}.',
                         style: t.bodyLg.copyWith(color: c.textMuted),
                       ),
-                      TextButton(onPressed: _changeNumber, child: const Text('Change')),
+                      TextButton(
+                        onPressed: _changeNumber,
+                        child: const Text('Change'),
+                      ),
                     ],
                   ),
                   const SizedBox(height: IdSpace.s5),
                   Text('6-digit code', style: t.labelSm),
                   const SizedBox(height: IdSpace.s3),
-                  OtpInput(controller: _code, hasError: error != null, enabled: !state.busy, onCompleted: _verify),
+                  OtpInput(
+                    controller: _code,
+                    hasError: error != null,
+                    enabled: !state.busy,
+                    onCompleted: _verify,
+                  ),
                   const SizedBox(height: IdSpace.s3),
                   if (error != null)
                     Row(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        Icon(LucideIcons.circleAlert, size: IdSize.iconSm, color: c.danger),
+                        Icon(
+                          LucideIcons.circleAlert,
+                          size: IdSize.iconSm,
+                          color: c.danger,
+                        ),
                         const SizedBox(width: 6),
                         Expanded(
-                          child: Semantics(liveRegion: true, child: Text(error, style: t.caption.copyWith(color: c.danger))),
+                          child: Semantics(
+                            liveRegion: true,
+                            child: Text(
+                              error,
+                              style: t.caption.copyWith(color: c.danger),
+                            ),
+                          ),
                         ),
                       ],
                     ),
@@ -134,10 +174,17 @@ class _OtpScreenState extends ConsumerState<OtpScreen> {
                   if (canResend)
                     Align(
                       alignment: Alignment.centerLeft,
-                      child: IdButton.text(label: 'Resend code', loading: state.busy, onPressed: ref.read(loginProvider.notifier).resend),
+                      child: IdButton.text(
+                        label: 'Resend code',
+                        loading: state.busy,
+                        onPressed: ref.read(loginProvider.notifier).resend,
+                      ),
                     )
                   else
-                    Text('Resend code in 0:${remaining.inSeconds.toString().padLeft(2, '0')}', style: t.body.copyWith(color: c.textMuted)),
+                    Text(
+                      'Resend code in 0:${remaining.inSeconds.toString().padLeft(2, '0')}',
+                      style: t.body.copyWith(color: c.textMuted),
+                    ),
                   const SizedBox(height: IdSpace.s5),
                   _Hint(
                     AppEnv.devAuth
@@ -148,7 +195,12 @@ class _OtpScreenState extends ConsumerState<OtpScreen> {
               ),
             ),
             Padding(
-              padding: const EdgeInsets.fromLTRB(IdSpace.s4, IdSpace.s3, IdSpace.s4, IdSpace.s4),
+              padding: const EdgeInsets.fromLTRB(
+                IdSpace.s5,
+                IdSpace.s3,
+                IdSpace.s5,
+                IdSpace.s4,
+              ),
               child: IdButton(
                 label: 'Verify',
                 expand: true,
@@ -172,17 +224,6 @@ class _Hint extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final c = context.colors;
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: IdSpace.s3),
-      decoration: BoxDecoration(color: c.primarySoft, borderRadius: BorderRadius.circular(IdRadius.md)),
-      child: Row(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Icon(LucideIcons.messageCircle, size: IdSize.iconMd, color: c.onPrimarySoft),
-          const SizedBox(width: 10),
-          Expanded(child: Text(text, style: context.text.body)),
-        ],
-      ),
-    );
+    return Text(text, style: context.text.caption.copyWith(color: c.textMuted));
   }
 }

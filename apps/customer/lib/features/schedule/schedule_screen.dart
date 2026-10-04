@@ -11,6 +11,7 @@ import '../../design/theme.dart';
 import '../../design/widgets/id_button.dart';
 import '../../design/widgets/slot_picker.dart';
 import '../../design/widgets/surfaces.dart';
+import '../../design/widgets/review_row.dart';
 import '../startup/startup.dart';
 import '../support/support.dart';
 import 'schedule.dart';
@@ -27,12 +28,18 @@ class ScheduleScreen extends ConsumerWidget {
 
     return Scaffold(
       appBar: AppBar(
-        leading: BackButton(onPressed: () => context.canPop() ? context.pop() : context.go(Routes.home)),
-        title: Text('Pickup time', style: context.text.titleLg),
+        leading: BackButton(
+          onPressed: () =>
+              context.canPop() ? context.pop() : context.go(Routes.home),
+        ),
+        title: Text('Pickup and delivery', style: context.text.titleLg),
       ),
       body: schedule.when(
         loading: () => const _Loading(),
-        error: (e, _) => _LoadFailure(offline: ApiFailure.from(e).isConnectivity, onRetry: () => ref.invalidate(pickupSlotsProvider)),
+        error: (e, _) => _LoadFailure(
+          offline: ApiFailure.from(e).isConnectivity,
+          onRetry: () => ref.invalidate(pickupSlotsProvider),
+        ),
         data: (s) => s.isEmpty ? const _NothingOpen() : _Body(schedule: s),
       ),
       bottomNavigationBar: _Footer(enabled: s?.isComplete ?? false),
@@ -53,10 +60,21 @@ class _Body extends ConsumerWidget {
     final earliest = schedule.earliestPickup;
 
     return ListView(
-      padding: const EdgeInsets.fromLTRB(IdSpace.s4, IdSpace.s5, IdSpace.s4, IdSpace.s6),
+      padding: const EdgeInsets.fromLTRB(
+        IdSpace.s5,
+        IdSpace.s5,
+        IdSpace.s5,
+        IdSpace.s6,
+      ),
       children: [
-        Semantics(header: true, child: Text('When should we collect?', style: t.titleLg)),
-        Text('Your partner arrives within the window you pick.', style: t.bodyLg.copyWith(color: c.textMuted)),
+        Semantics(
+          header: true,
+          child: Text('When should we collect?', style: t.titleLg),
+        ),
+        Text(
+          'Your partner arrives within the window you pick.',
+          style: t.bodyLg.copyWith(color: c.textMuted),
+        ),
         const SizedBox(height: IdSpace.s3),
         DateStrip(
           label: 'Pickup date',
@@ -70,7 +88,9 @@ class _Body extends ConsumerWidget {
           SlotTile(
             name: slotName(slot.slot),
             window: slotWindow(slot),
-            selected: schedule.pickup != null && slotKey(slot) == slotKey(schedule.pickup!),
+            selected:
+                schedule.pickup != null &&
+                slotKey(slot) == slotKey(schedule.pickup!),
             enabled: slot.available,
             onTap: () => choice.pickPickup(slot),
           ),
@@ -78,7 +98,14 @@ class _Body extends ConsumerWidget {
         ],
         if (schedule.pickup == null) ...[
           const SizedBox(height: IdSpace.s2),
-          _NoneOpenNotice(day: schedule.pickupDate, today: today, earliest: earliest, onPickEarliest: earliest == null ? null : () => choice.pickPickup(earliest)),
+          _NoneOpenNotice(
+            day: schedule.pickupDate,
+            today: today,
+            earliest: earliest,
+            onPickEarliest: earliest == null
+                ? null
+                : () => choice.pickPickup(earliest),
+          ),
         ],
         if (schedule.pickup != null) ...[
           const SizedBox(height: IdSpace.s6),
@@ -93,7 +120,12 @@ class _Body extends ConsumerWidget {
 
 /// "Today's pickups have closed. The earliest is Sat, 7 – 11 AM." with a button that takes it.
 class _NoneOpenNotice extends StatelessWidget {
-  const _NoneOpenNotice({required this.day, required this.today, required this.earliest, required this.onPickEarliest});
+  const _NoneOpenNotice({
+    required this.day,
+    required this.today,
+    required this.earliest,
+    required this.onPickEarliest,
+  });
 
   final String day;
   final String today;
@@ -104,23 +136,34 @@ class _NoneOpenNotice extends StatelessWidget {
   Widget build(BuildContext context) {
     final c = context.colors;
     final t = context.text;
-    final what = day == today ? "Today's pickups have closed." : 'No pickups are open on ${dayLong(day)}.';
+    final what = day == today
+        ? "Today's pickups have closed."
+        : 'No pickups are open on ${dayLong(day)}.';
     return Semantics(
       liveRegion: true,
       child: Container(
         padding: const EdgeInsets.all(14),
-        decoration: BoxDecoration(color: c.primarySoft, borderRadius: BorderRadius.circular(IdRadius.md)),
+        decoration: BoxDecoration(
+          color: c.primarySoft,
+          borderRadius: BorderRadius.circular(IdRadius.md),
+        ),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Row(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Icon(LucideIcons.clock, size: IdSize.iconMd, color: c.onPrimarySoft),
+                Icon(
+                  LucideIcons.clock,
+                  size: IdSize.iconMd,
+                  color: c.onPrimarySoft,
+                ),
                 const SizedBox(width: 10),
                 Expanded(
                   child: Text(
-                    earliest == null ? "$what We'll open more times soon. Please check back." : '$what The earliest is ${slotSummary(earliest!, today: today)}.',
+                    earliest == null
+                        ? "$what We'll open more times soon. Please check back."
+                        : '$what The earliest is ${slotSummary(earliest!, today: today)}.',
                     style: t.body,
                   ),
                 ),
@@ -131,9 +174,14 @@ class _NoneOpenNotice extends StatelessWidget {
               Padding(
                 padding: const EdgeInsets.only(left: 30),
                 child: FilledButton(
-                  style: FilledButton.styleFrom(backgroundColor: c.surface, foregroundColor: c.onPrimarySoft),
+                  style: FilledButton.styleFrom(
+                    backgroundColor: c.surface,
+                    foregroundColor: c.onPrimarySoft,
+                  ),
                   onPressed: onPickEarliest,
-                  child: Text('Pick ${dayChipTop(earliest!.date, today: today)}, ${slotWindow(earliest!)}'),
+                  child: Text(
+                    'Pick ${dayChipTop(earliest!.date, today: today)}, ${slotWindow(earliest!)}',
+                  ),
                 ),
               ),
             ],
@@ -156,20 +204,7 @@ class _DeliveryCard extends ConsumerWidget {
     final delivery = schedule.delivery;
 
     if (options == null || options.isLoading && !options.hasValue) {
-      return IdCard(
-        child: Semantics(
-          label: 'Finding delivery times',
-          child: ExcludeSemantics(
-            child: Row(
-              children: [
-                Container(width: 40, height: 40, decoration: BoxDecoration(color: c.surfaceSoft, borderRadius: BorderRadius.circular(IdRadius.sm))),
-                const SizedBox(width: IdSpace.s3),
-                Container(width: 160, height: 16, decoration: BoxDecoration(color: c.surfaceSoft, borderRadius: BorderRadius.circular(IdRadius.sm))),
-              ],
-            ),
-          ),
-        ),
-      );
+      return Semantics(label: 'Finding delivery times', child: ExcludeSemantics(child: Container(height: 64, color: c.surfaceSoft)));
     }
     if (options.hasError && !options.hasValue) {
       return IdCard(
@@ -179,9 +214,16 @@ class _DeliveryCard extends ConsumerWidget {
             children: [
               Icon(LucideIcons.circleAlert, color: c.danger),
               const SizedBox(width: IdSpace.s3),
-              Expanded(child: Text("Couldn't load delivery times.", style: t.body)),
+              Expanded(
+                child: Text("Couldn't load delivery times.", style: t.body),
+              ),
               TextButton(
-                onPressed: () => ref.invalidate(deliverySlotsProvider((date: schedule.pickup!.date, slot: schedule.pickup!.slot))),
+                onPressed: () => ref.invalidate(
+                  deliverySlotsProvider((
+                    date: schedule.pickup!.date,
+                    slot: schedule.pickup!.slot,
+                  )),
+                ),
                 child: const Text('Try again'),
               ),
             ],
@@ -192,49 +234,43 @@ class _DeliveryCard extends ConsumerWidget {
     if (delivery == null) {
       return Container(
         padding: const EdgeInsets.all(14),
-        decoration: BoxDecoration(color: c.warningSoft, borderRadius: BorderRadius.circular(IdRadius.md)),
+        decoration: BoxDecoration(
+          color: c.warningSoft,
+          borderRadius: BorderRadius.circular(IdRadius.md),
+        ),
         child: Semantics(
           liveRegion: true,
           child: Row(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Icon(LucideIcons.circleAlert, size: IdSize.iconMd, color: c.warning),
+              Icon(
+                LucideIcons.circleAlert,
+                size: IdSize.iconMd,
+                color: c.warning,
+              ),
               const SizedBox(width: 10),
-              Expanded(child: Text('No delivery times are open after that pickup. Try another pickup time.', style: t.body)),
+              Expanded(
+                child: Text(
+                  'No delivery times are open after that pickup. Try another pickup time.',
+                  style: t.body,
+                ),
+              ),
             ],
           ),
         ),
       );
     }
-    return IdCard(
-      padding: const EdgeInsets.symmetric(horizontal: IdSpace.s4, vertical: 14),
-      child: Row(
-        children: [
-          Container(
-            width: 40,
-            height: 40,
-            decoration: BoxDecoration(color: c.surfaceSoft, borderRadius: BorderRadius.circular(IdRadius.sm)),
-            child: Icon(LucideIcons.truck, size: IdSize.iconMd, color: c.primary),
-          ),
-          const SizedBox(width: IdSpace.s3),
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(slotSummary(delivery, today: schedule.today), style: t.title),
-                Text(schedule.deliveryIsEarliest ? 'Earliest after ironing' : 'Your choice', style: t.caption.copyWith(color: c.textMuted)),
-              ],
-            ),
-          ),
-          IdButton.text(label: 'Change', onPressed: () => showDeliverySheet(context)),
-        ],
-      ),
+    return ReviewRow(
+      label: schedule.deliveryIsEarliest ? 'Earliest available delivery' : 'Your delivery choice',
+      value: Text(slotSummary(delivery, today: schedule.today), style: t.title),
+      action: IdButton.text(label: 'Change', onPressed: () => showDeliverySheet(context)),
     );
   }
 }
 
 /// "Delivery time": any open window after the earliest the ironing allows.
-Future<void> showDeliverySheet(BuildContext context) => showModalBottomSheet<void>(
+Future<void> showDeliverySheet(BuildContext context) =>
+    showModalBottomSheet<void>(
       context: context,
       isScrollControlled: true,
       useSafeArea: true,
@@ -258,17 +294,27 @@ class _DeliverySheetState extends ConsumerState<_DeliverySheet> {
     final schedule = ref.watch(scheduleProvider).value;
     final slots = schedule?.deliverySlots?.value ?? const <SlotOptionDto>[];
     final dates = schedule?.deliveryDates ?? const <String>[];
-    final date = dates.contains(_date) ? _date! : (schedule?.delivery?.date ?? (dates.isEmpty ? '' : dates.first));
+    final date = dates.contains(_date)
+        ? _date!
+        : (schedule?.delivery?.date ?? (dates.isEmpty ? '' : dates.first));
     final hours = ref.read(startupProvider).value?.config.minTurnaroundHours;
 
     return SafeArea(
       child: SingleChildScrollView(
-        padding: const EdgeInsets.fromLTRB(IdSpace.s4, 0, IdSpace.s4, IdSpace.s4),
+        padding: const EdgeInsets.fromLTRB(
+          IdSpace.s5,
+          0,
+          IdSpace.s5,
+          IdSpace.s4,
+        ),
         child: Column(
           mainAxisSize: MainAxisSize.min,
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
-            Semantics(header: true, child: Text('Delivery time', style: t.titleLg)),
+            Semantics(
+              header: true,
+              child: Text('Delivery time', style: t.titleLg),
+            ),
             Text(
               "Ironing takes about ${hours ?? 20} hours, so earlier windows aren't available.",
               style: t.bodyLg.copyWith(color: c.textMuted),
@@ -287,15 +333,23 @@ class _DeliverySheetState extends ConsumerState<_DeliverySheet> {
               SlotTile(
                 name: slotName(slot.slot),
                 window: slotWindow(slot),
-                selected: schedule?.delivery != null && slotKey(slot) == slotKey(schedule!.delivery!),
+                selected:
+                    schedule?.delivery != null &&
+                    slotKey(slot) == slotKey(schedule!.delivery!),
                 enabled: slot.available,
                 closedNote: 'Too soon',
-                onTap: () => ref.read(scheduleChoiceProvider.notifier).pickDelivery(slot),
+                onTap: () => ref
+                    .read(scheduleChoiceProvider.notifier)
+                    .pickDelivery(slot),
               ),
               const SizedBox(height: IdSpace.s2),
             ],
             const SizedBox(height: IdSpace.s2),
-            IdButton(label: 'Done', expand: true, onPressed: () => Navigator.pop(context)),
+            IdButton(
+              label: 'Done',
+              expand: true,
+              onPressed: () => Navigator.pop(context),
+            ),
           ],
         ),
       ),
@@ -311,12 +365,24 @@ class _Footer extends StatelessWidget {
   Widget build(BuildContext context) {
     final c = context.colors;
     return DecoratedBox(
-      decoration: BoxDecoration(color: c.surface, boxShadow: context.shadows.sheet),
+      decoration: BoxDecoration(
+        color: c.surface,
+        border: Border(top: BorderSide(color: c.border)),
+      ),
       child: SafeArea(
         top: false,
         child: Padding(
-          padding: const EdgeInsets.fromLTRB(IdSpace.s4, IdSpace.s3, IdSpace.s4, IdSpace.s3),
-          child: IdButton(label: 'Continue', expand: true, onPressed: enabled ? () => context.push(Routes.checkout) : null),
+          padding: const EdgeInsets.fromLTRB(
+            IdSpace.s5,
+            IdSpace.s3,
+            IdSpace.s5,
+            IdSpace.s3,
+          ),
+          child: IdButton(
+            label: 'Continue',
+            expand: true,
+            onPressed: enabled ? () => context.push(Routes.checkout) : null,
+          ),
         ),
       ),
     );
@@ -329,20 +395,41 @@ class _Loading extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final c = context.colors;
-    Widget block(double w, double h, {double radius = IdRadius.md}) => Container(width: w, height: h, decoration: BoxDecoration(color: c.surfaceSoft, borderRadius: BorderRadius.circular(radius)));
+    Widget block(double w, double h, {double radius = IdRadius.md}) =>
+        Container(
+          width: w,
+          height: h,
+          decoration: BoxDecoration(
+            color: c.surfaceSoft,
+            borderRadius: BorderRadius.circular(radius),
+          ),
+        );
     return Semantics(
       label: 'Loading pickup times',
       child: ExcludeSemantics(
-        child: Padding(
-          padding: const EdgeInsets.all(IdSpace.s4),
+        child: SingleChildScrollView(
+          padding: const EdgeInsets.all(IdSpace.s5),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               block(220, 22),
               const SizedBox(height: IdSpace.s4),
-              Row(children: [for (var i = 0; i < 4; i++) ...[block(64, 72), const SizedBox(width: IdSpace.s2)]]),
+              Wrap(
+                children: [
+                  for (var i = 0; i < 4; i++) ...[
+                    block(64, 72),
+                    const SizedBox(width: IdSpace.s2),
+                  ],
+                ],
+              ),
               const SizedBox(height: IdSpace.s4),
-              for (var i = 0; i < 3; i++) ...[SizedBox(width: double.infinity, child: block(double.infinity, 64)), const SizedBox(height: IdSpace.s2)],
+              for (var i = 0; i < 3; i++) ...[
+                SizedBox(
+                  width: double.infinity,
+                  child: block(double.infinity, 64),
+                ),
+                const SizedBox(height: IdSpace.s2),
+              ],
             ],
           ),
         ),
@@ -361,10 +448,13 @@ class _LoadFailure extends StatelessWidget {
     final c = context.colors;
     final t = context.text;
     return ListView(
-      padding: const EdgeInsets.all(IdSpace.s4),
+      padding: const EdgeInsets.all(IdSpace.s5),
       children: [
         IdCard(
-          padding: const EdgeInsets.symmetric(horizontal: IdSpace.s5, vertical: IdSpace.s8),
+          padding: const EdgeInsets.symmetric(
+            horizontal: IdSpace.s5,
+            vertical: IdSpace.s8,
+          ),
           child: Semantics(
             liveRegion: true,
             child: Column(
@@ -372,19 +462,32 @@ class _LoadFailure extends StatelessWidget {
                 Container(
                   width: 56,
                   height: 56,
-                  decoration: BoxDecoration(color: c.dangerSoft, shape: BoxShape.circle),
-                  child: Icon(offline ? LucideIcons.wifiOff : LucideIcons.circleAlert, size: IdSize.iconLg, color: c.danger),
+                  decoration: BoxDecoration(
+                    color: c.dangerSoft,
+                    shape: BoxShape.circle,
+                  ),
+                  child: Icon(
+                    offline ? LucideIcons.wifiOff : LucideIcons.circleAlert,
+                    size: IdSize.iconLg,
+                    color: c.danger,
+                  ),
                 ),
                 const SizedBox(height: IdSpace.s3),
                 Text("Couldn't load pickup times", style: t.titleLg),
                 const SizedBox(height: IdSpace.s2),
                 Text(
-                  offline ? "You're offline. Check your connection and try again." : 'Please try again in a moment.',
+                  offline
+                      ? "You're offline. Check your connection and try again."
+                      : 'Please try again in a moment.',
                   style: t.body.copyWith(color: c.textMuted),
                   textAlign: TextAlign.center,
                 ),
                 const SizedBox(height: IdSpace.s4),
-                IdButton.tonal(label: 'Try again', icon: LucideIcons.refreshCw, onPressed: onRetry),
+                IdButton.tonal(
+                  label: 'Try again',
+                  icon: LucideIcons.refreshCw,
+                  onPressed: onRetry,
+                ),
               ],
             ),
           ),
@@ -409,13 +512,25 @@ class _NothingOpen extends ConsumerWidget {
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-            Icon(LucideIcons.clock, size: 52, color: c.textMuted),
+            Icon(LucideIcons.clock, size: 32, color: c.textMuted),
             const SizedBox(height: IdSpace.s4),
-            Text('No pickup times open right now', style: t.titleLg, textAlign: TextAlign.center),
+            Text(
+              'No pickup times open right now',
+              style: t.titleLg,
+              textAlign: TextAlign.center,
+            ),
             const SizedBox(height: IdSpace.s2),
-            Text("We'll open more times soon. Call us if you need a pickup today.", style: t.body.copyWith(color: c.textMuted), textAlign: TextAlign.center),
+            Text(
+              "We'll open more times soon. Call us if you need a pickup today.",
+              style: t.body.copyWith(color: c.textMuted),
+              textAlign: TextAlign.center,
+            ),
             const SizedBox(height: IdSpace.s4),
-            IdButton.outline(label: 'Call ${IndianPhone.display(phone)}', icon: LucideIcons.phone, onPressed: () => Support.dial(phone)),
+            IdButton.outline(
+              label: 'Call ${IndianPhone.display(phone)}',
+              icon: LucideIcons.phone,
+              onPressed: () => Support.dial(phone),
+            ),
           ],
         ),
       ),

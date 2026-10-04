@@ -25,19 +25,21 @@ class _EditProfileScreenState extends ConsumerState<EditProfileScreen> {
   String? _nameError;
   String? _emailError;
   bool _saving = false;
+  bool _prefilled = false;
 
   static final _emailPattern = RegExp(r'^[^@\s]+@[^@\s]+\.[^@\s]+$');
 
   Profile? get _profile => switch (ref.read(sessionProvider).value) {
-        SignedIn(:final profile) => profile,
-        _ => null,
-      };
+    SignedIn(:final profile) => profile,
+    _ => null,
+  };
 
   @override
   void initState() {
     super.initState();
     _name = TextEditingController(text: _profile?.name ?? '');
     _email = TextEditingController(text: _profile?.email ?? '');
+    _prefilled = _profile != null;
   }
 
   @override
@@ -51,14 +53,20 @@ class _EditProfileScreenState extends ConsumerState<EditProfileScreen> {
     final name = _name.text.trim();
     final email = _email.text.trim();
     setState(() {
-      _nameError = name.length < 2 ? 'Enter your name, as your partner should call you.' : null;
-      _emailError = email.isNotEmpty && !_emailPattern.hasMatch(email) ? 'Enter a valid email, like you@example.com.' : null;
+      _nameError = name.length < 2
+          ? 'Enter your name, as your partner should call you.'
+          : null;
+      _emailError = email.isNotEmpty && !_emailPattern.hasMatch(email)
+          ? 'Enter a valid email, like you@example.com.'
+          : null;
     });
     if (_nameError != null || _emailError != null) return;
 
     setState(() => _saving = true);
     try {
-      await ref.read(sessionProvider.notifier).saveProfile(name: name, email: email);
+      await ref
+          .read(sessionProvider.notifier)
+          .saveProfile(name: name, email: email);
       if (!mounted) return;
       final messenger = ScaffoldMessenger.of(context);
       context.pop();
@@ -69,7 +77,13 @@ class _EditProfileScreenState extends ConsumerState<EditProfileScreen> {
       if (!mounted) return;
       final failure = ApiFailure.from(e);
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text(failure.isConnectivity ? "You're offline. Check your connection and try again." : "We couldn't save that. Try again.")),
+        SnackBar(
+          content: Text(
+            failure.isConnectivity
+                ? "You're offline. Check your connection and try again."
+                : "We couldn't save that. Try again.",
+          ),
+        ),
       );
       setState(() => _saving = false);
     }
@@ -79,14 +93,30 @@ class _EditProfileScreenState extends ConsumerState<EditProfileScreen> {
   Widget build(BuildContext context) {
     final c = context.colors;
     final t = context.text;
-    final profile = _profile;
+    final profile = switch (ref.watch(sessionProvider).value) {
+      SignedIn(:final profile) => profile,
+      _ => null,
+    };
+    if (!_prefilled && profile != null) {
+      _name.text = profile.name ?? '';
+      _email.text = profile.email ?? '';
+      _prefilled = true;
+    }
     // Initials follow the name as it is typed.
-    final initials = Profile(id: '', phone: '', name: _name.text, isComplete: true).initials;
+    final initials = Profile(
+      id: '',
+      phone: '',
+      name: _name.text,
+      isComplete: true,
+    ).initials;
 
     return Scaffold(
       backgroundColor: c.surface,
       appBar: AppBar(
-        leading: BackButton(onPressed: () => context.canPop() ? context.pop() : context.go(Routes.account)),
+        leading: BackButton(
+          onPressed: () =>
+              context.canPop() ? context.pop() : context.go(Routes.account),
+        ),
         title: Text('Edit profile', style: t.titleLg),
       ),
       body: SafeArea(
@@ -95,15 +125,29 @@ class _EditProfileScreenState extends ConsumerState<EditProfileScreen> {
             children: [
               Expanded(
                 child: ListView(
-                  padding: const EdgeInsets.fromLTRB(IdSpace.s4, IdSpace.s6, IdSpace.s4, IdSpace.s6),
+                  padding: const EdgeInsets.fromLTRB(
+                    IdSpace.s5,
+                    IdSpace.s6,
+                    IdSpace.s5,
+                    IdSpace.s6,
+                  ),
                   children: [
                     Center(
                       child: Container(
                         width: 80,
                         height: 80,
                         alignment: Alignment.center,
-                        decoration: BoxDecoration(color: c.primarySoft, shape: BoxShape.circle),
-                        child: ExcludeSemantics(child: Text(initials, textScaler: TextScaler.noScaling, style: t.headline.copyWith(color: c.onPrimarySoft))),
+                        decoration: BoxDecoration(
+                          color: c.primarySoft,
+                          shape: BoxShape.circle,
+                        ),
+                        child: ExcludeSemantics(
+                          child: Text(
+                            initials,
+                            textScaler: TextScaler.noScaling,
+                            style: t.headline.copyWith(color: c.onPrimarySoft),
+                          ),
+                        ),
                       ),
                     ),
                     const SizedBox(height: IdSpace.s6),
@@ -134,8 +178,18 @@ class _EditProfileScreenState extends ConsumerState<EditProfileScreen> {
                 ),
               ),
               Padding(
-                padding: const EdgeInsets.fromLTRB(IdSpace.s4, IdSpace.s3, IdSpace.s4, IdSpace.s4),
-                child: IdButton(label: 'Save changes', expand: true, loading: _saving, onPressed: _save),
+                padding: const EdgeInsets.fromLTRB(
+                  IdSpace.s5,
+                  IdSpace.s3,
+                  IdSpace.s5,
+                  IdSpace.s4,
+                ),
+                child: IdButton(
+                  label: 'Save changes',
+                  expand: true,
+                  loading: _saving,
+                  onPressed: profile == null ? null : _save,
+                ),
               ),
             ],
           ),
@@ -158,7 +212,10 @@ class _LockedPhone extends StatelessWidget {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Text('Mobile number', style: t.label.copyWith(fontWeight: FontWeight.w600)),
+        Text(
+          'Mobile number',
+          style: t.label.copyWith(fontWeight: FontWeight.w600),
+        ),
         const SizedBox(height: 6),
         Semantics(
           readOnly: true,
@@ -167,7 +224,10 @@ class _LockedPhone extends StatelessWidget {
           child: Container(
             height: IdSize.inputHeight,
             padding: const EdgeInsets.symmetric(horizontal: 14),
-            decoration: BoxDecoration(color: c.surfaceSoft, borderRadius: BorderRadius.circular(IdRadius.md)),
+            decoration: BoxDecoration(
+              color: c.surfaceSoft,
+              borderRadius: BorderRadius.circular(IdRadius.md),
+            ),
             child: Row(
               children: [
                 Expanded(child: Text(shown, style: t.bodyLg)),
@@ -179,23 +239,14 @@ class _LockedPhone extends StatelessWidget {
         const SizedBox(height: 6),
         Padding(
           padding: const EdgeInsets.only(left: 4),
-          child: Text.rich(
-            TextSpan(
-              text: 'Your number signs you in. To change it, ',
-              children: [
-                WidgetSpan(
-                  alignment: PlaceholderAlignment.baseline,
-                  baseline: TextBaseline.alphabetic,
-                  child: InkWell(
-                    onTap: () => context.push(Routes.help),
-                    child: Text('contact support', style: t.caption.copyWith(color: c.primary, decoration: TextDecoration.underline)),
-                  ),
-                ),
-                const TextSpan(text: '.'),
-              ],
-            ),
+          child: Text(
+            'Your number signs you in. Contact support to change it.',
             style: t.caption.copyWith(color: c.textMuted),
           ),
+        ),
+        IdButton.text(
+          label: 'Contact support',
+          onPressed: () => context.push(Routes.help),
         ),
       ],
     );

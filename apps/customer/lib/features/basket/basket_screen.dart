@@ -32,20 +32,31 @@ class BasketScreen extends ConsumerWidget {
 
     return Scaffold(
       appBar: AppBar(
-        leading: BackButton(onPressed: () => context.canPop() ? context.pop() : context.go(Routes.home)),
+        leading: BackButton(
+          onPressed: () =>
+              context.canPop() ? context.pop() : context.go(Routes.home),
+        ),
         title: Text('Basket', style: context.text.titleLg),
       ),
       body: basket.isEmpty
           ? const _EmptyBasket()
           : ListView(
-              padding: const EdgeInsets.fromLTRB(IdSpace.s4, IdSpace.s4, IdSpace.s4, IdSpace.s6),
+              padding: const EdgeInsets.fromLTRB(
+                IdSpace.s5,
+                IdSpace.s5,
+                IdSpace.s5,
+                IdSpace.s6,
+              ),
               children: [
                 _Items(basket: basket, quote: q),
                 const SizedBox(height: IdSpace.s4),
                 _PromoRow(code: basket.promoCode, quote: q, loading: loading),
                 if (q?.minOrderShortfallPaise case final short?) ...[
                   const SizedBox(height: IdSpace.s4),
-                  _MinOrderNotice(shortfallPaise: short, minOrderPaise: q!.subtotalPaise + short),
+                  _MinOrderNotice(
+                    shortfallPaise: short,
+                    minOrderPaise: q!.subtotalPaise + short,
+                  ),
                 ],
                 const SizedBox(height: IdSpace.s4),
                 if (failed)
@@ -55,18 +66,27 @@ class BasketScreen extends ConsumerWidget {
                   const SizedBox(height: IdSpace.s3),
                   Text(
                     'The final amount changes only if the count differs at pickup.',
-                    style: context.text.caption.copyWith(color: context.colors.textMuted),
+                    style: context.text.caption.copyWith(
+                      color: context.colors.textMuted,
+                    ),
                   ),
                 ],
               ],
             ),
-      bottomNavigationBar: basket.isEmpty ? null : _Footer(quote: q, loading: loading),
+      bottomNavigationBar: basket.isEmpty
+          ? null
+          : _Footer(quote: q, loading: loading),
     );
   }
 }
 
 class _Line {
-  const _Line({required this.id, required this.name, required this.unitPaise, required this.quantity});
+  const _Line({
+    required this.id,
+    required this.name,
+    required this.unitPaise,
+    required this.quantity,
+  });
   final String id;
   final String name;
   final num unitPaise;
@@ -83,14 +103,32 @@ class _Items extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final t = context.text;
     final c = context.colors;
-    final services = ref.watch(servicesProvider).value ?? const <CatalogCategoryDto>[];
-    final quoted = {for (final l in quote?.lines ?? const <QuoteLineDto>[]) l.catalogItemId: l};
+    final services =
+        ref.watch(servicesProvider).value ?? const <CatalogCategoryDto>[];
+    final quoted = {
+      for (final l in quote?.lines ?? const <QuoteLineDto>[])
+        l.catalogItemId: l,
+    };
 
     _Line? lineFor(String id, CatalogItemDto? item) {
       final qty = basket.quantityOf(id);
-      if (item != null) return _Line(id: id, name: item.name, unitPaise: item.effectivePricePaise, quantity: qty);
+      if (item != null) {
+        return _Line(
+          id: id,
+          name: item.name,
+          unitPaise: item.effectivePricePaise,
+          quantity: qty,
+        );
+      }
       final line = quoted[id];
-      return line == null ? null : _Line(id: id, name: line.name, unitPaise: line.unitPricePaise, quantity: qty);
+      return line == null
+          ? null
+          : _Line(
+              id: id,
+              name: line.name,
+              unitPaise: line.unitPricePaise,
+              quantity: qty,
+            );
     }
 
     // Services in the admin's order, then anything the price list no longer shows (priced by the quote).
@@ -104,23 +142,40 @@ class _Items extends ConsumerWidget {
       placed.addAll(lines.map((l) => l.id));
       if (lines.isNotEmpty) groups.add((category.name, lines));
     }
-    final rest = [for (final id in basket.lines.keys.where((id) => !placed.contains(id))) ?lineFor(id, null)];
+    final rest = [
+      for (final id in basket.lines.keys.where((id) => !placed.contains(id)))
+        ?lineFor(id, null),
+    ];
     if (rest.isNotEmpty) groups.add((null, rest));
 
     return IdCard(
-      padding: const EdgeInsets.fromLTRB(IdSpace.s4, IdSpace.s1, IdSpace.s4, 0),
+      padding: EdgeInsets.zero,
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
           for (final (name, lines) in groups) ...[
             Padding(
-              padding: const EdgeInsets.only(top: IdSpace.s3, bottom: IdSpace.s1),
+              padding: const EdgeInsets.only(
+                top: IdSpace.s3,
+                bottom: IdSpace.s1,
+              ),
               child: Row(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
-                  if (name != null) Expanded(child: Semantics(header: true, child: Text(name, style: t.title))) else const Spacer(),
+                  if (name != null)
+                    Expanded(
+                      child: Semantics(
+                        header: true,
+                        child: Text(name, style: t.title),
+                      ),
+                    )
+                  else
+                    const Spacer(),
                   const SizedBox(width: IdSpace.s2),
-                  Text(_pieces(lines.fold(0, (a, l) => a + l.quantity)), style: t.caption.copyWith(color: c.textMuted)),
+                  Text(
+                    _pieces(lines.fold(0, (a, l) => a + l.quantity)),
+                    style: t.caption.copyWith(color: c.textMuted),
+                  ),
                 ],
               ),
             ),
@@ -134,7 +189,8 @@ class _Items extends ConsumerWidget {
             child: IdButton.text(
               label: 'Add more items',
               icon: LucideIcons.plus,
-              onPressed: () => context.canPop() ? context.pop() : context.push(Routes.book),
+              onPressed: () =>
+                  context.canPop() ? context.pop() : context.push(Routes.book),
             ),
           ),
         ],
@@ -153,57 +209,33 @@ class _BasketRow extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final c = context.colors;
     final t = context.text;
-    return Padding(
-      padding: const EdgeInsets.symmetric(vertical: IdSpace.s2),
-      child: Row(
-        children: [
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(line.name, style: t.title),
-                Text('${rupees(line.unitPaise)} each', style: t.caption.copyWith(color: c.textMuted)),
-              ],
-            ),
-          ),
-          ItemStepper(
-            name: line.name,
-            quantity: line.quantity,
-            showAddWhenEmpty: false,
-            canAdd: line.quantity < BasketController.maxPerItem,
-            onAdd: () => addToBasket(context, ref, line.id),
-            onRemove: () {
-              // This row is gone once the last piece leaves, so Undo must not reach back through its `ref`.
-              final basket = ref.read(basketProvider.notifier)..remove(line.id);
-              if (line.quantity == 1) {
-                ScaffoldMessenger.of(context)
-                  ..hideCurrentSnackBar()
-                  ..showSnackBar(
-                    SnackBar(
-                      content: Text('Removed ${line.name}'),
-                      action: SnackBarAction(label: 'Undo', onPressed: () => basket.add(line.id)),
-                    ),
-                  );
-              }
-            },
-          ),
-          ConstrainedBox(
-            constraints: const BoxConstraints(minWidth: 56),
-            child: Text(
-              rupees(line.unitPaise * line.quantity),
-              textAlign: TextAlign.end,
-              style: t.label.copyWith(fontFeatures: const [FontFeature.tabularFigures()]),
-            ),
-          ),
-        ],
+    return Padding(padding: const EdgeInsets.symmetric(vertical: IdSpace.s4), child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+      Row(crossAxisAlignment: CrossAxisAlignment.start, children: [
+        Expanded(child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [Text(line.name, style: t.title), Text('${rupees(line.unitPaise)} each', style: t.caption.copyWith(color: c.textMuted))])),
+        const SizedBox(width: IdSpace.s3),
+        Flexible(child: Text(rupees(line.unitPaise * line.quantity), textAlign: TextAlign.end, style: t.label.copyWith(fontFeatures: const [FontFeature.tabularFigures()]))),
+      ]),
+      const SizedBox(height: IdSpace.s3),
+      ItemStepper(name: line.name, quantity: line.quantity, showAddWhenEmpty: false, canAdd: line.quantity < BasketController.maxPerItem,
+        onAdd: () => addToBasket(context, ref, line.id),
+        onRemove: () {
+          final basket = ref.read(basketProvider.notifier)..remove(line.id);
+          if (line.quantity == 1) {
+            ScaffoldMessenger.of(context)..hideCurrentSnackBar()..showSnackBar(SnackBar(content: Text('Removed ${line.name}'), action: SnackBarAction(label: 'Undo', onPressed: () => basket.add(line.id))));
+          }
+        },
       ),
-    );
+    ]));
   }
 }
 
 /// "Apply a promo code", or the applied code with what the server made of it.
 class _PromoRow extends ConsumerWidget {
-  const _PromoRow({required this.code, required this.quote, required this.loading});
+  const _PromoRow({
+    required this.code,
+    required this.quote,
+    required this.loading,
+  });
 
   final String? code;
   final QuoteDto? quote;
@@ -218,30 +250,53 @@ class _PromoRow extends ConsumerWidget {
     if (code == null) {
       return IdCard(
         onTap: open,
-        padding: const EdgeInsets.symmetric(horizontal: IdSpace.s4, vertical: 14),
+        padding: const EdgeInsets.symmetric(
+          horizontal: IdSpace.s5,
+          vertical: 14,
+        ),
         child: Semantics(
           button: true,
           label: 'Apply a promo code',
           excludeSemantics: true,
           child: Row(
             children: [
-              _Tile(LucideIcons.badgePercent, c.surfaceSoft, c.primary),
+              Icon(LucideIcons.badgePercent, size: IdSize.iconMd, color: c.textMuted),
               const SizedBox(width: IdSpace.s3),
               Expanded(child: Text('Apply a promo code', style: t.title)),
-              Icon(LucideIcons.chevronRight, size: IdSize.iconSm, color: c.textMuted),
+              Icon(
+                LucideIcons.chevronRight,
+                size: IdSize.iconSm,
+                color: c.textMuted,
+              ),
             ],
           ),
         ),
       );
     }
 
-    final error = loading ? null : promoErrorText(quote?.promoError, shortfallPaise: quote?.promoShortfallPaise);
-    final applied = !loading && quote != null && quote!.promoCode == code && quote!.promoError == null;
+    final error = loading
+        ? null
+        : promoErrorText(
+            quote?.promoError,
+            shortfallPaise: quote?.promoShortfallPaise,
+          );
+    final applied =
+        !loading &&
+        quote != null &&
+        quote!.promoCode == code &&
+        quote!.promoError == null;
 
     if (error != null) {
       return Container(
-        padding: const EdgeInsets.symmetric(horizontal: IdSpace.s4, vertical: 14),
-        decoration: BoxDecoration(color: c.surface, borderRadius: BorderRadius.circular(IdRadius.lg), border: Border.all(color: c.danger, width: 2)),
+        padding: const EdgeInsets.symmetric(
+          horizontal: IdSpace.s5,
+          vertical: 14,
+        ),
+        decoration: BoxDecoration(
+          color: c.surface,
+          borderRadius: BorderRadius.circular(IdRadius.lg),
+          border: Border.all(color: c.danger, width: 2),
+        ),
         child: Semantics(
           liveRegion: true,
           child: Row(
@@ -266,19 +321,33 @@ class _PromoRow extends ConsumerWidget {
 
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 14, vertical: IdSpace.s3),
-      decoration: BoxDecoration(color: c.successSoft, borderRadius: BorderRadius.circular(IdRadius.md)),
+      decoration: BoxDecoration(
+        color: c.successSoft,
+        borderRadius: BorderRadius.circular(IdRadius.md),
+      ),
       child: Semantics(
         liveRegion: true,
         child: Row(
           children: [
-            Icon(LucideIcons.badgePercent, size: IdSize.iconMd, color: c.success),
+            Icon(
+              LucideIcons.badgePercent,
+              size: IdSize.iconMd,
+              color: c.success,
+            ),
             const SizedBox(width: 10),
             Expanded(
               child: Text.rich(
                 TextSpan(
                   children: [
-                    TextSpan(text: code, style: t.body.copyWith(fontWeight: FontWeight.w700)),
-                    TextSpan(text: applied ? ' applied. You save ${rupees(quote!.discountPaise)}.' : ' · checking…'),
+                    TextSpan(
+                      text: code,
+                      style: t.body.copyWith(fontWeight: FontWeight.w700),
+                    ),
+                    TextSpan(
+                      text: applied
+                          ? ' applied. You save ${rupees(quote!.discountPaise)}.'
+                          : ' · checking…',
+                    ),
                   ],
                 ),
                 style: t.body,
@@ -300,15 +369,21 @@ class _Tile extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) => Container(
-        width: 40,
-        height: 40,
-        decoration: BoxDecoration(color: bg, borderRadius: BorderRadius.circular(IdRadius.sm)),
-        child: Icon(icon, size: IdSize.iconMd, color: fg),
-      );
+    width: 40,
+    height: 40,
+    decoration: BoxDecoration(
+      color: bg,
+      borderRadius: BorderRadius.circular(IdRadius.sm),
+    ),
+    child: Icon(icon, size: IdSize.iconMd, color: fg),
+  );
 }
 
 class _MinOrderNotice extends StatelessWidget {
-  const _MinOrderNotice({required this.shortfallPaise, required this.minOrderPaise});
+  const _MinOrderNotice({
+    required this.shortfallPaise,
+    required this.minOrderPaise,
+  });
   final num shortfallPaise;
   final num minOrderPaise;
 
@@ -319,20 +394,36 @@ class _MinOrderNotice extends StatelessWidget {
     return Semantics(
       liveRegion: true,
       child: Container(
-        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: IdSpace.s3),
-        decoration: BoxDecoration(color: c.warningSoft, borderRadius: BorderRadius.circular(IdRadius.md)),
+        padding: const EdgeInsets.symmetric(
+          horizontal: 14,
+          vertical: IdSpace.s3,
+        ),
+        decoration: BoxDecoration(
+          color: c.warningSoft,
+          borderRadius: BorderRadius.circular(IdRadius.md),
+        ),
         child: Row(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Icon(LucideIcons.circleAlert, size: IdSize.iconMd, color: c.warning),
+            Icon(
+              LucideIcons.circleAlert,
+              size: IdSize.iconMd,
+              color: c.warning,
+            ),
             const SizedBox(width: 10),
             Expanded(
               child: Text.rich(
                 TextSpan(
                   children: [
                     const TextSpan(text: 'Add '),
-                    TextSpan(text: rupees(shortfallPaise), style: const TextStyle(fontWeight: FontWeight.w700)),
-                    TextSpan(text: ' more to book. The minimum order is ${rupees(minOrderPaise)}.'),
+                    TextSpan(
+                      text: rupees(shortfallPaise),
+                      style: const TextStyle(fontWeight: FontWeight.w700),
+                    ),
+                    TextSpan(
+                      text:
+                          ' more to book. The minimum order is ${rupees(minOrderPaise)}.',
+                    ),
                   ],
                 ),
                 style: t.body,
@@ -360,7 +451,12 @@ class _QuoteFailure extends ConsumerWidget {
           children: [
             Icon(LucideIcons.circleAlert, color: c.danger),
             const SizedBox(width: IdSpace.s3),
-            Expanded(child: Text("Couldn't work out the total. Check your connection.", style: t.body)),
+            Expanded(
+              child: Text(
+                "Couldn't work out the total. Check your connection.",
+                style: t.body,
+              ),
+            ),
             TextButton(onPressed: onRetry, child: const Text('Try again')),
           ],
         ),
@@ -382,19 +478,37 @@ class _Footer extends StatelessWidget {
     final short = q?.minOrderShortfallPaise;
     final IdButton button;
     if (short != null && !loading) {
-      button = IdButton(label: 'Add ${rupees(short)} more', expand: true, onPressed: () => context.canPop() ? context.pop() : context.push(Routes.book));
+      button = IdButton(
+        label: 'Add ${rupees(short)} more',
+        expand: true,
+        onPressed: () =>
+            context.canPop() ? context.pop() : context.push(Routes.book),
+      );
     } else {
       button = IdButton(
         label: 'Choose pickup time',
         expand: true,
-        onPressed: q != null && q.canPlaceOrder && !loading ? () => context.push(Routes.schedule) : null,
+        onPressed: q != null && q.canPlaceOrder && !loading
+            ? () => context.push(Routes.schedule)
+            : null,
       );
     }
     return DecoratedBox(
-      decoration: BoxDecoration(color: c.surface, boxShadow: context.shadows.sheet),
+      decoration: BoxDecoration(
+        color: c.surface,
+        border: Border(top: BorderSide(color: c.border)),
+      ),
       child: SafeArea(
         top: false,
-        child: Padding(padding: const EdgeInsets.fromLTRB(IdSpace.s4, IdSpace.s3, IdSpace.s4, IdSpace.s3), child: button),
+        child: Padding(
+          padding: const EdgeInsets.fromLTRB(
+            IdSpace.s5,
+            IdSpace.s3,
+            IdSpace.s5,
+            IdSpace.s3,
+          ),
+          child: button,
+        ),
       ),
     );
   }
@@ -416,25 +530,39 @@ class _EmptyBasket extends StatelessWidget {
             mainAxisSize: MainAxisSize.min,
             children: [
               SizedBox(
-                width: 132,
-                height: 132,
+                width: 72,
+                height: 72,
                 child: Stack(
                   alignment: Alignment.center,
                   clipBehavior: Clip.none,
                   children: [
                     Container(
-                      width: 120,
-                      height: 120,
-                      decoration: BoxDecoration(color: c.surfaceSoft, shape: BoxShape.circle),
-                      child: ExcludeSemantics(child: Icon(LucideIcons.shoppingBag, size: 52, color: c.primary)),
+                      width: 64,
+                      height: 64,
+                      decoration: BoxDecoration(
+                        color: c.surfaceSoft,
+                        shape: BoxShape.circle,
+                      ),
+                      child: ExcludeSemantics(
+                        child: Icon(
+                          LucideIcons.shoppingBag,
+                          size: 32,
+                          color: c.primary,
+                        ),
+                      ),
                     ),
-                    const Positioned(right: -2, top: 4, child: Bubble(24)),
-                    const Positioned(right: 26, top: -8, child: Bubble(12)),
                   ],
                 ),
               ),
               const SizedBox(height: IdSpace.s4),
-              Semantics(header: true, child: Text('Your basket is empty', style: t.titleLg, textAlign: TextAlign.center)),
+              Semantics(
+                header: true,
+                child: Text(
+                  'Your basket is empty',
+                  style: t.titleLg,
+                  textAlign: TextAlign.center,
+                ),
+              ),
               const SizedBox(height: IdSpace.s2),
               Text(
                 'Add the clothes you want ironed, washed or dry-cleaned. A rough count is fine.',
@@ -442,7 +570,12 @@ class _EmptyBasket extends StatelessWidget {
                 textAlign: TextAlign.center,
               ),
               const SizedBox(height: IdSpace.s4),
-              IdButton(label: 'Choose items', onPressed: () => context.canPop() ? context.pop() : context.push(Routes.book)),
+              IdButton(
+                label: 'Choose items',
+                onPressed: () => context.canPop()
+                    ? context.pop()
+                    : context.push(Routes.book),
+              ),
             ],
           ),
         ),

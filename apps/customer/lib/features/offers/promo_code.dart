@@ -9,7 +9,9 @@ void copyPromoCode(BuildContext context, String code) {
   Clipboard.setData(ClipboardData(text: code));
   ScaffoldMessenger.of(context)
     ..hideCurrentSnackBar()
-    ..showSnackBar(SnackBar(content: Text('Code $code copied. Apply it in your basket.')));
+    ..showSnackBar(
+      SnackBar(content: Text('Code $code copied. Apply it in your basket.')),
+    );
 }
 
 /// The code in a bordered chip. With [onTap] it is a button that copies the code (and shows the copy icon).
@@ -24,13 +26,17 @@ class PromoCodeChip extends StatelessWidget {
     final c = context.colors;
     final t = context.text;
     final chip = Container(
-      constraints: const BoxConstraints(minHeight: 40),
+      constraints: const BoxConstraints(minHeight: IdSize.touchTarget),
       padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-      decoration: BoxDecoration(color: c.surface, borderRadius: BorderRadius.circular(IdRadius.sm), border: Border.all(color: c.text, width: 1.5)),
+      decoration: BoxDecoration(
+        color: c.surface,
+        borderRadius: BorderRadius.circular(IdRadius.sm),
+        border: Border.all(color: c.text, width: 1.5),
+      ),
       child: Row(
         mainAxisSize: MainAxisSize.min,
         children: [
-          Text(code, style: t.orderId),
+          Flexible(child: Text(code, style: t.orderId)),
           if (onTap != null) ...[
             const SizedBox(width: 8),
             Icon(LucideIcons.copy, size: IdSize.iconSm, color: c.text),
@@ -38,12 +44,23 @@ class PromoCodeChip extends StatelessWidget {
         ],
       ),
     );
-    if (onTap == null) return Semantics(label: 'Code $code', excludeSemantics: true, child: chip);
+    if (onTap == null) {
+      return Semantics(
+        label: 'Code $code',
+        excludeSemantics: true,
+        child: chip,
+      );
+    }
     return Semantics(
+      container: true,
       button: true,
       label: 'Copy code $code',
       excludeSemantics: true,
-      child: InkWell(borderRadius: BorderRadius.circular(IdRadius.sm), onTap: onTap, child: chip),
+      child: InkWell(
+        borderRadius: BorderRadius.circular(IdRadius.sm),
+        onTap: onTap,
+        child: chip,
+      ),
     );
   }
 }

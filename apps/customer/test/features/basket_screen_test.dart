@@ -44,6 +44,8 @@ void main() {
     expect(find.text('Shirt / T-shirt'), findsOneWidget);
     expect(find.text('₹15 each'), findsNWidgets(2));
     expect(find.text('₹150'), findsOneWidget, reason: 'ten shirts');
+    await tester.scrollUntilVisible(find.text('To pay'), 200, scrollable: find.byType(Scrollable).first);
+    await tester.pumpAndSettle();
     expect(find.text('Items (15)'), findsOneWidget);
     expect(find.text('₹260'), findsNWidgets(2), reason: 'items and to pay');
     expect(find.text('Free'), findsOneWidget);
@@ -57,21 +59,31 @@ void main() {
     final (container, quotes) = await pump(tester, saved: {'basket.v1': tenShirtsAndASaree});
     quotes.calls.clear();
 
+    await tester.ensureVisible(find.bySemanticsLabel('Add one Saree'));
+    await tester.pump();
     await tester.tap(find.bySemanticsLabel('Add one Saree'));
     await tester.pump(const Duration(milliseconds: 100));
+    await tester.ensureVisible(find.bySemanticsLabel('Add one Saree'));
+    await tester.pump();
     await tester.tap(find.bySemanticsLabel('Add one Saree'));
     await tester.pump(const Duration(milliseconds: 100));
+    await tester.ensureVisible(find.bySemanticsLabel('Add one Saree'));
+    await tester.pump();
     await tester.tap(find.bySemanticsLabel('Add one Saree'));
     expect(quotes.calls, isEmpty, reason: 'still inside the debounce');
     await settle(tester);
 
     expect(quotes.calls, hasLength(1));
     expect(container.read(basketProvider).quantityOf('saree'), 4);
+    await tester.scrollUntilVisible(find.text('To pay'), 200, scrollable: find.byType(Scrollable).first);
+    await tester.pumpAndSettle();
     expect(find.text('₹410'), findsNWidgets(2));
   });
 
   testWidgets('the Choose pickup time button waits for the new price', (tester) async {
     await pump(tester, saved: {'basket.v1': tenShirtsAndASaree});
+    await tester.ensureVisible(find.bySemanticsLabel('Add one Saree'));
+    await tester.pump();
     await tester.tap(find.bySemanticsLabel('Add one Saree'));
     await tester.pump(const Duration(milliseconds: 50));
     expect(tester.widget<FilledButton>(find.widgetWithText(FilledButton, 'Choose pickup time')).onPressed, isNull);
@@ -113,6 +125,8 @@ void main() {
     final quotes = FakeQuoteRepository()..failure = const ApiFailure(ApiFailureKind.offline);
     await pump(tester, saved: {'basket.v1': tenShirtsAndASaree}, quotes: quotes);
 
+    await tester.scrollUntilVisible(find.text('Try again'), 200, scrollable: find.byType(Scrollable).first);
+    await tester.pumpAndSettle();
     expect(find.textContaining("Couldn't work out the total"), findsOneWidget);
     expect(tester.widget<FilledButton>(find.widgetWithText(FilledButton, 'Choose pickup time')).onPressed, isNull);
 
@@ -127,6 +141,8 @@ void main() {
     testWidgets('a valid code is checked, applied, and shown in the bill', (tester) async {
       final (container, quotes) = await pump(tester, saved: {'basket.v1': tenShirtsAndASaree});
 
+      await tester.scrollUntilVisible(find.text('Apply a promo code'), 200, scrollable: find.byType(Scrollable).first);
+      await tester.pumpAndSettle();
       await tester.tap(find.text('Apply a promo code'));
       await settle(tester);
       await tester.enterText(find.byType(TextField), 'welcome20');
@@ -137,12 +153,16 @@ void main() {
       expect(container.read(basketProvider).promoCode, 'WELCOME20');
       expect(quotes.calls.last.$2, 'WELCOME20');
       expect(find.textContaining('applied. You save ₹52.'), findsOneWidget);
+      await tester.scrollUntilVisible(find.text('To pay'), 200, scrollable: find.byType(Scrollable).first);
+      await tester.pumpAndSettle();
       expect(find.text('−₹52'), findsOneWidget);
       expect(find.text('₹208'), findsOneWidget, reason: 'to pay');
     });
 
     testWidgets('an unknown, expired or used code is explained under the field and not applied', (tester) async {
       final (container, _) = await pump(tester, saved: {'basket.v1': tenShirtsAndASaree});
+      await tester.scrollUntilVisible(find.text('Apply a promo code'), 200, scrollable: find.byType(Scrollable).first);
+      await tester.pumpAndSettle();
       await tester.tap(find.text('Apply a promo code'));
       await settle(tester);
 
@@ -170,6 +190,8 @@ void main() {
         saved: {'basket.v1': tenShirtsAndASaree},
         promotions: [testPromo('WELCOME20', '20% off your first order', minOrderPaise: 10000, maxDiscountPaise: 10000), testPromo('BIG', '10% off orders above ₹500', minOrderPaise: 50000)],
       );
+      await tester.scrollUntilVisible(find.text('Apply a promo code'), 200, scrollable: find.byType(Scrollable).first);
+      await tester.pumpAndSettle();
       await tester.tap(find.text('Apply a promo code'));
       await settle(tester);
 

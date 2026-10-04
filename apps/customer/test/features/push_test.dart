@@ -209,7 +209,7 @@ void main() {
     testWidgets('explains why, and Turn on asks the system then leaves', (tester) async {
       final (router, push, registrar, _) = await pump(tester);
       expect(find.text("Know when we're at your door"), findsOneWidget);
-      expect(find.textContaining('Offers only if you want them'), findsOneWidget);
+      expect(find.textContaining('Notifications may also include available offers'), findsOneWidget);
 
       await tester.tap(find.text('Turn on notifications'));
       await tester.pumpAndSettle();

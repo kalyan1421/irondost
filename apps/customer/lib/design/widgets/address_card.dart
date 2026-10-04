@@ -5,17 +5,23 @@ import '../../data/api/export.dart';
 import '../theme.dart';
 
 IconData addressIcon(String label) => switch (label.trim().toLowerCase()) {
-      'home' => LucideIcons.house,
-      'work' || 'office' => LucideIcons.briefcase,
-      _ => LucideIcons.mapPin,
-    };
+  'home' => LucideIcons.house,
+  'work' || 'office' => LucideIcons.briefcase,
+  _ => LucideIcons.mapPin,
+};
 
 /// A saved address, in the address book and the picker.
 ///
 /// [selected] draws the 2dp primary border and radio; [onEdit] adds the pencil button.
 /// An address outside the service area stays visible with a "Not in our area yet" chip.
 class AddressCard extends StatelessWidget {
-  const AddressCard({super.key, required this.address, this.selected, this.onTap, this.onEdit});
+  const AddressCard({
+    super.key,
+    required this.address,
+    this.selected,
+    this.onTap,
+    this.onEdit,
+  });
 
   final AddressDto address;
 
@@ -36,27 +42,25 @@ class AddressCard extends StatelessWidget {
       button: onTap != null,
       selected: selected,
       child: Opacity(
-        opacity: selected != null && unserved ? 0.6 : 1,
+        opacity: 1,
         child: Material(
           color: c.surface,
           shape: RoundedRectangleBorder(
             borderRadius: radius,
-            side: BorderSide(color: isSelected ? c.primary : c.border, width: isSelected ? 2 : 1),
+            side: BorderSide(
+              color: isSelected ? c.primary : c.border,
+              width: isSelected ? 2 : 1,
+            ),
           ),
           child: InkWell(
             borderRadius: radius,
             onTap: onTap,
             child: Padding(
-              padding: const EdgeInsets.all(IdSpace.s4),
+              padding: const EdgeInsets.symmetric(vertical: IdSpace.s4),
               child: Row(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Container(
-                    width: 40,
-                    height: 40,
-                    decoration: BoxDecoration(color: c.surfaceSoft, borderRadius: BorderRadius.circular(IdRadius.sm)),
-                    child: Icon(addressIcon(address.label), size: IdSize.iconMd, color: c.primary),
-                  ),
+                  Icon(addressIcon(address.label), size: IdSize.iconMd, color: c.textMuted),
                   const SizedBox(width: IdSpace.s3),
                   Expanded(
                     child: Column(
@@ -68,14 +72,22 @@ class AddressCard extends StatelessWidget {
                           crossAxisAlignment: WrapCrossAlignment.center,
                           children: [
                             Text(address.label, style: t.title),
-                            if (address.isPrimary) _Chip('Default', c.primarySoft, c.onPrimarySoft),
+                            if (address.isPrimary)
+                              _Chip('Default', c.primarySoft, c.onPrimarySoft),
                           ],
                         ),
                         const SizedBox(height: 2),
-                        Text(address.formatted, style: t.body.copyWith(color: c.textMuted)),
+                        Text(
+                          address.formatted,
+                          style: t.body.copyWith(color: c.textMuted),
+                        ),
                         if (unserved) ...[
                           const SizedBox(height: IdSpace.s2),
-                          _Chip('Not in our area yet', c.surfaceSoft, c.textMuted),
+                          _Chip(
+                            'Not in our area yet',
+                            c.surfaceSoft,
+                            c.textMuted,
+                          ),
                         ],
                       ],
                     ),
@@ -112,12 +124,18 @@ class _Chip extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) => Container(
-        height: 24,
-        padding: const EdgeInsets.symmetric(horizontal: 10),
-        decoration: BoxDecoration(color: bg, borderRadius: BorderRadius.circular(IdRadius.full)),
-        // widthFactor keeps the chip as wide as its text inside a Wrap.
-        child: Center(widthFactor: 1, child: Text(text, style: context.text.labelSm.copyWith(color: fg))),
-      );
+    constraints: const BoxConstraints(minHeight: 24),
+    padding: const EdgeInsets.symmetric(horizontal: 10),
+    decoration: BoxDecoration(
+      color: bg,
+      borderRadius: BorderRadius.circular(IdRadius.sm),
+    ),
+    // widthFactor keeps the chip as wide as its text inside a Wrap.
+    child: Center(
+      widthFactor: 1,
+      child: Text(text, style: context.text.labelSm.copyWith(color: fg)),
+    ),
+  );
 }
 
 class _Radio extends StatelessWidget {
@@ -130,7 +148,13 @@ class _Radio extends StatelessWidget {
     return Container(
       width: 20,
       height: 20,
-      decoration: BoxDecoration(shape: BoxShape.circle, border: Border.all(color: on ? c.primary : c.borderStrong, width: on ? 6 : 2)),
+      decoration: BoxDecoration(
+        shape: BoxShape.circle,
+        border: Border.all(
+          color: on ? c.primary : c.borderStrong,
+          width: on ? 6 : 2,
+        ),
+      ),
     );
   }
 }

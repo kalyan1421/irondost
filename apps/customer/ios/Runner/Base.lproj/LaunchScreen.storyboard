@@ -17,7 +17,7 @@
                         <autoresizingMask key="autoresizingMask" widthSizable="YES" heightSizable="YES"/>
                         <subviews>
                             <imageView clipsSubviews="YES" userInteractionEnabled="NO" contentMode="center" horizontalHuggingPriority="251" verticalHuggingPriority="251" image="LaunchImage" translatesAutoresizingMaskIntoConstraints="NO" id="YRO-k0-Ey4">
-                                <rect key="frame" x="56" y="390" width="281" height="72"/>
+                                <rect key="frame" x="112.5" y="410" width="168" height="32"/>
                             </imageView>
                         </subviews>
                         <viewLayoutGuide key="safeArea" id="6Tk-OE-BBY"/>
@@ -34,7 +34,7 @@
         </scene>
     </scenes>
     <resources>
-        <image name="LaunchImage" width="281" height="72"/>
+        <image name="LaunchImage" width="168" height="32"/>
         <namedColor name="LaunchBackground">
             <color red="1" green="1" blue="1" alpha="1" colorSpace="custom" customColorSpace="sRGB"/>
         </namedColor>

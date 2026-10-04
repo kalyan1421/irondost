@@ -60,7 +60,9 @@ class _OtpInputState extends State<OtpInput> {
     final c = context.colors;
     final t = context.text;
     final code = widget.controller.text;
-    final active = _focus.hasFocus ? code.length.clamp(0, widget.length - 1) : -1;
+    final active = _focus.hasFocus
+        ? code.length.clamp(0, widget.length - 1)
+        : -1;
 
     return Semantics(
       label: 'Verification code, ${widget.length} digits',
@@ -73,27 +75,37 @@ class _OtpInputState extends State<OtpInput> {
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
                 for (var i = 0; i < widget.length; i++)
-                  Container(
-                    width: 48,
-                    height: 56,
-                    alignment: Alignment.center,
-                    decoration: BoxDecoration(
-                      color: c.surface,
-                      borderRadius: BorderRadius.circular(IdRadius.md),
-                      border: Border.all(
-                        color: widget.hasError
-                            ? c.danger
-                            : i == active
+                  Expanded(
+                    child: Padding(
+                      padding: EdgeInsets.only(
+                        right: i < widget.length - 1 ? IdSpace.s1 : 0,
+                      ),
+                      child: Container(
+                        height:
+                            56 +
+                            (MediaQuery.textScalerOf(context).scale(1) - 1)
+                                    .clamp(0, 2) *
+                                32,
+                        alignment: Alignment.center,
+                        decoration: BoxDecoration(
+                          color: c.surface,
+                          borderRadius: BorderRadius.circular(IdRadius.md),
+                          border: Border.all(
+                            color: widget.hasError
+                                ? c.danger
+                                : i == active
                                 ? c.primary
                                 : c.borderStrong,
-                        width: widget.hasError || i == active ? 2 : 1,
-                      ),
-                    ),
-                    child: i < code.length
-                        ? Text(code[i], style: t.headline)
-                        : i == active
+                            width: widget.hasError || i == active ? 2 : 1,
+                          ),
+                        ),
+                        child: i < code.length
+                            ? Text(code[i], style: t.headline)
+                            : i == active
                             ? Container(width: 2, height: 24, color: c.primary)
                             : null,
+                      ),
+                    ),
                   ),
               ],
             ),
@@ -112,7 +124,11 @@ class _OtpInputState extends State<OtpInput> {
                 showCursor: false,
                 enableInteractiveSelection: false,
                 inputFormatters: [FilteringTextInputFormatter.digitsOnly],
-                decoration: const InputDecoration(counterText: '', border: InputBorder.none, filled: false),
+                decoration: const InputDecoration(
+                  counterText: '',
+                  border: InputBorder.none,
+                  filled: false,
+                ),
                 onChanged: (v) {
                   if (v.length == widget.length) widget.onCompleted(v);
                 },

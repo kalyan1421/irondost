@@ -20,14 +20,42 @@ class IdButton extends StatelessWidget {
     this.expand = false,
   });
 
-  const IdButton.tonal({super.key, required this.label, required this.onPressed, this.icon, this.iconAtEnd = false, this.loading = false, this.expand = false})
-      : variant = IdButtonVariant.tonal;
-  const IdButton.outline({super.key, required this.label, required this.onPressed, this.icon, this.iconAtEnd = false, this.loading = false, this.expand = false})
-      : variant = IdButtonVariant.outline;
-  const IdButton.text({super.key, required this.label, required this.onPressed, this.icon, this.iconAtEnd = false, this.loading = false, this.expand = false})
-      : variant = IdButtonVariant.text;
-  const IdButton.danger({super.key, required this.label, required this.onPressed, this.icon, this.iconAtEnd = false, this.loading = false, this.expand = false})
-      : variant = IdButtonVariant.danger;
+  const IdButton.tonal({
+    super.key,
+    required this.label,
+    required this.onPressed,
+    this.icon,
+    this.iconAtEnd = false,
+    this.loading = false,
+    this.expand = false,
+  }) : variant = IdButtonVariant.tonal;
+  const IdButton.outline({
+    super.key,
+    required this.label,
+    required this.onPressed,
+    this.icon,
+    this.iconAtEnd = false,
+    this.loading = false,
+    this.expand = false,
+  }) : variant = IdButtonVariant.outline;
+  const IdButton.text({
+    super.key,
+    required this.label,
+    required this.onPressed,
+    this.icon,
+    this.iconAtEnd = false,
+    this.loading = false,
+    this.expand = false,
+  }) : variant = IdButtonVariant.text;
+  const IdButton.danger({
+    super.key,
+    required this.label,
+    required this.onPressed,
+    this.icon,
+    this.iconAtEnd = false,
+    this.loading = false,
+    this.expand = false,
+  }) : variant = IdButtonVariant.danger;
 
   final String label;
   final VoidCallback? onPressed;
@@ -42,53 +70,76 @@ class IdButton extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final c = context.colors;
-    final onTap = loading ? () {} : onPressed;
+    final onTap = loading ? null : onPressed;
 
     final content = loading
-        ? const SizedBox.square(dimension: 20, child: CircularProgressIndicator(strokeWidth: 2, color: null))
+        ? const SizedBox.square(
+            dimension: 20,
+            child: CircularProgressIndicator(strokeWidth: 2, color: null),
+          )
         : Row(
             mainAxisSize: MainAxisSize.min,
             children: [
-              if (icon != null && !iconAtEnd) ...[Icon(icon, size: IdSize.iconMd), const SizedBox(width: IdSpace.s2)],
+              if (icon != null && !iconAtEnd) ...[
+                Icon(icon, size: IdSize.iconMd),
+                const SizedBox(width: IdSpace.s2),
+              ],
               // Wraps rather than truncating when text is large: a cut-off button label is a button nobody can read.
-              Flexible(child: Text(label, textAlign: TextAlign.center, overflow: TextOverflow.ellipsis, maxLines: 3)),
-              if (icon != null && iconAtEnd) ...[const SizedBox(width: IdSpace.s2), Icon(icon, size: IdSize.iconMd)],
+              Flexible(
+                child: Text(label, textAlign: TextAlign.center, softWrap: true),
+              ),
+              if (icon != null && iconAtEnd) ...[
+                const SizedBox(width: IdSpace.s2),
+                Icon(icon, size: IdSize.iconMd),
+              ],
             ],
           );
 
     final Widget button = switch (variant) {
-      IdButtonVariant.primary => FilledButton(onPressed: onTap, child: _Spinnered(loading, c.onPrimary, content)),
+      IdButtonVariant.primary => FilledButton(
+        style: loading ? FilledButton.styleFrom(disabledBackgroundColor: c.primary, disabledForegroundColor: c.onPrimary) : null,
+        onPressed: onTap,
+        child: _Spinnered(loading, c.onPrimary, content),
+      ),
       IdButtonVariant.tonal => FilledButton(
-          onPressed: onTap,
-          style: FilledButton.styleFrom(
-            backgroundColor: c.primarySoft,
-            foregroundColor: c.onPrimarySoft,
-            disabledBackgroundColor: c.primarySoft.withValues(alpha: 0.38),
-            disabledForegroundColor: c.onPrimarySoft.withValues(alpha: 0.38),
-          ),
-          child: _Spinnered(loading, c.onPrimarySoft, content),
+        onPressed: onTap,
+        style: FilledButton.styleFrom(
+          backgroundColor: c.primarySoft,
+          foregroundColor: c.onPrimarySoft,
+          disabledBackgroundColor: c.primarySoft.withValues(alpha: 0.38),
+          disabledForegroundColor: c.onPrimarySoft.withValues(alpha: 0.38),
         ),
-      IdButtonVariant.outline => OutlinedButton(onPressed: onTap, child: _Spinnered(loading, c.text, content)),
-      IdButtonVariant.text => TextButton(onPressed: onTap, child: _Spinnered(loading, c.primary, content)),
+        child: _Spinnered(loading, c.onPrimarySoft, content),
+      ),
+      IdButtonVariant.outline => OutlinedButton(
+        onPressed: onTap,
+        child: _Spinnered(loading, c.text, content),
+      ),
+      IdButtonVariant.text => TextButton(
+        onPressed: onTap,
+        child: _Spinnered(loading, c.primary, content),
+      ),
       IdButtonVariant.danger => FilledButton(
-          onPressed: onTap,
-          style: FilledButton.styleFrom(
-            backgroundColor: c.dangerSoft,
-            foregroundColor: c.danger,
-            disabledBackgroundColor: c.dangerSoft.withValues(alpha: 0.38),
-          ),
-          child: _Spinnered(loading, c.danger, content),
+        onPressed: onTap,
+        style: FilledButton.styleFrom(
+          backgroundColor: c.dangerSoft,
+          foregroundColor: c.danger,
+          disabledBackgroundColor: c.dangerSoft.withValues(alpha: 0.38),
         ),
+        child: _Spinnered(loading, c.danger, content),
+      ),
     };
 
     final semantic = Semantics(
       button: true,
-      enabled: onPressed != null,
+      enabled: onPressed != null && !loading,
       label: loading ? '$label, loading' : null,
       excludeSemantics: loading,
-      child: button,
+      child: KeyedSubtree(key: ValueKey((variant, label)), child: button),
     );
-    return expand ? SizedBox(width: double.infinity, child: semantic) : semantic;
+    return expand
+        ? SizedBox(width: double.infinity, child: semantic)
+        : semantic;
   }
 }
 
@@ -101,6 +152,9 @@ class _Spinnered extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) => loading
-      ? ProgressIndicatorTheme(data: ProgressIndicatorThemeData(color: color), child: child)
+      ? ProgressIndicatorTheme(
+          data: ProgressIndicatorThemeData(color: color),
+          child: child,
+        )
       : child;
 }

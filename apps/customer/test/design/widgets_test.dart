@@ -44,7 +44,7 @@ void main() {
     await tester.pumpWidget(themed(const PhoneScreen(), overrides: [authRepositoryProvider.overrideWithValue(auth)]));
 
     await tester.enterText(find.byType(TextField), '98765');
-    await tester.tap(find.text('Get OTP'));
+    await tester.tap(find.text('Send code'));
     await tester.pump();
 
     expect(find.text('Enter a 10-digit mobile number.'), findsOneWidget);

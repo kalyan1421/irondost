@@ -1,0 +1,11 @@
+{
+  "status": "final logo selection installed in the customer app; existing outlined artwork reused",
+  "date": "2026-10-05",
+  "primary": "logo/irondost-primary.svg",
+  "primaryDark": "logo/irondost-primary-reverse.svg",
+  "signature": "logo/irondost-signature.svg",
+  "symbol": "logo/irondost-symbol.svg",
+  "appIcon": "logo/irondost-app-icon.svg",
+  "artworkMaster": "packages/brand/scripts/build-svg.py",
+  "decision": "Use the existing outlined Outfit wordmark as primary UI identity. Retain the washer/iron signature for marketing/store/print contexts, and the small mark for app icon contexts. No redrawing or new colour scheme."
+}

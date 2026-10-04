@@ -30,7 +30,8 @@ abstract final class Routes {
 
   /// Paying an order online (just placed, or one with an amount still due).
   static const orderPay = '/order/:id/pay';
-  static String pay(String orderId, {bool due = false}) => '/order/$orderId/pay${due ? '?due=1' : ''}';
+  static String pay(String orderId, {bool due = false}) =>
+      '/order/$orderId/pay${due ? '?due=1' : ''}';
 
   /// The receipt after paying what was due on an existing order.
   static const orderPaid = '/order/:id/paid';
@@ -60,6 +61,12 @@ abstract final class Routes {
   static const orders = '/orders';
   static const offers = '/offers';
   static const account = '/account';
+
+  static const publicLegalRoutes = {
+    '/legal/terms',
+    '/legal/privacy',
+    '/legal/cancellation',
+  };
 
   static const signedOutRoutes = {welcome, login, loginCode};
   static const gateRoutes = {launch, unavailable, update, paused, setupName};

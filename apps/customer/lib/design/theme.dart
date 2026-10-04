@@ -1,16 +1,14 @@
 import 'package:flutter/material.dart';
-import 'package:google_fonts/google_fonts.dart';
 
 import 'tokens.g.dart';
 
 export 'tokens.g.dart';
 
-/// Builds a TextStyle for a font family. The app uses Google Fonts; tests pass a resolver
-/// that uses plain family names so nothing is fetched.
+/// Resolves the locally bundled font families; tests may supply their own resolver.
 typedef FontResolver = TextStyle Function(String family, TextStyle style);
 
-TextStyle googleFont(String family, TextStyle style) => GoogleFonts.getFont(family, textStyle: style);
-TextStyle plainFont(String family, TextStyle style) => style.copyWith(fontFamily: family);
+TextStyle plainFont(String family, TextStyle style) =>
+    style.copyWith(fontFamily: family);
 
 /// The design system's named text styles, coloured for the current theme. Read with `context.text`.
 @immutable
@@ -41,16 +39,16 @@ class IdTextStyles extends ThemeExtension<IdTextStyles> {
 
   factory IdTextStyles.of(IdColors c, FontResolver font) {
     TextStyle s(IdTypeSpec spec) => font(
-          spec.family,
-          TextStyle(
-            fontSize: spec.size,
-            height: spec.lineHeight / spec.size,
-            fontWeight: spec.weight,
-            letterSpacing: spec.letterSpacingEm * spec.size,
-            color: c.text,
-            leadingDistribution: TextLeadingDistribution.even,
-          ),
-        );
+      spec.family,
+      TextStyle(
+        fontSize: spec.size,
+        height: spec.lineHeight / spec.size,
+        fontWeight: spec.weight,
+        letterSpacing: spec.letterSpacingEm * spec.size,
+        color: c.text,
+        leadingDistribution: TextLeadingDistribution.even,
+      ),
+    );
     return IdTextStyles(
       display: s(IdType.display),
       headline: s(IdType.headline),
@@ -94,7 +92,7 @@ extension IdThemeContext on BuildContext {
 }
 
 /// Material theme for IronDost, following the platform mapping in the design system's README.
-ThemeData buildTheme(Brightness brightness, {FontResolver font = googleFont}) {
+ThemeData buildTheme(Brightness brightness, {FontResolver font = plainFont}) {
   final dark = brightness == Brightness.dark;
   final c = dark ? IdColors.dark : IdColors.light;
   final text = IdTextStyles.of(c, font);
@@ -147,10 +145,13 @@ ThemeData buildTheme(Brightness brightness, {FontResolver font = googleFont}) {
     labelSmall: text.caption,
   );
 
-  const buttonShape = RoundedRectangleBorder(borderRadius: BorderRadius.all(Radius.circular(IdRadius.md)));
+  const buttonShape = RoundedRectangleBorder(
+    borderRadius: BorderRadius.all(Radius.circular(IdRadius.md)),
+  );
   const buttonSize = Size(IdSize.touchTarget, IdSize.buttonHeight);
   const buttonPadding = EdgeInsets.symmetric(horizontal: IdSpace.s5);
-  OutlineInputBorder inputBorder(Color color, double width) => OutlineInputBorder(
+  OutlineInputBorder inputBorder(Color color, double width) =>
+      OutlineInputBorder(
         borderRadius: const BorderRadius.all(Radius.circular(IdRadius.md)),
         borderSide: BorderSide(color: color, width: width),
       );
@@ -159,7 +160,7 @@ ThemeData buildTheme(Brightness brightness, {FontResolver font = googleFont}) {
     useMaterial3: true,
     brightness: brightness,
     colorScheme: scheme,
-    scaffoldBackgroundColor: c.bg,
+    scaffoldBackgroundColor: c.surface,
     canvasColor: c.bg,
     textTheme: textTheme,
     extensions: [c, dark ? IdShadows.dark : IdShadows.light, text],
@@ -235,30 +236,44 @@ ThemeData buildTheme(Brightness brightness, {FontResolver font = googleFont}) {
       height: IdSize.bottomNav,
       backgroundColor: c.surface,
       surfaceTintColor: Colors.transparent,
-      indicatorColor: c.primarySoft,
-      indicatorShape: const StadiumBorder(),
+      indicatorColor: Colors.transparent,
+      indicatorShape: const RoundedRectangleBorder(),
       elevation: 0,
       labelBehavior: NavigationDestinationLabelBehavior.alwaysShow,
       labelTextStyle: WidgetStateProperty.resolveWith(
         (states) => text.caption.copyWith(
           fontWeight: FontWeight.w600,
-          color: states.contains(WidgetState.selected) ? c.text : c.textMuted,
+          color: states.contains(WidgetState.selected)
+              ? c.primary
+              : c.textMuted,
         ),
       ),
       iconTheme: WidgetStateProperty.resolveWith(
         (states) => IconThemeData(
           size: IdSize.iconLg,
-          color: states.contains(WidgetState.selected) ? c.onPrimarySoft : c.textMuted,
+          color: states.contains(WidgetState.selected)
+              ? c.primary
+              : c.textMuted,
         ),
       ),
     ),
     snackBarTheme: SnackBarThemeData(
       behavior: SnackBarBehavior.floating,
       backgroundColor: c.surfaceInverse,
-      contentTextStyle: text.body.copyWith(color: c.textInverse, fontWeight: FontWeight.w500),
+      contentTextStyle: text.body.copyWith(
+        color: c.textInverse,
+        fontWeight: FontWeight.w500,
+      ),
       actionTextColor: c.inverseAccent,
-      shape: const RoundedRectangleBorder(borderRadius: BorderRadius.all(Radius.circular(IdRadius.md))),
-      insetPadding: const EdgeInsets.fromLTRB(IdSpace.s4, 0, IdSpace.s4, IdSpace.s4),
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.all(Radius.circular(IdRadius.md)),
+      ),
+      insetPadding: const EdgeInsets.fromLTRB(
+        IdSpace.s4,
+        0,
+        IdSpace.s4,
+        IdSpace.s4,
+      ),
     ),
     bottomSheetTheme: BottomSheetThemeData(
       backgroundColor: c.surface,
@@ -266,13 +281,17 @@ ThemeData buildTheme(Brightness brightness, {FontResolver font = googleFont}) {
       modalBarrierColor: c.scrim,
       showDragHandle: true,
       dragHandleColor: c.borderStrong,
-      shape: const RoundedRectangleBorder(borderRadius: BorderRadius.vertical(top: Radius.circular(IdRadius.xl))),
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(IdRadius.xl)),
+      ),
     ),
     dialogTheme: DialogThemeData(
       backgroundColor: c.surface,
       surfaceTintColor: Colors.transparent,
       barrierColor: c.scrim,
-      shape: const RoundedRectangleBorder(borderRadius: BorderRadius.all(Radius.circular(IdRadius.xl))),
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.all(Radius.circular(IdRadius.xl)),
+      ),
       titleTextStyle: text.titleLg,
       contentTextStyle: text.body.copyWith(color: c.textMuted),
     ),
@@ -287,7 +306,10 @@ ThemeData buildTheme(Brightness brightness, {FontResolver font = googleFont}) {
       ),
     ),
     dividerTheme: DividerThemeData(color: c.border, thickness: 1, space: 1),
-    progressIndicatorTheme: ProgressIndicatorThemeData(color: c.primary, linearTrackColor: c.surfaceSoft),
+    progressIndicatorTheme: ProgressIndicatorThemeData(
+      color: c.primary,
+      linearTrackColor: c.surfaceSoft,
+    ),
     listTileTheme: ListTileThemeData(
       iconColor: c.textMuted,
       textColor: c.text,
@@ -297,12 +319,22 @@ ThemeData buildTheme(Brightness brightness, {FontResolver font = googleFont}) {
       contentPadding: const EdgeInsets.symmetric(horizontal: IdSpace.s4),
     ),
     switchTheme: SwitchThemeData(
-      thumbColor: WidgetStateProperty.resolveWith((s) => s.contains(WidgetState.selected) ? c.onPrimary : c.textMuted),
+      thumbColor: WidgetStateProperty.resolveWith(
+        (s) => s.contains(WidgetState.selected) ? c.onPrimary : c.textMuted,
+      ),
       trackColor: WidgetStateProperty.resolveWith((s) {
-        if (s.contains(WidgetState.selected)) return s.contains(WidgetState.disabled) ? c.primary.withValues(alpha: 0.5) : c.primary;
+        if (s.contains(WidgetState.selected)) {
+          return s.contains(WidgetState.disabled)
+              ? c.primary.withValues(alpha: 0.5)
+              : c.primary;
+        }
         return c.surfaceSoft;
       }),
-      trackOutlineColor: WidgetStateProperty.resolveWith((s) => s.contains(WidgetState.selected) ? Colors.transparent : c.borderStrong),
+      trackOutlineColor: WidgetStateProperty.resolveWith(
+        (s) => s.contains(WidgetState.selected)
+            ? Colors.transparent
+            : c.borderStrong,
+      ),
     ),
     textSelectionTheme: TextSelectionThemeData(
       cursorColor: c.primary,

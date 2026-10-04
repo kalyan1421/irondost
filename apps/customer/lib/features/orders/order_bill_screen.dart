@@ -27,35 +27,60 @@ class OrderBillScreen extends ConsumerWidget {
 
     return Scaffold(
       appBar: AppBar(
-        leading: BackButton(onPressed: () => context.canPop() ? context.pop() : context.go(Routes.orders)),
+        leading: BackButton(
+          onPressed: () =>
+              context.canPop() ? context.pop() : context.go(Routes.orders),
+        ),
         title: Text('Items and bill', style: t.titleLg),
       ),
       body: order == null
           ? const Center(child: CircularProgressIndicator())
           : ListView(
-              padding: const EdgeInsets.fromLTRB(IdSpace.s4, IdSpace.s4, IdSpace.s4, IdSpace.s6),
+              padding: const EdgeInsets.fromLTRB(
+                IdSpace.s5,
+                IdSpace.s5,
+                IdSpace.s5,
+                IdSpace.s6,
+              ),
               children: [
                 _Head(order),
                 const SizedBox(height: IdSpace.s4),
                 IdCard(
-                  padding: const EdgeInsets.fromLTRB(IdSpace.s4, IdSpace.s1, IdSpace.s4, IdSpace.s1),
+                  padding: const EdgeInsets.fromLTRB(
+                    IdSpace.s5,
+                    IdSpace.s1,
+                    IdSpace.s5,
+                    IdSpace.s1,
+                  ),
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.stretch,
                     children: [
                       Padding(
-                        padding: const EdgeInsets.only(top: IdSpace.s3, bottom: IdSpace.s1),
+                        padding: const EdgeInsets.only(
+                          top: IdSpace.s3,
+                          bottom: IdSpace.s1,
+                        ),
                         child: Row(
                           mainAxisAlignment: MainAxisAlignment.spaceBetween,
                           children: [
-                            Semantics(header: true, child: Text('Items', style: t.title)),
-                            if (order.pickedUpAt != null) Text('Counted at pickup', style: t.caption.copyWith(color: c.textMuted)),
+                            Semantics(
+                              header: true,
+                              child: Text('Items', style: t.title),
+                            ),
+                            if (order.pickedUpAt != null)
+                              Text(
+                                'Counted at pickup',
+                                style: t.caption.copyWith(color: c.textMuted),
+                              ),
                           ],
                         ),
                       ),
                       for (final (i, item) in order.items.indexed) ...[
                         if (i > 0) const Divider(height: 1),
                         Padding(
-                          padding: const EdgeInsets.symmetric(vertical: IdSpace.s3),
+                          padding: const EdgeInsets.symmetric(
+                            vertical: IdSpace.s3,
+                          ),
                           child: Row(
                             children: [
                               Expanded(
@@ -63,11 +88,23 @@ class OrderBillScreen extends ConsumerWidget {
                                   crossAxisAlignment: CrossAxisAlignment.start,
                                   children: [
                                     Text(item.name, style: t.title),
-                                    Text('${item.quantity.toInt()} × ${rupees(item.unitPricePaise)}', style: t.caption.copyWith(color: c.textMuted)),
+                                    Text(
+                                      '${item.quantity.toInt()} × ${rupees(item.unitPricePaise)}',
+                                      style: t.caption.copyWith(
+                                        color: c.textMuted,
+                                      ),
+                                    ),
                                   ],
                                 ),
                               ),
-                              Text(rupees(item.lineTotalPaise), style: t.label.copyWith(fontFeatures: const [FontFeature.tabularFigures()])),
+                              Text(
+                                rupees(item.lineTotalPaise),
+                                style: t.label.copyWith(
+                                  fontFeatures: const [
+                                    FontFeature.tabularFigures(),
+                                  ],
+                                ),
+                              ),
                             ],
                           ),
                         ),
@@ -93,8 +130,12 @@ class _Head extends StatelessWidget {
     final t = context.text;
     final paid = order.paymentStatus == PaymentStatus.paid;
     final dates = [
-      if (order.pickedUpAt != null) 'Picked up ${istDayLabel(order.pickedUpAt!)}',
-      if (order.deliveredAt != null) 'Delivered ${istDayLabel(order.deliveredAt!)}' else 'Delivery ${dayLong(order.deliveryDate)}',
+      if (order.pickedUpAt != null)
+        'Picked up ${istDayLabel(order.pickedUpAt!)}',
+      if (order.deliveredAt != null)
+        'Delivered ${istDayLabel(order.deliveredAt!)}'
+      else
+        'Delivery ${dayLong(order.deliveryDate)}',
     ].join(' · ');
     return IdCard(
       child: Column(
@@ -104,14 +145,33 @@ class _Head extends StatelessWidget {
             children: [
               Expanded(child: Text(order.orderNumber, style: t.orderId)),
               Container(
-                height: 28,
+                constraints: const BoxConstraints(minHeight: 28),
                 padding: const EdgeInsets.symmetric(horizontal: 10),
-                decoration: BoxDecoration(color: paid ? c.successSoft : c.warningSoft, borderRadius: BorderRadius.circular(IdRadius.full)),
+                decoration: BoxDecoration(
+                  color: paid ? c.successSoft : c.warningSoft,
+                  borderRadius: BorderRadius.circular(IdRadius.full),
+                ),
                 child: Row(
                   mainAxisSize: MainAxisSize.min,
                   children: [
-                    if (paid) ...[Icon(LucideIcons.check, size: IdSize.iconSm, color: c.success), const SizedBox(width: IdSpace.s1)],
-                    Text(paid ? 'Paid' : (order.amountDuePaise > 0 ? '${rupees(order.amountDuePaise)} due' : 'Unpaid'), style: t.labelSm.copyWith(color: paid ? c.success : c.warning)),
+                    if (paid) ...[
+                      Icon(
+                        LucideIcons.check,
+                        size: IdSize.iconSm,
+                        color: c.success,
+                      ),
+                      const SizedBox(width: IdSpace.s1),
+                    ],
+                    Text(
+                      paid
+                          ? 'Paid'
+                          : (order.amountDuePaise > 0
+                                ? '${rupees(order.amountDuePaise)} due'
+                                : 'Unpaid'),
+                      style: t.labelSm.copyWith(
+                        color: paid ? c.success : c.warning,
+                      ),
+                    ),
                   ],
                 ),
               ),
@@ -135,13 +195,25 @@ class _Bill extends StatelessWidget {
     final t = context.text;
     final figures = [const FontFeature.tabularFigures()];
     Widget row(String k, String v, {Color? color, FontWeight? weight}) => Row(
-          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-          children: [
-            Flexible(child: Text(k, style: t.bodyLg.copyWith(color: color, fontWeight: weight))),
-            const SizedBox(width: IdSpace.s3),
-            Text(v, style: t.bodyLg.copyWith(color: color, fontWeight: weight, fontFeatures: figures)),
-          ],
-        );
+      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+      children: [
+        Flexible(
+          child: Text(
+            k,
+            style: t.bodyLg.copyWith(color: color, fontWeight: weight),
+          ),
+        ),
+        const SizedBox(width: IdSpace.s3),
+        Text(
+          v,
+          style: t.bodyLg.copyWith(
+            color: color,
+            fontWeight: weight,
+            fontFeatures: figures,
+          ),
+        ),
+      ],
+    );
     final how = paidHow(order);
     return IdCard(
       child: Column(
@@ -149,25 +221,56 @@ class _Bill extends StatelessWidget {
           row('Items (${pieceCount(order)})', rupees(order.subtotalPaise)),
           if (order.discountPaise > 0) ...[
             const SizedBox(height: 10),
-            row(order.promoCode ?? 'Discount', '−${rupees(order.discountPaise)}', color: c.success, weight: FontWeight.w600),
+            row(
+              order.promoCode ?? 'Discount',
+              '−${rupees(order.discountPaise)}',
+              color: c.success,
+              weight: FontWeight.w600,
+            ),
           ],
           const SizedBox(height: 10),
-          row('Pickup & delivery', order.deliveryFeePaise == 0 ? 'Free' : rupees(order.deliveryFeePaise), color: c.textMuted),
+          row(
+            'Pickup & delivery',
+            order.deliveryFeePaise == 0
+                ? 'Free'
+                : rupees(order.deliveryFeePaise),
+            color: c.textMuted,
+          ),
           const SizedBox(height: IdSpace.s3),
           Container(
             padding: const EdgeInsets.only(top: IdSpace.s3),
-            decoration: BoxDecoration(border: Border(top: BorderSide(color: c.borderStrong))),
+            decoration: BoxDecoration(
+              border: Border(top: BorderSide(color: c.borderStrong)),
+            ),
             child: Column(
               children: [
                 Row(
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
                     Text('Total', style: t.titleLg),
-                    Text(rupees(order.totalPaise), style: t.titleLg.copyWith(fontFeatures: figures)),
+                    Text(
+                      rupees(order.totalPaise),
+                      style: t.titleLg.copyWith(fontFeatures: figures),
+                    ),
                   ],
                 ),
-                if (order.paidPaise > 0) ...[const SizedBox(height: 10), row(how, rupees(order.paidPaise), color: c.success, weight: FontWeight.w600)],
-                if (order.refundedPaise > 0) ...[const SizedBox(height: 10), row('Refunded', rupees(order.refundedPaise), color: c.textMuted)],
+                if (order.paidPaise > 0) ...[
+                  const SizedBox(height: 10),
+                  row(
+                    how,
+                    rupees(order.paidPaise),
+                    color: c.success,
+                    weight: FontWeight.w600,
+                  ),
+                ],
+                if (order.refundedPaise > 0) ...[
+                  const SizedBox(height: 10),
+                  row(
+                    'Refunded',
+                    rupees(order.refundedPaise),
+                    color: c.textMuted,
+                  ),
+                ],
                 const SizedBox(height: 10),
                 row('Due', rupees(order.amountDuePaise)),
               ],

@@ -1,0 +1,101 @@
+{
+  "created": "2026-10-05",
+  "environment": "local development API at localhost:4000",
+  "timezone": "Asia/Kolkata",
+  "dateRule": "10 calendar days before through 2 calendar days after the festival, inclusive",
+  "festivalCalendarSource": "https://www.iirs.gov.in/holidaycalender",
+  "generationTool": "Built-in image_gen.imagegen",
+  "prompts": "prompts.json",
+  "serviceAssets": {
+    "ironing": "../../../apps/customer/assets/services/ironing-3d.png",
+    "wash-and-iron": "../../../apps/customer/assets/services/wash-and-iron-3d.png",
+    "dry-cleaning": "../../../apps/customer/assets/services/dry-cleaning-3d.png"
+  },
+  "campaigns": [
+    {
+      "key": "dasara",
+      "asset": "dasara-2026.png",
+      "festivalDate": "2026-10-20",
+      "displayWindow": "10–22 Oct 2026",
+      "status": "scheduled in local admin Promotions",
+      "adminId": "b7d0d038-05f3-4d90-871c-56dbeaf4194a",
+      "upload": {
+        "url": "http://localhost:4000/uploads/promotion/2026/10/11b13467-de72-4a91-9d3f-8dfcf96bdd24.webp",
+        "width": 1200,
+        "height": 600,
+        "bytes": 56966
+      },
+      "promotionPayload": {
+        "code": "DASARA15",
+        "title": "Dasara: 15% off",
+        "description": "Minimum order ₹100. Maximum discount ₹100. 10–22 Oct 2026 (IST).",
+        "discountType": "PERCENT",
+        "discountValue": 15,
+        "minOrderPaise": 10000,
+        "maxDiscountPaise": 10000,
+        "perCustomerLimit": null,
+        "validFrom": "2026-10-09T18:30:00.000Z",
+        "validTo": "2026-10-22T18:29:59.999Z",
+        "imageUrl": "http://localhost:4000/uploads/promotion/2026/10/11b13467-de72-4a91-9d3f-8dfcf96bdd24.webp",
+        "isActive": true
+      }
+    },
+    {
+      "key": "diwali",
+      "asset": "diwali-2026.png",
+      "festivalDate": "2026-11-08",
+      "displayWindow": "29 Oct–10 Nov 2026",
+      "status": "scheduled in local admin Promotions",
+      "adminId": "bd65197e-bdea-498c-8f2f-c123b1095500",
+      "upload": {
+        "url": "http://localhost:4000/uploads/promotion/2026/10/0050bf76-efb4-4f2d-a2fb-efe494738b33.webp",
+        "width": 1200,
+        "height": 600,
+        "bytes": 83012
+      },
+      "promotionPayload": {
+        "code": "DIWALI10",
+        "title": "Diwali: 10% off",
+        "description": "Minimum order ₹100. Maximum discount ₹100. 29 Oct–10 Nov 2026 (IST).",
+        "discountType": "PERCENT",
+        "discountValue": 10,
+        "minOrderPaise": 10000,
+        "maxDiscountPaise": 10000,
+        "perCustomerLimit": null,
+        "validFrom": "2026-10-28T18:30:00.000Z",
+        "validTo": "2026-11-10T18:29:59.999Z",
+        "imageUrl": "http://localhost:4000/uploads/promotion/2026/10/0050bf76-efb4-4f2d-a2fb-efe494738b33.webp",
+        "isActive": true
+      }
+    },
+    {
+      "key": "new-customer",
+      "asset": "new-customer-wash-and-iron.png",
+      "status": "inactive local admin banner draft",
+      "adminId": "b6d65723-10ff-44c3-b039-ba5d6f70b7bd",
+      "upload": {
+        "url": "http://localhost:4000/uploads/banner/2026/10/1133f67c-1e3c-4025-a9e2-66be82837ed4.webp",
+        "width": 1600,
+        "height": 800,
+        "bytes": 58852
+      },
+      "bannerPayload": {
+        "imageUrl": "http://localhost:4000/uploads/banner/2026/10/1133f67c-1e3c-4025-a9e2-66be82837ed4.webp",
+        "title": "First order: wash & iron for 2 shirts + 2 pants FREE",
+        "linkUrl": "/offers",
+        "sortOrder": 2,
+        "isActive": false
+      },
+      "eligibility": "New customers, first order, Wash & iron for 2 shirts and 2 pants",
+      "pending": "Existing percent/flat coupon rules cannot grant specific free garments or enforce first-order eligibility. Add server-side free-item eligibility and checkout pricing before activating this draft.",
+      "previousAsset": "new-customer.png",
+      "service": "Wash & iron"
+    }
+  ],
+  "correctedLocalBanner": {
+    "id": "b19d92e8-cf7e-4ad4-9ea9-93458d8df489",
+    "title": "Diwail 50%",
+    "isActive": false,
+    "reason": "Existing logo-board artwork advertised 50%, conflicting with the requested scheduled 10% Diwali offer. Preserved the record and asset, removed it from active Home content."
+  }
+}

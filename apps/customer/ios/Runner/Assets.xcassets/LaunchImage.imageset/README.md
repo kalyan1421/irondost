@@ -1,4 +1,5 @@
 # Launch screen
 
-The IronDost logo with its tagline, at the size the app's own launch screen draws it (281 x 72 pt), in a light and a dark version.
-The background colour is `LaunchBackground.colorset`. Regenerate from `assets/brand/irondost-logo-tagline*.png`.
+The existing outlined wordmark, 32 pt high, matching the Flutter launch screen in both themes.
+The background colour is `LaunchBackground.colorset`, matching the customer surface tokens.
+Regenerate from `assets/brand/irondost-wordmark*.png` with `node apps/customer/tool/gen_launch.mjs` from the repository root.

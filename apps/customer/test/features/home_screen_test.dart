@@ -1,0 +1,104 @@
+import 'package:flutter/material.dart';
+import 'package:flutter_test/flutter_test.dart';
+import 'package:irondost_customer/app/routes.dart';
+import 'package:irondost_customer/data/api_client.dart';
+import 'package:irondost_customer/features/addresses/address_repository.dart';
+import 'package:irondost_customer/features/home/home_screen.dart';
+import 'package:irondost_customer/features/orders/order_repository.dart';
+import 'package:irondost_customer/features/auth/welcome_screen.dart';
+import 'package:irondost_customer/design/widgets/service_visual.dart';
+
+import '../helpers.dart';
+
+void main() {
+  testWidgets(
+    'service categories show distinct bundled 3D artwork without admin images',
+    (tester) async {
+      await tester.pumpWidget(
+        themed(
+          Column(
+            children: [
+              ServiceVisual(category: testCategory('ironing', 'Ironing', [])),
+              ServiceVisual(
+                category: testCategory('wash-and-iron', 'Wash & iron', []),
+              ),
+              ServiceVisual(
+                category: testCategory('dry-cleaning', 'Dry cleaning', []),
+              ),
+            ],
+          ),
+        ),
+      );
+      await tester.pumpAndSettle();
+      final assets = tester
+          .widgetList<Image>(find.byType(Image))
+          .map(
+            (image) => (image.image as ResizeImage).imageProvider as AssetImage,
+          )
+          .map((image) => image.assetName);
+      expect(assets, [
+        'assets/services/ironing-3d.png',
+        'assets/services/wash-and-iron-3d.png',
+        'assets/services/dry-cleaning-3d.png',
+      ]);
+      expect(tester.takeException(), isNull);
+    },
+  );
+  testWidgets(
+    'Home shows active orders from the existing provider and opens tracking',
+    (tester) async {
+      final repo = FakeOrderRepository()
+        ..listed.addAll([
+          testOrder(
+            id: 'first',
+            status: OrderStatus.processing,
+            deliveryDate: '2099-10-06',
+          ),
+          testOrder(id: 'second'),
+        ]);
+      final router = testRouter({
+        Routes.home: () => const HomeScreen(),
+        Routes.orderDetail: () => const Text('TRACKING'),
+      }, initial: Routes.home);
+      await tester.pumpWidget(
+        themedRouter(
+          router,
+          overrides: [
+            ...await basketOverrides(),
+            addressRepositoryProvider.overrideWithValue(
+              FakeAddressRepository([testAddress()]),
+            ),
+            orderRepositoryProvider.overrideWithValue(repo),
+          ],
+        ),
+      );
+      await tester.pumpAndSettle();
+      expect(find.text('Being ironed'), findsOneWidget);
+      expect(find.text('View all 2 active orders'), findsOneWidget);
+      expect(repo.listAsked, [(Scope.active, 1)]);
+      await tester.tap(find.text('Track order'));
+      await tester.pumpAndSettle();
+      expect(router.state.matchedLocation, Routes.order('first'));
+      expect(find.text('TRACKING'), findsOneWidget);
+    },
+  );
+  testWidgets('Welcome opens each policy independently before sign-in', (
+    tester,
+  ) async {
+    final router = testRouter({
+      Routes.welcome: () => const WelcomeScreen(),
+      '/legal/terms': () => const Scaffold(body: Text('TERMS')),
+      '/legal/privacy': () => const Scaffold(body: Text('PRIVACY')),
+    }, initial: Routes.welcome);
+    await tester.pumpWidget(themedRouter(router));
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('Terms of service'));
+    await tester.pumpAndSettle();
+    expect(find.text('TERMS'), findsOneWidget);
+    router.pop();
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('Privacy policy'));
+    await tester.pumpAndSettle();
+    expect(find.text('PRIVACY'), findsOneWidget);
+  });
+}

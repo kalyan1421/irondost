@@ -25,7 +25,11 @@ class AddressesScreen extends ConsumerWidget {
 
     return Scaffold(
       appBar: AppBar(
-        leading: IconButton(icon: const Icon(LucideIcons.arrowLeft), tooltip: 'Back', onPressed: context.pop),
+        leading: IconButton(
+          icon: const Icon(LucideIcons.arrowLeft),
+          tooltip: 'Back',
+          onPressed: context.pop,
+        ),
         title: const Text('Saved addresses'),
         shape: Border(bottom: BorderSide(color: c.border)),
       ),
@@ -38,12 +42,17 @@ class AddressesScreen extends ConsumerWidget {
               mainAxisSize: MainAxisSize.min,
               children: [
                 Text(
-                  ApiFailure.from(e).isConnectivity ? "You're offline. Check your connection." : "Couldn't load your addresses.",
+                  ApiFailure.from(e).isConnectivity
+                      ? "You're offline. Check your connection."
+                      : "Couldn't load your addresses.",
                   style: t.bodyLg.copyWith(color: c.textMuted),
                   textAlign: TextAlign.center,
                 ),
                 const SizedBox(height: IdSpace.s4),
-                IdButton.tonal(label: 'Try again', onPressed: () => ref.invalidate(addressesProvider)),
+                IdButton.tonal(
+                  label: 'Try again',
+                  onPressed: () => ref.invalidate(addressesProvider),
+                ),
               ],
             ),
           ),
@@ -51,14 +60,18 @@ class AddressesScreen extends ConsumerWidget {
         data: (list) => RefreshIndicator(
           onRefresh: () => ref.refresh(addressesProvider.future),
           child: ListView(
-            padding: const EdgeInsets.all(IdSpace.s4),
+            padding: const EdgeInsets.all(IdSpace.s5),
             children: [
               for (final a in list) ...[
                 AddressCard(
                   address: a,
                   onEdit: () => context.push(
                     Routes.addressDetails,
-                    extra: FormArgs(draft: AddressDraft.fromAddress(a), existingId: a.id, returnTo: Routes.addresses),
+                    extra: FormArgs(
+                      draft: AddressDraft.fromAddress(a),
+                      existingId: a.id,
+                      returnTo: Routes.addresses,
+                    ),
                   ),
                 ),
                 const SizedBox(height: IdSpace.s3),
@@ -67,7 +80,10 @@ class AddressesScreen extends ConsumerWidget {
                 label: 'Add new address',
                 icon: LucideIcons.plus,
                 expand: true,
-                onPressed: () => context.push(Routes.addressPin, extra: const PinArgs(returnTo: Routes.addresses)),
+                onPressed: () => context.push(
+                  Routes.addressPin,
+                  extra: const PinArgs(returnTo: Routes.addresses),
+                ),
               ),
             ],
           ),
@@ -99,12 +115,20 @@ class _AddressPickerSheet extends ConsumerWidget {
 
     return SafeArea(
       child: Padding(
-        padding: const EdgeInsets.fromLTRB(IdSpace.s4, 0, IdSpace.s4, IdSpace.s4),
+        padding: const EdgeInsets.fromLTRB(
+          IdSpace.s5,
+          0,
+          IdSpace.s5,
+          IdSpace.s4,
+        ),
         child: Column(
           mainAxisSize: MainAxisSize.min,
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
-            Semantics(header: true, child: Text('Pick up from', style: t.titleLg)),
+            Semantics(
+              header: true,
+              child: Text('Pick up from', style: t.titleLg),
+            ),
             const SizedBox(height: IdSpace.s4),
             Flexible(
               child: ListView.separated(
@@ -118,7 +142,9 @@ class _AddressPickerSheet extends ConsumerWidget {
                     selected: a.id == selected?.id,
                     onTap: a.serviceable
                         ? () {
-                            ref.read(selectedAddressIdProvider.notifier).select(a.id);
+                            ref
+                                .read(selectedAddressIdProvider.notifier)
+                                .select(a.id);
                             Navigator.pop(context);
                           }
                         : null,
@@ -133,7 +159,9 @@ class _AddressPickerSheet extends ConsumerWidget {
               expand: true,
               onPressed: () {
                 Navigator.pop(context);
-                unawaited(context.push(Routes.addressPin, extra: const PinArgs()));
+                unawaited(
+                  context.push(Routes.addressPin, extra: const PinArgs()),
+                );
               },
             ),
           ],

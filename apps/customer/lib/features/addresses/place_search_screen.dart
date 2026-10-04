@@ -47,7 +47,9 @@ class _PlaceSearchScreenState extends ConsumerState<PlaceSearchScreen> {
     final run = ++_run;
     setState(() => _phase = _Phase.searching);
     try {
-      final places = await ref.read(locationServiceProvider).search(_query.text);
+      final places = await ref
+          .read(locationServiceProvider)
+          .search(_query.text);
       if (!mounted || run != _run) return;
       setState(() {
         _results = places;
@@ -73,10 +75,19 @@ class _PlaceSearchScreenState extends ConsumerState<PlaceSearchScreen> {
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
             Padding(
-              padding: const EdgeInsets.fromLTRB(IdSpace.s2, IdSpace.s1, IdSpace.s4, IdSpace.s3),
+              padding: const EdgeInsets.fromLTRB(
+                IdSpace.s2,
+                IdSpace.s1,
+                IdSpace.s5,
+                IdSpace.s3,
+              ),
               child: Row(
                 children: [
-                  IconButton(icon: const Icon(LucideIcons.arrowLeft), tooltip: 'Back', onPressed: context.pop),
+                  IconButton(
+                    icon: const Icon(LucideIcons.arrowLeft),
+                    tooltip: 'Back',
+                    onPressed: context.pop,
+                  ),
                   Expanded(
                     child: TextField(
                       controller: _query,
@@ -87,11 +98,18 @@ class _PlaceSearchScreenState extends ConsumerState<PlaceSearchScreen> {
                       onSubmitted: (_) => _search(),
                       decoration: InputDecoration(
                         hintText: 'Search area, street or building',
-                        prefixIcon: Icon(LucideIcons.search, size: IdSize.iconMd, color: c.textMuted),
+                        prefixIcon: Icon(
+                          LucideIcons.search,
+                          size: IdSize.iconMd,
+                          color: c.textMuted,
+                        ),
                         suffixIcon: _query.text.isEmpty
                             ? null
                             : IconButton(
-                                icon: const Icon(LucideIcons.x, size: IdSize.iconMd),
+                                icon: const Icon(
+                                  LucideIcons.x,
+                                  size: IdSize.iconMd,
+                                ),
                                 tooltip: 'Clear',
                                 onPressed: () {
                                   _query.clear();
@@ -106,11 +124,17 @@ class _PlaceSearchScreenState extends ConsumerState<PlaceSearchScreen> {
             ),
             if (blocked)
               Padding(
-                padding: const EdgeInsets.fromLTRB(IdSpace.s4, 0, IdSpace.s4, IdSpace.s3),
+                padding: const EdgeInsets.fromLTRB(
+                  IdSpace.s5,
+                  0,
+                  IdSpace.s5,
+                  IdSpace.s3,
+                ),
                 child: _Notice(
                   text: 'Location is off, so search for your address instead.',
                   action: 'Turn on',
-                  onAction: () => ref.read(locationServiceProvider).openSettings(access),
+                  onAction: () =>
+                      ref.read(locationServiceProvider).openSettings(access),
                 ),
               ),
             Expanded(child: _body(context)),
@@ -124,31 +148,47 @@ class _PlaceSearchScreenState extends ConsumerState<PlaceSearchScreen> {
     final c = context.colors;
     final t = context.text;
     Widget message(String text) => Padding(
-          padding: const EdgeInsets.all(IdSpace.s6),
-          child: Text(text, style: t.body.copyWith(color: c.textMuted), textAlign: TextAlign.center),
-        );
+      padding: const EdgeInsets.all(IdSpace.s6),
+      child: Text(
+        text,
+        style: t.body.copyWith(color: c.textMuted),
+        textAlign: TextAlign.center,
+      ),
+    );
 
     return switch (_phase) {
-      _Phase.idle => message('Type at least 3 letters of your area, street or building.'),
+      _Phase.idle => message(
+        'Type at least 3 letters of your area, street or building.',
+      ),
       _Phase.searching => const Center(child: CircularProgressIndicator()),
-      _Phase.failed => message("Couldn't search. Check your connection and try again."),
-      _Phase.done when _results.isEmpty => message('No matches. Try the nearest street or landmark, then move the pin.'),
+      _Phase.failed => ListView(padding: const EdgeInsets.all(IdSpace.s5), children: [
+        message('Couldn’t search. Check your connection and try again.'),
+        TextButton(onPressed: _search, child: const Text('Try again')),
+      ]),
+      _Phase.done when _results.isEmpty => message(
+        'No matches. Try the nearest street or landmark, then move the pin.',
+      ),
       _Phase.done => ListView.separated(
-          padding: const EdgeInsets.symmetric(horizontal: IdSpace.s4),
-          itemCount: _results.length,
-          separatorBuilder: (_, _) => const Divider(),
-          itemBuilder: (_, i) {
-            final p = _results[i];
-            return ListTile(
-              contentPadding: EdgeInsets.zero,
-              minVerticalPadding: IdSpace.s3,
-              leading: Icon(LucideIcons.mapPin, color: c.textMuted),
-              title: Text(p.title, style: t.title),
-              subtitle: p.subtitle.isEmpty ? null : Text(p.subtitle, style: t.caption.copyWith(color: c.textMuted)),
-              onTap: () => context.pop(p),
-            );
-          },
-        ),
+        padding: const EdgeInsets.symmetric(horizontal: IdSpace.s5),
+        itemCount: _results.length,
+        separatorBuilder: (_, _) => const Divider(),
+        itemBuilder: (_, i) {
+          final p = _results[i];
+          return ListTile(
+            contentPadding: EdgeInsets.zero,
+            minVerticalPadding: IdSpace.s3,
+            leading: Icon(LucideIcons.mapPin, color: c.textMuted),
+            title: Text(p.title, style: t.title),
+            subtitle: p.subtitle.isEmpty
+                ? null
+                : Text(
+                    p.subtitle,
+                    style: t.caption.copyWith(color: c.textMuted),
+                  ),
+            onTap: () => context.pop(p),
+          );
+        },
+      ),
     };
   }
 }
@@ -165,13 +205,17 @@ class _Notice extends StatelessWidget {
     final c = context.colors;
     return Container(
       padding: const EdgeInsets.fromLTRB(14, 6, 6, 6),
-      decoration: BoxDecoration(color: c.warningSoft, borderRadius: BorderRadius.circular(IdRadius.md)),
+      decoration: BoxDecoration(
+        color: c.warningSoft,
+        borderRadius: BorderRadius.circular(IdRadius.md),
+      ),
       child: Row(
         children: [
           Icon(LucideIcons.mapPinOff, size: IdSize.iconMd, color: c.warning),
           const SizedBox(width: 10),
           Expanded(child: Text(text, style: context.text.body)),
-          if (action != null) TextButton(onPressed: onAction, child: Text(action!)),
+          if (action != null)
+            TextButton(onPressed: onAction, child: Text(action!)),
         ],
       ),
     );

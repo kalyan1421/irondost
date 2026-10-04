@@ -6,7 +6,7 @@ import '../design/theme.dart';
 import 'router.dart';
 
 class IronDostApp extends ConsumerWidget {
-  const IronDostApp({super.key, this.font = googleFont});
+  const IronDostApp({super.key, this.font = plainFont});
 
   /// Tests pass [plainFont] so no fonts are downloaded.
   final FontResolver font;

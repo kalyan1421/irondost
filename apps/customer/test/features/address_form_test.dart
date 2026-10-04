@@ -11,12 +11,24 @@ import 'package:irondost_customer/features/auth/session.dart';
 
 import '../helpers.dart';
 
-const _complete = AddressDraft(latitude: 17.4126, longitude: 78.4482, street: 'Road No. 12', area: 'Banjara Hills', city: 'Hyderabad', state: 'Telangana', pincode: '500034');
+const _complete = AddressDraft(
+  latitude: 17.4126,
+  longitude: 78.4482,
+  street: 'Road No. 12',
+  area: 'Banjara Hills',
+  city: 'Hyderabad',
+  state: 'Telangana',
+  pincode: '500034',
+);
 
 void main() {
   late FakeAddressRepository repo;
 
-  Future<void> pumpForm(WidgetTester tester, FormArgs args, {List<AddressDto> existing = const []}) async {
+  Future<void> pumpForm(
+    WidgetTester tester,
+    FormArgs args, {
+    List<AddressDto> existing = const [],
+  }) async {
     tester.view.physicalSize = const Size(1200, 3200);
     tester.view.devicePixelRatio = 3;
     addTearDown(tester.view.reset);
@@ -33,6 +45,37 @@ void main() {
     await tester.pumpAndSettle();
   }
 
+  testWidgets(
+    'long pickup location has full width and Change below it at 200% text',
+    (tester) async {
+      tester.view
+        ..physicalSize = const Size(640, 1480)
+        ..devicePixelRatio = 2
+        ..viewInsets = const FakeViewPadding(bottom: 600);
+      addTearDown(tester.view.reset);
+      await tester.pumpWidget(
+        themed(
+          const AddressFormScreen(
+            args: FormArgs(draft: _complete, onboarding: true),
+          ),
+          textScale: 2,
+          overrides: [
+            addressRepositoryProvider.overrideWithValue(
+              FakeAddressRepository(),
+            ),
+            sessionProvider.overrideWith(SignedInSession.new),
+          ],
+        ),
+      );
+      await tester.pumpAndSettle();
+      final location = tester.getRect(find.text(_complete.title));
+      final change = tester.getRect(find.widgetWithText(TextButton, 'Change'));
+      expect(location.width, 280);
+      expect(change.top, greaterThan(location.bottom));
+      expect(tester.takeException(), isNull);
+    },
+  );
+
   testWidgets('asks for the flat number before saving', (tester) async {
     await pumpForm(tester, const FormArgs(draft: _complete, onboarding: true));
     await tester.tap(find.text('Save address'));
@@ -41,7 +84,9 @@ void main() {
     expect(repo.created, isEmpty);
   });
 
-  testWidgets('saves the first address as the default, with trimmed details', (tester) async {
+  testWidgets('saves the first address as the default, with trimmed details', (
+    tester,
+  ) async {
     await pumpForm(tester, const FormArgs(draft: _complete, onboarding: true));
     final fields = find.byType(TextField);
     await tester.enterText(fields.at(0), ' 302 ');
@@ -62,8 +107,22 @@ void main() {
   });
 
   testWidgets('asks for what the geocoder could not read', (tester) async {
-    await pumpForm(tester, const FormArgs(draft: AddressDraft(latitude: 17.4, longitude: 78.4, city: 'Hyderabad', state: 'Telangana'), onboarding: true));
-    expect(find.text("We couldn't read the full address. Fill in what's missing."), findsOneWidget);
+    await pumpForm(
+      tester,
+      const FormArgs(
+        draft: AddressDraft(
+          latitude: 17.4,
+          longitude: 78.4,
+          city: 'Hyderabad',
+          state: 'Telangana',
+        ),
+        onboarding: true,
+      ),
+    );
+    expect(
+      find.text("We couldn't read the full address. Fill in what's missing."),
+      findsOneWidget,
+    );
     expect(find.text('Street or road'), findsOneWidget);
     expect(find.text('PIN code'), findsOneWidget);
     expect(find.text('City'), findsNothing);
@@ -83,28 +142,49 @@ void main() {
     await tester.pump();
     await tester.tap(find.text('Save address'));
     await tester.pump();
-    expect(find.text('Give this address a name, like Parents.'), findsOneWidget);
+    expect(
+      find.text('Give this address a name, like Parents.'),
+      findsOneWidget,
+    );
 
-    await tester.enterText(find.widgetWithText(TextField, 'e.g. Parents'), 'Parents');
+    await tester.enterText(
+      find.widgetWithText(TextField, 'e.g. Parents'),
+      'Parents',
+    );
     await tester.tap(find.text('Save address'));
     await tester.pumpAndSettle();
     expect(repo.created.single.label, 'Parents');
   });
 
-  testWidgets('a second address is not the default unless chosen', (tester) async {
-    await pumpForm(tester, const FormArgs(draft: _complete, onboarding: true), existing: [testAddress()]);
+  testWidgets('a second address is not the default unless chosen', (
+    tester,
+  ) async {
+    await pumpForm(
+      tester,
+      const FormArgs(draft: _complete, onboarding: true),
+      existing: [testAddress()],
+    );
     await tester.enterText(find.byType(TextField).at(0), '12');
     await tester.tap(find.text('Save address'));
     await tester.pumpAndSettle();
     expect(repo.created.single.isPrimary, isFalse);
   });
 
-  testWidgets('editing prefills the saved address and sends its label', (tester) async {
+  testWidgets('editing prefills the saved address and sends its label', (
+    tester,
+  ) async {
     final saved = testAddress(label: 'Work', isPrimary: false);
     await pumpForm(
       tester,
-      FormArgs(draft: AddressDraft.fromAddress(saved), existingId: saved.id, onboarding: true),
-      existing: [testAddress(id: 'a0'), saved],
+      FormArgs(
+        draft: AddressDraft.fromAddress(saved),
+        existingId: saved.id,
+        onboarding: true,
+      ),
+      existing: [
+        testAddress(id: 'a0'),
+        saved,
+      ],
     );
     expect(find.text('Edit address'), findsOneWidget);
     expect(find.widgetWithText(TextField, '302'), findsOneWidget);
@@ -115,14 +195,24 @@ void main() {
     expect(dto.houseNo, '302');
   });
 
-  testWidgets('address card marks out-of-area addresses and the default', (tester) async {
+  testWidgets('address card marks out-of-area addresses and the default', (
+    tester,
+  ) async {
     await tester.pumpWidget(
       themed(
         Scaffold(
           body: Column(
             children: [
               AddressCard(address: testAddress(), selected: true),
-              AddressCard(address: testAddress(id: 'a2', label: 'Parents', isPrimary: false, serviceable: false), selected: false),
+              AddressCard(
+                address: testAddress(
+                  id: 'a2',
+                  label: 'Parents',
+                  isPrimary: false,
+                  serviceable: false,
+                ),
+                selected: false,
+              ),
             ],
           ),
         ),
@@ -133,8 +223,16 @@ void main() {
   });
 
   test('the selected address is the chosen one, else the primary', () async {
-    final repo = FakeAddressRepository([testAddress(), testAddress(id: 'a2', label: 'Work', isPrimary: false)]);
-    final container = ProviderContainer(overrides: [addressRepositoryProvider.overrideWithValue(repo), sessionProvider.overrideWith(SignedInSession.new)]);
+    final repo = FakeAddressRepository([
+      testAddress(),
+      testAddress(id: 'a2', label: 'Work', isPrimary: false),
+    ]);
+    final container = ProviderContainer(
+      overrides: [
+        addressRepositoryProvider.overrideWithValue(repo),
+        sessionProvider.overrideWith(SignedInSession.new),
+      ],
+    );
     addTearDown(container.dispose);
     await container.read(sessionProvider.future);
     await container.read(addressesProvider.future);
@@ -142,6 +240,10 @@ void main() {
     container.read(selectedAddressIdProvider.notifier).select('a2');
     expect(container.read(selectedAddressProvider)?.label, 'Work');
     container.read(selectedAddressIdProvider.notifier).select('deleted');
-    expect(container.read(selectedAddressProvider)?.id, 'a1', reason: 'falls back to the default');
+    expect(
+      container.read(selectedAddressProvider)?.id,
+      'a1',
+      reason: 'falls back to the default',
+    );
   });
 }

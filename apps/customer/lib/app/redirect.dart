@@ -16,10 +16,15 @@ String? redirectFor({
   required AsyncValue<List<AddressDto>> addresses,
   required String location,
 }) {
+  // Policies remain readable before sign-in, including during an API outage.
+  if (Routes.publicLegalRoutes.contains(location)) return null;
+
   String? to(String target) => location == target ? null : target;
 
   // While a retry runs from the error screen, stay there (its button shows the spinner).
-  if (location == Routes.unavailable && (startup.isLoading || session.isLoading) && (startup.hasError || session.hasError)) {
+  if (location == Routes.unavailable &&
+      (startup.isLoading || session.isLoading) &&
+      (startup.hasError || session.hasError)) {
     return null;
   }
   if (startup.hasError && !startup.isLoading) return to(Routes.unavailable);
@@ -35,7 +40,8 @@ String? redirectFor({
   }
 
   return switch (s) {
-    SignedOut() || WrongApp() => Routes.signedOutRoutes.contains(location) ? null : Routes.welcome,
+    SignedOut() || WrongApp() =>
+      Routes.signedOutRoutes.contains(location) ? null : Routes.welcome,
     AccountPaused() => to(Routes.paused),
     SignedIn(:final profile) when !profile.isComplete => to(Routes.setupName),
     SignedIn() => _signedIn(addresses, location),
@@ -43,14 +49,21 @@ String? redirectFor({
 }
 
 String? _signedIn(AsyncValue<List<AddressDto>> addresses, String location) {
-  if (addresses.hasError && !addresses.isLoading) return location == Routes.unavailable ? null : Routes.unavailable;
+  if (addresses.hasError && !addresses.isLoading) {
+    return location == Routes.unavailable ? null : Routes.unavailable;
+  }
   // Right after sign-in the list is still the empty one from when nobody was signed in, while the real one loads.
   // Treat that as not loaded yet: otherwise a returning customer is sent to address setup (and asked for location) first.
-  final list = addresses.isLoading && (addresses.value?.isEmpty ?? true) ? null : addresses.value;
+  final list = addresses.isLoading && (addresses.value?.isEmpty ?? true)
+      ? null
+      : addresses.value;
   if (list == null) return location == Routes.launch ? null : Routes.launch;
   // Everyone needs a pickup address before the tabs; saving one ends setup by itself.
-  if (list.isEmpty) return Routes.setupRoutes.contains(location) ? null : Routes.setupPin;
-  final leaving = Routes.signedOutRoutes.contains(location) ||
+  if (list.isEmpty) {
+    return Routes.setupRoutes.contains(location) ? null : Routes.setupPin;
+  }
+  final leaving =
+      Routes.signedOutRoutes.contains(location) ||
       Routes.gateRoutes.contains(location) ||
       location == Routes.setupPin ||
       location == Routes.setupDetails;

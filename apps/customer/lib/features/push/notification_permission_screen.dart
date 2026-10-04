@@ -5,7 +5,6 @@ import 'package:lucide_icons_flutter/lucide_icons.dart';
 
 import '../../design/theme.dart';
 import '../../design/widgets/id_button.dart';
-import '../../design/widgets/surfaces.dart';
 import 'push_handler.dart';
 
 /// "Know when we're at your door": the reason to allow notifications, shown once after the first
@@ -14,10 +13,12 @@ class NotificationPermissionScreen extends ConsumerStatefulWidget {
   const NotificationPermissionScreen({super.key});
 
   @override
-  ConsumerState<NotificationPermissionScreen> createState() => _NotificationPermissionScreenState();
+  ConsumerState<NotificationPermissionScreen> createState() =>
+      _NotificationPermissionScreenState();
 }
 
-class _NotificationPermissionScreenState extends ConsumerState<NotificationPermissionScreen> {
+class _NotificationPermissionScreenState
+    extends ConsumerState<NotificationPermissionScreen> {
   bool _asking = false;
 
   Future<void> _turnOn() async {
@@ -55,10 +56,17 @@ class _NotificationPermissionScreenState extends ConsumerState<NotificationPermi
                       children: [
                         const ExcludeSemantics(child: _Preview()),
                         const SizedBox(height: 28),
-                        Semantics(header: true, child: Text("Know when we're at your door", style: t.headline, textAlign: TextAlign.center)),
+                        Semantics(
+                          header: true,
+                          child: Text(
+                            "Know when we're at your door",
+                            style: t.headline,
+                            textAlign: TextAlign.center,
+                          ),
+                        ),
                         const SizedBox(height: IdSpace.s2),
                         Text(
-                          "We'll tell you when a partner is on the way, when your clothes are ready and when they're delivered. Offers only if you want them.",
+                          'Get pickup, delivery and order updates. Notifications may also include available offers. You can turn them off in your device settings.',
                           style: t.bodyLg.copyWith(color: c.textMuted),
                           textAlign: TextAlign.center,
                         ),
@@ -68,13 +76,26 @@ class _NotificationPermissionScreenState extends ConsumerState<NotificationPermi
                 ),
               ),
               Padding(
-                padding: const EdgeInsets.fromLTRB(IdSpace.s4, IdSpace.s3, IdSpace.s4, IdSpace.s4),
+                padding: const EdgeInsets.fromLTRB(
+                  IdSpace.s5,
+                  IdSpace.s3,
+                  IdSpace.s5,
+                  IdSpace.s4,
+                ),
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.stretch,
                   children: [
-                    IdButton(label: 'Turn on notifications', icon: LucideIcons.bell, loading: _asking, onPressed: _turnOn),
+                    IdButton(
+                      label: 'Turn on notifications',
+                      icon: LucideIcons.bell,
+                      loading: _asking,
+                      onPressed: _turnOn,
+                    ),
                     const SizedBox(height: IdSpace.s1),
-                    IdButton.text(label: 'Not now', onPressed: _asking ? null : _notNow),
+                    IdButton.text(
+                      label: 'Not now',
+                      onPressed: _asking ? null : _notNow,
+                    ),
                   ],
                 ),
               ),
@@ -86,61 +107,39 @@ class _NotificationPermissionScreenState extends ConsumerState<NotificationPermi
   }
 }
 
-/// Two example notifications, the way they will look.
+/// One example transactional notification.
 class _Preview extends StatelessWidget {
   const _Preview();
-
   @override
-  Widget build(BuildContext context) {
-    final c = context.colors;
-    final t = context.text;
-    Widget card(String when, String text, {double opacity = 1, bool raised = false}) => Opacity(
-          opacity: opacity,
-          child: Container(
-            padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
-            decoration: BoxDecoration(color: c.surface, borderRadius: BorderRadius.circular(IdRadius.lg), boxShadow: raised ? context.shadows.raised : null),
-            child: Row(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Container(
-                  width: 36,
-                  height: 36,
-                  padding: const EdgeInsets.all(4),
-                  decoration: BoxDecoration(color: c.surfaceSoft, borderRadius: BorderRadius.circular(IdRadius.sm)),
-                  child: Image.asset('assets/brand/irondost-mark.png', fit: BoxFit.contain),
-                ),
-                const SizedBox(width: IdSpace.s3),
-                Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text.rich(TextSpan(text: 'IronDost ', children: [TextSpan(text: '· $when', style: t.caption.copyWith(color: c.textMuted))]), style: t.labelSm),
-                      Text(text, style: t.body),
-                    ],
-                  ),
-                ),
-              ],
-            ),
-          ),
-        );
-
-    return Stack(
-      clipBehavior: Clip.none,
+  Widget build(BuildContext context) => Container(
+    padding: const EdgeInsets.all(IdSpace.s4),
+    decoration: BoxDecoration(
+      color: context.colors.surfaceSoft,
+      borderRadius: BorderRadius.circular(IdRadius.lg),
+    ),
+    child: Row(
+      crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Container(
-          padding: const EdgeInsets.symmetric(vertical: 28, horizontal: IdSpace.s4),
-          decoration: BoxDecoration(color: c.surfaceSoft, borderRadius: BorderRadius.circular(IdRadius.xl)),
+        Icon(
+          LucideIcons.bell,
+          size: IdSize.iconLg,
+          color: context.colors.textMuted,
+        ),
+        const SizedBox(width: IdSpace.s3),
+        Expanded(
           child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              card('now', 'Ravi is on the way to collect your clothes.', raised: true),
-              const SizedBox(height: 10),
-              card('Sat', 'Order ID001042 is on its way.', opacity: 0.7),
+              Text('IronDost · now', style: context.text.labelSm),
+              const SizedBox(height: IdSpace.s1),
+              Text(
+                'Your partner is on the way to collect your clothes.',
+                style: context.text.body,
+              ),
             ],
           ),
         ),
-        const Positioned(right: 18, top: -10, child: Bubble(28)),
-        const Positioned(right: 52, top: -18, child: Bubble(14)),
       ],
-    );
-  }
+    ),
+  );
 }

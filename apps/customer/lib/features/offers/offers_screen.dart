@@ -5,214 +5,145 @@ import 'package:lucide_icons_flutter/lucide_icons.dart';
 import '../../data/api_client.dart';
 import '../../design/theme.dart';
 import '../../design/widgets/id_button.dart';
-import '../../design/widgets/surfaces.dart';
+import '../../design/widgets/state_view.dart';
 import 'promo_code.dart';
 import 'promotions.dart';
 
-/// The Offers tab: the best offer as a featured card, the rest as cards, each with its code to copy.
 class OffersScreen extends ConsumerWidget {
   const OffersScreen({super.key});
-
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final t = context.text;
     final promos = ref.watch(promotionsProvider);
     return Scaffold(
-      appBar: AppBar(title: Semantics(header: true, child: Text('Offers', style: t.headline))),
+      appBar: AppBar(title: const Text('Offers')),
       body: RefreshIndicator(
-        onRefresh: () => ref.refresh(promotionsProvider.future).then((_) {}, onError: (_) {}),
+        onRefresh: () => ref
+            .refresh(promotionsProvider.future)
+            .then((_) {}, onError: (_) {}),
         child: promos.when(
-          loading: () => const Center(child: CircularProgressIndicator()),
-          error: (e, _) => _Message(
-            icon: ApiFailure.from(e).isConnectivity ? LucideIcons.wifiOff : LucideIcons.circleAlert,
-            danger: true,
-            title: "Couldn't load offers",
-            body: ApiFailure.from(e).isConnectivity ? "You're offline. Check your connection and try again." : 'Please try again in a moment.',
-            action: IdButton.tonal(label: 'Try again', icon: LucideIcons.refreshCw, onPressed: () => ref.invalidate(promotionsProvider)),
-          ),
-          data: (list) => list.isEmpty
-              ? const _Message(icon: LucideIcons.badgePercent, title: 'No offers right now', body: "New offers show up here, and we'll let you know when one starts.")
-              : ListView.separated(
-                  physics: const AlwaysScrollableScrollPhysics(),
-                  padding: const EdgeInsets.all(IdSpace.s4),
-                  itemCount: list.length,
-                  separatorBuilder: (_, _) => const SizedBox(height: IdSpace.s3),
-                  itemBuilder: (context, i) => i == 0 ? _FeaturedPromo(list[i]) : _PromoCard(list[i]),
-                ),
-        ),
-      ),
-    );
-  }
-}
-
-/// The first offer, on the offer colour with bubbles.
-class _FeaturedPromo extends StatelessWidget {
-  const _FeaturedPromo(this.promo);
-  final PromotionDto promo;
-
-  @override
-  Widget build(BuildContext context) {
-    final c = context.colors;
-    final t = context.text;
-    final terms = promoTerms(promo, withLimit: true, withValidity: true);
-    // A one-time offer is a welcome offer.
-    final label = promo.perCustomerLimit == 1 ? 'New here' : promoBadge(promo);
-
-    return Semantics(
-      container: true,
-      child: ClipRRect(
-        borderRadius: BorderRadius.circular(IdRadius.lg),
-        child: Container(
-          color: c.offerSoft,
-          padding: const EdgeInsets.all(IdSpace.s5),
-          child: Stack(
-            clipBehavior: Clip.none,
-            children: [
-              const Positioned(right: -44, top: -44, child: Bubble(110)),
-              const Positioned(right: 24, bottom: -16, child: Bubble(44)),
-              Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  _OfferChip(label),
-                  const SizedBox(height: IdSpace.s3),
-                  // Leaves room on the right so the bubbles never sit under the words.
-                  Padding(
-                    padding: const EdgeInsets.only(right: 56),
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Semantics(header: true, child: Text(promo.title, style: t.headline)),
-                        if (promo.description != null) ...[
-                          const SizedBox(height: IdSpace.s1),
-                          Text(promo.description!, style: t.bodyLg),
-                        ],
-                        const SizedBox(height: IdSpace.s1),
-                        Text(terms, style: t.body.copyWith(color: c.textMuted)),
-                      ],
-                    ),
-                  ),
-                  const SizedBox(height: IdSpace.s4),
-                  PromoCodeChip(promo.code, onTap: () => copyPromoCode(context, promo.code)),
-                ],
-              ),
-            ],
-          ),
-        ),
-      ),
-    );
-  }
-}
-
-class _PromoCard extends StatelessWidget {
-  const _PromoCard(this.promo);
-  final PromotionDto promo;
-
-  @override
-  Widget build(BuildContext context) {
-    final c = context.colors;
-    final t = context.text;
-    return Semantics(
-      container: true,
-      child: IdCard(
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            _OfferChip(promoBadge(promo)),
-            const SizedBox(height: IdSpace.s2),
-            Semantics(header: true, child: Text(promo.title, style: t.title)),
-            if (promo.description != null) ...[
-              const SizedBox(height: IdSpace.s1),
-              Text(promo.description!, style: t.body),
-            ],
-            const SizedBox(height: IdSpace.s1),
-            Text(promoTerms(promo, withLimit: true, withValidity: true), style: t.body.copyWith(color: c.textMuted)),
-            const SizedBox(height: IdSpace.s3),
-            Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+          loading: () => Semantics(
+            label: 'Loading offers',
+            child: ListView(
+              padding: const EdgeInsets.all(IdSpace.s5),
               children: [
-                PromoCodeChip(promo.code),
-                IdButton.text(label: 'Copy code', onPressed: () => copyPromoCode(context, promo.code)),
-              ],
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-}
-
-class _OfferChip extends StatelessWidget {
-  const _OfferChip(this.label);
-  final String label;
-
-  @override
-  Widget build(BuildContext context) {
-    final c = context.colors;
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
-      decoration: BoxDecoration(color: c.offer, borderRadius: BorderRadius.circular(IdRadius.full)),
-      child: Text(label, style: context.text.label.copyWith(color: c.onOffer, fontWeight: FontWeight.w700)),
-    );
-  }
-}
-
-/// The empty and error states: a soft circle with an icon and a bubble, a title, a line, and maybe one action.
-class _Message extends StatelessWidget {
-  const _Message({required this.icon, required this.title, required this.body, this.action, this.danger = false});
-
-  final IconData icon;
-  final String title;
-  final String body;
-  final IdButton? action;
-  final bool danger;
-
-  @override
-  Widget build(BuildContext context) {
-    final c = context.colors;
-    final t = context.text;
-    // Always scrollable, so pull to refresh works on an empty or failed screen.
-    return LayoutBuilder(
-      builder: (context, box) => SingleChildScrollView(
-        physics: const AlwaysScrollableScrollPhysics(),
-        child: ConstrainedBox(
-          constraints: BoxConstraints(minHeight: box.maxHeight),
-          child: Center(
-            child: Padding(
-              padding: const EdgeInsets.all(IdSpace.s6),
-              child: ConstrainedBox(
-                constraints: const BoxConstraints(maxWidth: 320),
-                child: Column(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    SizedBox(
-                      width: 132,
-                      height: 132,
-                      child: Stack(
-                        alignment: Alignment.center,
-                        clipBehavior: Clip.none,
+                for (var i = 0; i < 3; i++)
+                  Padding(
+                    padding: const EdgeInsets.only(bottom: IdSpace.s4),
+                    child: ExcludeSemantics(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
                           Container(
-                            width: 120,
-                            height: 120,
-                            decoration: BoxDecoration(color: danger ? c.dangerSoft : c.offerSoft, shape: BoxShape.circle),
-                            child: ExcludeSemantics(child: Icon(icon, size: 52, color: danger ? c.danger : c.text)),
+                            width: 64,
+                            height: 22,
+                            color: context.colors.surfaceSoft,
                           ),
-                          if (!danger) const Positioned(right: 0, top: 6, child: Bubble(22)),
+                          const SizedBox(height: IdSpace.s3),
+                          FractionallySizedBox(
+                            widthFactor: .7,
+                            child: Container(
+                              height: 20,
+                              color: context.colors.surfaceSoft,
+                            ),
+                          ),
+                          const SizedBox(height: IdSpace.s2),
+                          FractionallySizedBox(
+                            widthFactor: .9,
+                            child: Container(
+                              height: 14,
+                              color: context.colors.surfaceSoft,
+                            ),
+                          ),
+                          const SizedBox(height: IdSpace.s3),
+                          Container(
+                            width: 104,
+                            height: IdSize.touchTarget,
+                            color: context.colors.surfaceSoft,
+                          ),
                         ],
                       ),
                     ),
-                    const SizedBox(height: IdSpace.s4),
-                    Semantics(header: true, child: Text(title, style: t.titleLg, textAlign: TextAlign.center)),
-                    const SizedBox(height: IdSpace.s2),
-                    Text(body, style: t.bodyLg.copyWith(color: c.textMuted), textAlign: TextAlign.center),
-                    if (action != null) ...[const SizedBox(height: IdSpace.s5), action!],
-                  ],
-                ),
-              ),
+                  ),
+              ],
             ),
           ),
+          error: (e, _) => ListStateView(
+            icon: ApiFailure.from(e).isConnectivity
+                ? LucideIcons.wifiOff
+                : LucideIcons.circleAlert,
+            tone: StateTone.danger,
+            announce: true,
+            title: 'Couldn’t load offers',
+            body: ApiFailure.from(e).isConnectivity
+                ? 'Check your connection and try again.'
+                : 'Please try again in a moment.',
+            action: IdButton(
+              label: 'Try again',
+              onPressed: () => ref.invalidate(promotionsProvider),
+            ),
+          ),
+          data: (list) => list.isEmpty
+              ? const ListStateView(
+                  icon: LucideIcons.badgePercent,
+                  title: 'No offers right now',
+                  body: 'Available offers will appear here. Pull down to check again.',
+                )
+              : ListView.separated(
+                  physics: const AlwaysScrollableScrollPhysics(),
+                  padding: const EdgeInsets.all(IdSpace.s5),
+                  itemCount: list.length,
+                  separatorBuilder: (_, _) => const Divider(),
+                  itemBuilder: (_, i) => _PromoRow(list[i]),
+                ),
         ),
       ),
     );
   }
+}
+
+class _PromoRow extends StatelessWidget {
+  const _PromoRow(this.promo);
+  final PromotionDto promo;
+  @override
+  Widget build(BuildContext context) => Padding(
+    padding: const EdgeInsets.symmetric(vertical: IdSpace.s4),
+    child: Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Container(
+          padding: const EdgeInsets.symmetric(
+            horizontal: IdSpace.s2,
+            vertical: IdSpace.s1,
+          ),
+          decoration: BoxDecoration(
+            color: context.colors.offer,
+            borderRadius: BorderRadius.circular(IdRadius.sm),
+          ),
+          child: Text(
+            promoBadge(promo),
+            style: context.text.labelSm.copyWith(color: context.colors.onOffer),
+          ),
+        ),
+        const SizedBox(height: IdSpace.s3),
+        Semantics(
+          header: true,
+          child: Text(promo.title, style: context.text.titleLg),
+        ),
+        if (promo.description?.isNotEmpty ?? false) ...[
+          const SizedBox(height: IdSpace.s1),
+          Text(promo.description!, style: context.text.body),
+        ],
+        const SizedBox(height: IdSpace.s2),
+        Text(
+          promoTerms(promo, withLimit: true, withValidity: true),
+          style: context.text.caption.copyWith(color: context.colors.textMuted),
+        ),
+        const SizedBox(height: IdSpace.s3),
+        PromoCodeChip(
+          promo.code,
+          onTap: () => copyPromoCode(context, promo.code),
+        ),
+      ],
+    ),
+  );
 }

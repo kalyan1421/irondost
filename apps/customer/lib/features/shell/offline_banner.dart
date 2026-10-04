@@ -6,6 +6,7 @@ import '../../data/api_client.dart';
 import '../../data/reachability.dart';
 import '../../design/theme.dart';
 import '../catalogue/catalogue.dart';
+import '../home/banners.dart';
 import '../notifications/notifications.dart';
 import '../offers/promotions.dart';
 import '../orders/orders_list.dart';
@@ -20,6 +21,7 @@ void refreshAfterReconnect(WidgetRef ref) {
   ref
     ..invalidate(catalogProvider)
     ..invalidate(promotionsProvider)
+    ..invalidate(bannersProvider)
     ..invalidate(notificationsProvider)
     ..invalidate(ordersListProvider);
 }

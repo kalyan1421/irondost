@@ -4,7 +4,14 @@ import '../theme.dart';
 
 /// A selectable option with an icon, title, description and radio: "Pay online" / "Cash on delivery".
 class ChoiceCard extends StatelessWidget {
-  const ChoiceCard({super.key, required this.icon, required this.title, required this.description, required this.selected, required this.onTap});
+  const ChoiceCard({
+    super.key,
+    required this.icon,
+    required this.title,
+    required this.description,
+    required this.selected,
+    required this.onTap,
+  });
 
   final IconData icon;
   final String title;
@@ -24,27 +31,28 @@ class ChoiceCard extends StatelessWidget {
       excludeSemantics: true,
       child: Material(
         color: c.surface,
-        shape: RoundedRectangleBorder(borderRadius: radius, side: BorderSide(color: selected ? c.primary : c.border, width: selected ? 2 : 1)),
+        shape: Border(bottom: BorderSide(color: c.border)),
         child: InkWell(
           borderRadius: radius,
           onTap: onTap,
           child: Padding(
-            padding: const EdgeInsets.symmetric(horizontal: IdSpace.s4, vertical: 14),
+            padding: const EdgeInsets.symmetric(
+              horizontal: 0,
+              vertical: 14,
+            ),
             child: Row(
               children: [
-                Container(
-                  width: 40,
-                  height: 40,
-                  decoration: BoxDecoration(color: c.surfaceSoft, borderRadius: BorderRadius.circular(IdRadius.sm)),
-                  child: Icon(icon, size: IdSize.iconMd, color: c.primary),
-                ),
+                Icon(icon, size: IdSize.iconMd, color: c.textMuted),
                 const SizedBox(width: IdSpace.s3),
                 Expanded(
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       Text(title, style: t.title),
-                      Text(description, style: t.body.copyWith(color: c.textMuted)),
+                      Text(
+                        description,
+                        style: t.body.copyWith(color: c.textMuted),
+                      ),
                     ],
                   ),
                 ),
@@ -52,7 +60,13 @@ class ChoiceCard extends StatelessWidget {
                 Container(
                   width: 20,
                   height: 20,
-                  decoration: BoxDecoration(shape: BoxShape.circle, border: Border.all(color: selected ? c.primary : c.borderStrong, width: selected ? 6 : 2)),
+                  decoration: BoxDecoration(
+                    shape: BoxShape.circle,
+                    border: Border.all(
+                      color: selected ? c.primary : c.borderStrong,
+                      width: selected ? 6 : 2,
+                    ),
+                  ),
                 ),
               ],
             ),

@@ -8,12 +8,13 @@ import '../../core/money.dart';
 import '../../core/slots.dart';
 import '../../data/api_client.dart';
 import '../../design/theme.dart';
-import '../../design/widgets/address_card.dart';
 import '../../design/widgets/alert_sheet.dart';
 import '../../design/widgets/choice_card.dart';
 import '../../design/widgets/id_button.dart';
 import '../../design/widgets/state_view.dart';
 import '../../design/widgets/surfaces.dart';
+import '../../design/widgets/review_row.dart';
+import '../schedule/schedule_screen.dart';
 import '../addresses/addresses_controller.dart';
 import '../addresses/addresses_screen.dart';
 import '../basket/basket.dart';
@@ -28,16 +29,29 @@ import 'checkout.dart';
 class CheckoutScreen extends ConsumerWidget {
   const CheckoutScreen({super.key});
 
-  Future<void> _place(BuildContext context, WidgetRef ref, Schedule schedule, AddressDto address) async {
-    final order = await ref.read(checkoutProvider.notifier).place(schedule: schedule, address: address);
+  Future<void> _place(
+    BuildContext context,
+    WidgetRef ref,
+    Schedule schedule,
+    AddressDto address,
+  ) async {
+    final order = await ref
+        .read(checkoutProvider.notifier)
+        .place(schedule: schedule, address: address);
     if (order == null || !context.mounted) return;
     await continueAfterPlacing(context, ref, order);
   }
 
   /// Explains what went wrong and sends the customer where it can be fixed.
-  Future<void> _explain(BuildContext context, WidgetRef ref, CheckoutProblem problem) async {
+  Future<void> _explain(
+    BuildContext context,
+    WidgetRef ref,
+    CheckoutProblem problem,
+  ) async {
     // Offline and unexpected failures stay as the line above the button until the next attempt.
-    if (problem != CheckoutProblem.offline && problem != CheckoutProblem.failed) ref.read(checkoutProvider.notifier).dismissProblem();
+    if (problem != CheckoutProblem.offline && problem != CheckoutProblem.failed) {
+      ref.read(checkoutProvider.notifier).dismissProblem();
+    }
     switch (problem) {
       case CheckoutProblem.slotClosed:
         final change = await showIdAlert(
@@ -113,7 +127,10 @@ class CheckoutScreen extends ConsumerWidget {
     final quoting = quote.isLoading;
 
     final appBar = AppBar(
-      leading: BackButton(onPressed: () => context.canPop() ? context.pop() : context.go(Routes.home)),
+      leading: BackButton(
+        onPressed: () =>
+            context.canPop() ? context.pop() : context.go(Routes.home),
+      ),
       title: Text('Checkout', style: context.text.titleLg),
     );
 
@@ -124,7 +141,10 @@ class CheckoutScreen extends ConsumerWidget {
           icon: LucideIcons.shoppingBag,
           title: 'Your basket is empty',
           body: 'Add something to book a pickup.',
-          primary: IdButton(label: 'Choose items', onPressed: () => context.go(Routes.book)),
+          primary: IdButton(
+            label: 'Choose items',
+            onPressed: () => context.go(Routes.book),
+          ),
         ),
       );
     }
@@ -135,20 +155,34 @@ class CheckoutScreen extends ConsumerWidget {
           icon: LucideIcons.clock,
           title: 'Choose a pickup time first',
           body: "We'll show your address, bill and payment options after that.",
-          primary: IdButton(label: 'Choose pickup time', onPressed: () => context.canPop() ? context.pop() : context.go(Routes.home)),
+          primary: IdButton(
+            label: 'Choose pickup time',
+            onPressed: () =>
+                context.canPop() ? context.pop() : context.go(Routes.home),
+          ),
         ),
       );
     }
 
     final servable = address.serviceable;
     final total = q?.totalPaise;
-    final canPlace = servable && q != null && q.canPlaceOrder && !quoting && !checkout.placing;
+    final canPlace =
+        servable &&
+        q != null &&
+        q.canPlaceOrder &&
+        !quoting &&
+        !checkout.placing;
     final online = checkout.method == PaymentMethod.online;
 
     return Scaffold(
       appBar: appBar,
       body: ListView(
-        padding: const EdgeInsets.fromLTRB(IdSpace.s4, IdSpace.s4, IdSpace.s4, IdSpace.s6),
+        padding: const EdgeInsets.fromLTRB(
+          IdSpace.s5,
+          IdSpace.s5,
+          IdSpace.s5,
+          IdSpace.s6,
+        ),
         children: [
           _Where(address: address, schedule: schedule),
           if (!servable) ...[
@@ -156,14 +190,19 @@ class CheckoutScreen extends ConsumerWidget {
             _NotServed(address: address),
           ],
           const SizedBox(height: IdSpace.s6),
-          Semantics(header: true, child: Text('Pay with', style: context.text.titleLg)),
+          Semantics(
+            header: true,
+            child: Text('Pay with', style: context.text.titleLg),
+          ),
           const SizedBox(height: IdSpace.s3),
           ChoiceCard(
             icon: LucideIcons.smartphone,
             title: 'Pay online',
             description: 'UPI, cards and netbanking',
             selected: online,
-            onTap: () => ref.read(checkoutProvider.notifier).chooseMethod(PaymentMethod.online),
+            onTap: () => ref
+                .read(checkoutProvider.notifier)
+                .chooseMethod(PaymentMethod.online),
           ),
           const SizedBox(height: IdSpace.s2),
           ChoiceCard(
@@ -171,7 +210,9 @@ class CheckoutScreen extends ConsumerWidget {
             title: 'Cash on delivery',
             description: 'Pay the partner when your clothes come back',
             selected: !online,
-            onTap: () => ref.read(checkoutProvider.notifier).chooseMethod(PaymentMethod.cod),
+            onTap: () => ref
+                .read(checkoutProvider.notifier)
+                .chooseMethod(PaymentMethod.cod),
           ),
           const SizedBox(height: IdSpace.s6),
           if (quote.hasError && !quoting)
@@ -200,72 +241,16 @@ class _Where extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final c = context.colors;
     final t = context.text;
-    return IdCard(
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.stretch,
-        children: [
-          Row(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Container(
-                width: 40,
-                height: 40,
-                decoration: BoxDecoration(color: c.surfaceSoft, borderRadius: BorderRadius.circular(IdRadius.sm)),
-                child: Icon(addressIcon(address.label), size: IdSize.iconMd, color: c.primary),
-              ),
-              const SizedBox(width: IdSpace.s3),
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(address.label, style: t.title),
-                    Text(
-                      [address.formatted, if (address.landmark != null && address.landmark!.isNotEmpty) address.landmark!].join(' · '),
-                      style: t.body.copyWith(color: c.textMuted),
-                    ),
-                  ],
-                ),
-              ),
-              IdButton.text(label: 'Change', onPressed: () => showAddressPicker(context)),
-            ],
-          ),
-          const SizedBox(height: IdSpace.s3),
-          Container(
-            padding: const EdgeInsets.all(IdSpace.s3),
-            decoration: BoxDecoration(color: c.surfaceSoft, borderRadius: BorderRadius.circular(IdRadius.md)),
-            child: Row(
-              children: [
-                Expanded(child: _Kv('Pickup', slotSummary(schedule.pickup!, today: schedule.today))),
-                const SizedBox(width: IdSpace.s3),
-                Expanded(child: _Kv('Delivery', slotSummary(schedule.delivery!, today: schedule.today))),
-              ],
-            ),
-          ),
-        ],
-      ),
-    );
+    void changePickup() => context.canPop() ? context.pop() : context.go(Routes.schedule);
+    return Column(crossAxisAlignment: CrossAxisAlignment.stretch, children: [
+      ReviewRow(label: 'Pickup address', value: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [Text(address.label, style: t.title), Text([address.formatted, if(address.landmark?.isNotEmpty ?? false) address.landmark!].join(' · '), style: t.body)]), action: IdButton.text(label: 'Change', onPressed: () => showAddressPicker(context))),
+      ReviewRow(label: 'Pickup', value: Text(slotSummary(schedule.pickup!, today: schedule.today), style: t.body), action: IdButton.text(label: 'Change', onPressed: changePickup)),
+      ReviewRow(label: 'Delivery', value: Text(slotSummary(schedule.delivery!, today: schedule.today), style: t.body), action: IdButton.text(label: 'Change', onPressed: () => showDeliverySheet(context))),
+    ]);
   }
 }
 
-class _Kv extends StatelessWidget {
-  const _Kv(this.k, this.v);
-  final String k;
-  final String v;
-
-  @override
-  Widget build(BuildContext context) {
-    final t = context.text;
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Text(k, style: t.caption.copyWith(color: context.colors.textMuted)),
-        Text(v, style: t.label.copyWith(fontWeight: FontWeight.w600)),
-      ],
-    );
-  }
-}
 
 class _NotServed extends StatelessWidget {
   const _NotServed({required this.address});
@@ -279,13 +264,21 @@ class _NotServed extends StatelessWidget {
       liveRegion: true,
       child: Container(
         padding: const EdgeInsets.all(14),
-        decoration: BoxDecoration(color: c.warningSoft, borderRadius: BorderRadius.circular(IdRadius.md)),
+        decoration: BoxDecoration(
+          color: c.warningSoft,
+          borderRadius: BorderRadius.circular(IdRadius.md),
+        ),
         child: Row(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Icon(LucideIcons.mapPinOff, size: IdSize.iconMd, color: c.warning),
             const SizedBox(width: 10),
-            Expanded(child: Text("We don't pick up from ${address.area ?? address.city} yet. Choose another address to book.", style: t.body)),
+            Expanded(
+              child: Text(
+                "We don't pick up from ${address.area ?? address.city} yet. Choose another address to book.",
+                style: t.body,
+              ),
+            ),
           ],
         ),
       ),
@@ -305,7 +298,12 @@ class _QuoteFailure extends StatelessWidget {
         children: [
           Icon(LucideIcons.circleAlert, color: c.danger),
           const SizedBox(width: IdSpace.s3),
-          Expanded(child: Text("Couldn't work out the total. Check your connection.", style: context.text.body)),
+          Expanded(
+            child: Text(
+              "Couldn't work out the total. Check your connection.",
+              style: context.text.body,
+            ),
+          ),
           TextButton(onPressed: onRetry, child: const Text('Try again')),
         ],
       ),
@@ -314,7 +312,15 @@ class _QuoteFailure extends StatelessWidget {
 }
 
 class _Footer extends StatelessWidget {
-  const _Footer({required this.online, required this.totalPaise, required this.placing, required this.enabled, required this.offline, required this.failed, required this.onPlace});
+  const _Footer({
+    required this.online,
+    required this.totalPaise,
+    required this.placing,
+    required this.enabled,
+    required this.offline,
+    required this.failed,
+    required this.onPlace,
+  });
 
   final bool online;
   final num? totalPaise;
@@ -331,11 +337,19 @@ class _Footer extends StatelessWidget {
     final amount = totalPaise == null ? '' : ' ${rupees(totalPaise!)}';
     final label = online ? 'Pay$amount' : 'Place order$amount';
     return DecoratedBox(
-      decoration: BoxDecoration(color: c.surface, boxShadow: context.shadows.sheet),
+      decoration: BoxDecoration(
+        color: c.surface,
+        border: Border(top: BorderSide(color: c.border)),
+      ),
       child: SafeArea(
         top: false,
         child: Padding(
-          padding: const EdgeInsets.fromLTRB(IdSpace.s4, IdSpace.s3, IdSpace.s4, IdSpace.s3),
+          padding: const EdgeInsets.fromLTRB(
+            IdSpace.s5,
+            IdSpace.s3,
+            IdSpace.s5,
+            IdSpace.s3,
+          ),
           child: Column(
             mainAxisSize: MainAxisSize.min,
             crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -353,16 +367,27 @@ class _Footer extends StatelessWidget {
                 ),
                 const SizedBox(height: IdSpace.s2),
               ],
-              IdButton(label: label, expand: true, loading: placing, onPressed: enabled ? onPlace : null),
+              IdButton(
+                label: label,
+                expand: true,
+                loading: placing,
+                onPressed: enabled ? onPlace : null,
+              ),
               const SizedBox(height: IdSpace.s2),
               Row(
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
-                  Icon(online ? LucideIcons.shieldCheck : LucideIcons.banknote, size: IdSize.iconSm, color: c.textMuted),
+                  Icon(
+                    online ? LucideIcons.shieldCheck : LucideIcons.banknote,
+                    size: IdSize.iconSm,
+                    color: c.textMuted,
+                  ),
                   const SizedBox(width: 6),
                   Flexible(
                     child: Text(
-                      online ? 'Secure payment by Razorpay' : 'You pay in cash when your clothes are delivered',
+                      online
+                          ? 'Secure payment by Razorpay'
+                          : 'You pay in cash when your clothes are delivered',
                       style: t.caption.copyWith(color: c.textMuted),
                       textAlign: TextAlign.center,
                     ),

@@ -47,21 +47,21 @@ void main() {
     await pump(tester);
 
     expect(find.text('When should we collect?'), findsOneWidget);
-    expect(find.text('TODAY'), findsOneWidget);
-    expect(find.text('SUN'), findsOneWidget);
+    expect(find.text('Today'), findsOneWidget);
+    expect(find.text('Sun'), findsOneWidget);
     expect(find.bySemanticsLabel('Morning, 7 – 11 AM · Closed'), findsOneWidget);
     expect(find.bySemanticsLabel('Afternoon, 11 AM – 4 PM · Closed'), findsOneWidget);
     expect(find.bySemanticsLabel('Evening, 4 – 8 PM'), findsOneWidget);
     expect(find.text('Delivery'), findsOneWidget);
     expect(find.text('Sun 4 Oct, 4 – 8 PM'), findsOneWidget);
-    expect(find.text('Earliest after ironing'), findsOneWidget);
+    expect(find.text('Earliest available delivery'), findsOneWidget);
     expect(continueButton(tester).onPressed, isNotNull);
   });
 
   testWidgets('another day lists that day\'s windows and moves delivery along', (tester) async {
     final (_, repo) = await pump(tester);
 
-    await tester.tap(find.text('MON'));
+    await tester.tap(find.text('Mon'));
     await tester.pumpAndSettle();
 
     expect(find.bySemanticsLabel('Morning, 7 – 11 AM'), findsOneWidget);
@@ -71,7 +71,7 @@ void main() {
 
   testWidgets('tapping a window selects it, and a closed one does nothing', (tester) async {
     final (container, _) = await pump(tester);
-    await tester.tap(find.text('MON'));
+    await tester.tap(find.text('Mon'));
     await tester.pumpAndSettle();
 
     await tester.tap(find.bySemanticsLabel('Afternoon, 11 AM – 4 PM'));
@@ -79,7 +79,7 @@ void main() {
     expect(container.read(scheduleProvider).requireValue.pickup!.slot, TimeSlot.noon);
     expect(find.text('Tue 6 Oct, 4 – 8 PM'), findsOneWidget, reason: 'a pickup ending at 4 pm is delivered from 12 noon next day: the evening window');
 
-    await tester.tap(find.text('TODAY'));
+    await tester.tap(find.text('Today'));
     await tester.pumpAndSettle();
     await tester.tap(find.bySemanticsLabel('Morning, 7 – 11 AM · Closed'));
     await tester.pumpAndSettle();
@@ -95,7 +95,7 @@ void main() {
     expect(find.textContaining('Ironing takes about 20 hours'), findsOneWidget);
     expect(find.bySemanticsLabel('Morning, 7 – 11 AM · Too soon'), findsOneWidget);
 
-    await tester.tap(find.descendant(of: find.byType(BottomSheet), matching: find.text('TUE')));
+    await tester.tap(find.descendant(of: find.byType(BottomSheet), matching: find.text('Tue')));
     await tester.pumpAndSettle();
     await tester.tap(find.bySemanticsLabel('Afternoon, 11 AM – 4 PM'));
     await tester.pumpAndSettle();
@@ -104,7 +104,7 @@ void main() {
 
     expect(find.text('Delivery time'), findsNothing);
     expect(find.text('Tue 6 Oct, 11 AM – 4 PM'), findsOneWidget);
-    expect(find.text('Your choice'), findsOneWidget);
+    expect(find.text('Your delivery choice'), findsOneWidget);
     expect(container.read(scheduleProvider).requireValue.deliveryIsEarliest, isFalse);
   });
 

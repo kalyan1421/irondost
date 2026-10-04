@@ -42,7 +42,6 @@ dependencies:
   firebase_messaging: ^16.7.0
   flutter_secure_storage: ^11.2.0
   package_info_plus: ^10.2.2
-  google_fonts: ^9.0.0
   lucide_icons_flutter: ^3.1.21
   intl: ^0.20.3
   url_launcher: ^6.3.2
@@ -88,6 +87,9 @@ flutter:
     - assets/brand/irondost-logo-tagline.png
     - assets/brand/irondost-logo-tagline-reverse.png
     - assets/brand/irondost-mark.png
+    - assets/brand/irondost-wordmark.png
+    - assets/brand/irondost-wordmark-reverse.png
+    - assets/services/
 
   # To add assets to your application, add an assets section, like this:
   # assets:
@@ -119,3 +121,27 @@ flutter:
   #
   # For details regarding fonts from package dependencies,
   # see https://flutter.dev/to/font-from-package
+
+  fonts:
+    - family: Figtree
+      fonts:
+        - asset: assets/fonts/Figtree-400.ttf
+          weight: 400
+        - asset: assets/fonts/Figtree-500.ttf
+          weight: 500
+        - asset: assets/fonts/Figtree-600.ttf
+          weight: 600
+        - asset: assets/fonts/Figtree-700.ttf
+          weight: 700
+    - family: Outfit
+      fonts:
+        - asset: assets/fonts/Outfit-500.ttf
+          weight: 500
+        - asset: assets/fonts/Outfit-600.ttf
+          weight: 600
+        - asset: assets/fonts/Outfit-700.ttf
+          weight: 700
+    - family: Geist Mono
+      fonts:
+        - asset: assets/fonts/GeistMono-500.ttf
+          weight: 500

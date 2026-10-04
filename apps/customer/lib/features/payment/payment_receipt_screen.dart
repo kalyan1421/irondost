@@ -24,7 +24,9 @@ class PaymentReceiptScreen extends ConsumerWidget {
     final c = context.colors;
     final t = context.text;
     final order = ref.watch(orderProvider(orderId)).value ?? initial;
-    final paid = order == null ? null : rupees(order.paidPaise > 0 ? order.paidPaise : order.totalPaise);
+    final paid = order == null
+        ? null
+        : rupees(order.paidPaise > 0 ? order.paidPaise : order.totalPaise);
     void back() => context.canPop() ? context.pop() : context.go(Routes.orders);
 
     return PopScope(
@@ -54,18 +56,40 @@ class PaymentReceiptScreen extends ConsumerWidget {
                                 alignment: Alignment.center,
                                 clipBehavior: Clip.none,
                                 children: [
-                                  Container(width: 120, height: 120, decoration: BoxDecoration(color: c.successSoft, shape: BoxShape.circle), child: ExcludeSemantics(child: Icon(LucideIcons.circleCheck, size: 52, color: c.success))),
-                                  const Positioned(right: 0, top: 6, child: Bubble(24)),
-                                  const Positioned(right: 24, top: -8, child: Bubble(12)),
+                                  Container(
+                                    width: 64,
+                                    height: 64,
+                                    decoration: BoxDecoration(
+                                      color: c.successSoft,
+                                      shape: BoxShape.circle,
+                                    ),
+                                    child: ExcludeSemantics(
+                                      child: Icon(
+                                        LucideIcons.circleCheck,
+                                        size: 32,
+                                        color: c.success,
+                                      ),
+                                    ),
+                                  ),
                                 ],
                               ),
                             ),
                           ),
                           const SizedBox(height: IdSpace.s6),
-                          Semantics(header: true, liveRegion: true, child: Text(paid == null ? 'Paid' : '$paid paid', style: t.headline, textAlign: TextAlign.center)),
+                          Semantics(
+                            header: true,
+                            liveRegion: true,
+                            child: Text(
+                              paid == null ? 'Paid' : '$paid paid',
+                              style: t.headline,
+                              textAlign: TextAlign.center,
+                            ),
+                          ),
                           const SizedBox(height: IdSpace.s3),
                           Text(
-                            order == null ? 'Thanks! Your payment is done.' : 'Thanks! Order ${order.orderNumber} is fully paid. Nothing to pay at the door.',
+                            order == null
+                                ? 'Thanks! Your payment is done.'
+                                : 'Thanks! Order ${order.orderNumber} is fully paid. Nothing to pay at the door.',
                             style: t.bodyLg.copyWith(color: c.textMuted),
                             textAlign: TextAlign.center,
                           ),
@@ -74,11 +98,26 @@ class PaymentReceiptScreen extends ConsumerWidget {
                             IdCard(
                               child: Column(
                                 children: [
-                                  _Row('Order', Text(order.orderNumber, style: t.orderId)),
+                                  _Row(
+                                    'Order',
+                                    Text(order.orderNumber, style: t.orderId),
+                                  ),
                                   const SizedBox(height: IdSpace.s2),
-                                  _Row('Paid online', Text(rupees(order.paidPaise), style: t.label)),
+                                  _Row(
+                                    'Paid online',
+                                    Text(
+                                      rupees(order.paidPaise),
+                                      style: t.label,
+                                    ),
+                                  ),
                                   const SizedBox(height: IdSpace.s2),
-                                  _Row('When', Text(istDateTimeLabel(DateTime.now()), style: t.bodyLg)),
+                                  _Row(
+                                    'When',
+                                    Text(
+                                      istDateTimeLabel(DateTime.now()),
+                                      style: t.bodyLg,
+                                    ),
+                                  ),
                                 ],
                               ),
                             ),
@@ -89,7 +128,19 @@ class PaymentReceiptScreen extends ConsumerWidget {
                   ),
                 ),
               ),
-              Padding(padding: const EdgeInsets.fromLTRB(IdSpace.s4, IdSpace.s3, IdSpace.s4, IdSpace.s4), child: IdButton(label: 'Back to order', expand: true, onPressed: back)),
+              Padding(
+                padding: const EdgeInsets.fromLTRB(
+                  IdSpace.s5,
+                  IdSpace.s3,
+                  IdSpace.s5,
+                  IdSpace.s4,
+                ),
+                child: IdButton(
+                  label: 'Back to order',
+                  expand: true,
+                  onPressed: back,
+                ),
+              ),
             ],
           ),
         ),
@@ -105,11 +156,16 @@ class _Row extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) => Row(
-        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-        children: [
-          Text(k, style: context.text.bodyLg.copyWith(color: context.colors.textMuted)),
-          const SizedBox(width: IdSpace.s3),
-          Flexible(child: Align(alignment: Alignment.centerRight, child: v)),
-        ],
-      );
+    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+    children: [
+      Text(
+        k,
+        style: context.text.bodyLg.copyWith(color: context.colors.textMuted),
+      ),
+      const SizedBox(width: IdSpace.s3),
+      Flexible(
+        child: Align(alignment: Alignment.centerRight, child: v),
+      ),
+    ],
+  );
 }

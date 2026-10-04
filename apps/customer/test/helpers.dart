@@ -17,6 +17,7 @@ import 'package:irondost_customer/features/basket/basket.dart';
 import 'package:irondost_customer/features/basket/quote.dart';
 import 'package:irondost_customer/features/catalogue/catalogue.dart';
 import 'package:irondost_customer/features/offers/promotions.dart';
+import 'package:irondost_customer/features/home/banners.dart';
 import 'package:irondost_customer/features/notifications/notifications.dart';
 import 'package:irondost_customer/features/orders/order_repository.dart';
 import 'package:irondost_customer/features/payment/payment.dart';
@@ -230,6 +231,7 @@ Future<List<Override>> basketOverrides({
   Future<List<CatalogCategoryDto>> Function()? load,
   QuoteRepository? quotes,
   List<PromotionDto> promotions = const [],
+  List<BannerDto> banners = const [],
 }) async {
   SharedPreferences.setMockInitialValues(saved);
   final prefs = await SharedPreferences.getInstance();
@@ -239,6 +241,7 @@ Future<List<Override>> basketOverrides({
     sessionProvider.overrideWith(SignedInSession.new),
     quoteRepositoryProvider.overrideWithValue(quotes ?? FakeQuoteRepository()),
     promotionsProvider.overrideWith((ref) async => promotions),
+    bannersProvider.overrideWith((ref) async => banners),
   ];
 }
 

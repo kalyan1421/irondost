@@ -19,9 +19,9 @@ class LaunchScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) => Scaffold(
-        backgroundColor: context.colors.surface,
-        body: const Center(child: BrandLogo(height: 72, tagline: true)),
-      );
+    backgroundColor: context.colors.surface,
+    body: const Center(child: BrandLogo(height: 32)),
+  );
 }
 
 /// No internet, or the API is down. Retries whatever failed.
@@ -52,15 +52,26 @@ class UnavailableScreen extends ConsumerWidget {
               icon: LucideIcons.wifiOff,
               title: "You're offline",
               body: 'Check your Wi-Fi or mobile data, then try again.',
-              primary: IdButton(label: 'Try again', icon: LucideIcons.refreshCw, loading: retrying, expand: true, onPressed: retry),
+              primary: IdButton(
+                label: 'Try again',
+                icon: LucideIcons.refreshCw,
+                loading: retrying,
+                expand: true,
+                onPressed: retry,
+              ),
             )
           : StateView(
               icon: LucideIcons.cloudOff,
               tone: StateTone.primary,
               title: "We'll be right back",
-              body: "IronDost isn't responding right now. Your orders and payments are safe. Please try again in a few minutes.",
-              caption: failure?.statusCode == null ? null : 'Error ${failure!.statusCode}',
-              primary: IdButton(label: 'Try again', icon: LucideIcons.refreshCw, loading: retrying, expand: true, onPressed: retry),
+              body: "IronDost isn't responding right now. We can't check your order status. Please try again in a few minutes.",
+              primary: IdButton(
+                label: 'Try again',
+                icon: LucideIcons.refreshCw,
+                loading: retrying,
+                expand: true,
+                onPressed: retry,
+              ),
               secondary: IdButton.outline(
                 label: 'Call ${IndianPhone.display(Support.fallbackPhone)}',
                 icon: LucideIcons.phone,
@@ -81,19 +92,46 @@ class UpdateScreen extends ConsumerWidget {
     final startup = ref.watch(startupProvider).value;
     final version = startup?.version;
     final storeUrl = version?.storeUrl;
+    Future<void> openStore() async {
+      var opened = false;
+      try {
+        final uri = storeUrl == null ? null : Uri.tryParse(storeUrl);
+        if (uri != null) {
+          opened = await launchUrl(uri, mode: LaunchMode.externalApplication);
+        }
+      } catch (_) {
+        // A missing store application should leave a useful recovery path.
+      }
+      if (!opened && context.mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text(
+              'Couldn’t open the update link. Contact support for help updating.',
+            ),
+          ),
+        );
+      }
+    }
+
     return Scaffold(
       backgroundColor: context.colors.surface,
       body: StateView(
         icon: LucideIcons.download,
         tone: StateTone.primary,
-        title: 'Time to update',
-        body: version?.message ??
-            'This version of IronDost is no longer supported. Updating takes a minute and keeps you signed in.',
-        caption: version == null ? null : 'You have ${startup!.installedVersion} · Latest is ${version.latestVersion}',
+        title: 'Update to continue',
+        body: version?.message ?? 'This version of IronDost is no longer supported. Install the latest version to continue.',
+        caption: storeUrl == null
+            ? 'The update link is unavailable. Contact support for help.'
+            : 'You have ${startup!.installedVersion} · Latest is ${version!.latestVersion}',
         primary: IdButton(
           label: 'Update now',
           expand: true,
-          onPressed: storeUrl == null ? null : () => launchUrl(Uri.parse(storeUrl), mode: LaunchMode.externalApplication),
+          onPressed: storeUrl == null ? null : openStore,
+        ),
+        secondary: IdButton.outline(
+          label: 'Contact support',
+          expand: true,
+          onPressed: () => Support.dial(Support.of(ref).phone),
         ),
       ),
     );
@@ -122,8 +160,17 @@ class PausedScreen extends ConsumerWidget {
         ),
         secondary: support.email == null
             ? null
-            : IdButton.outline(label: 'Email support', icon: LucideIcons.mail, expand: true, onPressed: () => Support.mail(support.email!)),
-        tertiary: IdButton.text(label: 'Log out', expand: true, onPressed: () => ref.read(sessionProvider.notifier).signOut()),
+            : IdButton.outline(
+                label: 'Email support',
+                icon: LucideIcons.mail,
+                expand: true,
+                onPressed: () => Support.mail(support.email!),
+              ),
+        tertiary: IdButton.text(
+          label: 'Log out',
+          expand: true,
+          onPressed: () => ref.read(sessionProvider.notifier).signOut(),
+        ),
       ),
     );
   }

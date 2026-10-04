@@ -39,36 +39,65 @@ class OrderDetailScreen extends ConsumerWidget {
 
     if (order == null) {
       return Scaffold(
-        appBar: AppBar(leading: _back(context), title: Text('Order', style: context.text.titleLg)),
+        appBar: AppBar(
+          leading: _back(context),
+          title: Text('Order', style: context.text.titleLg),
+        ),
         body: async.hasError
-            ? _LoadFailure(offline: ApiFailure.from(async.error!).isConnectivity, onRetry: () => ref.invalidate(orderProvider(orderId)))
+            ? _LoadFailure(
+                offline: ApiFailure.from(async.error!).isConnectivity,
+                onRetry: () => ref.invalidate(orderProvider(orderId)),
+              )
             : const Center(child: CircularProgressIndicator()),
       );
     }
 
-    final finished = order.status == OrderStatus.delivered || order.status == OrderStatus.cancelled;
-    final delayed = order.status == OrderStatus.pending && order.dispatchFailedAt != null;
+    final finished =
+        order.status == OrderStatus.delivered ||
+        order.status == OrderStatus.cancelled;
+    final delayed =
+        order.status == OrderStatus.pending && order.dispatchFailedAt != null;
 
     return Scaffold(
       appBar: AppBar(
         leading: _back(context),
         title: Text.rich(
-          TextSpan(text: 'Order ', children: [TextSpan(text: order.orderNumber, style: context.text.orderId.copyWith(fontSize: 18))]),
+          TextSpan(
+            text: 'Order ',
+            children: [
+              TextSpan(
+                text: order.orderNumber,
+                style: context.text.orderId.copyWith(fontSize: 18),
+              ),
+            ],
+          ),
           style: context.text.titleLg,
         ),
         actions: [
-          if (order.status != OrderStatus.delivered && order.status != OrderStatus.cancelled)
-            IconButton(icon: const Icon(LucideIcons.circleQuestionMark), tooltip: 'Get help with this order', onPressed: () => showOrderHelp(context, ref, order)),
+          if (order.status != OrderStatus.delivered &&
+              order.status != OrderStatus.cancelled)
+            IconButton(
+              icon: const Icon(LucideIcons.circleQuestionMark),
+              tooltip: 'Get help with this order',
+              onPressed: () => showOrderHelp(context, ref, order),
+            ),
         ],
       ),
       body: RefreshIndicator(
         onRefresh: () async {
           ref.invalidate(orderProvider(orderId));
-          await ref.read(orderProvider(orderId).future).then((_) {}, onError: (_) {});
+          await ref
+              .read(orderProvider(orderId).future)
+              .then((_) {}, onError: (_) {});
         },
         child: ListView(
           physics: const AlwaysScrollableScrollPhysics(),
-          padding: const EdgeInsets.fromLTRB(IdSpace.s4, IdSpace.s4, IdSpace.s4, IdSpace.s6),
+          padding: const EdgeInsets.fromLTRB(
+            IdSpace.s5,
+            IdSpace.s5,
+            IdSpace.s5,
+            IdSpace.s6,
+          ),
           children: [
             _Hero(order: order, delayed: delayed),
             const SizedBox(height: IdSpace.s4),
@@ -81,14 +110,34 @@ class OrderDetailScreen extends ConsumerWidget {
           ],
         ),
       ),
-      bottomNavigationBar: _footer(context, ref, order, finished: finished, delayed: delayed),
+      bottomNavigationBar: _footer(
+        context,
+        ref,
+        order,
+        finished: finished,
+        delayed: delayed,
+      ),
     );
   }
 
-  Widget? _footer(BuildContext context, WidgetRef ref, OrderDto order, {required bool finished, required bool delayed}) {
+  Widget? _footer(
+    BuildContext context,
+    WidgetRef ref,
+    OrderDto order, {
+    required bool finished,
+    required bool delayed,
+  }) {
     if (finished) {
       return _Footer(
-        actions: [IdButton(label: order.status == OrderStatus.cancelled ? 'Book again' : 'Book the same again', expand: true, onPressed: () => bookAgain(context, ref, order))],
+        actions: [
+          IdButton(
+            label: order.status == OrderStatus.cancelled
+                ? 'Book again'
+                : 'Book the same again',
+            expand: true,
+            onPressed: () => bookAgain(context, ref, order),
+          ),
+        ],
       );
     }
     final pay = canPayNow(order);
@@ -97,40 +146,74 @@ class OrderDetailScreen extends ConsumerWidget {
       final amount = rupees(order.amountDuePaise);
       return _Footer(
         actions: [
-          IdButton(label: order.paymentMethod == PaymentMethod.online ? 'Pay $amount' : 'Pay $amount online', expand: true, onPressed: () => showPayDueSheet(context, order)),
-          if (cancel) IdButton.outline(label: 'Cancel order', expand: true, onPressed: () => cancelOrder(context, order)),
+          IdButton(
+            label: order.paymentMethod == PaymentMethod.online
+                ? 'Pay $amount'
+                : 'Pay $amount online',
+            expand: true,
+            onPressed: () => showPayDueSheet(context, order),
+          ),
+          if (cancel)
+            IdButton.outline(
+              label: 'Cancel order',
+              expand: true,
+              onPressed: () => cancelOrder(context, order),
+            ),
         ],
       );
     }
     // A late pickup keeps its cancel button in the notice, up top.
     if (cancel && !delayed) {
       return _Footer(
-        actions: [IdButton.outline(label: 'Cancel order', expand: true, onPressed: () => cancelOrder(context, order))],
+        actions: [
+          IdButton.outline(
+            label: 'Cancel order',
+            expand: true,
+            onPressed: () => cancelOrder(context, order),
+          ),
+        ],
         caption: 'Free to cancel until your clothes are picked up.',
       );
     }
     return null;
   }
 
-  Widget _back(BuildContext context) => BackButton(onPressed: () => context.canPop() ? context.pop() : context.go(Routes.orders));
+  Widget _back(BuildContext context) => BackButton(
+    onPressed: () =>
+        context.canPop() ? context.pop() : context.go(Routes.orders),
+  );
 
-  List<Widget> _activeBody(BuildContext context, WidgetRef ref, OrderDto order, {required bool delayed}) {
+  List<Widget> _activeBody(
+    BuildContext context,
+    WidgetRef ref,
+    OrderDto order, {
+    required bool delayed,
+  }) {
     final partner = partnerFor(order);
     final due = canPayNow(order);
     return [
-      if (delayed) ...[_DelayedNotice(order: order), const SizedBox(height: IdSpace.s4)],
+      if (delayed) ...[
+        _DelayedNotice(order: order),
+        const SizedBox(height: IdSpace.s4),
+      ],
       IdCard(child: OrderTimeline(steps: buildTimeline(order))),
       if (partner != null) ...[
         const SizedBox(height: IdSpace.s4),
         _PartnerRow(person: partner, caption: partnerCaption(order)),
       ] else if (!delayed) ...[
         const SizedBox(height: IdSpace.s4),
-        const _Notice(icon: LucideIcons.user, tone: _NoticeTone.info, text: "You'll see your partner's name and number here once they accept."),
+        const _Notice(
+          icon: LucideIcons.user,
+          tone: _NoticeTone.info,
+          text: "You'll see your partner's name and number here once they accept.",
+        ),
       ],
       if (due) ...[
         const SizedBox(height: IdSpace.s4),
         _Notice(
-          icon: order.paymentMethod == PaymentMethod.online ? LucideIcons.circleAlert : LucideIcons.banknote,
+          icon: order.paymentMethod == PaymentMethod.online
+              ? LucideIcons.circleAlert
+              : LucideIcons.banknote,
           tone: _NoticeTone.warning,
           text: dueText(order),
         ),
@@ -140,37 +223,67 @@ class OrderDetailScreen extends ConsumerWidget {
     ];
   }
 
-  List<Widget> _deliveredBody(BuildContext context, WidgetRef ref, OrderDto order) {
+  List<Widget> _deliveredBody(
+    BuildContext context,
+    WidgetRef ref,
+    OrderDto order,
+  ) {
     final c = context.colors;
     final t = context.text;
+    final paid = order.paymentStatus == PaymentStatus.paid;
+    final paymentColor = paid ? c.success : c.warning;
     return [
       IdCard(
         child: Column(
           children: [
-            _Line('Picked up', order.pickedUpAt == null ? '—' : istDateTimeLabel(order.pickedUpAt!)),
+            _Line(
+              'Picked up',
+              order.pickedUpAt == null
+                  ? '—'
+                  : istDateTimeLabel(order.pickedUpAt!),
+            ),
             const SizedBox(height: 10),
             _Line('Items', '${pieceCount(order)}, ironed'),
             const SizedBox(height: 10),
             Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
-                Text('Paid', style: t.bodyLg.copyWith(color: c.textMuted)),
-                Container(
-                  height: 26,
-                  padding: const EdgeInsets.symmetric(horizontal: 10),
-                  decoration: BoxDecoration(color: c.successSoft, borderRadius: BorderRadius.circular(IdRadius.full)),
-                  child: Row(
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      Icon(LucideIcons.check, size: IdSize.iconSm, color: c.success),
-                      const SizedBox(width: IdSpace.s1),
-                      Text(
-                        order.paymentStatus == PaymentStatus.paid
-                            ? '${rupees(order.paidPaise)} ${paidHow(order) == 'Paid in cash' ? 'in cash' : 'online'}'
-                            : '${rupees(order.amountDuePaise)} due',
-                        style: t.labelSm.copyWith(color: c.success),
-                      ),
-                    ],
+                Expanded(
+                  child: Text(
+                    paid ? 'Paid' : 'Payment due',
+                    style: t.bodyLg.copyWith(color: c.textMuted),
+                  ),
+                ),
+                const SizedBox(width: IdSpace.s2),
+                Flexible(
+                  child: Container(
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 10,
+                      vertical: 6,
+                    ),
+                    decoration: BoxDecoration(
+                      color: paid ? c.successSoft : c.warningSoft,
+                      borderRadius: BorderRadius.circular(IdRadius.full),
+                    ),
+                    child: Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        Icon(
+                          paid ? LucideIcons.check : LucideIcons.circleAlert,
+                          size: IdSize.iconSm,
+                          color: paymentColor,
+                        ),
+                        const SizedBox(width: IdSpace.s1),
+                        Flexible(
+                          child: Text(
+                            paid
+                                ? '${rupees(order.paidPaise)} ${paidHow(order) == 'Paid in cash' ? 'in cash' : 'online'}'
+                                : '${rupees(order.amountDuePaise)} due',
+                            style: t.labelSm.copyWith(color: paymentColor),
+                          ),
+                        ),
+                      ],
+                    ),
                   ),
                 ),
               ],
@@ -181,8 +294,16 @@ class OrderDetailScreen extends ConsumerWidget {
       const SizedBox(height: IdSpace.s4),
       IdListGroup(
         children: [
-          IdListRow(icon: LucideIcons.fileText, label: 'Items and bill', onTap: () => context.push(Routes.bill(order.id), extra: order)),
-          IdListRow(icon: LucideIcons.circleQuestionMark, label: 'Something wrong with an item?', onTap: () => showOrderHelp(context, ref, order)),
+          IdListRow(
+            icon: LucideIcons.fileText,
+            label: 'Items and bill',
+            onTap: () => context.push(Routes.bill(order.id), extra: order),
+          ),
+          IdListRow(
+            icon: LucideIcons.circleQuestionMark,
+            label: 'Something wrong with an item?',
+            onTap: () => showOrderHelp(context, ref, order),
+          ),
         ],
       ),
     ];
@@ -198,17 +319,25 @@ class OrderDetailScreen extends ConsumerWidget {
           tone: _NoticeTone.info,
           text: refunded
               ? 'Your ${rupees(order.refundedPaise)} refund has been sent to the account you paid from.'
-              : 'Your ${rupees(order.paidPaise)} refund is on its way to the account you paid from. Refunds take 7–14 business days.',
+              : '${rupees(order.paidPaise)} is awaiting refund confirmation. Contact support for the current status.',
         ),
       if (paid) const SizedBox(height: IdSpace.s4),
       IdCard(
         child: Column(
           children: [
-            _Line('Was booked for', '${dayLong(order.pickupDate)}, ${windowFromLabel(order.pickupSlotLabel)}'),
+            _Line(
+              'Was booked for',
+              '${dayLong(order.pickupDate)}, ${windowFromLabel(order.pickupSlotLabel)}',
+            ),
             const SizedBox(height: 10),
             _Line('Items', '${pieceCount(order)}'),
             const SizedBox(height: 10),
-            _Line('Amount', paid ? '${rupees(order.totalPaise)} · ${refunded ? 'refunded' : 'refund pending'}' : '${rupees(order.totalPaise)} · nothing charged'),
+            _Line(
+              'Amount',
+              paid
+                  ? '${rupees(order.totalPaise)} · ${refunded ? 'refunded' : 'refund pending'}'
+                  : '${rupees(order.totalPaise)} · nothing charged',
+            ),
           ],
         ),
       ),
@@ -218,25 +347,35 @@ class OrderDetailScreen extends ConsumerWidget {
 
 /// Who has the clothes right now: the delivery partner once one is assigned, else the pickup partner.
 PersonRefDto? partnerFor(OrderDto o) => switch (o.status) {
-      OrderStatus.deliveryAssigned || OrderStatus.outForDelivery => o.deliveryDriver ?? o.pickupDriver,
-      OrderStatus.pickupAssigned || OrderStatus.pickedUp || OrderStatus.processing || OrderStatus.readyForDelivery => o.pickupDriver,
-      _ => null,
-    };
+  OrderStatus.deliveryAssigned ||
+  OrderStatus.outForDelivery => o.deliveryDriver ?? o.pickupDriver,
+  OrderStatus.pickupAssigned ||
+  OrderStatus.pickedUp ||
+  OrderStatus.processing ||
+  OrderStatus.readyForDelivery => o.pickupDriver,
+  _ => null,
+};
 
 String partnerCaption(OrderDto o) => switch (o.status) {
-      OrderStatus.pickupAssigned => 'Coming to pick up your clothes',
-      OrderStatus.deliveryAssigned => 'Will bring your clothes back',
-      OrderStatus.outForDelivery => 'Bringing your clothes back',
-      _ => 'Picked up your clothes',
-    };
+  OrderStatus.pickupAssigned => 'Coming to pick up your clothes',
+  OrderStatus.deliveryAssigned => 'Will bring your clothes back',
+  OrderStatus.outForDelivery => 'Bringing your clothes back',
+  _ => 'Picked up your clothes',
+};
 
 /// The warning under the timeline: how much is owed and the ways to pay it.
 String dueText(OrderDto o) {
   final amount = rupees(o.amountDuePaise);
-  if (o.paymentMethod == PaymentMethod.online) return "$amount isn't paid yet. Pay online now, or switch to cash on delivery.";
-  final delivering = o.status == OrderStatus.deliveryAssigned || o.status == OrderStatus.outForDelivery;
+  if (o.paymentMethod == PaymentMethod.online) {
+    return "$amount isn't paid yet. Pay online now, or switch to cash on delivery.";
+  }
+  final delivering =
+      o.status == OrderStatus.deliveryAssigned ||
+      o.status == OrderStatus.outForDelivery;
   final first = o.deliveryDriver?.name?.split(' ').first;
-  return delivering && first != null ? '$amount is due. Pay $first in cash at the door, or pay online now.' : '$amount is due. Pay the partner in cash or pay online now.';
+  return delivering && first != null
+      ? '$amount is due. Pay $first in cash at the door, or pay online now.'
+      : '$amount is due. Pay the partner in cash or pay online now.';
 }
 
 /// Opens the cancel sheet, and says so when the order was cancelled.
@@ -246,12 +385,18 @@ Future<void> cancelOrder(BuildContext context, OrderDto order) async {
   if (done) {
     messenger
       ..hideCurrentSnackBar()
-      ..showSnackBar(SnackBar(content: Text('Order ${order.orderNumber} cancelled')));
+      ..showSnackBar(
+        SnackBar(content: Text('Order ${order.orderNumber} cancelled')),
+      );
   }
 }
 
 /// Puts the order's items in the basket and opens it. Asks first if the basket already holds something.
-Future<void> bookAgain(BuildContext context, WidgetRef ref, OrderDto order) async {
+Future<void> bookAgain(
+  BuildContext context,
+  WidgetRef ref,
+  OrderDto order,
+) async {
   final lines = <String, int>{
     for (final i in order.items)
       if (i.catalogItemId != null) i.catalogItemId!: i.quantity.toInt(),
@@ -278,7 +423,11 @@ Future<void> bookAgain(BuildContext context, WidgetRef ref, OrderDto order) asyn
 }
 
 /// "Need help with this order?": call or email support, with the order number to quote.
-Future<void> showOrderHelp(BuildContext context, WidgetRef ref, OrderDto order) {
+Future<void> showOrderHelp(
+  BuildContext context,
+  WidgetRef ref,
+  OrderDto order,
+) {
   final support = Support.of(ref);
   return showIdSheet<void>(
     context,
@@ -288,14 +437,30 @@ Future<void> showOrderHelp(BuildContext context, WidgetRef ref, OrderDto order) 
         mainAxisSize: MainAxisSize.min,
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
-          Semantics(header: true, child: Text('Need help with this order?', style: t.titleLg)),
+          Semantics(
+            header: true,
+            child: Text('Need help with this order?', style: t.titleLg),
+          ),
           const SizedBox(height: IdSpace.s1),
-          Text('Mention ${order.orderNumber} and we\'ll find it straight away.', style: t.body.copyWith(color: context.colors.textMuted)),
+          Text(
+            'Mention ${order.orderNumber} and we\'ll find it straight away.',
+            style: t.body.copyWith(color: context.colors.textMuted),
+          ),
           const SizedBox(height: IdSpace.s4),
-          IdButton(label: 'Call ${IndianPhone.display(support.phone)}', icon: LucideIcons.phone, expand: true, onPressed: () => Support.dial(support.phone)),
+          IdButton(
+            label: 'Call ${IndianPhone.display(support.phone)}',
+            icon: LucideIcons.phone,
+            expand: true,
+            onPressed: () => Support.dial(support.phone),
+          ),
           if (support.email != null) ...[
             const SizedBox(height: IdSpace.s2),
-            IdButton.outline(label: 'Email ${support.email}', icon: LucideIcons.mail, expand: true, onPressed: () => Support.mail(support.email!)),
+            IdButton.outline(
+              label: 'Email ${support.email}',
+              icon: LucideIcons.mail,
+              expand: true,
+              onPressed: () => Support.mail(support.email!),
+            ),
           ],
         ],
       );
@@ -316,7 +481,9 @@ class _Hero extends StatelessWidget {
 
     if (order.status == OrderStatus.delivered) {
       final by = order.deliveryDriver?.name;
-      final when = order.deliveredAt == null ? null : istDateTimeLabel(order.deliveredAt!);
+      final when = order.deliveredAt == null
+          ? null
+          : istDateTimeLabel(order.deliveredAt!);
       return Semantics(
         container: true,
         child: ClipRRect(
@@ -326,14 +493,33 @@ class _Hero extends StatelessWidget {
             padding: const EdgeInsets.all(IdSpace.s5),
             child: Row(
               children: [
-                Container(width: 52, height: 52, decoration: BoxDecoration(color: c.surface, shape: BoxShape.circle), child: Icon(LucideIcons.check, size: IdSize.iconLg, color: c.success)),
+                Container(
+                  width: 52,
+                  height: 52,
+                  decoration: BoxDecoration(
+                    color: c.surface,
+                    shape: BoxShape.circle,
+                  ),
+                  child: Icon(
+                    LucideIcons.check,
+                    size: IdSize.iconLg,
+                    color: c.success,
+                  ),
+                ),
                 const SizedBox(width: 14),
                 Expanded(
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      Semantics(header: true, child: Text('Delivered', style: t.headline)),
-                      if (when != null) Text([when, if (by != null) 'by $by'].join(' · '), style: t.body),
+                      Semantics(
+                        header: true,
+                        child: Text('Delivered', style: t.headline),
+                      ),
+                      if (when != null)
+                        Text(
+                          [when, if (by != null) 'by $by'].join(' · '),
+                          style: t.body,
+                        ),
                     ],
                   ),
                 ),
@@ -346,24 +532,51 @@ class _Hero extends StatelessWidget {
 
     if (order.status == OrderStatus.cancelled) {
       final reason = order.cancelReason;
-      final byStaff = order.events?.where((e) => e.toStatus == OrderStatus.cancelled).any((e) => e.actorRole != null && e.actorRole != Role.customer) ?? false;
+      final byStaff =
+          order.events
+              ?.where((e) => e.toStatus == OrderStatus.cancelled)
+              .any(
+                (e) => e.actorRole != null && e.actorRole != Role.customer,
+              ) ??
+          false;
       return Container(
         padding: const EdgeInsets.all(IdSpace.s5),
-        decoration: BoxDecoration(color: c.surfaceSoft, borderRadius: BorderRadius.circular(IdRadius.xl)),
+        decoration: BoxDecoration(
+          color: c.surfaceSoft,
+          borderRadius: BorderRadius.circular(IdRadius.xl),
+        ),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Container(
-              height: 28,
+              constraints: const BoxConstraints(minHeight: 28),
               padding: const EdgeInsets.symmetric(horizontal: 10),
-              decoration: BoxDecoration(color: c.surface, borderRadius: BorderRadius.circular(IdRadius.full)),
+              decoration: BoxDecoration(
+                color: c.surface,
+                borderRadius: BorderRadius.circular(IdRadius.full),
+              ),
               alignment: Alignment.center,
-              child: Text('Cancelled', style: t.labelSm.copyWith(color: c.textMuted)),
+              child: Text(
+                'Cancelled',
+                style: t.labelSm.copyWith(color: c.textMuted),
+              ),
             ),
             const SizedBox(height: 6),
-            Semantics(header: true, child: Text(byStaff ? 'This order was cancelled' : 'You cancelled this order', style: t.headline)),
+            Semantics(
+              header: true,
+              child: Text(
+                byStaff
+                    ? 'This order was cancelled'
+                    : 'You cancelled this order',
+                style: t.headline,
+              ),
+            ),
             Text(
-              [if (order.cancelledAt != null) istDateTimeLabel(order.cancelledAt!), if (reason != null && reason.isNotEmpty) '"$reason"'].join(' · '),
+              [
+                if (order.cancelledAt != null)
+                  istDateTimeLabel(order.cancelledAt!),
+                if (reason != null && reason.isNotEmpty) '"$reason"',
+              ].join(' · '),
               style: t.body.copyWith(color: c.textMuted),
             ),
           ],
@@ -372,15 +585,20 @@ class _Hero extends StatelessWidget {
     }
 
     final step = order.status.timelineStep;
+    final missed = deliveryEstimateMissed(order);
     final title = delayed ? 'Pickup running late' : order.status.customerLabel;
-    final body = switch (order.status) {
-      OrderStatus.pending || OrderStatus.pickupAssigned =>
-        delayed
-            ? 'Window ${dayPhrase(order.pickupDate, today: today)}, ${windowFromLabel(order.pickupSlotLabel)}'
-            : 'Pickup ${dayPhrase(order.pickupDate, today: today)}, ${windowFromLabel(order.pickupSlotLabel)}',
-      OrderStatus.deliveryAssigned || OrderStatus.outForDelivery => 'Arriving ${dayPhrase(order.deliveryDate, today: today)}, ${windowFromLabel(order.deliverySlotLabel)}',
-      _ => 'Back by ${dayLong(order.deliveryDate, today: today)}, ${windowFromLabel(order.deliverySlotLabel)}',
-    };
+    final body = missed
+        ? 'Delivery estimate missed: ${dayLong(order.deliveryDate)}, ${windowFromLabel(order.deliverySlotLabel)}. Contact support for an update.'
+        : switch (order.status) {
+            OrderStatus.pending || OrderStatus.pickupAssigned =>
+              delayed
+                  ? 'Window ${dayPhrase(order.pickupDate, today: today)}, ${windowFromLabel(order.pickupSlotLabel)}'
+                  : 'Pickup ${dayPhrase(order.pickupDate, today: today)}, ${windowFromLabel(order.pickupSlotLabel)}',
+            OrderStatus.deliveryAssigned || OrderStatus.outForDelivery =>
+              'Arriving ${dayPhrase(order.deliveryDate, today: today)}, ${windowFromLabel(order.deliverySlotLabel)}',
+            _ =>
+              'Back by ${dayLong(order.deliveryDate, today: today)}, ${windowFromLabel(order.deliverySlotLabel)}',
+          };
     return Semantics(
       container: true,
       liveRegion: true,
@@ -388,18 +606,20 @@ class _Hero extends StatelessWidget {
         borderRadius: BorderRadius.circular(IdRadius.xl),
         child: Container(
           width: double.infinity,
-          color: c.surfaceInverse,
+          color: c.surface,
           padding: const EdgeInsets.all(IdSpace.s5),
           child: Stack(
             clipBehavior: Clip.none,
             children: [
-              if (!delayed) const Positioned(right: -18, top: -38, child: Bubble(72)),
               Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Text('Step $step of 5', style: t.labelSm.copyWith(color: c.inverseAccent)),
-                  Text(title, style: t.headline.copyWith(color: c.textInverse)),
-                  Text(body, style: t.body.copyWith(color: c.textInverse)),
+                  Text(
+                    'Step $step of 5',
+                    style: t.labelSm.copyWith(color: c.textMuted),
+                  ),
+                  Text(title, style: t.headline.copyWith(color: c.text)),
+                  Text(body, style: t.body.copyWith(color: c.text)),
                 ],
               ),
             ],
@@ -413,7 +633,12 @@ class _Hero extends StatelessWidget {
 enum _NoticeTone { info, warning }
 
 class _Notice extends StatelessWidget {
-  const _Notice({required this.icon, required this.tone, required this.text, this.actions = const []});
+  const _Notice({
+    required this.icon,
+    required this.tone,
+    required this.text,
+    this.actions = const [],
+  });
 
   final IconData icon;
   final _NoticeTone tone;
@@ -428,21 +653,35 @@ class _Notice extends StatelessWidget {
       liveRegion: true,
       child: Container(
         padding: const EdgeInsets.all(14),
-        decoration: BoxDecoration(color: warning ? c.warningSoft : c.primarySoft, borderRadius: BorderRadius.circular(IdRadius.md)),
+        decoration: BoxDecoration(
+          color: warning ? c.warningSoft : c.primarySoft,
+          borderRadius: BorderRadius.circular(IdRadius.md),
+        ),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Row(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Icon(icon, size: IdSize.iconMd, color: warning ? c.warning : c.onPrimarySoft),
+                Icon(
+                  icon,
+                  size: IdSize.iconMd,
+                  color: warning ? c.warning : c.onPrimarySoft,
+                ),
                 const SizedBox(width: 10),
                 Expanded(child: Text(text, style: context.text.body)),
               ],
             ),
             if (actions.isNotEmpty) ...[
               const SizedBox(height: IdSpace.s3),
-              Padding(padding: const EdgeInsets.only(left: 30), child: Wrap(spacing: IdSpace.s2, runSpacing: IdSpace.s1, children: actions)),
+              Padding(
+                padding: const EdgeInsets.only(left: 30),
+                child: Wrap(
+                  spacing: IdSpace.s2,
+                  runSpacing: IdSpace.s1,
+                  children: actions,
+                ),
+              ),
             ],
           ],
         ),
@@ -464,10 +703,17 @@ class _DelayedNotice extends ConsumerWidget {
     return _Notice(
       icon: LucideIcons.clock,
       tone: _NoticeTone.warning,
-      text: "All our partners nearby are busy. We're still trying and will call you if we can't make it by $end.",
+      text:
+          "All our partners nearby are busy. We're still trying and will call you if we can't make it by $end.",
       actions: [
-        IdButton.outline(label: 'Call us', onPressed: () => Support.dial(support.phone)),
-        IdButton.text(label: 'Cancel order', onPressed: () => cancelOrder(context, order)),
+        IdButton.outline(
+          label: 'Call us',
+          onPressed: () => Support.dial(support.phone),
+        ),
+        IdButton.text(
+          label: 'Cancel order',
+          onPressed: () => cancelOrder(context, order),
+        ),
       ],
     );
   }
@@ -479,7 +725,11 @@ class _PartnerRow extends StatelessWidget {
   final String caption;
 
   static String _initials(String? name) {
-    final parts = (name ?? '').trim().split(RegExp(r'\s+')).where((p) => p.isNotEmpty).toList();
+    final parts = (name ?? '')
+        .trim()
+        .split(RegExp(r'\s+'))
+        .where((p) => p.isNotEmpty)
+        .toList();
     if (parts.isEmpty) return '•';
     return parts.take(2).map((p) => p[0].toUpperCase()).join();
   }
@@ -491,15 +741,23 @@ class _PartnerRow extends StatelessWidget {
     final name = person.name ?? 'Your partner';
     final first = name.split(' ').first;
     return IdCard(
-      padding: const EdgeInsets.symmetric(horizontal: IdSpace.s4, vertical: 14),
+      padding: const EdgeInsets.symmetric(horizontal: IdSpace.s5, vertical: 14),
       child: Row(
         children: [
           Container(
             width: 48,
             height: 48,
             alignment: Alignment.center,
-            decoration: BoxDecoration(color: c.primarySoft, shape: BoxShape.circle),
-            child: ExcludeSemantics(child: Text(_initials(person.name), style: t.title.copyWith(color: c.onPrimarySoft))),
+            decoration: BoxDecoration(
+              color: c.primarySoft,
+              shape: BoxShape.circle,
+            ),
+            child: ExcludeSemantics(
+              child: Text(
+                _initials(person.name),
+                style: t.title.copyWith(color: c.onPrimarySoft),
+              ),
+            ),
           ),
           const SizedBox(width: IdSpace.s3),
           Expanded(
@@ -513,7 +771,11 @@ class _PartnerRow extends StatelessWidget {
           ),
           IconButton(
             tooltip: 'Call $first',
-            style: IconButton.styleFrom(side: BorderSide(color: c.borderStrong), foregroundColor: c.primary, fixedSize: const Size(48, 48)),
+            style: IconButton.styleFrom(
+              side: BorderSide(color: c.borderStrong),
+              foregroundColor: c.primary,
+              fixedSize: const Size(48, 48),
+            ),
             icon: const Icon(LucideIcons.phone),
             onPressed: () => Support.dial(person.phone),
           ),
@@ -544,8 +806,16 @@ class _BillRow extends StatelessWidget {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Text('${piecesLabel(order)} · ${rupees(order.totalPaise)}', style: t.title),
-                  Text(paid ? paidHow(order) : itemsSummary(order), style: t.caption.copyWith(color: c.textMuted), maxLines: 1, overflow: TextOverflow.ellipsis),
+                  Text(
+                    '${piecesLabel(order)} · ${rupees(order.totalPaise)}',
+                    style: t.title,
+                  ),
+                  Text(
+                    paid ? paidHow(order) : itemsSummary(order),
+                    style: t.caption.copyWith(color: c.textMuted),
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                  ),
                 ],
               ),
             ),
@@ -564,13 +834,18 @@ class _Line extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) => Row(
-        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-        children: [
-          Text(k, style: context.text.bodyLg.copyWith(color: context.colors.textMuted)),
-          const SizedBox(width: IdSpace.s3),
-          Flexible(child: Text(v, style: context.text.bodyLg, textAlign: TextAlign.end)),
-        ],
-      );
+    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+    children: [
+      Text(
+        k,
+        style: context.text.bodyLg.copyWith(color: context.colors.textMuted),
+      ),
+      const SizedBox(width: IdSpace.s3),
+      Flexible(
+        child: Text(v, style: context.text.bodyLg, textAlign: TextAlign.end),
+      ),
+    ],
+  );
 }
 
 class _Footer extends StatelessWidget {
@@ -583,19 +858,34 @@ class _Footer extends StatelessWidget {
   Widget build(BuildContext context) {
     final c = context.colors;
     return DecoratedBox(
-      decoration: BoxDecoration(color: c.surface, boxShadow: context.shadows.sheet),
+      decoration: BoxDecoration(
+        color: c.surface,
+        border: Border(top: BorderSide(color: c.border)),
+      ),
       child: SafeArea(
         top: false,
         child: Padding(
-          padding: const EdgeInsets.fromLTRB(IdSpace.s4, IdSpace.s3, IdSpace.s4, IdSpace.s3),
+          padding: const EdgeInsets.fromLTRB(
+            IdSpace.s5,
+            IdSpace.s3,
+            IdSpace.s5,
+            IdSpace.s3,
+          ),
           child: Column(
             mainAxisSize: MainAxisSize.min,
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
-              for (final (i, a) in actions.indexed) ...[if (i > 0) const SizedBox(height: IdSpace.s2), a],
+              for (final (i, a) in actions.indexed) ...[
+                if (i > 0) const SizedBox(height: IdSpace.s2),
+                a,
+              ],
               if (caption != null) ...[
                 const SizedBox(height: IdSpace.s2),
-                Text(caption!, style: context.text.caption.copyWith(color: c.textMuted), textAlign: TextAlign.center),
+                Text(
+                  caption!,
+                  style: context.text.caption.copyWith(color: c.textMuted),
+                  textAlign: TextAlign.center,
+                ),
               ],
             ],
           ),
@@ -620,13 +910,27 @@ class _LoadFailure extends StatelessWidget {
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-            Icon(offline ? LucideIcons.wifiOff : LucideIcons.circleAlert, size: 52, color: c.danger),
+            Icon(
+              offline ? LucideIcons.wifiOff : LucideIcons.circleAlert,
+              size: 32,
+              color: c.danger,
+            ),
             const SizedBox(height: IdSpace.s4),
             Text("Couldn't load this order", style: t.titleLg),
             const SizedBox(height: IdSpace.s2),
-            Text(offline ? "You're offline. Check your connection and try again." : 'Please try again in a moment.', style: t.body.copyWith(color: c.textMuted), textAlign: TextAlign.center),
+            Text(
+              offline
+                  ? "You're offline. Check your connection and try again."
+                  : 'Please try again in a moment.',
+              style: t.body.copyWith(color: c.textMuted),
+              textAlign: TextAlign.center,
+            ),
             const SizedBox(height: IdSpace.s4),
-            IdButton.tonal(label: 'Try again', icon: LucideIcons.refreshCw, onPressed: onRetry),
+            IdButton.tonal(
+              label: 'Try again',
+              icon: LucideIcons.refreshCw,
+              onPressed: onRetry,
+            ),
           ],
         ),
       ),

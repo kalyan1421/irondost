@@ -80,6 +80,8 @@ void main() {
     expect(find.text('Sun 4 Oct, 4 – 8 PM'), findsOneWidget);
     expect(find.text('Pay online'), findsOneWidget);
     expect(find.text('Cash on delivery'), findsOneWidget);
+    await tester.scrollUntilVisible(find.text('To pay'), 200, scrollable: find.byType(Scrollable).first);
+    await tester.pumpAndSettle();
     expect(find.text('Items (3)'), findsOneWidget);
     expect(find.text('To pay'), findsOneWidget);
     expect(find.text('Pay ₹80'), findsOneWidget);

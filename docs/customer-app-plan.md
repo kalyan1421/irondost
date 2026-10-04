@@ -2,8 +2,8 @@
 
 The Flutter app customers use to book ironing, wash and dry-cleaning pickups, pay, and track orders. It talks only to the NestJS API (`apps/api`). Firebase is used for phone OTP and push notifications, and nothing else.
 
-- **Design system:** [IronDost design system](https://claude.ai/artifact/3TxmJdVqHnomwZHFxMu9bR) (tokens, components, copy rules, order-status vocabulary).
-- **Screen designs:** [IronDost customer app canvas](https://claude.ai/artifact/Tt5QkcQxS1hRmbdsbAdWc7) (24 phone screens, clickable).
+- **Design system:** [Implemented customer design system v2](ui-ux-audit/DESIGN_SYSTEM.md) (logo, customer tokens, typography, components and copy rules).
+- **Screen review:** [47-view before-and-after board](ui-ux-audit/implemented.html), with actual Flutter light/dark captures and local iOS evidence.
 - **API contract:** `packages/contracts/openapi.json`.
 
 ## Scope of v1
@@ -37,7 +37,7 @@ The Flutter app customers use to book ironing, wash and dry-cleaning pickups, pa
 
 Bottom navigation has four tabs, and each tab keeps its own back stack (`StatefulShellRoute`):
 
-- **Home:** address switcher, book-a-pickup hero, active order, services, offer.
+- **Home:** address switcher, active order and next event, booking action, service price rows, compact offer.
 - **Orders:** active and past orders, then order details and tracking.
 - **Offers:** promotions from `GET /v1/promotions`.
 - **Account:** profile, addresses, notifications, help, legal, log out, delete account.
@@ -90,7 +90,7 @@ Full-screen flows sit above the tabs:
 ```
 apps/customer/lib/
   app/            router (go_router), app shell, flavour config, theme
-  design/         tokens.g.dart (generated from tokens.json) + IronDost widgets
+  design/         tokens.g.dart (generated from customer.tokens.json) + IronDost widgets
                   (Button, OtpInput, QuantityStepper, SlotPicker, StatusChip,
                    OrderTimeline, OrderCard, AddressCard, PromoCard, PriceSummary, CartBar…)
   data/           api client (generated from openapi.json), repositories, DTO mappers
@@ -110,7 +110,7 @@ apps/customer/lib/
   - `razorpay_flutter`. The server creates the Razorpay order and verifies the signature; the app never decides that a payment succeeded.
   - If verification is still pending when the app returns, the order shows "Payment processing" until the webhook settles it.
 - **Theme:**
-  - `design/tokens.g.dart` is generated from the design system's `tokens.json`: light and dark `ColorScheme`s, plus a `ThemeExtension` for `success`, `warning`, `offer`, `surface-soft` and the rest.
+  - `design/tokens.g.dart` is generated from `packages/design-tokens/customer.tokens.json`: light and dark `ColorScheme`s, plus a `ThemeExtension` for `success`, `warning`, `offer`, `surface-soft` and the rest.
   - Fonts (Outfit, Figtree, Geist Mono) are bundled as assets rather than fetched at runtime.
   - Icons come from `lucide_icons_flutter`.
 - **Quality bar (from the design system):**

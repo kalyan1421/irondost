@@ -14,8 +14,10 @@ void addToBasket(BuildContext context, WidgetRef ref, String itemId) {
   final result = ref.read(basketProvider.notifier).add(itemId);
   final message = switch (result) {
     AddResult.added => null,
-    AddResult.itemLimit => 'You can add up to ${BasketController.maxPerItem} of one item.',
-    AddResult.basketFull => 'A basket holds up to ${BasketController.maxLines} different items.',
+    AddResult.itemLimit =>
+      'You can add up to ${BasketController.maxPerItem} of one item.',
+    AddResult.basketFull =>
+      'A basket holds up to ${BasketController.maxLines} different items.',
   };
   if (message != null) {
     ScaffoldMessenger.of(context)
@@ -37,53 +39,76 @@ class ItemRow extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final c = context.colors;
     final t = context.text;
-    final quantity = ref.watch(basketProvider.select((b) => b.quantityOf(item.id)));
-    final hasOffer = item.offerPricePaise != null && item.offerPricePaise! < item.pricePaise;
+    final quantity = ref.watch(
+      basketProvider.select((b) => b.quantityOf(item.id)),
+    );
+    final hasOffer =
+        item.offerPricePaise != null && item.offerPricePaise! < item.pricePaise;
 
+    final details = Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(item.name, style: t.title),
+        const SizedBox(height: IdSpace.s1),
+        Text.rich(
+          TextSpan(
+            text: rupees(item.effectivePricePaise),
+            style: t.label,
+            children: [
+              if (hasOffer)
+                TextSpan(
+                  text: '  ${rupees(item.pricePaise)}',
+                  style: t.caption.copyWith(
+                    color: c.textMuted,
+                    decoration: TextDecoration.lineThrough,
+                  ),
+                ),
+            ],
+          ),
+          semanticsLabel: hasOffer
+              ? '${rupees(item.effectivePricePaise)}, was ${rupees(item.pricePaise)}'
+              : rupees(item.effectivePricePaise),
+        ),
+        Text(
+          [unitLabel(item.unit), ?categoryName].join(' · '),
+          style: t.caption.copyWith(color: c.textMuted),
+        ),
+      ],
+    );
+    final stepper = ItemStepper(
+      name: item.name,
+      quantity: quantity,
+      canAdd: quantity < BasketController.maxPerItem,
+      onAdd: () => addToBasket(context, ref, item.id),
+      onRemove: () => ref.read(basketProvider.notifier).remove(item.id),
+    );
     return Padding(
-      padding: const EdgeInsets.symmetric(vertical: IdSpace.s3),
-      child: Row(
-        children: [
-          _Thumb(item.imageUrl),
-          const SizedBox(width: IdSpace.s3),
-          Expanded(
-            child: Column(
+      padding: const EdgeInsets.symmetric(vertical: IdSpace.s4),
+      child: LayoutBuilder(
+        builder: (context, box) {
+          if (box.maxWidth < 300 ||
+              MediaQuery.textScalerOf(context).scale(1) > 1.3) {
+            return Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text(item.name, style: t.title),
-                const SizedBox(height: 2),
-                Text.rich(
-                  TextSpan(
-                    text: rupees(item.effectivePricePaise),
-                    style: t.label.copyWith(fontWeight: FontWeight.w600),
-                    children: [
-                      if (hasOffer)
-                        TextSpan(
-                          text: '  ${rupees(item.pricePaise)}',
-                          style: t.label.copyWith(color: c.textMuted, decoration: TextDecoration.lineThrough),
-                        ),
-                    ],
-                  ),
-                  semanticsLabel: hasOffer
-                      ? '${rupees(item.effectivePricePaise)}, was ${rupees(item.pricePaise)}'
-                      : rupees(item.effectivePricePaise),
-                ),
-                Text(
-                  [unitLabel(item.unit), ?categoryName].join(' · '),
-                  style: t.caption.copyWith(color: c.textMuted),
-                ),
+                details,
+                const SizedBox(height: IdSpace.s3),
+                stepper,
               ],
-            ),
-          ),
-          const SizedBox(width: IdSpace.s2),
-          ItemStepper(
-            name: item.name,
-            quantity: quantity,
-            canAdd: quantity < BasketController.maxPerItem,
-            onAdd: () => addToBasket(context, ref, item.id),
-            onRemove: () => ref.read(basketProvider.notifier).remove(item.id),
-          ),
-        ],
+            );
+          }
+          return Row(
+            children: [
+              if (item.imageUrl != null) ...[
+                _Thumb(item.imageUrl),
+                const SizedBox(width: IdSpace.s3),
+              ],
+              Expanded(child: details),
+              const SizedBox(width: IdSpace.s3),
+              stepper,
+            ],
+          );
+        },
       ),
     );
   }
@@ -103,7 +128,10 @@ class _Thumb extends StatelessWidget {
         height: IdSize.thumb,
         clipBehavior: Clip.antiAlias,
         alignment: Alignment.center,
-        decoration: BoxDecoration(color: c.surfaceSoft, borderRadius: BorderRadius.circular(IdRadius.sm)),
+        decoration: BoxDecoration(
+          color: c.surfaceSoft,
+          borderRadius: BorderRadius.circular(IdRadius.sm),
+        ),
         child: url == null
             ? icon
             : Image.network(
@@ -113,7 +141,8 @@ class _Thumb extends StatelessWidget {
                 fit: BoxFit.cover,
                 cacheWidth: 168,
                 errorBuilder: (_, _, _) => icon,
-                loadingBuilder: (_, child, progress) => progress == null ? child : icon,
+                loadingBuilder: (_, child, progress) =>
+                    progress == null ? child : icon,
               ),
       ),
     );

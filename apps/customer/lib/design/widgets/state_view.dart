@@ -6,8 +6,8 @@ import 'id_button.dart';
 enum StateTone { neutral, primary, success, warning, danger }
 
 /// A full-screen state from the design system: offline, server down, force update,
-/// account paused, success. Icon in a tinted circle, a title, one paragraph and up to
-/// two actions pinned to the bottom.
+/// account paused, success. A compact status mark, title and explanation with
+/// actions pinned to the bottom.
 class StateView extends StatelessWidget {
   const StateView({
     super.key,
@@ -41,7 +41,11 @@ class StateView extends StatelessWidget {
       StateTone.warning => (c.warningSoft, c.warning),
       StateTone.danger => (c.dangerSoft, c.danger),
     };
-    final actions = [primary, secondary, tertiary].whereType<IdButton>().toList();
+    final actions = [
+      primary,
+      secondary,
+      tertiary,
+    ].whereType<IdButton>().toList();
 
     return SafeArea(
       child: Column(
@@ -56,18 +60,36 @@ class StateView extends StatelessWidget {
                     mainAxisSize: MainAxisSize.min,
                     children: [
                       Container(
-                        width: 120,
-                        height: 120,
-                        decoration: BoxDecoration(color: bg, shape: BoxShape.circle),
-                        child: Icon(icon, size: 52, color: fg),
+                        width: 64,
+                        height: 64,
+                        decoration: BoxDecoration(
+                          color: bg,
+                          shape: BoxShape.circle,
+                        ),
+                        child: Icon(icon, size: 32, color: fg),
                       ),
                       const SizedBox(height: IdSpace.s6),
-                      Semantics(header: true, child: Text(title, style: t.headline, textAlign: TextAlign.center)),
+                      Semantics(
+                        header: true,
+                        child: Text(
+                          title,
+                          style: t.headline,
+                          textAlign: TextAlign.center,
+                        ),
+                      ),
                       const SizedBox(height: IdSpace.s4),
-                      Text(body, style: t.bodyLg.copyWith(color: c.textMuted), textAlign: TextAlign.center),
+                      Text(
+                        body,
+                        style: t.bodyLg.copyWith(color: c.textMuted),
+                        textAlign: TextAlign.center,
+                      ),
                       if (caption != null) ...[
                         const SizedBox(height: IdSpace.s4),
-                        Text(caption!, style: t.caption.copyWith(color: c.textMuted), textAlign: TextAlign.center),
+                        Text(
+                          caption!,
+                          style: t.caption.copyWith(color: c.textMuted),
+                          textAlign: TextAlign.center,
+                        ),
                       ],
                     ],
                   ),
@@ -77,7 +99,12 @@ class StateView extends StatelessWidget {
           ),
           if (actions.isNotEmpty)
             Padding(
-              padding: const EdgeInsets.fromLTRB(IdSpace.s4, IdSpace.s3, IdSpace.s4, IdSpace.s4),
+              padding: const EdgeInsets.fromLTRB(
+                IdSpace.s5,
+                IdSpace.s3,
+                IdSpace.s5,
+                IdSpace.s4,
+              ),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.stretch,
                 children: [
@@ -92,4 +119,80 @@ class StateView extends StatelessWidget {
       ),
     );
   }
+}
+
+/// A recoverable list state that keeps pull-to-refresh and large-text scrolling.
+class ListStateView extends StatelessWidget {
+  const ListStateView({
+    super.key,
+    this.icon,
+    required this.title,
+    required this.body,
+    this.action,
+    this.tone = StateTone.neutral,
+    this.announce = false,
+  });
+
+  final IconData? icon;
+  final String title;
+  final String body;
+  final Widget? action;
+  final StateTone tone;
+  final bool announce;
+
+  @override
+  Widget build(BuildContext context) => LayoutBuilder(
+    builder: (context, constraints) => SingleChildScrollView(
+      physics: const AlwaysScrollableScrollPhysics(),
+      child: ConstrainedBox(
+        constraints: BoxConstraints(minHeight: constraints.maxHeight),
+        child: Center(
+          child: Padding(
+            padding: const EdgeInsets.symmetric(
+              horizontal: IdSpace.s5,
+              vertical: IdSpace.s6,
+            ),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                if (icon != null) ...[
+                  ExcludeSemantics(
+                    child: Icon(
+                      icon,
+                      size: IdSpace.s8,
+                      color: tone == StateTone.danger
+                          ? context.colors.danger
+                          : context.colors.textMuted,
+                    ),
+                  ),
+                  const SizedBox(height: IdSpace.s4),
+                ],
+                Semantics(
+                  header: true,
+                  liveRegion: announce,
+                  child: Text(
+                    title,
+                    style: context.text.titleLg,
+                    textAlign: TextAlign.center,
+                  ),
+                ),
+                const SizedBox(height: IdSpace.s2),
+                Text(
+                  body,
+                  style: context.text.body.copyWith(
+                    color: context.colors.textMuted,
+                  ),
+                  textAlign: TextAlign.center,
+                ),
+                if (action != null) ...[
+                  const SizedBox(height: IdSpace.s5),
+                  action!,
+                ],
+              ],
+            ),
+          ),
+        ),
+      ),
+    ),
+  );
 }

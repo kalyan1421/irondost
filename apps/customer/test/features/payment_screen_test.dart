@@ -87,7 +87,7 @@ void main() {
     await pump(tester, results: [const CheckoutCancelled()]);
 
     expect(find.text('Payment cancelled'), findsOneWidget);
-    expect(find.textContaining('Nothing was charged'), findsOneWidget);
+    expect(find.textContaining('If money was debited, contact support'), findsOneWidget);
     expect(find.textContaining('Your pickup is still booked for today, 4 – 8 PM. Order ID001046.'), findsOneWidget);
     expect(find.text('Try again · ₹248'), findsOneWidget);
     expect(find.text('Pay cash at delivery instead'), findsOneWidget);
@@ -170,7 +170,7 @@ void main() {
     await tester.pumpAndSettle();
 
     expect(find.text("We're still confirming"), findsOneWidget);
-    expect(find.textContaining("You don't need to pay again"), findsOneWidget);
+    expect(find.textContaining('Don’t pay again while we check'), findsOneWidget);
 
     payments.markPaid(order.id);
     await tester.tap(find.text('Check again'));

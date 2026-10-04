@@ -39,11 +39,24 @@ void main() {
     });
   });
 
+  group('delivery estimate presentation', () {
+    final processing = testOrder(status: OrderStatus.processing, deliveryDate: '2026-10-06');
+    test('changes at the end of the India delivery window', () {
+      expect(deliveryEstimateMissed(processing, now: DateTime.utc(2026, 10, 6, 14, 29, 59)), isFalse);
+      expect(deliveryEstimateMissed(processing, now: DateTime.utc(2026, 10, 6, 14, 30)), isTrue);
+    });
+    test('does not label terminal or pre-pickup orders as delivery overdue', () {
+      for(final status in [OrderStatus.pending, OrderStatus.pickupAssigned, OrderStatus.delivered, OrderStatus.cancelled]) {
+        expect(deliveryEstimateMissed(testOrder(status: status, deliveryDate: '2026-10-06'), now: DateTime.utc(2026, 10, 7)), isFalse);
+      }
+    });
+  });
+
   group('settledNote', () {
     test('what happened to the money on a finished order', () {
       expect(settledNote(order(status: OrderStatus.cancelled)), 'Nothing charged');
       expect(settledNote(order(status: OrderStatus.cancelled, paid: PaymentStatus.refunded, paidPaise: 24800, refunded: 24800)), '₹248 refunded');
-      expect(settledNote(order(status: OrderStatus.cancelled, paid: PaymentStatus.paid, paidPaise: 24800)), 'Refund on its way');
+      expect(settledNote(order(status: OrderStatus.cancelled, paid: PaymentStatus.paid, paidPaise: 24800)), 'Refund pending');
       expect(settledNote(order(status: OrderStatus.delivered, paid: PaymentStatus.paid, paidPaise: 24800)), 'Paid in cash');
       expect(settledNote(order(status: OrderStatus.delivered, method: PaymentMethod.online, paid: PaymentStatus.paid, paidPaise: 24800)), 'Paid online');
     });

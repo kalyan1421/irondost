@@ -1,0 +1,564 @@
+{
+  "name": "IronDost",
+  "version": 2,
+  "meta": {
+    "source": "customer-app local audit",
+    "status": "proposal; not applied to application",
+    "date": "2026-10-05",
+    "basedOn": "packages/design-tokens/tokens.json v1",
+    "brandMaster": "packages/brand/scripts/build-svg.py"
+  },
+  "color": {
+    "themes": [
+      {
+        "id": "light",
+        "name": "Light"
+      },
+      {
+        "id": "dark",
+        "name": "Dark"
+      }
+    ],
+    "tokens": [
+      {
+        "name": "ink",
+        "value": "#0e1e3d",
+        "usage": "Brand ink: the logo's outlines, the word \"Iron\", dark brand surfaces. For UI text use `text`, which follows the theme."
+      },
+      {
+        "name": "royal",
+        "value": "#1f4fd1",
+        "usage": "Brand primary: the word \"Dost\", the iron's body. UI actions use `primary`, which is royal in light mode."
+      },
+      {
+        "name": "sky",
+        "value": "#3fb8ea",
+        "usage": "Water and fills in illustrations; accent text on dark grounds only (2.3:1 on white, never text on light)."
+      },
+      {
+        "name": "ocean",
+        "value": "#1a73b0",
+        "usage": "Sky's text-safe partner on light grounds (5.1:1 on white): the tagline, informational links."
+      },
+      {
+        "name": "sun",
+        "value": "#ffc93c",
+        "usage": "Offers, savings and highlights. Always carries `ink` text (10.8:1), never white."
+      },
+      {
+        "name": "mist",
+        "value": "#e6eef8",
+        "usage": "Soft brand panels and the washer's control panel in illustrations."
+      },
+      {
+        "name": "white",
+        "value": "#ffffff",
+        "usage": "Washer and iron bodies in illustrations; logo ground."
+      },
+      {
+        "name": "bg",
+        "value": {
+          "light": "#F7F8FA",
+          "dark": "#101820"
+        },
+        "usage": "App background behind cards, lists and sheets."
+      },
+      {
+        "name": "surface",
+        "value": {
+          "light": "#FFFFFF",
+          "dark": "#18222F"
+        },
+        "usage": "Cards, sheets, inputs, app bars and the bottom navigation."
+      },
+      {
+        "name": "surface-soft",
+        "value": {
+          "light": "#F0F3F7",
+          "dark": "#223041"
+        },
+        "usage": "Grouped panels inside a card, skeleton loaders, unselected chips."
+      },
+      {
+        "name": "surface-inverse",
+        "value": {
+          "light": "#0e1e3d",
+          "dark": "#e6eef8"
+        },
+        "usage": "Snackbars only. Status summaries use surface and text in both themes; do not invert the entire tracking hero."
+      },
+      {
+        "name": "text",
+        "value": {
+          "light": "#0e1e3d",
+          "dark": "#eef3fa"
+        },
+        "usage": "Primary text and icons on `bg`, `surface` and `surface-soft`."
+      },
+      {
+        "name": "text-muted",
+        "value": {
+          "light": "#526078",
+          "dark": "#AFBED1"
+        },
+        "usage": "Secondary text, captions and inactive icons on `bg`, `surface` and `surface-soft`."
+      },
+      {
+        "name": "text-inverse",
+        "value": {
+          "light": "#ffffff",
+          "dark": "#0e1e3d"
+        },
+        "usage": "Text on `surface-inverse`."
+      },
+      {
+        "name": "inverse-accent",
+        "value": {
+          "light": "#3fb8ea",
+          "dark": "#1f4fd1"
+        },
+        "usage": "Action text on `surface-inverse`, e.g. the snackbar's \"Undo\" (light 7.3:1, dark 5.8:1)."
+      },
+      {
+        "name": "primary",
+        "value": {
+          "light": "#1f4fd1",
+          "dark": "#7fa2ff"
+        },
+        "usage": "The one main action per screen, links, selected states, progress. On `surface` and `bg`: light 6.8:1, dark 6.5:1."
+      },
+      {
+        "name": "primary-pressed",
+        "value": {
+          "light": "#1a43b3",
+          "dark": "#9db8ff"
+        },
+        "usage": "Pressed state of `primary` fills."
+      },
+      {
+        "name": "on-primary",
+        "value": {
+          "light": "#ffffff",
+          "dark": "#0e1e3d"
+        },
+        "usage": "Text and icons on `primary` fills."
+      },
+      {
+        "name": "primary-soft",
+        "value": {
+          "light": "#e8eefc",
+          "dark": "#1c2f63"
+        },
+        "usage": "Selected chips and slots, the active tab indicator, info fills. Pair with `on-primary-soft`."
+      },
+      {
+        "name": "on-primary-soft",
+        "value": "{primary}",
+        "usage": "Text and icons on `primary-soft`."
+      },
+      {
+        "name": "accent",
+        "value": {
+          "light": "#16639a",
+          "dark": "#3fb8ea"
+        },
+        "usage": "Informational accents: the live-tracking line, \"Partner on the way\", the out-for-delivery chip. Light is `ocean` deepened for small text: 6.4:1 on `surface`, 5.5:1 on `surface-soft`; dark is `sky` (7:1, 6:1)."
+      },
+      {
+        "name": "offer",
+        "value": "#ffc93c",
+        "usage": "Small offer benefit marker only; no full-screen promotional fill. Always pair with on-offer."
+      },
+      {
+        "name": "on-offer",
+        "value": "#0e1e3d",
+        "usage": "Text on `offer`."
+      },
+      {
+        "name": "offer-soft",
+        "value": {
+          "light": "#fff4d1",
+          "dark": "#3a3112"
+        },
+        "usage": "Large promo backgrounds; text on it is `text`."
+      },
+      {
+        "name": "success",
+        "value": {
+          "light": "#1a7347",
+          "dark": "#5fd39a"
+        },
+        "usage": "Delivered, paid, savings amounts. On `surface` 5.8:1 / 8.6:1; on `success-soft` 5.1:1 / 6.8:1. Always with an icon or word."
+      },
+      {
+        "name": "success-soft",
+        "value": {
+          "light": "#e3f4ea",
+          "dark": "#133a2a"
+        },
+        "usage": "Background of success chips and banners."
+      },
+      {
+        "name": "warning",
+        "value": {
+          "light": "#8a5a00",
+          "dark": "#ffc93c"
+        },
+        "usage": "Unpaid amounts, slots closing soon. On `warning-soft` 5.3:1 / 8.4:1."
+      },
+      {
+        "name": "warning-soft",
+        "value": {
+          "light": "#fff1cc",
+          "dark": "#3a3112"
+        },
+        "usage": "Background of warning chips and banners."
+      },
+      {
+        "name": "danger",
+        "value": {
+          "light": "#c62828",
+          "dark": "#ff8a80"
+        },
+        "usage": "Errors, cancellation, account deletion. On `surface` 5.6:1 / 7:1; on `danger-soft` 4.9:1 / 7.1:1."
+      },
+      {
+        "name": "danger-soft",
+        "value": {
+          "light": "#fdeceb",
+          "dark": "#3d1a1d"
+        },
+        "usage": "Background of error banners and the cancelled chip."
+      },
+      {
+        "name": "border",
+        "value": {
+          "light": "#DFE5ED",
+          "dark": "#344254"
+        },
+        "usage": "Dividers and card outlines (decorative, never the only boundary of a control)."
+      },
+      {
+        "name": "border-strong",
+        "value": {
+          "light": "#7d8ba3",
+          "dark": "#6f82a6"
+        },
+        "usage": "Input, checkbox and outline-button borders: ≥3:1 on `surface` and `bg` in both themes."
+      },
+      {
+        "name": "focus-ring",
+        "value": {
+          "light": "#1f4fd1",
+          "dark": "#3fb8ea"
+        },
+        "usage": "2px keyboard and switch-access focus ring, offset 2px; ≥6.5:1 on every surface."
+      },
+      {
+        "name": "scrim",
+        "value": {
+          "light": "rgba(14, 30, 61, 0.5)",
+          "dark": "rgba(0, 0, 0, 0.6)"
+        },
+        "usage": "Behind bottom sheets and dialogs."
+      },
+      {
+        "name": "illo-steel",
+        "value": "#c9d2dd",
+        "usage": "Illustration: the iron's soleplate and metal parts."
+      },
+      {
+        "name": "illo-ring",
+        "value": "#dce4ee",
+        "usage": "Illustration: the washer door ring."
+      },
+      {
+        "name": "illo-glass",
+        "value": "#bfeaf8",
+        "usage": "Illustration: glass and window highlights."
+      },
+      {
+        "name": "illo-foam",
+        "value": "#d9f4fc",
+        "usage": "Illustration: soap bubbles and foam."
+      },
+      {
+        "name": "illo-chrome",
+        "value": "#f1f4f8",
+        "usage": "Illustration: chrome highlights."
+      }
+    ]
+  },
+  "type": {
+    "fonts": [],
+    "families": {
+      "display": "\"Outfit\", system-ui, sans-serif",
+      "body": "\"Figtree\", system-ui, sans-serif",
+      "mono": "\"Geist Mono\", ui-monospace, monospace",
+      "devanagari": "\"Noto Sans Devanagari\", \"Figtree\", sans-serif"
+    },
+    "groups": [
+      {
+        "name": "Display",
+        "family": "display",
+        "styles": [
+          {
+            "name": "display",
+            "fontSize": "30px",
+            "lineHeight": "36px",
+            "fontWeight": 600,
+            "letterSpacing": "0em",
+            "sample": "₹1,240",
+            "usage": "Totals and big numbers: the order total, the OTP digits."
+          },
+          {
+            "name": "headline",
+            "fontSize": "26px",
+            "lineHeight": "32px",
+            "fontWeight": 600,
+            "letterSpacing": "0em",
+            "sample": "Book a pickup",
+            "usage": "Main screen heading; never repeated as a heading inside every card."
+          },
+          {
+            "name": "title-lg",
+            "fontSize": "20px",
+            "lineHeight": "26px",
+            "fontWeight": 600,
+            "sample": "Choose a time",
+            "usage": "Compact app bar title and section heading.",
+            "letterSpacing": "0em"
+          }
+        ]
+      },
+      {
+        "name": "Text",
+        "family": "body",
+        "styles": [
+          {
+            "name": "title",
+            "fontSize": "16px",
+            "lineHeight": "22px",
+            "fontWeight": 600,
+            "sample": "Shirt / T-shirt",
+            "usage": "Card titles, item names, list row labels.",
+            "letterSpacing": "0em"
+          },
+          {
+            "name": "body-lg",
+            "fontSize": "16px",
+            "lineHeight": "24px",
+            "fontWeight": 400,
+            "sample": "We pick up, iron and deliver to your door.",
+            "usage": "Input text and comfortable reading copy.",
+            "letterSpacing": "0em"
+          },
+          {
+            "name": "body",
+            "fontSize": "16px",
+            "lineHeight": "24px",
+            "fontWeight": 400,
+            "sample": "Flat 302, Sai Residency, Banjara Hills",
+            "usage": "Default body copy, addresses, descriptions.",
+            "letterSpacing": "0em"
+          },
+          {
+            "name": "label",
+            "fontSize": "15px",
+            "lineHeight": "20px",
+            "fontWeight": 600,
+            "sample": "Schedule pickup",
+            "usage": "Button labels and tab labels.",
+            "letterSpacing": "0em"
+          },
+          {
+            "name": "label-sm",
+            "fontSize": "13px",
+            "lineHeight": "18px",
+            "fontWeight": 600,
+            "sample": "Out for delivery",
+            "usage": "Chips, badges and field labels.",
+            "letterSpacing": "0em"
+          },
+          {
+            "name": "caption",
+            "fontSize": "13px",
+            "lineHeight": "18px",
+            "fontWeight": 400,
+            "sample": "Taxes included",
+            "usage": "Supporting timestamps and helpers; actionable links still get a 48 dp hit area.",
+            "letterSpacing": "0em"
+          }
+        ]
+      },
+      {
+        "name": "Mono",
+        "family": "mono",
+        "styles": [
+          {
+            "name": "order-id",
+            "fontSize": "14px",
+            "lineHeight": "20px",
+            "fontWeight": 500,
+            "sample": "ID001042",
+            "usage": "Order numbers and promo codes.",
+            "letterSpacing": "0em"
+          }
+        ]
+      }
+    ]
+  },
+  "spacing": {
+    "note": "4-point rhythm. 20 dp default side gutter, 16 dp for long text/lists at 320 dp; section gaps 24 or 32 dp. Controls retain minimum 48 dp targets.",
+    "tokens": [
+      {
+        "name": "space-1",
+        "value": "4px",
+        "usage": "Icon-to-text gap inside chips."
+      },
+      {
+        "name": "space-2",
+        "value": "8px",
+        "usage": "Gap between related items; minimum gap between touch targets."
+      },
+      {
+        "name": "space-3",
+        "value": "12px",
+        "usage": "Inside chips and list rows; gap between cards in a list."
+      },
+      {
+        "name": "space-4",
+        "value": "16px",
+        "usage": "Screen side gutter and card padding."
+      },
+      {
+        "name": "space-5",
+        "value": "20px",
+        "usage": "Padding of hero and promo cards."
+      },
+      {
+        "name": "space-6",
+        "value": "24px",
+        "usage": "Space between sections on a screen."
+      },
+      {
+        "name": "space-8",
+        "value": "32px",
+        "usage": "Space above a screen's first heading; empty-state padding."
+      },
+      {
+        "name": "space-12",
+        "value": "48px",
+        "usage": "Large breaks, e.g. above the sign-in form."
+      }
+    ]
+  },
+  "radius": {
+    "tokens": [
+      {
+        "name": "radius-sm",
+        "value": "8px",
+        "usage": "Small chips, thumbnails, admin buttons and inputs."
+      },
+      {
+        "name": "radius-md",
+        "value": "10px",
+        "usage": "App buttons, inputs, OTP boxes, slot tiles."
+      },
+      {
+        "name": "radius-lg",
+        "value": "12px",
+        "usage": "Only grouped address/order panels that require an enclosing boundary. Ordinary lists use dividers."
+      },
+      {
+        "name": "radius-xl",
+        "value": "20px",
+        "usage": "Top corners of modal sheets; not a default hero shape."
+      },
+      {
+        "name": "radius-full",
+        "value": "999px",
+        "usage": "Avatars and compact status chips only; do not use for every button or stepper."
+      }
+    ]
+  },
+  "shadow": {
+    "note": "Shadows only in light mode; dark mode separates with `border` and lighter surfaces.",
+    "tokens": [
+      {
+        "name": "shadow-card",
+        "value": {
+          "light": "none",
+          "dark": "none"
+        },
+        "usage": "Resting content is flat; separate with spacing or a decorative divider."
+      },
+      {
+        "name": "shadow-raised",
+        "value": {
+          "light": "0 6px 20px rgba(14, 30, 61, 0.12)",
+          "dark": "0 6px 20px rgba(0, 0, 0, 0.5)"
+        },
+        "usage": "Floating elements: the cart bar, menus, snackbars."
+      },
+      {
+        "name": "shadow-sheet",
+        "value": {
+          "light": "0 -4px 16px rgba(14, 30, 61, 0.08)",
+          "dark": "none"
+        },
+        "usage": "Actual modal sheets only. Sticky action bars use a top divider, not a sheet shadow."
+      }
+    ]
+  },
+  "size": {
+    "note": "Fixed sizes in logical pixels (dp / pt).",
+    "tokens": [
+      {
+        "name": "touch-target",
+        "value": "48px",
+        "usage": "Minimum tappable area for any control, even when the visible icon is smaller."
+      },
+      {
+        "name": "button-height",
+        "value": "52px",
+        "usage": "Primary and secondary buttons."
+      },
+      {
+        "name": "input-height",
+        "value": "52px",
+        "usage": "Text fields and the phone field."
+      },
+      {
+        "name": "app-bar",
+        "value": "56px",
+        "usage": "Top app bar height (plus the status-bar safe area)."
+      },
+      {
+        "name": "bottom-nav",
+        "value": "64px",
+        "usage": "Bottom navigation height (plus the home-indicator safe area)."
+      },
+      {
+        "name": "icon-sm",
+        "value": "16px",
+        "usage": "Icons inside chips and captions."
+      },
+      {
+        "name": "icon-md",
+        "value": "20px",
+        "usage": "Icons in buttons, list rows and fields."
+      },
+      {
+        "name": "icon-lg",
+        "value": "24px",
+        "usage": "App bar and bottom navigation icons."
+      },
+      {
+        "name": "thumb",
+        "value": "56px",
+        "usage": "Item and service thumbnails in lists."
+      }
+    ]
+  }
+}

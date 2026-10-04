@@ -13,6 +13,7 @@ import '../../design/widgets/address_card.dart';
 import '../../design/widgets/id_button.dart';
 import '../../design/widgets/id_sheet.dart';
 import '../../design/widgets/id_text_field.dart';
+import '../../design/widgets/review_row.dart';
 import 'address_args.dart';
 import 'addresses_controller.dart';
 import 'place.dart';
@@ -39,7 +40,9 @@ class _AddressFormScreenState extends ConsumerState<AddressFormScreen> {
   late final _city = TextEditingController(text: _draft.city ?? '');
   late final _state = TextEditingController(text: _draft.state ?? '');
   late final _pincode = TextEditingController(text: _draft.pincode ?? '');
-  late final _otherLabel = TextEditingController(text: _labels.contains(_draft.label) ? '' : _draft.label);
+  late final _otherLabel = TextEditingController(
+    text: _labels.contains(_draft.label) ? '' : _draft.label,
+  );
   late String _choice = _labels.contains(_draft.label) ? _draft.label : 'Other';
   late bool _primary = _draft.isPrimary;
   final _errors = <String, String>{};
@@ -51,12 +54,23 @@ class _AddressFormScreenState extends ConsumerState<AddressFormScreen> {
   bool get _needsStreet => (_draft.street ?? '').trim().length < 2;
   bool get _needsCity => (_draft.city ?? '').trim().length < 2;
   bool get _needsState => (_draft.state ?? '').trim().length < 2;
-  bool get _needsPincode => !RegExp(r'^[1-9]\d{5}$').hasMatch(_draft.pincode ?? '');
-  bool get _needsAnything => _needsStreet || _needsCity || _needsState || _needsPincode;
+  bool get _needsPincode =>
+      !RegExp(r'^[1-9]\d{5}$').hasMatch(_draft.pincode ?? '');
+  bool get _needsAnything =>
+      _needsStreet || _needsCity || _needsState || _needsPincode;
 
   @override
   void dispose() {
-    for (final c in [_houseNo, _building, _landmark, _street, _city, _state, _pincode, _otherLabel]) {
+    for (final c in [
+      _houseNo,
+      _building,
+      _landmark,
+      _street,
+      _city,
+      _state,
+      _pincode,
+      _otherLabel,
+    ]) {
       c.dispose();
     }
     super.dispose();
@@ -72,7 +86,17 @@ class _AddressFormScreenState extends ConsumerState<AddressFormScreen> {
     final place = await context.push<Place>(
       Routes.addressPin,
       extra: PinArgs(
-        initial: lat == null || lng == null ? null : Place(latitude: lat, longitude: lng, street: _draft.street, area: _draft.area, city: _draft.city, state: _draft.state, pincode: _draft.pincode),
+        initial: lat == null || lng == null
+            ? null
+            : Place(
+                latitude: lat,
+                longitude: lng,
+                street: _draft.street,
+                area: _draft.area,
+                city: _draft.city,
+                state: _draft.state,
+                pincode: _draft.pincode,
+              ),
         mode: PinMode.changeLocation,
       ),
     );
@@ -90,23 +114,43 @@ class _AddressFormScreenState extends ConsumerState<AddressFormScreen> {
 
   bool _validate() {
     _errors.clear();
-    if (_houseNo.text.trim().isEmpty) _errors['house'] = 'Enter your flat or house number.';
-    if (_needsStreet && _street.text.trim().length < 2) _errors['street'] = 'Enter your street or road.';
-    if (_needsCity && _city.text.trim().length < 2) _errors['city'] = 'Enter your city.';
-    if (_needsState && _state.text.trim().length < 2) _errors['state'] = 'Enter your state.';
-    if (_needsPincode && !RegExp(r'^[1-9]\d{5}$').hasMatch(_pincode.text.trim())) _errors['pincode'] = 'Enter a 6-digit PIN code.';
-    if (_choice == 'Other' && _label.isEmpty) _errors['label'] = 'Give this address a name, like Parents.';
+    if (_houseNo.text.trim().isEmpty) {
+      _errors['house'] = 'Enter your flat or house number.';
+    }
+    if (_needsStreet && _street.text.trim().length < 2) {
+      _errors['street'] = 'Enter your street or road.';
+    }
+    if (_needsCity && _city.text.trim().length < 2) {
+      _errors['city'] = 'Enter your city.';
+    }
+    if (_needsState && _state.text.trim().length < 2) {
+      _errors['state'] = 'Enter your state.';
+    }
+    if (_needsPincode &&
+        !RegExp(r'^[1-9]\d{5}$').hasMatch(_pincode.text.trim())) {
+      _errors['pincode'] = 'Enter a 6-digit PIN code.';
+    }
+    if (_choice == 'Other' && _label.isEmpty) {
+      _errors['label'] = 'Give this address a name, like Parents.';
+    }
     setState(() {});
     return _errors.isEmpty;
   }
 
   Future<void> _save() async {
     if (!_validate()) return;
-    final street = _needsStreet ? _street.text.trim() : (_draft.street ?? '').trim();
+    final street = _needsStreet
+        ? _street.text.trim()
+        : (_draft.street ?? '').trim();
     final city = _needsCity ? _city.text.trim() : (_draft.city ?? '').trim();
-    final state = _needsState ? _state.text.trim() : (_draft.state ?? '').trim();
-    final pincode = _needsPincode ? _pincode.text.trim() : (_draft.pincode ?? '').trim();
-    String? optional(TextEditingController c) => c.text.trim().isEmpty ? null : c.text.trim();
+    final state = _needsState
+        ? _state.text.trim()
+        : (_draft.state ?? '').trim();
+    final pincode = _needsPincode
+        ? _pincode.text.trim()
+        : (_draft.pincode ?? '').trim();
+    String? optional(TextEditingController c) =>
+        c.text.trim().isEmpty ? null : c.text.trim();
 
     setState(() => _saving = true);
     try {
@@ -153,7 +197,9 @@ class _AddressFormScreenState extends ConsumerState<AddressFormScreen> {
       }
       if (!mounted) return;
       // First-run setup finishes by itself: with an address saved the router moves on to Home.
-      if (!widget.args.onboarding) context.go(widget.args.returnTo ?? Routes.home);
+      if (!widget.args.onboarding) {
+        context.go(widget.args.returnTo ?? Routes.home);
+      }
     } catch (e) {
       if (!mounted) return;
       final failure = ApiFailure.from(e);
@@ -163,8 +209,8 @@ class _AddressFormScreenState extends ConsumerState<AddressFormScreen> {
             failure.isConnectivity
                 ? "You're offline. Check your connection and try again."
                 : failure.kind == ApiFailureKind.rejected
-                    ? "We couldn't save that address. Check the details and try again."
-                    : 'Something went wrong. Please try again.',
+                ? "We couldn't save that address. Check the details and try again."
+                : 'Something went wrong. Please try again.',
           ),
         ),
       );
@@ -184,23 +230,40 @@ class _AddressFormScreenState extends ConsumerState<AddressFormScreen> {
         children: [
           Text('Delete this address?', style: t.headline),
           const SizedBox(height: IdSpace.s2),
-          Text('Past orders keep it. You can add it again any time.', style: t.bodyLg.copyWith(color: c.textMuted)),
+          Text(
+            'Past orders keep it. You can add it again any time.',
+            style: t.bodyLg.copyWith(color: c.textMuted),
+          ),
           const SizedBox(height: IdSpace.s5),
-          IdButton.danger(label: 'Delete address', expand: true, onPressed: () => Navigator.pop(sheet, true)),
+          IdButton.danger(
+            label: 'Delete address',
+            expand: true,
+            onPressed: () => Navigator.pop(sheet, true),
+          ),
           const SizedBox(height: IdSpace.s2),
-          IdButton.outline(label: 'Keep address', expand: true, onPressed: () => Navigator.pop(sheet, false)),
+          IdButton.outline(
+            label: 'Keep address',
+            expand: true,
+            onPressed: () => Navigator.pop(sheet, false),
+          ),
         ],
       ),
     );
     if (confirmed != true || !mounted) return;
     setState(() => _saving = true);
     try {
-      await ref.read(addressesProvider.notifier).remove(widget.args.existingId!);
+      await ref
+          .read(addressesProvider.notifier)
+          .remove(widget.args.existingId!);
       if (mounted) context.go(widget.args.returnTo ?? Routes.addresses);
     } catch (_) {
       if (!mounted) return;
       setState(() => _saving = false);
-      ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text("We couldn't delete that address. Try again.")));
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text("We couldn't delete that address. Try again."),
+        ),
+      );
     }
   }
 
@@ -208,13 +271,19 @@ class _AddressFormScreenState extends ConsumerState<AddressFormScreen> {
   Widget build(BuildContext context) {
     final c = context.colors;
     final t = context.text;
-    final noAddressesYet = (ref.watch(addressesProvider).value ?? const <AddressDto>[]).isEmpty;
-    final lockedPrimary = (noAddressesYet && !_editing) || (_editing && _draft.isPrimary);
+    final noAddressesYet =
+        (ref.watch(addressesProvider).value ?? const <AddressDto>[]).isEmpty;
+    final lockedPrimary =
+        (noAddressesYet && !_editing) || (_editing && _draft.isPrimary);
 
     return Scaffold(
       backgroundColor: c.bg,
       appBar: AppBar(
-        leading: IconButton(icon: const Icon(LucideIcons.arrowLeft), tooltip: 'Back', onPressed: context.pop),
+        leading: IconButton(
+          icon: const Icon(LucideIcons.arrowLeft),
+          tooltip: 'Back',
+          onPressed: context.pop,
+        ),
         title: Text(_editing ? 'Edit address' : 'Address details'),
         shape: Border(bottom: BorderSide(color: c.border)),
       ),
@@ -222,7 +291,12 @@ class _AddressFormScreenState extends ConsumerState<AddressFormScreen> {
         children: [
           Expanded(
             child: ListView(
-              padding: const EdgeInsets.fromLTRB(IdSpace.s4, IdSpace.s4, IdSpace.s4, IdSpace.s6),
+              padding: const EdgeInsets.fromLTRB(
+                IdSpace.s5,
+                IdSpace.s5,
+                IdSpace.s5,
+                IdSpace.s6,
+              ),
               children: [
                 _Summary(draft: _draft, onChange: _changeLocation),
                 const SizedBox(height: IdSpace.s5),
@@ -234,7 +308,11 @@ class _AddressFormScreenState extends ConsumerState<AddressFormScreen> {
                   onChanged: (_) => setState(() => _errors.remove('house')),
                 ),
                 const SizedBox(height: IdSpace.s5),
-                IdTextField(label: 'Building or apartment', controller: _building, textInputAction: TextInputAction.next),
+                IdTextField(
+                  label: 'Building or apartment',
+                  controller: _building,
+                  textInputAction: TextInputAction.next,
+                ),
                 const SizedBox(height: IdSpace.s5),
                 IdTextField(
                   label: 'Landmark (optional)',
@@ -244,18 +322,36 @@ class _AddressFormScreenState extends ConsumerState<AddressFormScreen> {
                 ),
                 if (_needsAnything) ...[
                   const SizedBox(height: IdSpace.s6),
-                  Text("We couldn't read the full address. Fill in what's missing.", style: t.body.copyWith(color: c.textMuted)),
+                  Text(
+                    "We couldn't read the full address. Fill in what's missing.",
+                    style: t.body.copyWith(color: c.textMuted),
+                  ),
                   if (_needsStreet) ...[
                     const SizedBox(height: IdSpace.s4),
-                    IdTextField(label: 'Street or road', controller: _street, error: _errors['street'], textInputAction: TextInputAction.next),
+                    IdTextField(
+                      label: 'Street or road',
+                      controller: _street,
+                      error: _errors['street'],
+                      textInputAction: TextInputAction.next,
+                    ),
                   ],
                   if (_needsCity) ...[
                     const SizedBox(height: IdSpace.s4),
-                    IdTextField(label: 'City', controller: _city, error: _errors['city'], textInputAction: TextInputAction.next),
+                    IdTextField(
+                      label: 'City',
+                      controller: _city,
+                      error: _errors['city'],
+                      textInputAction: TextInputAction.next,
+                    ),
                   ],
                   if (_needsState) ...[
                     const SizedBox(height: IdSpace.s4),
-                    IdTextField(label: 'State', controller: _state, error: _errors['state'], textInputAction: TextInputAction.next),
+                    IdTextField(
+                      label: 'State',
+                      controller: _state,
+                      error: _errors['state'],
+                      textInputAction: TextInputAction.next,
+                    ),
                   ],
                   if (_needsPincode) ...[
                     const SizedBox(height: IdSpace.s4),
@@ -264,12 +360,18 @@ class _AddressFormScreenState extends ConsumerState<AddressFormScreen> {
                       controller: _pincode,
                       error: _errors['pincode'],
                       keyboardType: TextInputType.number,
-                      inputFormatters: [FilteringTextInputFormatter.digitsOnly, LengthLimitingTextInputFormatter(6)],
+                      inputFormatters: [
+                        FilteringTextInputFormatter.digitsOnly,
+                        LengthLimitingTextInputFormatter(6),
+                      ],
                     ),
                   ],
                 ],
                 const SizedBox(height: IdSpace.s6),
-                Semantics(header: true, child: Text('Save as', style: t.labelSm)),
+                Semantics(
+                  header: true,
+                  child: Text('Save as', style: t.labelSm),
+                ),
                 const SizedBox(height: IdSpace.s3),
                 Wrap(
                   spacing: IdSpace.s2,
@@ -302,25 +404,60 @@ class _AddressFormScreenState extends ConsumerState<AddressFormScreen> {
                 MergeSemantics(
                   child: Row(
                     children: [
-                      Expanded(child: Text('Use as my default address', style: t.bodyLg)),
-                      Switch(value: _primary || lockedPrimary, onChanged: lockedPrimary ? null : (v) => setState(() => _primary = v)),
+                      Expanded(
+                        child: Text(
+                          'Use as my default address',
+                          style: t.bodyLg,
+                        ),
+                      ),
+                      Switch(
+                        value: _primary || lockedPrimary,
+                        onChanged: lockedPrimary
+                            ? null
+                            : (v) => setState(() => _primary = v),
+                      ),
                     ],
                   ),
                 ),
+                if (lockedPrimary) ...[
+                  const SizedBox(height: IdSpace.s2),
+                  Text(
+                    'This is your default pickup address. Choose another default from a different address.',
+                    style: t.caption.copyWith(color: c.textMuted),
+                  ),
+                ],
                 if (_editing) ...[
                   const SizedBox(height: IdSpace.s6),
-                  IdButton.danger(label: 'Delete address', icon: LucideIcons.trash, expand: true, onPressed: _saving ? null : _delete),
+                  IdButton.danger(
+                    label: 'Delete address',
+                    icon: LucideIcons.trash,
+                    expand: true,
+                    onPressed: _saving ? null : _delete,
+                  ),
                 ],
               ],
             ),
           ),
           DecoratedBox(
-            decoration: BoxDecoration(color: c.surface, boxShadow: context.shadows.sheet),
+            decoration: BoxDecoration(
+              color: c.surface,
+              border: Border(top: BorderSide(color: c.border)),
+            ),
             child: SafeArea(
               top: false,
               child: Padding(
-                padding: const EdgeInsets.fromLTRB(IdSpace.s4, IdSpace.s3, IdSpace.s4, IdSpace.s4),
-                child: IdButton(label: _editing ? 'Save changes' : 'Save address', expand: true, loading: _saving, onPressed: _save),
+                padding: const EdgeInsets.fromLTRB(
+                  IdSpace.s5,
+                  IdSpace.s3,
+                  IdSpace.s5,
+                  IdSpace.s4,
+                ),
+                child: IdButton(
+                  label: _editing ? 'Save changes' : 'Save address',
+                  expand: true,
+                  loading: _saving,
+                  onPressed: _save,
+                ),
               ),
             ),
           ),
@@ -341,40 +478,28 @@ class _Summary extends StatelessWidget {
     final c = context.colors;
     final t = context.text;
     final title = draft.title.isEmpty ? 'Pickup location' : draft.title;
-    return Container(
-      padding: const EdgeInsets.fromLTRB(IdSpace.s4, IdSpace.s2, IdSpace.s2, IdSpace.s2),
-      decoration: BoxDecoration(
-        color: c.surface,
-        borderRadius: BorderRadius.circular(IdRadius.lg),
-        boxShadow: context.shadows.card,
-      ),
-      child: Row(
+    return ReviewRow(
+      label: 'Pickup location',
+      value: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Container(
-            width: 40,
-            height: 40,
-            decoration: BoxDecoration(color: c.surfaceSoft, borderRadius: BorderRadius.circular(IdRadius.sm)),
-            child: Icon(LucideIcons.mapPin, size: IdSize.iconMd, color: c.primary),
-          ),
-          const SizedBox(width: IdSpace.s3),
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(title, style: t.title),
-                if (draft.subtitle.isNotEmpty) Text(draft.subtitle, style: t.body.copyWith(color: c.textMuted)),
-              ],
-            ),
-          ),
-          TextButton(onPressed: onChange, child: const Text('Change')),
+          Text(title, style: t.title),
+          if (draft.subtitle.isNotEmpty)
+            Text(draft.subtitle, style: t.body.copyWith(color: c.textMuted)),
         ],
       ),
+      action: TextButton(onPressed: onChange, child: const Text('Change')),
     );
   }
 }
 
 class _LabelChip extends StatelessWidget {
-  const _LabelChip({required this.label, required this.selected, required this.onTap, this.icon});
+  const _LabelChip({
+    required this.label,
+    required this.selected,
+    required this.onTap,
+    this.icon,
+  });
 
   final String label;
   final IconData? icon;
@@ -389,19 +514,38 @@ class _LabelChip extends StatelessWidget {
       selected: selected,
       child: Material(
         color: selected ? c.primarySoft : c.surface,
-        shape: StadiumBorder(side: BorderSide(color: selected ? c.primary : c.borderStrong, width: selected ? 2 : 1)),
+        shape: StadiumBorder(
+          side: BorderSide(
+            color: selected ? c.primary : c.borderStrong,
+            width: selected ? 2 : 1,
+          ),
+        ),
         child: InkWell(
           customBorder: const StadiumBorder(),
           onTap: onTap,
           child: ConstrainedBox(
-            constraints: const BoxConstraints(minHeight: IdSize.touchTarget - 8),
+            constraints: const BoxConstraints(
+              minHeight: IdSize.touchTarget - 8,
+            ),
             child: Padding(
-              padding: const EdgeInsets.symmetric(horizontal: IdSpace.s4),
+              padding: const EdgeInsets.symmetric(horizontal: IdSpace.s5),
               child: Row(
                 mainAxisSize: MainAxisSize.min,
                 children: [
-                  if (icon != null) ...[Icon(icon, size: IdSize.iconSm, color: selected ? c.onPrimarySoft : c.text), const SizedBox(width: IdSpace.s1)],
-                  Text(label, style: context.text.labelSm.copyWith(color: selected ? c.onPrimarySoft : c.text)),
+                  if (icon != null) ...[
+                    Icon(
+                      icon,
+                      size: IdSize.iconSm,
+                      color: selected ? c.onPrimarySoft : c.text,
+                    ),
+                    const SizedBox(width: IdSpace.s1),
+                  ],
+                  Text(
+                    label,
+                    style: context.text.labelSm.copyWith(
+                      color: selected ? c.onPrimarySoft : c.text,
+                    ),
+                  ),
                 ],
               ),
             ),

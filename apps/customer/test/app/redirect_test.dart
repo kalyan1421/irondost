@@ -60,6 +60,15 @@ void main() {
   }) =>
       redirectFor(startup: startup, session: session, addresses: addresses, location: location);
 
+  test('policies stay public without weakening other route protection', () {
+    for(final policy in Routes.publicLegalRoutes) {
+      expect(go(policy, session: const AsyncData(SignedOut())), isNull);
+      expect(go(policy, startup: const AsyncError(ApiFailure(ApiFailureKind.offline), StackTrace.empty), session: const AsyncLoading()), isNull);
+    }
+    expect(go(Routes.editProfile, session: const AsyncData(SignedOut())), Routes.welcome);
+    expect(go('/legal/unknown', session: const AsyncData(SignedOut())), Routes.welcome);
+  });
+
   test('shows the launch screen until startup and session are known', () {
     expect(go(Routes.home, startup: const AsyncLoading(), session: const AsyncLoading()), Routes.launch);
     expect(go(Routes.home, session: const AsyncLoading()), Routes.launch);

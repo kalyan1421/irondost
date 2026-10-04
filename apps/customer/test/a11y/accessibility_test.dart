@@ -260,10 +260,13 @@ void main() {
       await tester.tap(find.text(row));
       await tester.pump(const Duration(milliseconds: 500));
       if (blocked) {
-        final delete = find.descendant(of: find.byType(BottomSheet), matching: find.text('Delete account'));
+        final delete = find.widgetWithText(FilledButton, 'Delete account');
         await tester.ensureVisible(delete);
-        await tester.tap(delete);
+        await tester.pumpAndSettle();
+        await tester.tap(delete, warnIfMissed: true);
         await tester.pump(const Duration(milliseconds: 500));
+        await tester.pumpAndSettle();
+        expect(find.text('Finish your orders first'), findsOneWidget);
       }
     }
 

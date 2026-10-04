@@ -1,10 +1,14 @@
 import '../data/api/export.dart';
 import 'money.dart';
+import 'slots.dart';
 
 /// "Shirt / T-shirt ×10 · Trousers / Jeans ×4 · Saree ×1": what is in an order, on one or two lines.
-String itemsSummary(OrderDto order) => [for (final i in order.items) '${i.name} ×${i.quantity.toInt()}'].join(' · ');
+String itemsSummary(OrderDto order) =>
+    [for (final i in order.items) '${i.name} ×${i.quantity.toInt()}']
+        .join(' · ');
 
-int pieceCount(OrderDto order) => order.items.fold<num>(0, (a, i) => a + i.quantity).toInt();
+int pieceCount(OrderDto order) =>
+    order.items.fold<num>(0, (a, i) => a + i.quantity).toInt();
 
 /// "17 items".
 String piecesLabel(OrderDto order) {
@@ -22,14 +26,37 @@ bool canPayNow(OrderDto o) {
 
 /// How a paid order was paid: "Paid online" or "Paid in cash". Cash is only collected at delivery, so a cash-on-delivery
 /// order that is paid before it is delivered must have been paid online.
-String paidHow(OrderDto o) => o.paymentMethod == PaymentMethod.cod && o.status == OrderStatus.delivered ? 'Paid in cash' : 'Paid online';
+String paidHow(OrderDto o) =>
+    o.paymentMethod == PaymentMethod.cod && o.status == OrderStatus.delivered
+    ? 'Paid in cash'
+    : 'Paid online';
 
 /// What happened to the money on a finished order: "Paid online", "Paid in cash", "Nothing charged", "₹120 refunded".
 String settledNote(OrderDto o) {
   if (o.status == OrderStatus.cancelled) {
     if (o.paidPaise <= 0) return 'Nothing charged';
-    return o.refundedPaise >= o.paidPaise ? '${rupees(o.refundedPaise)} refunded' : 'Refund on its way';
+    return o.refundedPaise >= o.paidPaise
+        ? '${rupees(o.refundedPaise)} refunded'
+        : 'Refund pending';
   }
   if (o.paymentStatus == PaymentStatus.paid) return paidHow(o);
   return o.amountDuePaise > 0 ? '${rupees(o.amountDuePaise)} due' : 'Paid';
+}
+
+/// Presentation only: identifies an elapsed delivery window without changing dispatch state.
+bool deliveryEstimateMissed(OrderDto order, {DateTime? now}) {
+  if (order.status == OrderStatus.pending || order.status == OrderStatus.pickupAssigned || order.status == OrderStatus.delivered ||
+      order.status == OrderStatus.cancelled) {
+    return false;
+  }
+  final current = now ?? DateTime.now();
+  final match = RegExp(r'^\d{1,2}:\d{2}\s*[–-]\s*(\d{1,2}):(\d{2})$')
+      .firstMatch(order.deliverySlotLabel.trim());
+  if (match == null) return order.deliveryDate.compareTo(istToday(current)) < 0;
+  final date = DateTime.tryParse('${order.deliveryDate}T00:00:00Z');
+  if (date == null) return false;
+  final end = date
+      .add(Duration(hours: int.parse(match[1]!), minutes: int.parse(match[2]!)))
+      .subtract(const Duration(hours: 5, minutes: 30));
+  return !current.toUtc().isBefore(end);
 }

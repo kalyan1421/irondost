@@ -51,7 +51,7 @@ class OrderTimeline extends StatelessWidget {
                                 color: step.state == ProgressState.future ? c.textMuted : c.text,
                               ),
                             ),
-                            if (step.meta != null) Text(step.meta!, style: t.caption.copyWith(color: c.textMuted)),
+                            if (step.meta != null) Text(step.state == ProgressState.future ? 'Estimated · ${step.meta!}' : step.meta!, style: t.caption.copyWith(color: c.textMuted)),
                           ],
                         ),
                       ),

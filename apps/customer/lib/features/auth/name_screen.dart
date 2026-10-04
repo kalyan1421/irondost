@@ -35,21 +35,29 @@ class _NameScreenState extends ConsumerState<NameScreen> {
     final name = _name.text.trim();
     final email = _email.text.trim();
     setState(() {
-      _nameError = name.length < 2 ? 'Enter your name, as your partner should call you.' : null;
-      _emailError = email.isNotEmpty && !_emailPattern.hasMatch(email) ? 'Enter a valid email, like you@example.com.' : null;
+      _nameError = name.length < 2
+          ? 'Enter your name, as your partner should call you.'
+          : null;
+      _emailError = email.isNotEmpty && !_emailPattern.hasMatch(email)
+          ? 'Enter a valid email, like you@example.com.'
+          : null;
     });
     if (_nameError != null || _emailError != null) return;
 
     setState(() => _saving = true);
     try {
-      await ref.read(sessionProvider.notifier).saveProfile(name: name, email: email);
+      await ref
+          .read(sessionProvider.notifier)
+          .saveProfile(name: name, email: email);
     } catch (e) {
       if (!mounted) return;
       final failure = ApiFailure.from(e);
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
           content: Text(
-            failure.isConnectivity ? "You're offline. Check your connection and try again." : "We couldn't save that. Try again.",
+            failure.isConnectivity
+                ? "You're offline. Check your connection and try again."
+                : "We couldn't save that. Try again.",
           ),
         ),
       );
@@ -69,15 +77,28 @@ class _NameScreenState extends ConsumerState<NameScreen> {
           child: Column(
             children: [
               Padding(
-                padding: const EdgeInsets.fromLTRB(IdSpace.s4, IdSpace.s3, IdSpace.s4, 0),
+                padding: const EdgeInsets.fromLTRB(
+                  IdSpace.s5,
+                  IdSpace.s3,
+                  IdSpace.s5,
+                  0,
+                ),
                 child: Row(
                   children: [
-                    Text('Step 1 of 2', style: t.caption.copyWith(color: c.textMuted)),
+                    Text(
+                      'Step 1 of 2',
+                      style: t.caption.copyWith(color: c.textMuted),
+                    ),
                     const SizedBox(width: IdSpace.s3),
                     Expanded(
                       child: ClipRRect(
                         borderRadius: BorderRadius.circular(2),
-                        child: LinearProgressIndicator(value: 0.5, minHeight: 4, color: c.primary, backgroundColor: c.surfaceSoft),
+                        child: LinearProgressIndicator(
+                          value: 0.5,
+                          minHeight: 4,
+                          color: c.primary,
+                          backgroundColor: c.surfaceSoft,
+                        ),
                       ),
                     ),
                   ],
@@ -85,11 +106,25 @@ class _NameScreenState extends ConsumerState<NameScreen> {
               ),
               Expanded(
                 child: ListView(
-                  padding: const EdgeInsets.fromLTRB(IdSpace.s4, IdSpace.s6, IdSpace.s4, IdSpace.s6),
+                  padding: const EdgeInsets.fromLTRB(
+                    IdSpace.s5,
+                    IdSpace.s6,
+                    IdSpace.s5,
+                    IdSpace.s6,
+                  ),
                   children: [
-                    Semantics(header: true, child: Text('What should we call you?', style: t.headline)),
+                    Semantics(
+                      header: true,
+                      child: Text(
+                        'What should we call you?',
+                        style: t.headline,
+                      ),
+                    ),
                     const SizedBox(height: IdSpace.s2),
-                    Text('Your partner uses your name at pickup.', style: t.bodyLg.copyWith(color: c.textMuted)),
+                    Text(
+                      'Your partner uses your name at pickup.',
+                      style: t.bodyLg.copyWith(color: c.textMuted),
+                    ),
                     const SizedBox(height: 28),
                     IdTextField(
                       label: 'Full name',
@@ -116,8 +151,18 @@ class _NameScreenState extends ConsumerState<NameScreen> {
                 ),
               ),
               Padding(
-                padding: const EdgeInsets.fromLTRB(IdSpace.s4, IdSpace.s3, IdSpace.s4, IdSpace.s4),
-                child: IdButton(label: 'Continue', expand: true, loading: _saving, onPressed: _save),
+                padding: const EdgeInsets.fromLTRB(
+                  IdSpace.s5,
+                  IdSpace.s3,
+                  IdSpace.s5,
+                  IdSpace.s4,
+                ),
+                child: IdButton(
+                  label: 'Continue',
+                  expand: true,
+                  loading: _saving,
+                  onPressed: _save,
+                ),
               ),
             ],
           ),

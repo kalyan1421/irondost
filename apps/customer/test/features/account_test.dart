@@ -127,7 +127,7 @@ void main() {
       final opens = {
         'Saved addresses': Routes.addresses,
         'Notifications': Routes.notifications,
-        'Help & support': Routes.help,
+        'Help and support': Routes.help,
         'Terms of service': '/legal/terms',
         'Privacy policy': '/legal/privacy',
         'Cancellation & refunds': '/legal/cancellation',
@@ -341,7 +341,9 @@ void main() {
 
     testWidgets('the support link leads to Help', (tester) async {
       await openEdit(tester);
-      await tester.tap(find.text('contact support'));
+      await tester.ensureVisible(find.text('Contact support'));
+      await tester.pumpAndSettle();
+      await tester.tap(find.text('Contact support'));
       await tester.pumpAndSettle();
       expect(find.text('help page'), findsOneWidget);
     });
