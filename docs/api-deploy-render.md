@@ -2,13 +2,14 @@
 
 The API is one Docker image (`apps/api/Dockerfile`). It needs PostgreSQL, and background jobs (pg-boss) run inside the API process and
 keep their state in that same database, so nothing else needs deploying. [`render.yaml`](../render.yaml) at the repo root describes the
-one Render service. Workspace: akvega's workspace, region Singapore (nearest to Hyderabad).
+two Render services: the API and the admin console. Workspace: akvega's workspace, region Singapore (nearest to Hyderabad).
 
 ## Where things live
 
 | Part | Where | Notes |
 |---|---|---|
 | API (Docker web service `irondost-api`) | Render, `free` plan | Sleeps after 15 minutes idle and takes about a minute to wake, so order jobs and push notifications stall while asleep. |
+| Admin console (Node web service `irondost-admin`) | Render, `free` plan | Next.js, built on Render. Sleeps when idle like the API. |
 | PostgreSQL | Supabase project `gsqcgqgsatppgccuiqbb` (`ap-southeast-1`) | Reached through the session pooler. A free Supabase project pauses after a week without activity. |
 | Uploaded images | Same Supabase project, public bucket `irondost-uploads` | See "Storage on Supabase" below. |
 
@@ -35,6 +36,21 @@ with the project's secret key through Supabase's storage API (no AWS or S3 invol
 `https://gsqcgqgsatppgccuiqbb.supabase.co/storage/v1/object/public/irondost-uploads/…`. The project URL and bucket are set in
 `render.yaml`; only the secret key is entered in Render. To use a different project or bucket, change `SUPABASE_URL` and
 `SUPABASE_STORAGE_BUCKET` there.
+
+## Admin console
+
+`irondost-admin` builds the Next.js app (`apps/admin`) on Render and serves it with `next start`, so the `/orders/[id]` and
+`/customers/[id]` pages work without changes. Its settings are all in `render.yaml`: the API address and the Firebase **web** app
+config (`IronDost Admin`, created in the `irondost-app` Firebase project). Those values are compiled into the browser bundle, so
+they are public by design; restrict the web API key to the admin's address in Google Cloud → Credentials if you want a second layer.
+
+Two things outside the repo make sign-in work:
+
+- The admin's address (`irondost-admin.onrender.com`) must be in Firebase → Authentication → Settings → Authorized domains.
+- The same address is in the API's `CORS_ORIGINS` (set in `render.yaml`).
+
+The first super admin signs in with the number given to the seed, and then adds everyone else under Staff. That number must not
+be a Firebase "phone number for testing", because those have a fixed, known code.
 
 ## Database connections
 

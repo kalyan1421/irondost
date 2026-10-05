@@ -1,4 +1,4 @@
-# Render Blueprint for the IronDost API: one Docker web service on Render.
+# Render Blueprint for IronDost: the API (Docker) and the admin console (Node), both on Render.
 # The database is the IronDost Supabase project's Postgres, and uploaded images go to a public bucket in the same
 # project, so nothing else is created on Render. Background jobs (pg-boss) run inside the API process and keep their
 # state in that database, so there is no separate worker or Redis to deploy.
@@ -33,9 +33,9 @@ services:
         value: info
       - key: AUTH_DEV_BYPASS
         value: "false"
-      # Browser origins allowed to call the API (admin site, marketing site). The mobile app does not need CORS.
+      # Browser origins allowed to call the API: the marketing site and the admin below. The mobile app does not need CORS.
       - key: CORS_ORIGINS
-        sync: false
+        value: https://irondost-app.web.app,https://irondost-admin.onrender.com
       # Firebase service account JSON for the irondost-app project, base64-encoded.
       - key: FIREBASE_SERVICE_ACCOUNT_BASE64
         sync: false
@@ -58,3 +58,32 @@ services:
       # Supabase dashboard → Project Settings → API Keys → the secret key (service_role). Server-side only.
       - key: SUPABASE_SERVICE_ROLE_KEY
         sync: false
+
+  # Admin console: a Next.js app that talks only to the API. The NEXT_PUBLIC_* values are compiled into the browser
+  # bundle, so they are public by design: the API address and the Firebase *web* config (not a secret; the real
+  # protection is that the API checks every request).
+  - type: web
+    name: irondost-admin
+    runtime: node
+    region: singapore
+    plan: free # sleeps when idle like the API; fine for a back-office tool, upgrade to starter to keep it awake
+    buildCommand: corepack enable && pnpm install --frozen-lockfile --filter @laundry/admin... && pnpm --filter @laundry/admin build
+    startCommand: pnpm --filter @laundry/admin exec next start --hostname 0.0.0.0 --port $PORT
+    healthCheckPath: /login
+    autoDeploy: false
+    envVars:
+      - key: NODE_VERSION
+        value: "24"
+      - key: NEXT_PUBLIC_API_URL
+        value: https://irondost-api.onrender.com
+      - key: NEXT_PUBLIC_FIREBASE_API_KEY
+        value: AIzaSyB9uTZR0kqg21VrrtTYo2oozFpZ29lUpLg
+      - key: NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN
+        value: irondost-app.firebaseapp.com
+      - key: NEXT_PUBLIC_FIREBASE_PROJECT_ID
+        value: irondost-app
+      - key: NEXT_PUBLIC_FIREBASE_APP_ID
+        value: 1:264618787416:web:1a737dfa290441f9c7c02d
+      # Local-development shortcut that skips the SMS code. Must stay off here.
+      - key: NEXT_PUBLIC_AUTH_DEV_BYPASS
+        value: "false"
