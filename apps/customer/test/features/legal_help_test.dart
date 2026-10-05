@@ -197,6 +197,9 @@ void main() {
           200,
           scrollable: find.byType(Scrollable).first,
         );
+        // scrollUntilVisible stops with one edge on screen, where a tap can miss; bring the whole row in.
+        await tester.ensureVisible(find.text(key));
+        await tester.pumpAndSettle();
         await tester.tap(find.text(key));
         await tester.pumpAndSettle();
         expect(find.text('policy $value'), findsOneWidget, reason: key);
