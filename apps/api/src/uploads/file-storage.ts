@@ -31,14 +31,26 @@ export class LocalFileStorage extends FileStorage {
   }
 }
 
-/** Production: S3 (served through CloudFront or the bucket URL). Files never change, so cache them for a year. */
+/**
+ * Production: S3 or an S3-compatible store such as Supabase Storage (set S3_ENDPOINT), served from STORAGE_PUBLIC_BASE_URL.
+ * Files never change, so cache them for a year.
+ */
 export class S3FileStorage extends FileStorage {
   private readonly client: S3Client;
   private readonly bucket: string;
 
   constructor(env: Env) {
     super(env.STORAGE_PUBLIC_BASE_URL);
-    this.client = new S3Client({ region: env.S3_REGION });
+    this.client = new S3Client({
+      region: env.S3_REGION,
+      // S3-compatible stores address buckets by path and reject the SDK's default checksum headers.
+      ...(env.S3_ENDPOINT && {
+        endpoint: env.S3_ENDPOINT,
+        forcePathStyle: true,
+        requestChecksumCalculation: 'WHEN_REQUIRED' as const,
+        responseChecksumValidation: 'WHEN_REQUIRED' as const,
+      }),
+    });
     this.bucket = env.S3_BUCKET;
   }
 

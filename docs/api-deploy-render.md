@@ -22,11 +22,28 @@ These are `sync: false` in the Blueprint, so Render prompts for them when it is 
 | Variable | Where it comes from |
 |---|---|
 | `FIREBASE_SERVICE_ACCOUNT_BASE64` | Firebase console → `irondost-app` → Project settings → Service accounts → new private key, then `base64 -i key.json` |
-| `RAZORPAY_KEY_ID`, `RAZORPAY_KEY_SECRET` | Razorpay dashboard, live mode |
-| `RAZORPAY_WEBHOOK_SECRET` | Chosen when adding the webhook (`https://<api-url>/v1/webhooks/razorpay`) in the Razorpay dashboard |
-| `S3_BUCKET`, `STORAGE_PUBLIC_BASE_URL` | An S3 bucket in `ap-south-1` and its public or CloudFront URL. Production refuses `STORAGE_DRIVER=local`. |
-| `AWS_ACCESS_KEY_ID`, `AWS_SECRET_ACCESS_KEY` | An IAM user limited to that bucket |
+| `RAZORPAY_KEY_ID`, `RAZORPAY_KEY_SECRET` | Razorpay dashboard. Use test-mode keys while testing and live keys at launch. |
+| `AWS_ACCESS_KEY_ID`, `AWS_SECRET_ACCESS_KEY` | Supabase → Project Settings → Storage → S3 Connection → new access key. The AWS SDK reads these variable names. |
 | `CORS_ORIGINS` | Comma-separated browser origins: the admin site and `https://irondost-app.web.app` |
+
+## Storage on Supabase
+
+Uploads go to a **public** Supabase bucket named `irondost-uploads` through Supabase's S3-compatible endpoint, so the API's S3
+driver is used as is (`S3_ENDPOINT` switches it to path-style requests). Create the bucket first (Storage → New bucket → public),
+then generate an S3 access key pair and enter it as `AWS_ACCESS_KEY_ID` / `AWS_SECRET_ACCESS_KEY`. The endpoint
+(`https://gsqcgqgsatppgccuiqbb.supabase.co/storage/v1/s3`), region (`ap-southeast-1`) and public URL are already set in `render.yaml`.
+If you move to a different Supabase project, change those three values there.
+
+## The Razorpay webhook is optional for testing
+
+The app confirms a payment itself: after checkout it calls the API, which verifies Razorpay's signature with the key secret.
+That path needs only `RAZORPAY_KEY_ID` and `RAZORPAY_KEY_SECRET`. The webhook (`POST /v1/webhooks/razorpay`) is a safety net for
+customers who close the app mid-payment, and the only source of refund-status and payment-failed updates. Without it, those
+refund updates do not arrive. Cash orders do not use Razorpay at all.
+
+Render generates `RAZORPAY_WEBHOOK_SECRET` for you. Add the webhook in the Razorpay dashboard when you want it, using
+`https://<api-url>/v1/webhooks/razorpay`, the events `payment.captured`, `payment.failed` and `refund.*`, and the value from the
+service's Environment tab as the secret.
 
 ## Deploying
 
