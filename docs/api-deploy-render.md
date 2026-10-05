@@ -31,7 +31,7 @@ These are `sync: false` in the Blueprint, so Render prompts for them when it is 
 Uploads go to a **public** Supabase bucket named `irondost-uploads` through Supabase's S3-compatible endpoint, so the API's S3
 driver is used as is (`S3_ENDPOINT` switches it to path-style requests). Create the bucket first (Storage → New bucket → public),
 then generate an S3 access key pair and enter it as `AWS_ACCESS_KEY_ID` / `AWS_SECRET_ACCESS_KEY`. The endpoint
-(`https://gsqcgqgsatppgccuiqbb.supabase.co/storage/v1/s3`), region (`ap-southeast-1`) and public URL are already set in `render.yaml`.
+(`https://gsqcgqgsatppgccuiqbb.storage.supabase.co/storage/v1/s3`), region (`ap-southeast-1`) and public URL are already set in `render.yaml`.
 If you move to a different Supabase project, change those three values there.
 
 ## The Razorpay webhook is optional for testing

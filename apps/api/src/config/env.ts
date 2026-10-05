@@ -44,7 +44,7 @@ export const envSchema = z
     STORAGE_PUBLIC_BASE_URL: z.string().default('http://localhost:4000/uploads'),
     S3_BUCKET: z.string().default(''),
     S3_REGION: z.string().default('ap-south-1'),
-    /** Only for S3-compatible stores such as Supabase Storage, e.g. https://<ref>.supabase.co/storage/v1/s3. Empty means AWS S3. */
+    /** Only for S3-compatible stores such as Supabase Storage, e.g. https://<ref>.storage.supabase.co/storage/v1/s3. Empty means AWS S3. */
     S3_ENDPOINT: z.string().default(''),
 
     /** Turn off the pg-boss worker (e.g. for one-off scripts). */

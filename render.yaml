@@ -59,7 +59,7 @@ services:
         value: irondost-uploads # a public bucket
       # Supabase project gsqcgqgsatppgccuiqbb (ap-southeast-1). Its S3 endpoint, region and public bucket URL are not secret.
       - key: S3_ENDPOINT
-        value: https://gsqcgqgsatppgccuiqbb.supabase.co/storage/v1/s3
+        value: https://gsqcgqgsatppgccuiqbb.storage.supabase.co/storage/v1/s3
       - key: S3_REGION
         value: ap-southeast-1
       - key: STORAGE_PUBLIC_BASE_URL
