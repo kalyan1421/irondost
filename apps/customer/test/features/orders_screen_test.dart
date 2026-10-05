@@ -2,8 +2,10 @@ import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:go_router/go_router.dart';
 import 'package:irondost_customer/app/routes.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:irondost_customer/data/api_client.dart';
-import 'package:irondost_customer/features/auth/session.dart';
+import 'package:irondost_customer/design/widgets/order_card.dart';
+import 'package:irondost_customer/features/basket/basket.dart';
 import 'package:irondost_customer/features/orders/order_repository.dart';
 import 'package:irondost_customer/features/orders/orders_screen.dart';
 
@@ -24,13 +26,14 @@ void main() {
       Routes.orders: () => const OrdersScreen(),
       Routes.orderDetail: () => const Text('DETAIL PAGE'),
       Routes.home: () => const Text('HOME PAGE'),
+      Routes.basket: () => const Text('BASKET PAGE'),
     }, initial: Routes.orders);
     await tester.pumpWidget(
       themedRouter(
         router,
         overrides: [
+          ...await basketOverrides(),
           orderRepositoryProvider.overrideWithValue(repo),
-          sessionProvider.overrideWith(SignedInSession.new),
         ],
       ),
     );
@@ -125,6 +128,56 @@ void main() {
   });
 
   testWidgets(
+    'a finished order card keeps both actions on screen and full size at 320 dp and 200% text',
+    (tester) async {
+      tester.view
+        ..physicalSize = const Size(320 * 2, 740 * 2)
+        ..devicePixelRatio = 2;
+      addTearDown(tester.view.reset);
+      await tester.pumpWidget(
+        themed(
+          Scaffold(
+            body: SingleChildScrollView(
+              padding: const EdgeInsets.all(20),
+              child: OrderCard(
+                order: testOrder(
+                  id: 'd1',
+                  status: OrderStatus.delivered,
+                  method: PaymentMethod.online,
+                  paymentStatus: PaymentStatus.paid,
+                  paidPaise: 24800,
+                  deliveredAt: DateTime.utc(2026, 9, 26, 12),
+                ),
+                onOpen: () {},
+                onRepeat: () {},
+              ),
+            ),
+          ),
+          textScale: 2,
+        ),
+      );
+      await tester.pumpAndSettle();
+
+      expect(tester.takeException(), isNull, reason: 'no overflow');
+      for (final label in ['Book again', 'Details']) {
+        final button = find
+            .ancestor(of: find.text(label), matching: find.byType(TextButton))
+            .first;
+        expect(
+          tester.getSize(button).height,
+          greaterThanOrEqualTo(48),
+          reason: label,
+        );
+        expect(
+          tester.getRect(button).right,
+          lessThanOrEqualTo(320),
+          reason: '$label stays on screen',
+        );
+      }
+    },
+  );
+
+  testWidgets(
     'Past lists delivered and cancelled orders with what happened to the money',
     (tester) async {
       await pump(
@@ -172,6 +225,46 @@ void main() {
       expect(find.text('Paid in cash'), findsOneWidget);
       expect(find.text('Paid online'), findsOneWidget);
       expect(find.text('Details'), findsNWidgets(3));
+      expect(
+        find.text('Book again'),
+        findsNWidgets(3),
+        reason: 'every finished order, cancelled ones too',
+      );
+    },
+  );
+
+  testWidgets(
+    'Book again puts the order\'s items in the basket; an order in progress does not offer it',
+    (tester) async {
+      await pump(
+        tester,
+        seed: (r) => r.listed.addAll([
+          booked(),
+          testOrder(
+            id: 'd1',
+            number: 'ID001038',
+            status: OrderStatus.delivered,
+            pieces: 9,
+          ),
+        ]),
+      );
+      expect(
+        find.text('Book again'),
+        findsNothing,
+        reason: 'the active tab: an order in progress',
+      );
+
+      await tester.tap(find.text('Past'));
+      await tester.pumpAndSettle();
+      await tester.tap(find.text('Book again'));
+      await tester.pumpAndSettle();
+
+      expect(find.text('BASKET PAGE'), findsOneWidget);
+      // The stub basket page has no Scaffold; any element under the app's scope will do.
+      final container = ProviderScope.containerOf(
+        tester.element(find.text('BASKET PAGE')),
+      );
+      expect(container.read(basketProvider).quantityOf('shirt'), 9);
     },
   );
 

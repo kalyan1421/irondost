@@ -79,7 +79,7 @@ void main() {
       expect(find.text('Order ID001046'), findsOneWidget);
       expect(find.text('Step 1 of 5'), findsOneWidget);
       expect(find.text('Booked'), findsWidgets);
-      expect(find.text('Pickup today, 4 – 8 PM'), findsOneWidget);
+      expect(find.text('Pickup today, 4\u00A0\u2060–\u2060\u00A08\u00A0PM'), findsOneWidget);
       expect(find.text('Finding a partner near you'), findsOneWidget);
       expect(find.text('Ironing'), findsOneWidget);
       expect(
@@ -106,7 +106,7 @@ void main() {
       );
 
       expect(find.text('Pickup running late'), findsOneWidget);
-      expect(find.text('Window today, 4 – 8 PM'), findsOneWidget);
+      expect(find.text('Window today, 4\u00A0\u2060–\u2060\u00A08\u00A0PM'), findsOneWidget);
       expect(
         find.textContaining("will call you if we can't make it by 8 PM"),
         findsOneWidget,
@@ -163,7 +163,7 @@ void main() {
       ),
     );
     expect(find.text('Out for delivery'), findsWidgets);
-    expect(find.text('Arriving today, 4 – 8 PM'), findsOneWidget);
+    expect(find.text('Arriving today, 4\u00A0\u2060–\u2060\u00A08\u00A0PM'), findsOneWidget);
     expect(find.text('Bringing your clothes back'), findsOneWidget);
     expect(
       find.text(

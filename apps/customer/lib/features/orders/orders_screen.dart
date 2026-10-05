@@ -10,6 +10,7 @@ import '../../design/widgets/id_button.dart';
 import '../../design/widgets/order_card.dart';
 import '../../design/widgets/state_view.dart';
 import '../../design/widgets/surfaces.dart';
+import 'order_detail_screen.dart' show bookAgain;
 import 'orders_list.dart';
 import 'pay_due.dart';
 
@@ -183,6 +184,7 @@ class _OrdersState extends ConsumerState<_Orders> {
                 onOpen: () =>
                     context.push(Routes.order(order.id), extra: order),
                 onPay: () => showPayDueSheet(context, order),
+                onRepeat: () => bookAgain(context, ref, order),
               );
             },
           );

@@ -47,7 +47,8 @@ void main() {
     await tester.scrollUntilVisible(find.text('To pay'), 200, scrollable: find.byType(Scrollable).first);
     await tester.pumpAndSettle();
     expect(find.text('Items (15)'), findsOneWidget);
-    expect(find.text('₹260'), findsNWidgets(2), reason: 'items and to pay');
+    expect(find.text('₹260'), findsNWidgets(3), reason: 'items, to pay, and the total in the footer');
+    expect(find.text('Total'), findsOneWidget, reason: 'the footer keeps the amount in view even when the bill is scrolled away');
     expect(find.text('Free'), findsOneWidget);
     expect(find.text('To pay'), findsOneWidget);
     expect(quotes.calls, hasLength(1));
@@ -87,7 +88,7 @@ void main() {
     expect(container.read(basketProvider).quantityOf('saree'), 4);
     await tester.scrollUntilVisible(find.text('To pay'), 200, scrollable: find.byType(Scrollable).first);
     await tester.pumpAndSettle();
-    expect(find.text('₹410'), findsNWidgets(2));
+    expect(find.text('₹410'), findsNWidgets(3), reason: 'items, to pay, and the footer total');
   });
 
   testWidgets('the Choose pickup time button waits for the new price', (tester) async {
@@ -166,7 +167,7 @@ void main() {
       await tester.scrollUntilVisible(find.text('To pay'), 200, scrollable: find.byType(Scrollable).first);
       await tester.pumpAndSettle();
       expect(find.text('−₹52'), findsOneWidget);
-      expect(find.text('₹208'), findsOneWidget, reason: 'to pay');
+      expect(find.text('₹208'), findsNWidgets(2), reason: 'to pay, and the footer total');
     });
 
     testWidgets('an unknown, expired or used code is explained under the field and not applied', (tester) async {

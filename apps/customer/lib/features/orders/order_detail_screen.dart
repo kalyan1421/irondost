@@ -650,7 +650,8 @@ class _Hero extends StatelessWidget {
                   const SizedBox(width: IdSpace.s2),
                   Expanded(
                     child: Text(
-                      body,
+                      // The hours stay on one line: a wrap inside "4 – 8 PM" reads as two times.
+                      keepWindowTogether(body),
                       // The time to look for is the point of this line; a late message is a
                       // sentence, so it stays at body weight.
                       style: (missed ? t.body : t.title).copyWith(
