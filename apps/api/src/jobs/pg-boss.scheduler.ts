@@ -24,7 +24,7 @@ export class PgBossScheduler extends JobScheduler implements OnApplicationBootst
       this.logger.warn('Background jobs disabled (JOBS_ENABLED=false)');
       return;
     }
-    const boss = new PgBoss({ connectionString: this.env.DATABASE_URL, schema: 'pgboss' });
+    const boss = new PgBoss({ connectionString: this.env.DATABASE_URL, schema: 'pgboss', max: this.env.DATABASE_POOL_MAX });
     boss.on('error', (err: unknown) => this.logger.error(`pg-boss: ${String(err)}`));
     await boss.start();
     for (const [queue, handler] of this.handlers) {

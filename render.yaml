@@ -1,18 +1,10 @@
-# Render Blueprint for the IronDost API: one Docker web service plus one Postgres database, both on Render.
-# Uploaded images are the only thing stored elsewhere: a public bucket in Supabase Storage.
-# Background jobs (pg-boss) run inside the API process and keep their state in the same database,
-# so there is no separate worker or Redis to deploy.
+# Render Blueprint for the IronDost API: one Docker web service on Render.
+# The database is the IronDost Supabase project's Postgres, and uploaded images go to a public bucket in the same
+# project, so nothing else is created on Render. Background jobs (pg-boss) run inside the API process and keep their
+# state in that database, so there is no separate worker or Redis to deploy.
 #
 # Values marked `sync: false` are secrets or per-environment settings. Render asks for them when the
 # Blueprint is first applied; they are never stored in this file. See docs/api-deploy-render.md.
-databases:
-  - name: irondost-db
-    databaseName: irondost
-    user: irondost
-    region: singapore # closest Render region to Hyderabad
-    plan: free # expires 30 days after creation; move to basic-256mb before real customers
-    ipAllowList: [] # internal connections only; the API reaches it over Render's private network
-
 services:
   - type: web
     name: irondost-api
@@ -26,10 +18,13 @@ services:
     envVars:
       - key: NODE_ENV
         value: production
+      # Supabase → Connect → Session pooler (reachable over IPv4, port 5432). Supabase's direct host is IPv6 only on the free plan.
+      # Not the transaction pooler (port 6543): Prisma migrations and prepared statements need session mode.
       - key: DATABASE_URL
-        fromDatabase:
-          name: irondost-db
-          property: connectionString
+        sync: false
+      # Prisma and pg-boss each open up to this many connections. 2 x 5 stays under the pooler's free-tier limit of 15.
+      - key: DATABASE_POOL_MAX
+        value: "5"
       - key: APP_NAME
         value: IronDost
       - key: ORDER_NUMBER_PREFIX

@@ -23,6 +23,8 @@ export const envSchema = z
     LOG_LEVEL: z.enum(['fatal', 'error', 'warn', 'info', 'debug', 'trace', 'silent']).default('info'),
 
     DATABASE_URL: z.string().min(1, 'DATABASE_URL is required'),
+    /** Connections each pool may open (Prisma and pg-boss have one each). Keep 2 x this under the pooler's limit, e.g. Supabase free tier allows 15. */
+    DATABASE_POOL_MAX: z.coerce.number().int().min(1).max(50).default(10),
 
     APP_NAME: z.string().min(1).default('Laundry'),
     ORDER_NUMBER_PREFIX: z

@@ -99,4 +99,4 @@ The e2e suite creates its own database (`laundry_e2e_<pid>_<time>`), runs the mi
 - **Production environment.** Set `FIREBASE_SERVICE_ACCOUNT_BASE64`, the three `RAZORPAY_*` values and `CORS_ORIGINS`. Leave `AUTH_DEV_BYPASS` unset.
 - **Image storage.** Production needs `STORAGE_DRIVER=supabase`, `SUPABASE_URL`, `SUPABASE_STORAGE_BUCKET` and `SUPABASE_SERVICE_ROLE_KEY`; the API refuses local storage in production. The Supabase driver has been tested against a local stand-in, not yet against the real bucket.
 - **Razorpay webhook:** point it at `POST /v1/webhooks/razorpay`, with the events `payment.captured` and `payment.failed`.
-- **Hosting.** The API and its PostgreSQL run on Render (Singapore) from [`render.yaml`](render.yaml); uploaded images go to Supabase Storage. See [`docs/api-deploy-render.md`](docs/api-deploy-render.md).
+- **Hosting.** The API runs on Render (Singapore) from [`render.yaml`](render.yaml); the PostgreSQL database and the uploaded images are in Supabase. See [`docs/api-deploy-render.md`](docs/api-deploy-render.md).
