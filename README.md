@@ -25,7 +25,7 @@ This repository replaces the Firebase-based "Cloud Ironing Factory" apps with a 
   - checks the file really is an image
   - removes camera metadata, including GPS location
   - resizes the image for its use and stores it as WebP
-  - saves it to S3 in production, or to a local `uploads/` folder in development
+  - saves it to Supabase Storage in production, or to a local `uploads/` folder in development
 
 ### Order flow
 
@@ -97,6 +97,6 @@ The e2e suite creates its own database (`laundry_e2e_<pid>_<time>`), runs the mi
 
 - `apps/api/Dockerfile` builds a production image. Build it from the repo root. It runs `prisma migrate deploy` on start. The Dockerfile has not been built yet.
 - **Production environment.** Set `FIREBASE_SERVICE_ACCOUNT_BASE64`, the three `RAZORPAY_*` values and `CORS_ORIGINS`. Leave `AUTH_DEV_BYPASS` unset.
-- **Image storage.** Production needs `STORAGE_DRIVER=s3`, `S3_BUCKET` and `STORAGE_PUBLIC_BASE_URL` (the CloudFront or bucket URL); the API refuses local storage in production. The S3 driver has not yet been run against a real bucket.
+- **Image storage.** Production needs `STORAGE_DRIVER=supabase`, `SUPABASE_URL`, `SUPABASE_STORAGE_BUCKET` and `SUPABASE_SERVICE_ROLE_KEY`; the API refuses local storage in production. The Supabase driver has been tested against a local stand-in, not yet against the real bucket.
 - **Razorpay webhook:** point it at `POST /v1/webhooks/razorpay`, with the events `payment.captured` and `payment.failed`.
-- **Hosting.** Suggested: AWS Mumbai (ap-south-1), with App Runner or ECS for the API and RDS PostgreSQL.
+- **Hosting.** The API and its PostgreSQL run on Render (Singapore) from [`render.yaml`](render.yaml); uploaded images go to Supabase Storage. See [`docs/api-deploy-render.md`](docs/api-deploy-render.md).

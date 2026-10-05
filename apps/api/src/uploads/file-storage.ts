@@ -1,6 +1,5 @@
 import { mkdir, writeFile } from 'node:fs/promises';
 import { dirname, resolve } from 'node:path';
-import { PutObjectCommand, S3Client } from '@aws-sdk/client-s3';
 import type { Env } from '../config/env.js';
 
 /** Where uploaded files live. Keys look like `banner/2026/10/<uuid>.webp`. */
@@ -31,42 +30,36 @@ export class LocalFileStorage extends FileStorage {
   }
 }
 
-/**
- * Production: S3 or an S3-compatible store such as Supabase Storage (set S3_ENDPOINT), served from STORAGE_PUBLIC_BASE_URL.
- * Files never change, so cache them for a year.
- */
-export class S3FileStorage extends FileStorage {
-  private readonly client: S3Client;
-  private readonly bucket: string;
+/** Production: Supabase Storage, a public bucket served from the project's CDN. Files never change, so cache them for a year. */
+export class SupabaseFileStorage extends FileStorage {
+  private readonly objectsUrl: string;
+  private readonly secretKey: string;
 
   constructor(env: Env) {
     super(env.STORAGE_PUBLIC_BASE_URL);
-    this.client = new S3Client({
-      region: env.S3_REGION,
-      // S3-compatible stores address buckets by path and reject the SDK's default checksum headers.
-      ...(env.S3_ENDPOINT && {
-        endpoint: env.S3_ENDPOINT,
-        forcePathStyle: true,
-        requestChecksumCalculation: 'WHEN_REQUIRED' as const,
-        responseChecksumValidation: 'WHEN_REQUIRED' as const,
-      }),
-    });
-    this.bucket = env.S3_BUCKET;
+    this.objectsUrl = `${env.SUPABASE_URL.replace(/\/$/, '')}/storage/v1/object/${env.SUPABASE_STORAGE_BUCKET}`;
+    this.secretKey = env.SUPABASE_SERVICE_ROLE_KEY;
   }
 
   async put(key: string, body: Buffer, contentType: string): Promise<void> {
-    await this.client.send(
-      new PutObjectCommand({
-        Bucket: this.bucket,
-        Key: key,
-        Body: body,
-        ContentType: contentType,
-        CacheControl: 'public, max-age=31536000, immutable',
-      }),
-    );
+    const path = key.split('/').map(encodeURIComponent).join('/');
+    const res = await fetch(`${this.objectsUrl}/${path}`, {
+      method: 'POST',
+      headers: {
+        // Both headers, as the Supabase clients send them: newer secret keys are not JWTs and only work as `apikey`.
+        apikey: this.secretKey,
+        Authorization: `Bearer ${this.secretKey}`,
+        'Content-Type': contentType,
+        'Cache-Control': 'max-age=31536000',
+      },
+      body: new Uint8Array(body),
+    });
+    if (!res.ok) {
+      throw new Error(`Supabase Storage rejected the upload (${res.status}): ${(await res.text()).slice(0, 200)}`);
+    }
   }
 }
 
 export function createFileStorage(env: Env): FileStorage {
-  return env.STORAGE_DRIVER === 's3' ? new S3FileStorage(env) : new LocalFileStorage(env);
+  return env.STORAGE_DRIVER === 'supabase' ? new SupabaseFileStorage(env) : new LocalFileStorage(env);
 }

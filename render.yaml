@@ -1,4 +1,5 @@
-# Render Blueprint for the IronDost API: one Docker web service plus one Postgres database.
+# Render Blueprint for the IronDost API: one Docker web service plus one Postgres database, both on Render.
+# Uploaded images are the only thing stored elsewhere: a public bucket in Supabase Storage.
 # Background jobs (pg-boss) run inside the API process and keep their state in the same database,
 # so there is no separate worker or Redis to deploy.
 #
@@ -52,20 +53,13 @@ services:
       # (https://<api-url>/v1/webhooks/razorpay) when you add one. Checkout payments work without the webhook.
       - key: RAZORPAY_WEBHOOK_SECRET
         generateValue: true
-      # Production refuses to start with local disk storage. Images go to Supabase Storage through its S3 protocol.
+      # Production refuses to start with local disk storage. Images go to a public bucket in the IronDost Supabase project.
       - key: STORAGE_DRIVER
-        value: s3
-      - key: S3_BUCKET
-        value: irondost-uploads # a public bucket
-      # Supabase project gsqcgqgsatppgccuiqbb (ap-southeast-1). Its S3 endpoint, region and public bucket URL are not secret.
-      - key: S3_ENDPOINT
-        value: https://gsqcgqgsatppgccuiqbb.storage.supabase.co/storage/v1/s3
-      - key: S3_REGION
-        value: ap-southeast-1
-      - key: STORAGE_PUBLIC_BASE_URL
-        value: https://gsqcgqgsatppgccuiqbb.supabase.co/storage/v1/object/public/irondost-uploads
-      # Supabase S3 access key pair (Project Settings → Storage → S3 Connection). The AWS SDK reads these names.
-      - key: AWS_ACCESS_KEY_ID
-        sync: false
-      - key: AWS_SECRET_ACCESS_KEY
+        value: supabase
+      - key: SUPABASE_URL
+        value: https://gsqcgqgsatppgccuiqbb.supabase.co
+      - key: SUPABASE_STORAGE_BUCKET
+        value: irondost-uploads
+      # Supabase dashboard → Project Settings → API Keys → the secret key (service_role). Server-side only.
+      - key: SUPABASE_SERVICE_ROLE_KEY
         sync: false

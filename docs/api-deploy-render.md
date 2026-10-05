@@ -23,16 +23,17 @@ These are `sync: false` in the Blueprint, so Render prompts for them when it is 
 |---|---|
 | `FIREBASE_SERVICE_ACCOUNT_BASE64` | Firebase console → `irondost-app` → Project settings → Service accounts → new private key, then `base64 -i key.json` |
 | `RAZORPAY_KEY_ID`, `RAZORPAY_KEY_SECRET` | Razorpay dashboard. Use test-mode keys while testing and live keys at launch. |
-| `AWS_ACCESS_KEY_ID`, `AWS_SECRET_ACCESS_KEY` | Supabase → Project Settings → Storage → S3 Connection → new access key. The AWS SDK reads these variable names. |
+| `SUPABASE_SERVICE_ROLE_KEY` | Supabase → Project Settings → API Keys → the secret key (`service_role`). Server-side only. |
 | `CORS_ORIGINS` | Comma-separated browser origins: the admin site and `https://irondost-app.web.app` |
 
 ## Storage on Supabase
 
-Uploads go to a **public** Supabase bucket named `irondost-uploads` through Supabase's S3-compatible endpoint, so the API's S3
-driver is used as is (`S3_ENDPOINT` switches it to path-style requests). Create the bucket first (Storage → New bucket → public),
-then generate an S3 access key pair and enter it as `AWS_ACCESS_KEY_ID` / `AWS_SECRET_ACCESS_KEY`. The endpoint
-(`https://gsqcgqgsatppgccuiqbb.storage.supabase.co/storage/v1/s3`), region (`ap-southeast-1`) and public URL are already set in `render.yaml`.
-If you move to a different Supabase project, change those three values there.
+The server, the database and the background jobs all run on Render. Only uploaded images live elsewhere, in a **public** bucket named
+`irondost-uploads` in the IronDost Supabase project (`gsqcgqgsatppgccuiqbb`, `ap-southeast-1`). The API's Supabase driver uploads
+with the project's secret key through Supabase's storage API (no AWS or S3 involved) and serves files from
+`https://gsqcgqgsatppgccuiqbb.supabase.co/storage/v1/object/public/irondost-uploads/…`. The project URL and bucket are set in
+`render.yaml`; only the secret key is entered in Render. To use a different project or bucket, change `SUPABASE_URL` and
+`SUPABASE_STORAGE_BUCKET` there.
 
 ## The Razorpay webhook is optional for testing
 

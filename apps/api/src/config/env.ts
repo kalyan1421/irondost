@@ -37,15 +37,17 @@ export const envSchema = z
     RAZORPAY_KEY_SECRET: z.string().default(''),
     RAZORPAY_WEBHOOK_SECRET: z.string().default(''),
 
-    /** Where uploaded images go: `local` (a folder served by the API, for development) or `s3`. */
-    STORAGE_DRIVER: z.enum(['local', 's3']).default('local'),
+    /** Where uploaded images go: `local` (a folder served by the API, for development) or `supabase` (Supabase Storage). */
+    STORAGE_DRIVER: z.enum(['local', 'supabase']).default('local'),
     STORAGE_LOCAL_DIR: z.string().default('uploads'),
-    /** Public URL prefix for stored files, e.g. https://cdn.irondost.in or http://localhost:4000/uploads */
+    /** Public URL prefix for local files, e.g. http://localhost:4000/uploads. With `supabase` it is derived from the project and bucket. */
     STORAGE_PUBLIC_BASE_URL: z.string().default('http://localhost:4000/uploads'),
-    S3_BUCKET: z.string().default(''),
-    S3_REGION: z.string().default('ap-south-1'),
-    /** Only for S3-compatible stores such as Supabase Storage, e.g. https://<ref>.storage.supabase.co/storage/v1/s3. Empty means AWS S3. */
-    S3_ENDPOINT: z.string().default(''),
+    /** Supabase project URL, e.g. https://<project-ref>.supabase.co */
+    SUPABASE_URL: z.string().default(''),
+    /** Server-side secret key (service role). It can write to any bucket, so keep it out of the apps and the repo. */
+    SUPABASE_SERVICE_ROLE_KEY: z.string().default(''),
+    /** A public bucket that holds the uploaded images. */
+    SUPABASE_STORAGE_BUCKET: z.string().default(''),
 
     /** Turn off the pg-boss worker (e.g. for one-off scripts). */
     JOBS_ENABLED: z
@@ -62,7 +64,7 @@ export const envSchema = z
         ctx.addIssue({
           code: 'custom',
           path: ['STORAGE_DRIVER'],
-          message: 'must be s3 in production (container disks are not persistent)',
+          message: 'must be supabase in production (container disks are not persistent)',
         });
       }
       if (!env.FIREBASE_SERVICE_ACCOUNT_BASE64) {
@@ -73,10 +75,20 @@ export const envSchema = z
         });
       }
     }
-    if (env.STORAGE_DRIVER === 's3' && !env.S3_BUCKET) {
-      ctx.addIssue({ code: 'custom', path: ['S3_BUCKET'], message: 'is required when STORAGE_DRIVER=s3' });
+    if (env.STORAGE_DRIVER === 'supabase') {
+      for (const key of ['SUPABASE_URL', 'SUPABASE_SERVICE_ROLE_KEY', 'SUPABASE_STORAGE_BUCKET'] as const) {
+        if (!env[key]) ctx.addIssue({ code: 'custom', path: [key], message: 'is required when STORAGE_DRIVER=supabase' });
+      }
     }
-  });
+  })
+  .transform((env) =>
+    env.STORAGE_DRIVER === 'supabase'
+      ? {
+          ...env,
+          STORAGE_PUBLIC_BASE_URL: `${env.SUPABASE_URL.replace(/\/$/, '')}/storage/v1/object/public/${env.SUPABASE_STORAGE_BUCKET}`,
+        }
+      : env,
+  );
 
 export type Env = z.infer<typeof envSchema>;
 
