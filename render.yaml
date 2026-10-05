@@ -67,7 +67,7 @@ services:
     runtime: node
     region: singapore
     plan: free # sleeps when idle like the API; fine for a back-office tool, upgrade to starter to keep it awake
-    buildCommand: corepack enable && pnpm install --frozen-lockfile --filter @laundry/admin... && pnpm --filter @laundry/admin build
+    buildCommand: pnpm install --frozen-lockfile --filter @laundry/admin... && pnpm --filter @laundry/admin build
     startCommand: pnpm --filter @laundry/admin exec next start --hostname 0.0.0.0 --port $PORT
     healthCheckPath: /login
     autoDeploy: false
