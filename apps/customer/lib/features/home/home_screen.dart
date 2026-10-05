@@ -23,6 +23,7 @@ import '../offers/promotions.dart';
 import '../orders/order_detail_screen.dart' show bookAgain;
 import '../orders/orders_list.dart';
 import 'banners.dart';
+import 'how_it_works.dart';
 import 'offer_banners.dart';
 
 class HomeScreen extends ConsumerWidget {
@@ -410,6 +411,14 @@ class _Services extends ConsumerWidget {
                     ),
                   ),
                 ),
+              Align(
+                alignment: Alignment.centerLeft,
+                child: IdButton.text(
+                  label: 'How it works',
+                  icon: LucideIcons.info,
+                  onPressed: () => showHowItWorks(context, ref),
+                ),
+              ),
             ],
           ),
         ),

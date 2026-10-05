@@ -7,6 +7,7 @@ import '../../app/routes.dart';
 import '../../core/phone.dart';
 import '../../design/theme.dart';
 import '../../design/widgets/surfaces.dart';
+import '../home/how_it_works.dart';
 import '../startup/startup.dart';
 import '../support/support.dart';
 import 'legal_content.dart';
@@ -91,6 +92,11 @@ class HelpScreen extends ConsumerWidget {
           const SizedBox(height: IdSpace.s5),
           IdListGroup(
             children: [
+              IdListRow(
+                icon: LucideIcons.info,
+                label: 'How it works',
+                onTap: () => showHowItWorks(context, ref),
+              ),
               IdListRow(
                 icon: LegalDoc.cancellation.icon,
                 label: 'Cancellation and refunds',
