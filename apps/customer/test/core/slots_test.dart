@@ -17,6 +17,13 @@ void main() {
     expect(slotWindow(testSlot(testToday, TimeSlot.evening)), '4 – 8 PM');
   });
 
+  test('keepWindowTogether stops a window breaking across lines, and leaves everything else alone', () {
+    expect(keepWindowTogether('Arriving today, 4 – 8 PM'), 'Arriving today, 4\u00A0\u2060–\u2060\u00A08\u00A0PM');
+    expect(keepWindowTogether('Back by Sat 3 Oct, 11 AM – 4 PM'), 'Back by Sat 3 Oct, 11\u00A0AM\u00A0\u2060–\u2060\u00A04\u00A0PM');
+    expect(keepWindowTogether('Step 3 of 5'), 'Step 3 of 5', reason: 'no hours, no change');
+    expect(keepWindowTogether('Sun 4 Oct'), 'Sun 4 Oct', reason: 'dates keep their ordinary spaces');
+  });
+
   test('keeps half hours, and midnight and noon read as 12', () {
     SlotOptionDto at(int h, int m, int endH, int endM) => SlotOptionDto(
           date: testToday,

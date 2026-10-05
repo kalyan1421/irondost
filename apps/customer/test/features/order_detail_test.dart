@@ -6,6 +6,7 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:go_router/go_router.dart';
 import 'package:irondost_customer/app/routes.dart';
 import 'package:irondost_customer/data/api_client.dart';
+import 'package:irondost_customer/design/theme.dart';
 import 'package:irondost_customer/features/basket/basket.dart';
 import 'package:irondost_customer/features/orders/order_bill_screen.dart';
 import 'package:irondost_customer/features/orders/order_detail_screen.dart';
@@ -78,7 +79,7 @@ void main() {
       expect(find.text('Order ID001046'), findsOneWidget);
       expect(find.text('Step 1 of 5'), findsOneWidget);
       expect(find.text('Booked'), findsWidgets);
-      expect(find.text('Pickup today, 4 – 8 PM'), findsOneWidget);
+      expect(find.text('Pickup today, 4\u00A0\u2060–\u2060\u00A08\u00A0PM'), findsOneWidget);
       expect(find.text('Finding a partner near you'), findsOneWidget);
       expect(find.text('Ironing'), findsOneWidget);
       expect(
@@ -105,7 +106,7 @@ void main() {
       );
 
       expect(find.text('Pickup running late'), findsOneWidget);
-      expect(find.text('Window today, 4 – 8 PM'), findsOneWidget);
+      expect(find.text('Window today, 4\u00A0\u2060–\u2060\u00A08\u00A0PM'), findsOneWidget);
       expect(
         find.textContaining("will call you if we can't make it by 8 PM"),
         findsOneWidget,
@@ -162,7 +163,7 @@ void main() {
       ),
     );
     expect(find.text('Out for delivery'), findsWidgets);
-    expect(find.text('Arriving today, 4 – 8 PM'), findsOneWidget);
+    expect(find.text('Arriving today, 4\u00A0\u2060–\u2060\u00A08\u00A0PM'), findsOneWidget);
     expect(find.text('Bringing your clothes back'), findsOneWidget);
     expect(
       find.text(
@@ -170,6 +171,130 @@ void main() {
       ),
       findsOneWidget,
     );
+  });
+
+  group('the status hero and the partner card', () {
+    /// Fill colour of each of the five progress segments, left to right.
+    List<Color?> bar(WidgetTester tester) => [
+      for (final w in tester.widgetList<Container>(
+        find.byWidgetPredicate(
+          (w) =>
+              w is Container &&
+              w.constraints?.minHeight == 4 &&
+              w.constraints?.maxHeight == 4,
+        ),
+      ))
+        (w.decoration! as BoxDecoration).color,
+    ];
+
+    IdColors colors(WidgetTester tester) =>
+        tester.element(find.byType(Scaffold).first).colors;
+
+    Finder callButtons() => find.byWidgetPredicate(
+      (w) => w is IconButton && (w.tooltip ?? '').startsWith('Call '),
+    );
+
+    testWidgets('the bar fills to the current step, in the primary colour while on time', (
+      tester,
+    ) async {
+      await pump(
+        tester,
+        testOrder(
+          status: OrderStatus.processing,
+          deliveryDate: '2099-10-06',
+          pickedUpAt: pickedUp,
+          pickupDriver: ravi,
+        ),
+      );
+      final c = colors(tester);
+
+      expect(bar(tester), [c.primary, c.primary, c.primary, c.border, c.border]);
+      expect(find.text('Step 3 of 5'), findsOneWidget, reason: 'the words stay');
+      expect(find.text('Call us'), findsNothing, reason: 'nothing is late');
+    });
+
+    testWidgets('a missed delivery estimate turns the bar amber and offers a call', (
+      tester,
+    ) async {
+      await pump(
+        tester,
+        testOrder(
+          status: OrderStatus.processing,
+          pickedUpAt: pickedUp,
+        ).withPickupDriver(ravi),
+      );
+      final c = colors(tester);
+
+      expect(bar(tester), [c.warning, c.warning, c.warning, c.border, c.border]);
+      expect(find.textContaining('Delivery estimate missed:'), findsOneWidget);
+      expect(find.text('Call us'), findsOneWidget);
+    });
+
+    testWidgets('a late pickup has an amber bar and still exactly one Call us', (
+      tester,
+    ) async {
+      await pump(
+        tester,
+        testOrder(
+          pickupDate: today,
+          dispatchFailedAt: DateTime.utc(2026, 10, 3, 9, 30),
+        ),
+      );
+      final c = colors(tester);
+
+      expect(bar(tester), [c.warning, c.border, c.border, c.border, c.border]);
+      expect(find.text('Call us'), findsOneWidget, reason: 'the notice has it; the hero adds none');
+    });
+
+    testWidgets('before anyone accepts, the card has the same shape and no call button', (
+      tester,
+    ) async {
+      await pump(tester, testOrder(pickupDate: today));
+
+      expect(find.text('Your partner'), findsOneWidget);
+      expect(
+        find.text(
+          "You'll see your partner's name and number here once they accept.",
+        ),
+        findsOneWidget,
+      );
+      expect(find.text('Pickup partner'), findsNothing);
+      expect(callButtons(), findsNothing);
+    });
+
+    testWidgets('once assigned, the card names the role and offers a call', (
+      tester,
+    ) async {
+      await pump(
+        tester,
+        testOrder(
+          status: OrderStatus.processing,
+          deliveryDate: '2099-10-06',
+          pickedUpAt: pickedUp,
+          pickupDriver: ravi,
+        ),
+      );
+
+      expect(find.text('Pickup partner'), findsOneWidget);
+      expect(find.text('Ravi K.'), findsOneWidget);
+      expect(find.text('Your partner'), findsNothing);
+      expect(callButtons(), findsOneWidget);
+    });
+
+    testWidgets('on the way back, it is the delivery partner', (tester) async {
+      await pump(
+        tester,
+        testOrder(
+          status: OrderStatus.outForDelivery,
+          deliveryDate: '2099-10-06',
+          pickedUpAt: pickedUp,
+          deliveryDriver: ravi,
+        ),
+      );
+
+      expect(find.text('Delivery partner'), findsOneWidget);
+      expect(find.text('Pickup partner'), findsNothing);
+    });
   });
 
   testWidgets(

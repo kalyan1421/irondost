@@ -35,6 +35,15 @@ String windowFromLabel(String label) {
   return _window(int.parse(m[1]!), int.parse(m[2]!), int.parse(m[3]!), int.parse(m[4]!));
 }
 
+/// Keeps a time window together on one line. "4 – 8 PM" and "11 AM – 4 PM" are joined with no-break
+/// spaces, so a long sentence wraps before the hours rather than in the middle of them ("4 – 8 /
+/// PM"). The en dash needs more than a no-break space: Unicode allows a line break right after it,
+/// so it is wrapped in word joiners (U+2060, which draw nothing). Only for text that is displayed:
+/// the strings the API and the tests compare stay as they are.
+String keepWindowTogether(String text) => text
+    .replaceAll(' – ', '\u00A0\u2060–\u2060\u00A0')
+    .replaceAllMapped(RegExp(r'(\d) (AM|PM)'), (m) => '${m[1]}\u00A0${m[2]}');
+
 /// "2026-10-03" as a calendar date. No time zone is involved: the API sends IST calendar days.
 DateTime _day(String isoDate) => DateTime.parse(isoDate);
 

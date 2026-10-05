@@ -213,7 +213,8 @@ class _BasketRow extends ConsumerWidget {
       Row(crossAxisAlignment: CrossAxisAlignment.start, children: [
         Expanded(child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [Text(line.name, style: t.title), Text('${rupees(line.unitPaise)} each', style: t.caption.copyWith(color: c.textMuted))])),
         const SizedBox(width: IdSpace.s3),
-        Flexible(child: Text(rupees(line.unitPaise * line.quantity), textAlign: TextAlign.end, style: t.label.copyWith(fontFeatures: const [FontFeature.tabularFigures()]))),
+        // Not Flexible: next to the Expanded name it would take half the row and start mid-screen.
+        Text(rupees(line.unitPaise * line.quantity), textAlign: TextAlign.end, style: t.label.copyWith(fontFeatures: const [FontFeature.tabularFigures()])),
       ]),
       const SizedBox(height: IdSpace.s3),
       ItemStepper(name: line.name, quantity: line.quantity, showAddWhenEmpty: false, canAdd: line.quantity < BasketController.maxPerItem,
@@ -474,25 +475,50 @@ class _Footer extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final c = context.colors;
+    final t = context.text;
     final q = quote;
     final short = q?.minOrderShortfallPaise;
+    // With large text the total and the button no longer fit side by side: the button goes below,
+    // full width (the same rule as the catalogue's cart bar).
+    final stacked = MediaQuery.textScalerOf(context).scale(1) > 1.3;
     final IdButton button;
     if (short != null && !loading) {
       button = IdButton(
         label: 'Add ${rupees(short)} more',
-        expand: true,
+        expand: stacked,
         onPressed: () =>
             context.canPop() ? context.pop() : context.push(Routes.book),
       );
     } else {
       button = IdButton(
         label: 'Choose pickup time',
-        expand: true,
+        expand: stacked,
         onPressed: q != null && q.canPlaceOrder && !loading
             ? () => context.push(Routes.schedule)
             : null,
       );
     }
+    // Always shown, so the button does not change width while a new price is on its way: the last
+    // total stays, muted, until the server answers.
+    final total = q == null ? '—' : rupees(q.totalPaise);
+    final summary = Semantics(
+      label: q == null ? 'Total not known yet' : 'Total $total',
+      excludeSemantics: true,
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Text('Total', style: t.label.copyWith(color: c.textMuted)),
+          Text(
+            total,
+            style: t.titleLg.copyWith(
+              color: loading ? c.textMuted : null,
+              fontFeatures: const [FontFeature.tabularFigures()],
+            ),
+          ),
+        ],
+      ),
+    );
     return DecoratedBox(
       decoration: BoxDecoration(
         color: c.surface,
@@ -507,7 +533,19 @@ class _Footer extends StatelessWidget {
             IdSpace.s5,
             IdSpace.s3,
           ),
-          child: button,
+          child: stacked
+              ? Column(
+                  crossAxisAlignment: CrossAxisAlignment.stretch,
+                  mainAxisSize: MainAxisSize.min,
+                  children: [summary, const SizedBox(height: IdSpace.s2), button],
+                )
+              : Row(
+                  children: [
+                    Expanded(child: summary),
+                    const SizedBox(width: IdSpace.s3),
+                    button,
+                  ],
+                ),
         ),
       ),
     );

@@ -199,14 +199,14 @@ class OrderDetailScreen extends ConsumerWidget {
       IdCard(child: OrderTimeline(steps: buildTimeline(order))),
       if (partner != null) ...[
         const SizedBox(height: IdSpace.s4),
-        _PartnerRow(person: partner, caption: partnerCaption(order)),
+        _PartnerRow(
+          person: partner,
+          role: partnerRole(order),
+          caption: partnerCaption(order),
+        ),
       ] else if (!delayed) ...[
         const SizedBox(height: IdSpace.s4),
-        const _Notice(
-          icon: LucideIcons.user,
-          tone: _NoticeTone.info,
-          text: "You'll see your partner's name and number here once they accept.",
-        ),
+        const _PartnerPending(),
       ],
       if (due) ...[
         const SizedBox(height: IdSpace.s4),
@@ -355,6 +355,16 @@ PersonRefDto? partnerFor(OrderDto o) => switch (o.status) {
   OrderStatus.readyForDelivery => o.pickupDriver,
   _ => null,
 };
+
+/// "Delivery partner" once the partner shown is the one bringing the clothes back, else "Pickup partner".
+String partnerRole(OrderDto o) {
+  final delivering =
+      o.status == OrderStatus.deliveryAssigned ||
+      o.status == OrderStatus.outForDelivery;
+  return delivering && o.deliveryDriver != null
+      ? 'Delivery partner'
+      : 'Pickup partner';
+}
 
 String partnerCaption(OrderDto o) => switch (o.status) {
   OrderStatus.pickupAssigned => 'Coming to pick up your clothes',
@@ -599,32 +609,113 @@ class _Hero extends StatelessWidget {
             _ =>
               'Back by ${dayLong(order.deliveryDate, today: today)}, ${windowFromLabel(order.deliverySlotLabel)}',
           };
-    return Semantics(
-      container: true,
-      liveRegion: true,
-      child: ClipRRect(
-        borderRadius: BorderRadius.circular(IdRadius.xl),
-        child: Container(
-          width: double.infinity,
-          color: c.surface,
-          padding: const EdgeInsets.all(IdSpace.s5),
-          child: Stack(
-            clipBehavior: Clip.none,
+    // Late: the sentence stays in the text colour so it is easy to read; the icon and the bar carry
+    // the warning colour, and the words say it too, so colour is never the only signal.
+    final late = missed || delayed;
+    final accent = late ? c.warning : c.primary;
+    // No card around the hero: it is the page's own colour, so padding or a clip here would only
+    // push the text 20 dp off the grid the timeline and partner card sit on, and a clip would cut
+    // the edge of anything drawn right at the margin (a glyph, a button outline).
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        // The status is announced when it changes; the button below is kept out of this region
+        // so that announcing a new status does not also announce a button.
+        Semantics(
+          container: true,
+          liveRegion: true,
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Column(
+              Text(
+                'Step $step of 5',
+                style: t.labelSm.copyWith(color: c.textMuted),
+              ),
+              Text(title, style: t.headline.copyWith(color: c.text)),
+              const SizedBox(height: IdSpace.s2),
+              Row(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Text(
-                    'Step $step of 5',
-                    style: t.labelSm.copyWith(color: c.textMuted),
+                  ExcludeSemantics(
+                    child: Padding(
+                      // Centres the 20 dp icon on the first line of text.
+                      padding: const EdgeInsets.only(top: 1),
+                      child: Icon(
+                        late ? LucideIcons.circleAlert : LucideIcons.clock,
+                        size: IdSize.iconMd,
+                        color: accent,
+                      ),
+                    ),
                   ),
-                  Text(title, style: t.headline.copyWith(color: c.text)),
-                  Text(body, style: t.body.copyWith(color: c.text)),
+                  const SizedBox(width: IdSpace.s2),
+                  Expanded(
+                    child: Text(
+                      // The hours stay on one line: a wrap inside "4 – 8 PM" reads as two times.
+                      keepWindowTogether(body),
+                      // The time to look for is the point of this line; a late message is a
+                      // sentence, so it stays at body weight.
+                      style: (missed ? t.body : t.title).copyWith(
+                        color: c.text,
+                      ),
+                    ),
+                  ),
                 ],
               ),
+              const SizedBox(height: IdSpace.s4),
+              _StepBar(step: step, color: accent),
             ],
           ),
         ),
+        if (missed) ...[const SizedBox(height: IdSpace.s4), const _CallUs()],
+      ],
+    );
+  }
+}
+
+/// Five short segments, one per timeline step: those reached are filled. It repeats what "Step n of
+/// 5" and the timeline already say, so it is hidden from screen readers.
+class _StepBar extends StatelessWidget {
+  const _StepBar({required this.step, required this.color});
+  final int step;
+  final Color color;
+
+  @override
+  Widget build(BuildContext context) {
+    final c = context.colors;
+    return ExcludeSemantics(
+      child: Row(
+        children: [
+          for (var i = 1; i <= 5; i++) ...[
+            if (i > 1) const SizedBox(width: IdSpace.s1),
+            Expanded(
+              child: Container(
+                height: 4,
+                decoration: BoxDecoration(
+                  color: i <= step ? color : c.border,
+                  borderRadius: BorderRadius.circular(IdRadius.full),
+                ),
+              ),
+            ),
+          ],
+        ],
+      ),
+    );
+  }
+}
+
+/// Dials support. Shown when the delivery estimate has passed, next to the words that say so.
+class _CallUs extends ConsumerWidget {
+  const _CallUs();
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final support = Support.of(ref);
+    return Align(
+      alignment: Alignment.centerLeft,
+      child: IdButton.outline(
+        label: 'Call us',
+        icon: LucideIcons.phone,
+        onPressed: () => Support.dial(support.phone),
       ),
     );
   }
@@ -719,9 +810,62 @@ class _DelayedNotice extends ConsumerWidget {
   }
 }
 
+/// The partner card before anyone has accepted. Same shape as [_PartnerRow], so the screen does not
+/// jump when a name and a call button replace it.
+class _PartnerPending extends StatelessWidget {
+  const _PartnerPending();
+
+  @override
+  Widget build(BuildContext context) {
+    final c = context.colors;
+    final t = context.text;
+    return IdCard(
+      padding: const EdgeInsets.symmetric(vertical: 14),
+      child: Row(
+        children: [
+          Container(
+            width: 48,
+            height: 48,
+            alignment: Alignment.center,
+            decoration: BoxDecoration(
+              color: c.surfaceSoft,
+              shape: BoxShape.circle,
+            ),
+            child: ExcludeSemantics(
+              child: Icon(
+                LucideIcons.user,
+                size: IdSize.iconMd,
+                color: c.textMuted,
+              ),
+            ),
+          ),
+          const SizedBox(width: IdSpace.s3),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text('Your partner', style: t.title),
+                Text(
+                  "You'll see your partner's name and number here once they accept.",
+                  style: t.caption.copyWith(color: c.textMuted),
+                ),
+              ],
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
 class _PartnerRow extends StatelessWidget {
-  const _PartnerRow({required this.person, required this.caption});
+  const _PartnerRow({
+    required this.person,
+    required this.role,
+    required this.caption,
+  });
   final PersonRefDto person;
+  final String role;
   final String caption;
 
   static String _initials(String? name) {
@@ -741,7 +885,7 @@ class _PartnerRow extends StatelessWidget {
     final name = person.name ?? 'Your partner';
     final first = name.split(' ').first;
     return IdCard(
-      padding: const EdgeInsets.symmetric(horizontal: IdSpace.s5, vertical: 14),
+      padding: const EdgeInsets.symmetric(vertical: 14),
       child: Row(
         children: [
           Container(
@@ -764,6 +908,7 @@ class _PartnerRow extends StatelessWidget {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
+                Text(role, style: t.labelSm.copyWith(color: c.textMuted)),
                 Text(name, style: t.title),
                 Text(caption, style: t.caption.copyWith(color: c.textMuted)),
               ],

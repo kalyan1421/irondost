@@ -93,6 +93,8 @@ class OrderConfirmedScreen extends ConsumerWidget {
                               ),
                               const SizedBox(height: IdSpace.s6),
                               _Summary(order: order),
+                              const SizedBox(height: IdSpace.s6),
+                              const _NextSteps(),
                             ],
                           ),
                         ),
@@ -211,6 +213,83 @@ class _Summary extends StatelessWidget {
           ),
         ],
       ),
+    );
+  }
+}
+
+/// What the customer can expect, in the order the tracker will show it. Every line restates
+/// something the app already tells them elsewhere (the count is confirmed at pickup, the tracker
+/// has an Ironing step, the delivery window was chosen), so this adds no new promise.
+class _NextSteps extends StatelessWidget {
+  const _NextSteps();
+
+  static const _steps = [
+    (
+      'Collected and counted',
+      'Your partner counts your clothes at pickup.',
+    ),
+    (
+      'Ironed at our workshop',
+      'Track each step from the Orders tab.',
+    ),
+    (
+      'Brought back to you',
+      'A partner delivers in the window you chose.',
+    ),
+  ];
+
+  @override
+  Widget build(BuildContext context) {
+    final c = context.colors;
+    final t = context.text;
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        Semantics(
+          header: true,
+          child: Text('What happens next', style: t.title),
+        ),
+        const SizedBox(height: IdSpace.s2),
+        for (final (i, (title, body)) in _steps.indexed)
+          Container(
+            decoration: BoxDecoration(
+              border: Border(
+                top: BorderSide(color: c.border),
+                bottom: i == _steps.length - 1
+                    ? BorderSide(color: c.border)
+                    : BorderSide.none,
+              ),
+            ),
+            padding: const EdgeInsets.symmetric(vertical: IdSpace.s3),
+            child: Row(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                ExcludeSemantics(
+                  child: SizedBox(
+                    width: IdSpace.s5,
+                    child: Text(
+                      '${i + 1}',
+                      style: t.label.copyWith(color: c.primary),
+                    ),
+                  ),
+                ),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(title, style: t.label),
+                      const SizedBox(height: IdSpace.s1),
+                      Text(
+                        body,
+                        style: t.body.copyWith(color: c.textMuted),
+                      ),
+                    ],
+                  ),
+                ),
+              ],
+            ),
+          ),
+      ],
     );
   }
 }

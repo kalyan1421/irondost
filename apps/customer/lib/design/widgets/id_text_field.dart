@@ -27,6 +27,9 @@ class IdTextField extends StatelessWidget {
     this.autofocus = false,
     this.textCapitalization = TextCapitalization.none,
     this.trailing,
+    this.minLines,
+    this.maxLines = 1,
+    this.maxLength,
   });
 
   final String label;
@@ -49,6 +52,13 @@ class IdTextField extends StatelessWidget {
   final bool autofocus;
   final TextCapitalization textCapitalization;
   final Widget? trailing;
+
+  /// A note field grows between [minLines] and [maxLines]; the default is a single line.
+  final int? minLines;
+  final int? maxLines;
+
+  /// Stops typing at this length and shows a running count under the field.
+  final int? maxLength;
 
   @override
   Widget build(BuildContext context) {
@@ -86,6 +96,9 @@ class IdTextField extends StatelessWidget {
           autofillHints: autofillHints,
           inputFormatters: inputFormatters,
           textCapitalization: textCapitalization,
+          minLines: minLines,
+          maxLines: maxLines,
+          maxLength: maxLength,
           onChanged: onChanged,
           onSubmitted: onSubmitted,
           style: t.bodyLg,

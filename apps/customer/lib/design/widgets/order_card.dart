@@ -17,6 +17,7 @@ class OrderCard extends StatelessWidget {
     required this.order,
     required this.onOpen,
     this.onPay,
+    this.onRepeat,
   });
 
   final OrderDto order;
@@ -26,6 +27,9 @@ class OrderCard extends StatelessWidget {
 
   /// "Pay now", shown when something is due.
   final VoidCallback? onPay;
+
+  /// "Book again", offered on finished orders: puts the same items in a new basket.
+  final VoidCallback? onRepeat;
 
   bool get _finished =>
       order.status == OrderStatus.delivered ||
@@ -42,6 +46,49 @@ class OrderCard extends StatelessWidget {
         ? '${order.status == OrderStatus.cancelled ? 'Cancelled${order.pickedUpAt == null ? ' before pickup' : ''}' : itemsSummary(order)}'
               ' · ${istDayLabel((order.status == OrderStatus.cancelled ? order.cancelledAt : order.deliveredAt) ?? order.updatedAt)}'
         : itemsSummary(order);
+
+    final amountAndNote = Wrap(
+      spacing: IdSpace.s2,
+      runSpacing: IdSpace.s1,
+      crossAxisAlignment: WrapCrossAlignment.center,
+      children: [
+        Text(
+          rupees(order.totalPaise),
+          style: t.titleLg.copyWith(
+            fontFeatures: const [FontFeature.tabularFigures()],
+            color: order.status == OrderStatus.cancelled ? c.textMuted : null,
+            decoration: order.status == OrderStatus.cancelled
+                ? TextDecoration.lineThrough
+                : null,
+          ),
+        ),
+        if (_finished)
+          Text(
+            settledNote(order),
+            style: t.caption.copyWith(color: c.textMuted),
+          )
+        else
+          _PaymentChip(order, due: due),
+      ],
+    );
+    final details = TextButton(
+      onPressed: due && onPay != null ? onPay : onOpen,
+      style: TextButton.styleFrom(
+        padding: const EdgeInsets.only(left: IdSpace.s3),
+      ),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Text(
+            due && onPay != null
+                ? 'Pay now'
+                : (_finished ? 'Details' : 'Track'),
+          ),
+          const SizedBox(width: 2),
+          const Icon(LucideIcons.chevronRight, size: IdSize.iconSm),
+        ],
+      ),
+    );
 
     return Semantics(
       container: true,
@@ -109,56 +156,32 @@ class OrderCard extends StatelessWidget {
               ),
             ],
             const SizedBox(height: IdSpace.s3),
-            Row(
-              children: [
-                Expanded(
-                  child: Wrap(
-                    spacing: IdSpace.s2,
-                    runSpacing: IdSpace.s1,
-                    crossAxisAlignment: WrapCrossAlignment.center,
-                    children: [
-                      Text(
-                        rupees(order.totalPaise),
-                        style: t.titleLg.copyWith(
-                          fontFeatures: const [FontFeature.tabularFigures()],
-                          color: order.status == OrderStatus.cancelled
-                              ? c.textMuted
-                              : null,
-                          decoration: order.status == OrderStatus.cancelled
-                              ? TextDecoration.lineThrough
-                              : null,
-                        ),
-                      ),
-                      if (_finished)
-                        Text(
-                          settledNote(order),
-                          style: t.caption.copyWith(color: c.textMuted),
-                        )
-                      else
-                        _PaymentChip(order, due: due),
-                    ],
+            if (_finished && onRepeat != null) ...[
+              amountAndNote,
+              // Two short actions in a Wrap, so large text puts one under the other instead of
+              // overflowing a Row.
+              Wrap(
+                alignment: WrapAlignment.spaceBetween,
+                crossAxisAlignment: WrapCrossAlignment.center,
+                children: [
+                  TextButton.icon(
+                    onPressed: onRepeat,
+                    style: TextButton.styleFrom(
+                      padding: const EdgeInsets.only(right: IdSpace.s3),
+                    ),
+                    icon: const Icon(LucideIcons.repeat, size: IdSize.iconSm),
+                    label: const Text('Book again'),
                   ),
-                ),
-                TextButton(
-                  onPressed: due && onPay != null ? onPay : onOpen,
-                  style: TextButton.styleFrom(
-                    padding: const EdgeInsets.only(left: IdSpace.s3),
-                  ),
-                  child: Row(
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      Text(
-                        due && onPay != null
-                            ? 'Pay now'
-                            : (_finished ? 'Details' : 'Track'),
-                      ),
-                      const SizedBox(width: 2),
-                      const Icon(LucideIcons.chevronRight, size: IdSize.iconSm),
-                    ],
-                  ),
-                ),
-              ],
-            ),
+                  details,
+                ],
+              ),
+            ] else
+              Row(
+                children: [
+                  Expanded(child: amountAndNote),
+                  details,
+                ],
+              ),
           ],
         ),
       ),

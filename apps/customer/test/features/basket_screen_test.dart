@@ -47,12 +47,23 @@ void main() {
     await tester.scrollUntilVisible(find.text('To pay'), 200, scrollable: find.byType(Scrollable).first);
     await tester.pumpAndSettle();
     expect(find.text('Items (15)'), findsOneWidget);
-    expect(find.text('₹260'), findsNWidgets(2), reason: 'items and to pay');
+    expect(find.text('₹260'), findsNWidgets(3), reason: 'items, to pay, and the total in the footer');
+    expect(find.text('Total'), findsOneWidget, reason: 'the footer keeps the amount in view even when the bill is scrolled away');
     expect(find.text('Free'), findsOneWidget);
     expect(find.text('To pay'), findsOneWidget);
     expect(quotes.calls, hasLength(1));
     expect(quotes.calls.single.$2, isNull);
     expect(tester.widget<FilledButton>(find.widgetWithText(FilledButton, 'Choose pickup time')).onPressed, isNotNull);
+  });
+
+  testWidgets('each line price sits at the right edge of its row, not mid-screen', (tester) async {
+    await pump(tester, saved: {'basket.v1': tenShirtsAndASaree});
+    final screen = tester.getSize(find.byType(Scaffold).first).width;
+
+    // Ten shirts at ₹15. The price must end where the content ends (20 dp gutter), whatever the name's length.
+    final priceRight = tester.getTopRight(find.text('₹150')).dx;
+    expect(priceRight, closeTo(screen - 20, 1));
+    expect(tester.getTopLeft(find.text('₹150')).dx, greaterThan(screen / 2), reason: 'a short price must not start at the row midpoint');
   });
 
   testWidgets('a burst of taps is priced once, after the pause', (tester) async {
@@ -77,7 +88,7 @@ void main() {
     expect(container.read(basketProvider).quantityOf('saree'), 4);
     await tester.scrollUntilVisible(find.text('To pay'), 200, scrollable: find.byType(Scrollable).first);
     await tester.pumpAndSettle();
-    expect(find.text('₹410'), findsNWidgets(2));
+    expect(find.text('₹410'), findsNWidgets(3), reason: 'items, to pay, and the footer total');
   });
 
   testWidgets('the Choose pickup time button waits for the new price', (tester) async {
@@ -156,7 +167,7 @@ void main() {
       await tester.scrollUntilVisible(find.text('To pay'), 200, scrollable: find.byType(Scrollable).first);
       await tester.pumpAndSettle();
       expect(find.text('−₹52'), findsOneWidget);
-      expect(find.text('₹208'), findsOneWidget, reason: 'to pay');
+      expect(find.text('₹208'), findsNWidgets(2), reason: 'to pay, and the footer total');
     });
 
     testWidgets('an unknown, expired or used code is explained under the field and not applied', (tester) async {

@@ -20,6 +20,7 @@ import '../catalogue/booking_entry.dart';
 import '../notifications/notifications.dart';
 import '../offers/promo_code.dart';
 import '../offers/promotions.dart';
+import '../orders/order_detail_screen.dart' show bookAgain;
 import '../orders/orders_list.dart';
 import 'banners.dart';
 import 'offer_banners.dart';
@@ -113,6 +114,7 @@ class HomeScreen extends ConsumerWidget {
           ref.invalidate(promotionsProvider);
           ref.invalidate(bannersProvider);
           ref.invalidate(ordersListProvider(Scope.active));
+          ref.invalidate(ordersListProvider(Scope.past));
           await ref
               .read(catalogProvider.future)
               .catchError((_) => <CatalogCategoryDto>[]);
@@ -151,10 +153,11 @@ class HomeScreen extends ConsumerWidget {
               expand: true,
               onPressed: () => startBooking(context, ref),
             ),
+            const _RepeatLast(),
             const SizedBox(height: IdSpace.s6),
-            const OfferBanners(),
             const _Services(),
             const SizedBox(height: IdSpace.s6),
+            const OfferBanners(),
             const _Offer(),
           ],
         ),
@@ -278,6 +281,42 @@ class _ActiveOrder extends ConsumerWidget {
             ],
           ),
         ),
+      ),
+    );
+  }
+}
+
+/// "Repeat last order · 12 items": a way back to the same basket for a returning customer.
+///
+/// Only when nothing is in progress. With an active order, tracking it is the useful shortcut; and
+/// past orders are then not loaded every time Home opens.
+class _RepeatLast extends ConsumerWidget {
+  const _RepeatLast();
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final active = ref.watch(ordersListProvider(Scope.active)).value;
+    if (active == null || active.items.isNotEmpty) {
+      return const SizedBox.shrink();
+    }
+    final past =
+        ref.watch(ordersListProvider(Scope.past)).value?.items ?? const [];
+    final last = past
+        .where((o) => o.status == OrderStatus.delivered)
+        .firstOrNull;
+    if (last == null) return const SizedBox.shrink();
+    // The same items bookAgain would put in the basket: those still in the price list.
+    final pieces = last.items
+        .where((i) => i.catalogItemId != null)
+        .fold<num>(0, (a, i) => a + i.quantity)
+        .toInt();
+    if (pieces == 0) return const SizedBox.shrink();
+    return Align(
+      alignment: Alignment.centerLeft,
+      child: IdButton.text(
+        label: 'Repeat last order · $pieces ${pieces == 1 ? 'item' : 'items'}',
+        icon: LucideIcons.repeat,
+        onPressed: () => bookAgain(context, ref, last),
       ),
     );
   }

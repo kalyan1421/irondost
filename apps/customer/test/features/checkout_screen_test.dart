@@ -98,6 +98,54 @@ void main() {
     expect(find.text('Secure payment by Razorpay'), findsNothing);
   });
 
+  group('note for the pickup', () {
+    testWidgets('is optional, and says who sees it', (tester) async {
+      final (_, orders, _) = await pump(tester);
+      expect(find.text('Note for your pickup (optional)'), findsOneWidget);
+      expect(find.text('IronDost sees this with your order.'), findsOneWidget);
+
+      await tester.tap(find.text('Pay ₹80'));
+      await settle(tester);
+
+      expect(orders.placed.single.$1.instructions, isNull, reason: 'no note, nothing sent');
+    });
+
+    testWidgets('typed text and a quick phrase are sent together, and a phrase is only added once', (tester) async {
+      final (_, orders, _) = await pump(tester);
+
+      await tester.enterText(find.byType(TextField), 'Gate code 4321');
+      await tester.tap(find.text('Call before arriving'));
+      await tester.pump();
+      await tester.tap(find.text('Call before arriving'));
+      await tester.pump();
+      expect(find.text('Gate code 4321. Call before arriving'), findsOneWidget);
+
+      await tester.tap(find.text('Pay ₹80'));
+      await settle(tester);
+
+      expect(orders.placed.single.$1.instructions, 'Gate code 4321. Call before arriving');
+    });
+
+    testWidgets('quick phrases are full-size touch targets', (tester) async {
+      await pump(tester);
+      for (final phrase in ['Call before arriving', 'Leave with security', "Don't ring the bell"]) {
+        final target = find.ancestor(of: find.text(phrase), matching: find.byType(InkWell)).first;
+        expect(tester.getSize(target).height, greaterThanOrEqualTo(48), reason: phrase);
+      }
+    });
+
+    testWidgets('stops at the API limit of 500 characters', (tester) async {
+      final (_, orders, _) = await pump(tester);
+
+      await tester.enterText(find.byType(TextField), 'a' * 600);
+      await tester.pump();
+      await tester.tap(find.text('Pay ₹80'));
+      await settle(tester);
+
+      expect(orders.placed.single.$1.instructions, hasLength(500));
+    });
+  });
+
   testWidgets('placing a cash order goes to the confirmation', (tester) async {
     final (router, orders, container) = await pump(tester);
     await tester.tap(find.text('Cash on delivery'));
@@ -211,6 +259,15 @@ void main() {
       expect(find.text('Pay ₹248 at delivery'), findsOneWidget);
       expect(find.text('17 items · Home, Banjara Hills'), findsOneWidget);
       expect(find.text('Track order'), findsOneWidget);
+    });
+
+    testWidgets('says what happens next, in the same words as tracking', (tester) async {
+      await show(tester, testOrder());
+      expect(find.text('What happens next'), findsOneWidget);
+      expect(find.text('Collected and counted'), findsOneWidget);
+      expect(find.text('Your partner counts your clothes at pickup.'), findsOneWidget);
+      expect(find.text('Ironed at our workshop'), findsOneWidget);
+      expect(find.text('Brought back to you'), findsOneWidget);
     });
 
     testWidgets('a paid order shows the amount paid; a later pickup names the day', (tester) async {

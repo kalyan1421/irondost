@@ -58,6 +58,9 @@ class _Body extends ConsumerWidget {
     final choice = ref.read(scheduleChoiceProvider.notifier);
     final today = schedule.today!;
     final earliest = schedule.earliestPickup;
+    final open = schedule.pickupWindows.where((s) => s.available).toList();
+    final closed = schedule.pickupWindows.where((s) => !s.available).toList();
+    final fold = open.isNotEmpty && closed.isNotEmpty;
 
     return ListView(
       padding: const EdgeInsets.fromLTRB(
@@ -84,7 +87,17 @@ class _Body extends ConsumerWidget {
           onSelect: choice.pickDate,
         ),
         const SizedBox(height: IdSpace.s3),
-        for (final slot in schedule.pickupWindows) ...[
+        // With something open, the closed windows fold into one line (they only say "not these").
+        // With nothing open they all stay listed, so the notice below has the whole day in view.
+        if (fold) ...[
+          _ClosedWindows(
+            names: [for (final s in closed) slotName(s.slot)],
+            day: schedule.pickupDate,
+            today: today,
+          ),
+          const SizedBox(height: IdSpace.s2),
+        ],
+        for (final slot in fold ? open : schedule.pickupWindows) ...[
           SlotTile(
             name: slotName(slot.slot),
             window: slotWindow(slot),
@@ -114,6 +127,53 @@ class _Body extends ConsumerWidget {
           _DeliveryCard(schedule: schedule),
         ],
       ],
+    );
+  }
+}
+
+/// "Morning and Afternoon are closed for today.": the windows that cannot be chosen, in one line.
+class _ClosedWindows extends StatelessWidget {
+  const _ClosedWindows({
+    required this.names,
+    required this.day,
+    required this.today,
+  });
+
+  final List<String> names;
+  final String day;
+  final String today;
+
+  @override
+  Widget build(BuildContext context) {
+    final c = context.colors;
+    final list = names.length < 2
+        ? names.join()
+        : '${names.sublist(0, names.length - 1).join(', ')} and ${names.last}';
+    final when = day == today ? 'today' : dayLong(day);
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: IdSpace.s2),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          ExcludeSemantics(
+            child: Padding(
+              padding: const EdgeInsets.only(top: 1),
+              child: Icon(
+                LucideIcons.clock,
+                size: IdSize.iconSm,
+                color: c.textMuted,
+              ),
+            ),
+          ),
+          const SizedBox(width: IdSpace.s2),
+          Expanded(
+            child: Text(
+              '$list ${names.length == 1 ? 'is' : 'are'} closed for $when.',
+              style: context.text.caption.copyWith(color: c.textMuted),
+            ),
+          ),
+        ],
+      ),
     );
   }
 }

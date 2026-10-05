@@ -43,14 +43,15 @@ void main() {
 
   FilledButton continueButton(WidgetTester tester) => tester.widget<FilledButton>(find.widgetWithText(FilledButton, 'Continue'));
 
-  testWidgets('shows today with the closed windows dimmed and the earliest open one chosen', (tester) async {
+  testWidgets('shows today with the closed windows folded into one line and the earliest open one chosen', (tester) async {
     await pump(tester);
 
     expect(find.text('When should we collect?'), findsOneWidget);
     expect(find.text('Today'), findsOneWidget);
     expect(find.text('Sun'), findsOneWidget);
-    expect(find.bySemanticsLabel('Morning, 7 – 11 AM · Closed'), findsOneWidget);
-    expect(find.bySemanticsLabel('Afternoon, 11 AM – 4 PM · Closed'), findsOneWidget);
+    expect(find.text('Morning and Afternoon are closed for today.'), findsOneWidget);
+    expect(find.bySemanticsLabel('Morning, 7 – 11 AM · Closed'), findsNothing, reason: 'no dimmed, unselectable rows');
+    expect(find.bySemanticsLabel('Afternoon, 11 AM – 4 PM · Closed'), findsNothing);
     expect(find.bySemanticsLabel('Evening, 4 – 8 PM'), findsOneWidget);
     expect(find.text('Delivery'), findsOneWidget);
     expect(find.text('Sun 4 Oct, 4 – 8 PM'), findsOneWidget);
@@ -69,7 +70,7 @@ void main() {
     expect(repo.deliveryAsked.last, (date: '2026-10-05', slot: TimeSlot.morning));
   });
 
-  testWidgets('tapping a window selects it, and a closed one does nothing', (tester) async {
+  testWidgets('tapping a window selects it, and the closed-windows line does nothing', (tester) async {
     final (container, _) = await pump(tester);
     await tester.tap(find.text('Mon'));
     await tester.pumpAndSettle();
@@ -81,9 +82,20 @@ void main() {
 
     await tester.tap(find.text('Today'));
     await tester.pumpAndSettle();
-    await tester.tap(find.bySemanticsLabel('Morning, 7 – 11 AM · Closed'));
+    await tester.tap(find.text('Morning and Afternoon are closed for today.'));
     await tester.pumpAndSettle();
     expect(container.read(scheduleProvider).requireValue.pickup!.slot, TimeSlot.evening, reason: 'still the open window');
+  });
+
+  testWidgets('a single closed window is named on its own; with all closed the windows stay listed', (tester) async {
+    await pump(tester, repo: FakeScheduleRepository(closed: {(date: testToday, slot: TimeSlot.morning)}));
+    expect(find.text('Morning is closed for today.'), findsOneWidget);
+    expect(find.bySemanticsLabel('Afternoon, 11 AM – 4 PM'), findsOneWidget);
+
+    final all = {for (final s in [TimeSlot.morning, TimeSlot.noon, TimeSlot.evening]) (date: testToday, slot: s)};
+    await pump(tester, repo: FakeScheduleRepository(closed: all));
+    expect(find.textContaining('are closed for today.'), findsNothing, reason: 'nothing open: keep the full list and the notice');
+    expect(find.bySemanticsLabel('Morning, 7 – 11 AM · Closed'), findsOneWidget);
   });
 
   testWidgets('Change opens the delivery windows; too-soon ones are dimmed and a later one can be taken', (tester) async {
