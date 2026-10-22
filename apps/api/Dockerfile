@@ -3,6 +3,9 @@ FROM node:24-alpine AS build
 RUN corepack enable
 WORKDIR /repo
 COPY pnpm-lock.yaml pnpm-workspace.yaml package.json ./
+# pnpm-workspace.yaml pins `useNodeVersion` for local development. In the image Node comes from the base image, and pnpm cannot
+# download its own Node on Alpine (musl), so the build broke as soon as the node:24-alpine tag moved past the pinned version.
+RUN sed -i '/^useNodeVersion:/d' pnpm-workspace.yaml
 COPY apps/api/package.json apps/api/
 RUN pnpm install --frozen-lockfile --filter @laundry/api --ignore-scripts
 COPY apps/api apps/api
