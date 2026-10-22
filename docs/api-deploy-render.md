@@ -8,14 +8,37 @@ two Render services: the API and the admin console. Workspace: akvega's workspac
 
 | Part | Where | Notes |
 |---|---|---|
-| API (Docker web service `irondost-api`) | Render, `free` plan | Sleeps after 15 minutes idle and takes about a minute to wake, so order jobs and push notifications stall while asleep. |
-| Admin console (Node web service `irondost-admin`) | Render, `free` plan | Next.js, built on Render. Sleeps when idle like the API. |
+| API (Docker web service `irondost-api`) | Render, `free` plan | Sleeps after 15 minutes idle and takes about a minute to wake, so order jobs and push notifications stall while asleep. The keep-alive job (below) stops that. |
+| Admin console (Node web service `irondost-admin`) | Render, `free` plan | Next.js, built on Render. Sleeps when idle like the API, and is left to sleep on purpose (see the keep-alive section). |
 | PostgreSQL | Supabase project `gsqcgqgsatppgccuiqbb` (`ap-southeast-1`) | Reached through the session pooler. A free Supabase project pauses after a week without activity. |
 | Uploaded images | Same Supabase project, public bucket `irondost-uploads` | See "Storage on Supabase" below. |
 
 The free plans are for testing. Before real customers, change the Render `plan` to `starter` (Render refuses paid plans until the
 workspace has a payment method; `render blueprints validate render.yaml` reports `need_payment_info`) and move the Supabase project to a
 paid plan so it does not pause.
+
+## Keeping the free plans awake
+
+The API runs a keep-alive job (`apps/api/src/keep-alive`). With `KEEP_ALIVE_INTERVAL_MINUTES=10` (set in `render.yaml`) it does two
+things on start and then every 10 minutes:
+
+- **Database update.** It rewrites one row in `service_heartbeats` (the service name, a beat counter and the time), so Supabase sees
+  real writes and the project is never idle long enough to pause.
+- **Traffic.** It requests its own public address (`RENDER_EXTERNAL_URL/v1/health`, which Render fills in) and each address in
+  `KEEP_ALIVE_URLS`, so Render sees inbound traffic and never spins the service down.
+
+A failed beat is logged as a warning (`Keep-alive …`) and never affects the API. The `service_heartbeats` table comes from a migration
+that runs when the container starts. Until then the job logs a database warning and still sends the requests.
+
+**The admin is left asleep on purpose.** Free Render gives the whole workspace 750 instance hours a month, and a service that never
+sleeps uses about 744. The API alone fits; the API plus the admin is about 1,490 hours, and Render then suspends every free service
+until the first of the next month. To keep the admin awake too, move both services to `starter` first, then set
+`KEEP_ALIVE_URLS=https://irondost-admin.onrender.com/login` on the API.
+
+Limits: the job only runs while the API is up. If Render restarts it, the job starts again by itself, but nothing wakes a service
+that was already asleep before this change was deployed (open the API address once). Render also does not promise that a service
+pinging itself is "traffic"; if the API still sleeps, schedule an outside caller (UptimeRobot or a GitHub Actions cron) for
+`/v1/health` every 10 minutes, or move to `starter`.
 
 ## Settings Render asks for
 
@@ -81,7 +104,12 @@ service's Environment tab as the secret.
 3. The container applies pending migrations (`prisma migrate deploy`) and then starts. Check `https://<api-url>/v1/health`.
 4. Seed the first super admin once, from your own machine with the same `DATABASE_URL` (the session pooler string):
    `SEED_SUPER_ADMIN_PHONE=+91… pnpm --filter @laundry/api db:seed`.
-5. Put the service URL in `apps/customer/env/prod.json` as `API_BASE_URL`, and rebuild the app with
+5. Load the service catalogue (categories and items) from your local database into the live one. From `apps/api`, with the
+   session pooler string as the target; the first run is a dry run that prints what it would add and writes nothing:
+   `TARGET_DATABASE_URL='postgresql://…' scripts/push-catalogue.sh`, then the same with `--apply`. It only adds what is missing
+   (add `--overwrite` to also replace prices of items that already exist) and never deletes. Check the result at
+   `https://<api-url>/v1/catalog`.
+6. Put the service URL in `apps/customer/env/prod.json` as `API_BASE_URL`, and rebuild the app with
    `--dart-define-from-file=env/prod.json` (see [`customer-app-release.md`](customer-app-release.md), section 4).
 
 `autoDeploy` is off, so a push does not redeploy. Use the dashboard's Manual Deploy or `render deploys create <service-id>`.

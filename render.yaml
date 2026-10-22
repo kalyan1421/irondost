@@ -12,7 +12,7 @@ services:
     dockerfilePath: ./apps/api/Dockerfile
     dockerContext: .
     region: singapore
-    plan: free # sleeps after 15 minutes idle, which stalls order jobs and push; move to starter before launch
+    plan: free # sleeps after 15 minutes idle unless KEEP_ALIVE_INTERVAL_MINUTES below is set; move to starter before launch
     healthCheckPath: /v1/health
     autoDeploy: false # deploy on purpose, from the dashboard or `render deploys create`
     envVars:
@@ -25,6 +25,12 @@ services:
       # Prisma and pg-boss each open up to this many connections. 2 x 5 stays under the pooler's free-tier limit of 15.
       - key: DATABASE_POOL_MAX
         value: "5"
+      # Every 10 minutes the API writes a heartbeat row to the database and requests its own public address, so neither
+      # Render nor Supabase sees it as idle. Free Render gives the whole workspace 750 instance hours a month, which
+      # covers ONE service awake all month (about 744 hours). Do not add the admin's address to KEEP_ALIVE_URLS on the
+      # free plan: two always-on services use about 1,490 hours and Render then suspends both until the next month.
+      - key: KEEP_ALIVE_INTERVAL_MINUTES
+        value: "10"
       - key: APP_NAME
         value: IronDost
       - key: ORDER_NUMBER_PREFIX

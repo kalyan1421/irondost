@@ -562,3 +562,13 @@ model AuditLog {
   @@index([createdAt(sort: Desc)])
   @@map("audit_logs")
 }
+
+/// One row per service, rewritten on a timer so the database never looks idle (a free Supabase project pauses after
+/// a week without activity). Holds nothing the app reads.
+model ServiceHeartbeat {
+  service    String   @id
+  beats      Int      @default(0)
+  lastBeatAt DateTime @map("last_beat_at")
+
+  @@map("service_heartbeats")
+}

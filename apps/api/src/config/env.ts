@@ -51,6 +51,17 @@ export const envSchema = z
     /** A public bucket that holds the uploaded images. */
     SUPABASE_STORAGE_BUCKET: z.string().default(''),
 
+    /**
+     * Minutes between keep-alive beats: one write to the database plus one request to this service's own public
+     * address and to each of KEEP_ALIVE_URLS. 0 turns it off. A free Render service sleeps after 15 minutes without
+     * traffic, so use 10 there.
+     */
+    KEEP_ALIVE_INTERVAL_MINUTES: z.coerce.number().int().min(0).default(0),
+    /** Other addresses to request on every beat (for example the admin console), comma-separated. */
+    KEEP_ALIVE_URLS: csv,
+    /** Set by Render itself: this service's public address. */
+    RENDER_EXTERNAL_URL: z.string().default(''),
+
     /** Turn off the pg-boss worker (e.g. for one-off scripts). */
     JOBS_ENABLED: z
       .enum(['true', 'false'])
