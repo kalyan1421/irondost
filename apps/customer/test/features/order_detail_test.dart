@@ -16,6 +16,9 @@ import '../helpers.dart';
 
 void main() {
   final today = istTodayForTest();
+  // A delivery window that is today ends at 8 PM, and after that the screen rightly says the estimate was missed.
+  // Tests of an order still on its way use tomorrow, so they do not depend on the time of day they run.
+  final tomorrow = DateTime.parse('${today}T00:00:00Z').add(const Duration(days: 1)).toIso8601String().substring(0, 10);
   const ravi = PersonRefDto(id: 'd1', name: 'Ravi K.', phone: '+919876500001');
   final pickedUp = DateTime.utc(2026, 10, 1, 12, 10);
 
@@ -157,13 +160,13 @@ void main() {
       testOrder(
         status: OrderStatus.outForDelivery,
         totalPaise: 18000,
-        deliveryDate: today,
+        deliveryDate: tomorrow,
         pickedUpAt: pickedUp,
         deliveryDriver: ravi,
       ),
     );
     expect(find.text('Out for delivery'), findsWidgets);
-    expect(find.text('Arriving today, 4\u00A0\u2060–\u2060\u00A08\u00A0PM'), findsOneWidget);
+    expect(find.text('Arriving tomorrow, 4\u00A0\u2060–\u2060\u00A08\u00A0PM'), findsOneWidget);
     expect(find.text('Bringing your clothes back'), findsOneWidget);
     expect(
       find.text(

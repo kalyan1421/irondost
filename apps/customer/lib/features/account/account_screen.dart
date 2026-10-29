@@ -173,7 +173,7 @@ class AccountScreen extends ConsumerWidget {
             ),
             const SizedBox(height: IdSpace.s2),
             Text(
-              "You'll need a code by SMS to sign in again, and this phone stops getting order updates.",
+              "You'll need to sign in again to see your orders, and this phone stops getting order updates.",
               style: t.bodyLg.copyWith(color: sheet.colors.textMuted),
             ),
             const SizedBox(height: IdSpace.s5),
