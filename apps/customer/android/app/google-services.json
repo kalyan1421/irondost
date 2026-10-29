@@ -12,7 +12,20 @@
           "package_name": "com.cloudironingfactory.customer"
         }
       },
-      "oauth_client": [],
+      "oauth_client": [
+        {
+          "client_id": "264618787416-j9l4lrs1sil5d9tcguhi0eroj72vbi9i.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "com.cloudironingfactory.customer",
+            "certificate_hash": "92eef9d9b31084041e5b8bda49c318d3320ffd6f"
+          }
+        },
+        {
+          "client_id": "264618787416-jc01v9tgh2reht2j6r0voi84u1cdqv6s.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
       "api_key": [
         {
           "current_key": "AIzaSyDnJYTA08GGAbbxLoTXpmC_QUe1PocJJxU"
@@ -20,7 +33,71 @@
       ],
       "services": {
         "appinvite_service": {
-          "other_platform_oauth_client": []
+          "other_platform_oauth_client": [
+            {
+              "client_id": "264618787416-jc01v9tgh2reht2j6r0voi84u1cdqv6s.apps.googleusercontent.com",
+              "client_type": 3
+            },
+            {
+              "client_id": "264618787416-g3bpe3q3rvsj0um0ulhee1j18cphsn2v.apps.googleusercontent.com",
+              "client_type": 2,
+              "ios_info": {
+                "bundle_id": "com.irondost.customer"
+              }
+            }
+          ]
+        }
+      }
+    },
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:264618787416:android:ad3c715399093417c7c02d",
+        "android_client_info": {
+          "package_name": "com.irondost.customer"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "264618787416-hcf79ss167p67k5l3tamhhcjb9kmsa30.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "com.irondost.customer",
+            "certificate_hash": "92eef9d9b31084041e5b8bda49c318d3320ffd6f"
+          }
+        },
+        {
+          "client_id": "264618787416-mg5hgu4725r0i0ur2jrq55g7osk7klke.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "com.irondost.customer",
+            "certificate_hash": "ab4341eea990862a53f6a36f5c9c9a85ae82cd2a"
+          }
+        },
+        {
+          "client_id": "264618787416-jc01v9tgh2reht2j6r0voi84u1cdqv6s.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyDnJYTA08GGAbbxLoTXpmC_QUe1PocJJxU"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "264618787416-jc01v9tgh2reht2j6r0voi84u1cdqv6s.apps.googleusercontent.com",
+              "client_type": 3
+            },
+            {
+              "client_id": "264618787416-g3bpe3q3rvsj0um0ulhee1j18cphsn2v.apps.googleusercontent.com",
+              "client_type": 2,
+              "ios_info": {
+                "bundle_id": "com.irondost.customer"
+              }
+            }
+          ]
         }
       }
     }
