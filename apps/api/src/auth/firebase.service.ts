@@ -6,8 +6,8 @@ import { APP_ENV } from '../config/config.module.js';
 import type { Env } from '../config/env.js';
 
 /**
- * Firebase is used for exactly two things: verifying phone-OTP ID tokens and
- * sending push notifications. No Firebase database or storage is touched.
+ * Firebase is used for verifying ID tokens (phone-OTP sign-in, plus the custom tokens minted for admins who
+ * sign in with email + password) and for sending push notifications. No Firebase database or storage is touched.
  * When no service account is configured (local dev, tests) both are null.
  */
 @Injectable()

@@ -53,6 +53,43 @@
         ]
       }
     },
+    "/v1/auth/admin-login": {
+      "post": {
+        "operationId": "AuthController_adminLogin",
+        "parameters": [],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/AdminLoginDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AdminLoginResultDto"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Admin sign-in with email + password. Everyone else signs in with a phone code.",
+        "tags": [
+          "auth"
+        ]
+      }
+    },
     "/v1/schedule/pickup-slots": {
       "get": {
         "operationId": "SchedulingController_pickupSlots",
@@ -3325,6 +3362,33 @@
           "isActive",
           "isProfileComplete",
           "createdAt"
+        ]
+      },
+      "AdminLoginDto": {
+        "type": "object",
+        "properties": {
+          "email": {
+            "type": "string",
+            "example": "admin@example.com"
+          },
+          "password": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "email",
+          "password"
+        ]
+      },
+      "AdminLoginResultDto": {
+        "type": "object",
+        "properties": {
+          "token": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "token"
         ]
       },
       "TimeSlot": {

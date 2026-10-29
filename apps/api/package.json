@@ -23,6 +23,7 @@
     "db:migrate": "prisma migrate dev",
     "db:deploy": "prisma migrate deploy",
     "db:seed": "prisma db seed",
+    "db:admin": "tsx prisma/set-admin.ts",
     "db:studio": "prisma studio",
     "openapi": "nest build && node scripts/export-openapi.mjs",
     "demo": "node scripts/demo-data.mjs"

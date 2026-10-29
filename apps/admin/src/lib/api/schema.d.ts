@@ -38,6 +38,23 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/v1/auth/admin-login": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Admin sign-in with email + password. Everyone else signs in with a phone code. */
+        post: operations["AuthController_adminLogin"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/v1/schedule/pickup-slots": {
         parameters: {
             query?: never;
@@ -1113,6 +1130,14 @@ export interface components {
             /** Format: date-time */
             createdAt: string;
         };
+        AdminLoginDto: {
+            /** @example admin@example.com */
+            email: string;
+            password: string;
+        };
+        AdminLoginResultDto: {
+            token: string;
+        };
         /** @enum {string} */
         TimeSlot: "MORNING" | "NOON" | "EVENING";
         SlotOptionDto: {
@@ -2013,6 +2038,29 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["UserDto"];
+                };
+            };
+        };
+    };
+    AuthController_adminLogin: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["AdminLoginDto"];
+            };
+        };
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["AdminLoginResultDto"];
                 };
             };
         };

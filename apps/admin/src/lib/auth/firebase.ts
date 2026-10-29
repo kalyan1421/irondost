@@ -8,7 +8,7 @@ const config = {
   appId: process.env.NEXT_PUBLIC_FIREBASE_APP_ID,
 };
 
-/** Firebase is only used for phone-OTP sign-in. */
+/** Firebase carries every session: phone-OTP sign-in, and the custom token the API returns for email + password. */
 export const firebaseEnabled = Boolean(config.apiKey && config.authDomain && config.projectId);
 
 /** Local development without Firebase: sign in as any registered admin phone. Never enable in production. */

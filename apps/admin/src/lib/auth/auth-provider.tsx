@@ -4,6 +4,7 @@ import { useQueryClient } from "@tanstack/react-query";
 import {
   onAuthStateChanged,
   RecaptchaVerifier,
+  signInWithCustomToken,
   signInWithPhoneNumber,
   signOut as firebaseSignOut,
   type ConfirmationResult,
@@ -27,6 +28,8 @@ interface AuthContextValue {
   /** Sends an OTP to a 10-digit Indian mobile number. */
   sendOtp: (mobile: string) => Promise<void>;
   verifyOtp: (code: string) => Promise<void>;
+  /** Email + password sign-in; resolves once the attempt is over, and a failure shows up as `state.error`. */
+  signInWithPassword: (email: string, password: string) => Promise<void>;
   devSignIn: (mobile: string) => Promise<void>;
   signOut: () => Promise<void>;
   /** Re-reads the signed-in admin (after they edit their own staff record). */
@@ -37,8 +40,8 @@ const AuthContext = createContext<AuthContextValue | null>(null);
 const DEV_KEY = "irondost.admin.devPhone";
 
 const SESSION_ERRORS: Record<string, string> = {
-  NOT_REGISTERED: "This number is not registered as an admin. Ask a super admin to add you.",
-  WRONG_APP: "This number belongs to a customer or partner account, not an admin.",
+  NOT_REGISTERED: "This account is not registered as an admin. Ask a super admin to add you.",
+  WRONG_APP: "This account belongs to a customer or partner, not an admin.",
   ACCOUNT_DISABLED: "This admin account has been disabled.",
 };
 
@@ -145,6 +148,24 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     }
   }, []);
 
+  const signInWithPassword = useCallback(async (email: string, password: string) => {
+    const auth = firebaseAuth();
+    if (!auth) {
+      setState({ status: "signedOut", error: "Sign-in is not configured. Set the NEXT_PUBLIC_FIREBASE_* variables." });
+      return;
+    }
+    setState({ status: "loading" });
+    try {
+      // The API checks the password and answers with a Firebase custom token; Firebase turns it into the same
+      // kind of session a phone code gives, so refresh, sign-out and the realtime socket all work unchanged.
+      const { token } = await unwrap(api.POST("/v1/auth/admin-login", { body: { email, password } }));
+      await signInWithCustomToken(auth, token);
+      // onAuthStateChanged takes it from here and starts the API session.
+    } catch (err) {
+      setState({ status: "signedOut", error: err instanceof Error ? err.message : "Sign-in failed. Try again." });
+    }
+  }, []);
+
   const devSignIn = useCallback(
     async (mobile: string) => {
       if (!devAuthEnabled) throw new Error("Dev sign-in is disabled");
@@ -173,11 +194,12 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       devAuthEnabled,
       sendOtp,
       verifyOtp,
+      signInWithPassword,
       devSignIn,
       signOut,
       refreshUser,
     };
-  }, [state, sendOtp, verifyOtp, devSignIn, signOut, refreshUser]);
+  }, [state, sendOtp, verifyOtp, signInWithPassword, devSignIn, signOut, refreshUser]);
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
 }

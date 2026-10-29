@@ -80,6 +80,16 @@ Two things outside the repo make sign-in work:
 The first super admin signs in with the number given to the seed, and then adds everyone else under Staff. That number must not
 be a Firebase "phone number for testing", because those have a fixed, known code.
 
+**Email + password sign-in.** The admin's sign-in page also takes an email and password (it is the default tab; "Use a mobile number
+instead" switches to the phone code). The API checks the password against a scrypt hash in `users.password_hash`, then returns a
+Firebase custom token (`POST /v1/auth/admin-login`), so the session after that is an ordinary Firebase one. Only admins and super
+admins can use it, five tries a minute per address, and an account locks for 15 minutes after eight wrong passwords. Create such an
+admin, or reset its password, from your own machine with the session pooler string:
+`DATABASE_URL='postgresql://…' ADMIN_EMAIL=you@example.com ADMIN_PASSWORD='…' pnpm --filter @laundry/api db:admin`. The account has
+no phone, so Staff lists it as `email:<address>`. There is no "forgot password" flow on purpose: the email is only a username, so
+nobody who owns that mailbox can reset it; re-run the command to change the password. Use a real address you control and a long
+password, because this sign-in is reachable from the internet.
+
 ## Database connections
 
 The session pooler on Supabase's free tier allows about 15 connections. Prisma and pg-boss each keep a pool, so `render.yaml` sets
@@ -108,7 +118,8 @@ service's Environment tab as the secret.
 2. Render dashboard → Blueprints → New Blueprint Instance → pick the repo, enter the values above, apply.
 3. The container applies pending migrations (`prisma migrate deploy`) and then starts. Check `https://<api-url>/v1/health`.
 4. Seed the first super admin once, from your own machine with the same `DATABASE_URL` (the session pooler string):
-   `SEED_SUPER_ADMIN_PHONE=+91… pnpm --filter @laundry/api db:seed`.
+   `SEED_SUPER_ADMIN_PHONE=+91… pnpm --filter @laundry/api db:seed`. For an email + password admin instead, run `db:admin` (see
+   "Email + password sign-in" above).
 5. Load the service catalogue (categories and items) from your local database into the live one. From `apps/api`, with the
    session pooler string as the target; the first run is a dry run that prints what it would add and writes nothing:
    `TARGET_DATABASE_URL='postgresql://…' scripts/push-catalogue.sh`, then the same with `--apply`. It only adds what is missing

@@ -13,9 +13,13 @@ import { useAuth } from "@/lib/auth/auth-provider";
 const MOBILE = /^[6-9]\d{9}$/;
 
 function LoginForm() {
-  const { state, firebaseEnabled, devAuthEnabled, sendOtp, verifyOtp, devSignIn } = useAuth();
+  const { state, firebaseEnabled, devAuthEnabled, sendOtp, verifyOtp, signInWithPassword, devSignIn } = useAuth();
   const router = useRouter();
   const next = useSearchParams().get("next") ?? "/";
+  // Email + password needs Firebase to hold the session; without it (local development) only the dev sign-in exists.
+  const [method, setMethod] = useState<"email" | "phone">(firebaseEnabled ? "email" : "phone");
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
   const [mobile, setMobile] = useState("");
   const [code, setCode] = useState("");
   const [step, setStep] = useState<"phone" | "code">("phone");
@@ -28,6 +32,7 @@ function LoginForm() {
 
   const error = localError ?? (state.status === "signedOut" ? state.error : undefined);
   const validMobile = MOBILE.test(mobile);
+  const emailMode = method === "email" && firebaseEnabled;
 
   async function onSendCode(e: React.FormEvent) {
     e.preventDefault();
@@ -52,13 +57,27 @@ function LoginForm() {
     setBusy(false);
   }
 
+  async function onPasswordSignIn(e: React.FormEvent) {
+    e.preventDefault();
+    setLocalError(null);
+    await signInWithPassword(email.trim(), password);
+  }
+
   async function onDevSignIn() {
     if (!validMobile) return setLocalError("Enter a 10-digit mobile number starting with 6–9.");
     setLocalError(null);
     await devSignIn(mobile);
   }
 
+  function switchMethod(to: "email" | "phone") {
+    setLocalError(null);
+    setStep("phone");
+    setCode("");
+    setMethod(to);
+  }
+
   const signingIn = state.status === "loading" && (busy || step === "code");
+  const passwordSigningIn = state.status === "loading";
 
   return (
     <div className="flex w-full max-w-sm flex-col gap-6">
@@ -68,7 +87,11 @@ function LoginForm() {
       <div>
         <h1 className="text-2xl font-semibold tracking-tight">Sign in</h1>
         <p className="mt-1 text-sm text-muted-foreground">
-          {step === "phone" ? "Use the mobile number your account was set up with." : `Enter the 6-digit code sent to +91 ${mobile}.`}
+          {emailMode
+            ? "Use the email and password your admin account was set up with."
+            : step === "phone"
+              ? "Use the mobile number your account was set up with."
+              : `Enter the 6-digit code sent to +91 ${mobile}.`}
         </p>
       </div>
 
@@ -79,7 +102,40 @@ function LoginForm() {
         </Alert>
       ) : null}
 
-      {step === "phone" ? (
+      {emailMode ? (
+        <form onSubmit={onPasswordSignIn} className="flex flex-col gap-4">
+          <div className="grid gap-2">
+            <Label htmlFor="email">Email</Label>
+            <Input
+              id="email"
+              type="email"
+              inputMode="email"
+              autoComplete="username"
+              placeholder="you@example.com"
+              value={email}
+              onChange={(e) => setEmail(e.target.value)}
+              autoFocus
+            />
+          </div>
+          <div className="grid gap-2">
+            <Label htmlFor="password">Password</Label>
+            <Input
+              id="password"
+              type="password"
+              autoComplete="current-password"
+              value={password}
+              onChange={(e) => setPassword(e.target.value)}
+            />
+          </div>
+          <Button type="submit" disabled={passwordSigningIn || !email.trim() || !password}>
+            {passwordSigningIn ? <Loader2 className="animate-spin" /> : null}
+            Sign in
+          </Button>
+          <Button type="button" variant="ghost" onClick={() => switchMethod("phone")}>
+            Use a mobile number instead
+          </Button>
+        </form>
+      ) : step === "phone" ? (
         <form onSubmit={onSendCode} className="flex flex-col gap-4">
           <div className="grid gap-2">
             <Label htmlFor="mobile">Mobile number</Label>
@@ -101,6 +157,11 @@ function LoginForm() {
             <Button type="submit" disabled={busy || !validMobile}>
               {busy ? <Loader2 className="animate-spin" /> : null}
               Send code
+            </Button>
+          ) : null}
+          {firebaseEnabled ? (
+            <Button type="button" variant="ghost" onClick={() => switchMethod("email")}>
+              Use email and password instead
             </Button>
           ) : null}
           {devAuthEnabled ? (

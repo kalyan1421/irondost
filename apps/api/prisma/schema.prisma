@@ -130,6 +130,8 @@ model User {
   phone       String    @unique
   name        String?
   email       String?
+  /// scrypt hash for an admin who signs in with email + password instead of a phone code. Never returned by the API.
+  passwordHash String?  @map("password_hash")
   role        Role
   isActive    Boolean   @default(true) @map("is_active")
   lastLoginAt DateTime? @map("last_login_at")
