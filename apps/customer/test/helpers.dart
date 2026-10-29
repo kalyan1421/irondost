@@ -55,7 +55,14 @@ class FakeAuth implements AuthRepository {
   bool signedIn = false;
   AuthFailure? sendFailure;
   AuthFailure? confirmFailure;
+  AuthFailure? googleFailure;
   final sentTo = <String>[];
+  int googleSignIns = 0;
+
+  /// Whether the signed-in account already carries a verified number.
+  bool verifiedPhone = false;
+  int unlinks = 0;
+  final linkRequests = <bool>[];
 
   @override
   Future<bool> hasCredentials() async => signedIn;
@@ -64,16 +71,37 @@ class FakeAuth implements AuthRepository {
   Future<String?> token({bool forceRefresh = false}) async => signedIn ? 'test-token' : null;
 
   @override
-  Future<PhoneChallenge> sendCode(String phone, {PhoneChallenge? resendOf, void Function()? onAutoVerified}) async {
+  Future<PhoneChallenge> sendCode(String phone, {PhoneChallenge? resendOf, void Function()? onAutoVerified, bool link = false}) async {
     sentTo.add(phone);
+    linkRequests.add(link);
     if (sendFailure != null) throw sendFailure!;
-    return PhoneChallenge(phone: phone, verificationId: 'v-${sentTo.length}');
+    return PhoneChallenge(phone: phone, verificationId: 'v-${sentTo.length}', link: link);
   }
 
   @override
   Future<void> confirmCode(PhoneChallenge challenge, String code) async {
     if (confirmFailure != null) throw confirmFailure!;
+    if (challenge.link) {
+      verifiedPhone = true;
+      return;
+    }
     signedIn = true;
+  }
+
+  @override
+  Future<void> signInWithGoogle() async {
+    googleSignIns++;
+    if (googleFailure != null) throw googleFailure!;
+    signedIn = true;
+  }
+
+  @override
+  Future<bool> hasVerifiedPhone() async => verifiedPhone;
+
+  @override
+  Future<void> unlinkPhone() async {
+    unlinks++;
+    verifiedPhone = false;
   }
 
   @override
@@ -232,13 +260,14 @@ Future<List<Override>> basketOverrides({
   QuoteRepository? quotes,
   List<PromotionDto> promotions = const [],
   List<BannerDto> banners = const [],
+  SessionController Function()? session,
 }) async {
   SharedPreferences.setMockInitialValues(saved);
   final prefs = await SharedPreferences.getInstance();
   return [
     sharedPreferencesProvider.overrideWithValue(prefs),
     catalogProvider.overrideWith((ref) => load != null ? load() : Future.value(catalog ?? testCatalog())),
-    sessionProvider.overrideWith(SignedInSession.new),
+    sessionProvider.overrideWith(session ?? SignedInSession.new),
     quoteRepositoryProvider.overrideWithValue(quotes ?? FakeQuoteRepository()),
     promotionsProvider.overrideWith((ref) async => promotions),
     bannersProvider.overrideWith((ref) async => banners),

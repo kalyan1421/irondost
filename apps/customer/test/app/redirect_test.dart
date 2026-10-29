@@ -160,4 +160,31 @@ void main() {
   test('shows the paused screen for disabled accounts', () {
     expect(go(Routes.home, session: const AsyncData(AccountPaused())), Routes.paused);
   });
+
+  group('sessionRouteKey: when the router re-runs its redirect', () {
+    const google = Profile(id: 'g1', name: 'Gina', isComplete: true);
+    const googleWithPhone = Profile(id: 'g1', phone: '+919000000042', name: 'Gina', isComplete: true);
+
+    test('adding a verified number, or saving a name, does not change it (no screen is rebuilt under the customer)', () {
+      expect(sessionRouteKey(const AsyncData(SignedIn(google))), sessionRouteKey(const AsyncData(SignedIn(googleWithPhone))));
+      expect(
+        sessionRouteKey(const AsyncData(SignedIn(complete))),
+        sessionRouteKey(const AsyncData(SignedIn(Profile(id: 'u1', phone: '+919876543210', name: 'Priya S', isComplete: true)))),
+      );
+    });
+
+    test('signing in or out, finishing the profile, a pause, and loading all do', () {
+      final keys = {
+        sessionRouteKey(const AsyncData(SignedOut())),
+        sessionRouteKey(const AsyncData(SignedIn(incomplete))),
+        sessionRouteKey(const AsyncData(SignedIn(complete))),
+        sessionRouteKey(const AsyncData(AccountPaused())),
+        sessionRouteKey(const AsyncData(WrongApp())),
+        sessionRouteKey(const AsyncLoading<Session>()),
+        sessionRouteKey(AsyncError<Session>(Exception('offline'), StackTrace.empty)),
+      };
+      expect(keys, hasLength(7));
+    });
+  });
 }
+

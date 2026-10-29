@@ -184,6 +184,10 @@ export class OrdersService {
     }
 
     const customer = await this.activeCustomer(customerId);
+    // A customer who signed in with Google has no number until they verify one; the pickup partner needs it.
+    if (!customer.phone) {
+      throw AppError.badRequest('PHONE_REQUIRED', 'Add and verify your mobile number to place an order');
+    }
 
     const settings = await this.settings.get();
     const scheduleError =

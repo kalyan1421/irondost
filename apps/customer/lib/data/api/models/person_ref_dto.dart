@@ -18,7 +18,7 @@ class PersonRefDto {
   
   final String id;
   final String? name;
-  final String phone;
+  final String? phone;
 
   Map<String, Object?> toJson() => _$PersonRefDtoToJson(this);
 }

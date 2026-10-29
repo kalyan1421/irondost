@@ -45,7 +45,9 @@ final routerProvider = Provider<GoRouter>((ref) {
   final refresh = ValueNotifier(0);
   ref
     ..listen(startupProvider, (_, _) => refresh.value++)
-    ..listen(sessionProvider, (_, _) => refresh.value++)
+    ..listen(sessionProvider, (previous, next) {
+      if (previous == null || sessionRouteKey(previous) != sessionRouteKey(next)) refresh.value++;
+    })
     ..listen(addressesProvider, (_, _) => refresh.value++)
     ..onDispose(refresh.dispose);
 
@@ -68,6 +70,11 @@ final routerProvider = Provider<GoRouter>((ref) {
         path: Routes.login,
         builder: (_, _) => const PhoneScreen(),
         routes: [GoRoute(path: 'code', builder: (_, _) => const OtpScreen())],
+      ),
+      GoRoute(
+        path: Routes.addPhone,
+        builder: (_, _) => const PhoneScreen(linking: true),
+        routes: [GoRoute(path: 'code', builder: (_, _) => const OtpScreen(linking: true))],
       ),
       GoRoute(path: Routes.setupName, builder: (_, _) => const NameScreen()),
       GoRoute(

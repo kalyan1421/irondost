@@ -10,7 +10,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
 import { api, unwrap } from "@/lib/api/client";
 import type { Order, OrderAddress } from "@/lib/api/types";
-import { calendarDate, dateTime, phone } from "@/lib/format";
+import { calendarDate, dateTime, phone, telHref } from "@/lib/format";
 import { ItemsCard } from "./_components/items-card";
 import { OrderActions } from "./_components/order-actions";
 import { PartnersCard } from "./_components/partners-card";
@@ -98,7 +98,7 @@ function CustomerCard({ order }: { order: Order }) {
             <Link href={`/customers/${c.id}`} className="font-medium hover:underline">
               {c.name ?? "Unnamed customer"}
             </Link>
-            <a href={`tel:${c.phone}`} className="inline-flex items-center gap-1.5 text-sm text-muted-foreground hover:text-foreground">
+            <a href={telHref(c.phone)} className="inline-flex items-center gap-1.5 text-sm text-muted-foreground hover:text-foreground">
               <Phone className="size-3.5" /> {phone(c.phone)}
             </a>
           </>

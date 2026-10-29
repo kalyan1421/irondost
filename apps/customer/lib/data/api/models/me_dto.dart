@@ -26,7 +26,9 @@ class MeDto {
   factory MeDto.fromJson(Map<String, Object?> json) => _$MeDtoFromJson(json);
   
   final String id;
-  final String phone;
+
+  /// Null for a customer who signed in with Google and has not added a verified number yet.
+  final String? phone;
   final String? name;
   final String? email;
   final Role role;

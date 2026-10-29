@@ -3324,6 +3324,8 @@
           },
           "phone": {
             "type": "string",
+            "nullable": true,
+            "description": "Null for a customer who signed in with Google and has not added a verified number yet.",
             "example": "+919876543210"
           },
           "name": {
@@ -3586,6 +3588,8 @@
           },
           "phone": {
             "type": "string",
+            "nullable": true,
+            "description": "Null for a customer who signed in with Google and has not added a verified number yet.",
             "example": "+919876543210"
           },
           "name": {
@@ -4894,7 +4898,8 @@
             "nullable": true
           },
           "phone": {
-            "type": "string"
+            "type": "string",
+            "nullable": true
           }
         },
         "required": [
@@ -5418,7 +5423,8 @@
             "nullable": true
           },
           "contact": {
-            "type": "string"
+            "type": "string",
+            "nullable": true
           },
           "email": {
             "type": "string",
@@ -6012,6 +6018,8 @@
           },
           "phone": {
             "type": "string",
+            "nullable": true,
+            "description": "Null for a customer who signed in with Google and has not added a verified number yet.",
             "example": "+919876543210"
           },
           "name": {

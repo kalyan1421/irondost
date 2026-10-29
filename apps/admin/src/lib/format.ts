@@ -20,8 +20,17 @@ export function paiseToInput(paise: number | null | undefined): string {
   return paise % 100 === 0 ? String(paise / 100) : (paise / 100).toFixed(2);
 }
 
-/** "+919876543210" → "+91 98765 43210" */
-export function phone(e164: string): string {
+/** Shown where a customer who signed in with Google has not added a verified number yet. */
+export const NO_NUMBER = "No number yet";
+
+/** A `tel:` link, or no link at all when there is no number. */
+export function telHref(e164: string | null | undefined): string | undefined {
+  return e164 ? `tel:${e164}` : undefined;
+}
+
+/** "+919876543210" → "+91 98765 43210"; "No number yet" when there is none. */
+export function phone(e164: string | null | undefined): string {
+  if (!e164) return NO_NUMBER;
   const m = /^\+91(\d{5})(\d{5})$/.exec(e164);
   return m ? `+91 ${m[1]} ${m[2]}` : e164;
 }

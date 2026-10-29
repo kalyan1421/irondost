@@ -9,7 +9,7 @@ part of 'person_ref_dto.dart';
 PersonRefDto _$PersonRefDtoFromJson(Map<String, dynamic> json) => PersonRefDto(
   id: json['id'] as String,
   name: json['name'] as String?,
-  phone: json['phone'] as String,
+  phone: json['phone'] as String?,
 );
 
 Map<String, dynamic> _$PersonRefDtoToJson(PersonRefDto instance) =>

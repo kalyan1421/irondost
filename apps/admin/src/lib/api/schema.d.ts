@@ -1119,8 +1119,11 @@ export interface components {
         Role: "CUSTOMER" | "DRIVER" | "ADMIN" | "SUPER_ADMIN";
         UserDto: {
             id: string;
-            /** @example +919876543210 */
-            phone: string;
+            /**
+             * @description Null for a customer who signed in with Google and has not added a verified number yet.
+             * @example +919876543210
+             */
+            phone: string | null;
             name: string | null;
             email: string | null;
             role: components["schemas"]["Role"];
@@ -1188,8 +1191,11 @@ export interface components {
         };
         MeDto: {
             id: string;
-            /** @example +919876543210 */
-            phone: string;
+            /**
+             * @description Null for a customer who signed in with Google and has not added a verified number yet.
+             * @example +919876543210
+             */
+            phone: string | null;
             name: string | null;
             email: string | null;
             role: components["schemas"]["Role"];
@@ -1595,7 +1601,7 @@ export interface components {
         PersonRefDto: {
             id: string;
             name: string | null;
-            phone: string;
+            phone: string | null;
         };
         OrderEventDto: {
             fromStatus: components["schemas"]["OrderStatus"] | null;
@@ -1725,7 +1731,7 @@ export interface components {
         };
         CheckoutPrefillDto: {
             name: string | null;
-            contact: string;
+            contact: string | null;
             email: string | null;
         };
         CheckoutParamsDto: {
@@ -1884,8 +1890,11 @@ export interface components {
         };
         CustomerListItemDto: {
             id: string;
-            /** @example +919876543210 */
-            phone: string;
+            /**
+             * @description Null for a customer who signed in with Google and has not added a verified number yet.
+             * @example +919876543210
+             */
+            phone: string | null;
             name: string | null;
             email: string | null;
             role: components["schemas"]["Role"];

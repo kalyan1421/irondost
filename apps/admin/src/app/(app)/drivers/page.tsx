@@ -11,7 +11,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { api, unwrap } from "@/lib/api/client";
 import type { Driver } from "@/lib/api/types";
-import { dateTime, phone, relativeTime } from "@/lib/format";
+import { dateTime, phone, relativeTime, telHref } from "@/lib/format";
 import { cn } from "@/lib/utils";
 import { PartnerDialog } from "./_components/partner-dialog";
 
@@ -144,7 +144,7 @@ export default function DriversPage() {
                       <TableCell>
                         <div className="font-medium">{d.name ?? "Unnamed partner"}</div>
                         <a
-                          href={`tel:${d.phone}`}
+                          href={telHref(d.phone)}
                           className="tabular text-xs text-muted-foreground hover:text-foreground hover:underline"
                         >
                           {phone(d.phone)}

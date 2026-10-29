@@ -48,6 +48,20 @@ String? redirectFor({
   };
 }
 
+/// What [redirectFor] looks at in the session. The router re-runs its redirect only when this changes: any other change to
+/// the session (a new name, a number just verified) must not rebuild the screens the customer is on.
+Object sessionRouteKey(AsyncValue<Session> session) => (
+      session.isLoading,
+      session.hasError,
+      switch (session.value) {
+        null => 'none',
+        SignedOut() => 'out',
+        WrongApp() => 'wrong-app',
+        AccountPaused() => 'paused',
+        SignedIn(:final profile) => profile.isComplete ? 'in' : 'incomplete',
+      },
+    );
+
 String? _signedIn(AsyncValue<List<AddressDto>> addresses, String location) {
   if (addresses.hasError && !addresses.isLoading) {
     return location == Routes.unavailable ? null : Routes.unavailable;

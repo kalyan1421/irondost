@@ -17,7 +17,7 @@ export interface CheckoutParams {
   amountPaise: number;
   currency: 'INR';
   orderNumber: string;
-  prefill: { name: string | null; contact: string; email: string | null };
+  prefill: { name: string | null; contact: string | null; email: string | null };
 }
 
 interface RazorpayWebhook {

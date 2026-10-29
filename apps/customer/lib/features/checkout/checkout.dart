@@ -26,6 +26,9 @@ enum CheckoutProblem {
   /// The account is paused.
   paused,
 
+  /// The customer signed in with Google and has not added a verified mobile number yet.
+  phoneRequired,
+
   /// No connection: nothing was charged, trying again is safe.
   offline,
 
@@ -150,6 +153,8 @@ class CheckoutController extends Notifier<CheckoutState> {
         return CheckoutProblem.basketChanged;
       case 'CUSTOMER_INACTIVE':
         return CheckoutProblem.paused;
+      case 'PHONE_REQUIRED':
+        return CheckoutProblem.phoneRequired;
     }
     return e.isConnectivity ? CheckoutProblem.offline : CheckoutProblem.failed;
   }

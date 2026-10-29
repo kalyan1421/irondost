@@ -7,7 +7,8 @@ import { ClientApp, DevicePlatform, Role } from '../generated/prisma/enums.js';
 
 export class UserDto {
   @ApiProperty() id!: string;
-  @ApiProperty({ example: '+919876543210' }) phone!: string;
+  /** Null for a customer who signed in with Google and has not added a verified number yet. */
+  @ApiProperty({ example: '+919876543210', nullable: true, type: String }) phone!: string | null;
   @ApiProperty({ nullable: true, type: String }) name!: string | null;
   @ApiProperty({ nullable: true, type: String }) email!: string | null;
   @ApiProperty({ enum: Role, enumName: 'Role' }) role!: Role;

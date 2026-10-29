@@ -16,7 +16,7 @@ import { Switch } from "@/components/ui/switch";
 import { api, explainErrors, unwrap } from "@/lib/api/client";
 import { useApiMutation } from "@/lib/api/mutation";
 import type { User } from "@/lib/api/types";
-import { date, phone } from "@/lib/format";
+import { date, phone, telHref } from "@/lib/format";
 import { EMAIL_RE } from "../../_components/add-customer-dialog";
 import { isValidMobile, MOBILE_HINT, MobileInput, toLocalMobile } from "@/components/mobile-input";
 
@@ -63,7 +63,7 @@ export function ProfileCard({ customer }: { customer: User }) {
         <dl className="grid gap-4 sm:grid-cols-2">
           <Field label="Name">{customer.name ?? <span className="text-muted-foreground">Not given yet</span>}</Field>
           <Field label="Mobile">
-            <a href={`tel:${customer.phone}`} className="tabular hover:underline">
+            <a href={telHref(customer.phone)} className="tabular hover:underline">
               {phone(customer.phone)}
             </a>
           </Field>
@@ -90,15 +90,16 @@ export function ProfileCard({ customer }: { customer: User }) {
 function EditProfileDialog({ customer, onClose }: { customer: User; onClose: () => void }) {
   const [name, setName] = useState(customer.name ?? "");
   const [email, setEmail] = useState(customer.email ?? "");
-  const [mobile, setMobile] = useState(toLocalMobile(customer.phone));
+  const [mobile, setMobile] = useState(toLocalMobile(customer.phone ?? ""));
   const [active, setActive] = useState(customer.isActive);
   const [phoneTouched, setPhoneTouched] = useState(false);
 
   const nameOk = name.trim().length >= 2;
-  const phoneOk = isValidMobile(mobile);
+  // A customer who signed in with Google may have no number yet; leaving it empty keeps it that way.
+  const phoneOk = isValidMobile(mobile) || (!customer.phone && mobile === "");
   const trimmedEmail = email.trim();
   const emailOk = trimmedEmail === "" || EMAIL_RE.test(trimmedEmail);
-  const phoneChanged = phoneOk && `+91${mobile}` !== customer.phone;
+  const phoneChanged = isValidMobile(mobile) && `+91${mobile}` !== customer.phone;
   const valid = nameOk && phoneOk && emailOk;
 
   const save = useApiMutation(

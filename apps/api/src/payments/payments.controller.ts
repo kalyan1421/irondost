@@ -18,7 +18,7 @@ export class VerifyCheckoutDto {
 
 class CheckoutPrefillDto {
   @ApiProperty({ nullable: true, type: String }) name!: string | null;
-  @ApiProperty() contact!: string;
+  @ApiProperty({ nullable: true, type: String }) contact!: string | null;
   @ApiProperty({ nullable: true, type: String }) email!: string | null;
 }
 

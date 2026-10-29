@@ -5,6 +5,8 @@
 import 'package:dio/dio.dart';
 import 'package:retrofit/retrofit.dart';
 
+import '../models/admin_login_dto.dart';
+import '../models/admin_login_result_dto.dart';
 import '../models/start_session_dto.dart';
 import '../models/user_dto.dart';
 
@@ -18,5 +20,11 @@ abstract class AuthClient {
   @POST('/v1/auth/session')
   Future<UserDto> authControllerSession({
     @Body() required StartSessionDto body,
+  });
+
+  /// Admin sign-in with email + password. Everyone else signs in with a phone code.
+  @POST('/v1/auth/admin-login')
+  Future<AdminLoginResultDto> authControllerAdminLogin({
+    @Body() required AdminLoginDto body,
   });
 }

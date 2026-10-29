@@ -121,9 +121,10 @@ export class AdminService {
     return this.prisma.user.update({
       where: { id },
       data: {
-        // Changing the number unlinks the old Firebase login.
+        // Changing the number unlinks the old Firebase login. A Google customer with no number yet keeps theirs:
+        // their login is the Google account, not a phone.
         ...(phone && phone !== current.phone
-          ? { phone, firebaseUid: null }
+          ? { phone, ...(current.phone ? { firebaseUid: null } : {}) }
           : {}),
         name: dto.name?.trim(),
         email: dto.email === null ? null : dto.email?.trim().toLowerCase(),

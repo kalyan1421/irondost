@@ -97,6 +97,7 @@ void main() {
         ),
     'Welcome': (b, s) async => themedRouter(testRouter({Routes.welcome: () => const WelcomeScreen()}, initial: Routes.welcome), brightness: b, textScale: s),
     'Phone': (b, s) async => themed(const PhoneScreen(), overrides: [authRepositoryProvider.overrideWithValue(FakeAuth())], brightness: b, textScale: s),
+    'Add mobile number': (b, s) async => themed(const PhoneScreen(linking: true), overrides: [authRepositoryProvider.overrideWithValue(FakeAuth())], brightness: b, textScale: s),
     'Basket': (b, s) async => themed(
           const BasketScreen(),
           overrides: await basketOverrides(saved: {'basket.v1': '{"lines":{"shirt":10,"trousers":4,"saree":1},"promoCode":null}'}),

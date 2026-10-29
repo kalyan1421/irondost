@@ -7,6 +7,10 @@ abstract final class Routes {
   static const welcome = '/welcome';
   static const login = '/login';
   static const loginCode = '/login/code';
+
+  /// A Google customer adding a verified mobile number before their first booking (pops `true` when stored).
+  static const addPhone = '/phone/add';
+  static const addPhoneCode = '/phone/add/code';
   static const setupName = '/setup/name';
   static const setupPin = '/setup/pin';
   static const setupDetails = '/setup/pin/details';

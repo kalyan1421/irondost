@@ -961,4 +961,54 @@ describe('Laundry API (e2e)', () => {
       });
     });
   });
+
+  describe('Google customers', () => {
+    // Created directly: the session endpoint is rate limited and this suite has used its share. The sign-in paths
+    // (creating the account, linking a verified number, refusing staff apps) are covered by the AuthService unit tests.
+    const google = { Authorization: 'Bearer dev-google:gina@example.com' };
+    const orderBody = () => ({
+      items: [{ catalogItemId: shirtId, quantity: 2 }],
+      pickupDate: tomorrow,
+      pickupSlot: 'MORNING',
+      deliveryDate: dayAfter,
+      deliverySlot: 'EVENING',
+      pickupAddressId: googleAddressId,
+      paymentMethod: 'COD',
+    });
+    let googleAddressId: string;
+    let googleCustomerId: string;
+
+    it('can browse and quote with no number, but not order, and admins can still see them', async () => {
+      const user = await prisma.user.create({
+        data: { firebaseUid: 'dev-google-gina@example.com', phone: null, email: 'gina@example.com', name: 'Gina', role: 'CUSTOMER' },
+      });
+      googleCustomerId = user.id;
+      const me = await http.get('/v1/me').set(google).expect(200);
+      expect(me.body).toMatchObject({ phone: null, email: 'gina@example.com', isProfileComplete: true });
+
+      const address = await http
+        .post('/v1/me/addresses')
+        .set(google)
+        .send({ houseNo: '9', street: 'Road 5', area: 'Jubilee Hills', city: 'Hyderabad', state: 'Telangana', pincode: '500033', latitude: 17.4126, longitude: 78.4482 })
+        .expect(201);
+      googleAddressId = address.body.id;
+      await http.post('/v1/orders/quote').set(google).send({ items: orderBody().items }).expect(200);
+
+      const refused = await http.post('/v1/orders').set(google).send(orderBody()).expect(400);
+      expect(refused.body.code).toBe('PHONE_REQUIRED');
+      expect(await prisma.order.count({ where: { customerId: googleCustomerId } })).toBe(0);
+
+      const listed = await http.get('/v1/admin/customers').set(bearer(PHONES.admin)).query({ search: 'gina' }).expect(200);
+      expect(listed.body.items[0]).toMatchObject({ email: 'gina@example.com', phone: null });
+      await http.get(`/v1/admin/customers/${googleCustomerId}`).set(bearer(PHONES.admin)).expect(200);
+    });
+
+    it('takes the order once a verified number is stored, and gives the partner that number', async () => {
+      await prisma.user.update({ where: { id: googleCustomerId }, data: { phone: '+919777777777' } });
+      const placed = await http.post('/v1/orders').set(google).send(orderBody()).expect(201);
+      expect(placed.body.pickupAddress.contactPhone).toBe('+919777777777');
+      const detail = await http.get(`/v1/admin/orders/${placed.body.id}`).set(bearer(PHONES.admin)).expect(200);
+      expect(detail.body.customer).toMatchObject({ id: googleCustomerId, phone: '+919777777777' });
+    });
+  });
 });

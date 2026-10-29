@@ -33,6 +33,36 @@ flutter run --dart-define-from-file=env/dev-firebase.json
 | `AUTH_MODE` | `firebase` (real SMS) or `dev` (`dev:<phone>` tokens) |
 | `FLAVOR` | `dev`, `staging` or `prod` |
 
+## Sign in with Google, and the mobile number
+
+The welcome and mobile-number screens offer **Continue with Google**. A Google customer is signed up on the first use, with the
+name and email from Google, and has **no mobile number yet**. They can browse, build a basket and pick times. The first time they
+book (or from Account → Add mobile number) the app asks for a number, sends an SMS code, and links that verified number to the
+same Firebase account (`linkWithCredential`). The API reads the verified `phone_number` from the refreshed ID token and stores
+it; `POST /v1/orders` answers `PHONE_REQUIRED` until it is there, and `PHONE_IN_USE` if another customer already has the number.
+Accounts are never merged by email: a Google sign-in is a new account unless that Firebase user already exists.
+
+In dev mode (`AUTH_MODE=dev`) the Google button signs in as `dev.customer@example.com` (token `dev-google:<email>`, with
+`dev-google:<email>:<phone>` once a number is added), so the whole flow works against a local API with `AUTH_DEV_BYPASS=true`.
+
+The Google button shows a friendly message instead of opening Google until sign-in is set up for the build. To set it up:
+
+1. **Firebase console** → project `irondost-app` → Authentication → Sign-in method → **Google** → Enable (pick a support email) → Save.
+2. **iOS.** Project settings → Your apps → the iOS app (`com.irondost.customer`) → download the new `GoogleService-Info.plist` and replace
+   `ios/Runner/GoogleService-Info.plist`; it now contains `CLIENT_ID` and `REVERSED_CLIENT_ID`. Then:
+   - put the `CLIENT_ID` into the `ios` options in `lib/firebase_options.dart` as `iosClientId` (or run `flutterfire configure`);
+     the app does not call Google on iOS until it is there;
+   - in `ios/Runner/Info.plist` add a **second** entry to `CFBundleURLTypes` (keep the existing Firebase one) whose
+     `CFBundleURLSchemes` holds the `REVERSED_CLIENT_ID` value. Without this scheme the Google SDK ends the app when sign-in starts.
+3. **Android** (`com.cloudironingfactory.customer`). Add the SHA-1 and SHA-256 fingerprints of the debug key
+   (`cd android && ./gradlew signingReport`), the upload key, and the **Play App Signing** key (Play Console → App integrity)
+   under Project settings → Your apps → Android; then download the new `google-services.json` into `android/app/`. Its
+   `oauth_client` entries make the Google Services plugin generate `default_web_client_id`, which Google sign-in uses.
+4. Rebuild the app. Nothing changes on the API: it already accepts Firebase ID tokens from this project.
+
+Apple's App Store rule 4.8 requires **Sign in with Apple** to be offered on iOS next to any other third-party sign-in. Add it
+before the iOS release that ships Google login.
+
 ## Maps and location
 
 Pickup addresses are chosen on a map with a fixed centre pin (Google Maps SDK). Search and "use my

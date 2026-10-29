@@ -17,7 +17,7 @@ class CheckoutPrefillDto {
   factory CheckoutPrefillDto.fromJson(Map<String, Object?> json) => _$CheckoutPrefillDtoFromJson(json);
   
   final String? name;
-  final String contact;
+  final String? contact;
   final String? email;
 
   Map<String, Object?> toJson() => _$CheckoutPrefillDtoToJson(this);

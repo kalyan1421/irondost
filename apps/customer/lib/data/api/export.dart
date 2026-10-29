@@ -19,6 +19,8 @@ export 'models/client_app.dart';
 export 'models/start_session_dto.dart';
 export 'models/role.dart';
 export 'models/user_dto.dart';
+export 'models/admin_login_dto.dart';
+export 'models/admin_login_result_dto.dart';
 export 'models/time_slot.dart';
 export 'models/slot_option_dto.dart';
 export 'models/slot_definition_dto.dart';

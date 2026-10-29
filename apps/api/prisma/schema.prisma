@@ -126,8 +126,9 @@ model User {
   id          String    @id @default(uuid()) @db.Uuid
   /// Firebase Auth UID. Null for staff provisioned by an admin who have not logged in yet.
   firebaseUid String?   @unique @map("firebase_uid")
-  /// E.164, e.g. +919876543210
-  phone       String    @unique
+  /// E.164, e.g. +919876543210. Null for a customer who signed in with Google and has not added a number yet;
+  /// staff and drivers always have one. Unique, and Postgres allows many nulls.
+  phone       String?   @unique
   name        String?
   email       String?
   /// scrypt hash for an admin who signs in with email + password instead of a phone code. Never returned by the API.

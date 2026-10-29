@@ -7,7 +7,7 @@ import { ErrorState, PageBody, PageHeader } from "@/components/page";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
-import { phone } from "@/lib/format";
+import { phone, telHref } from "@/lib/format";
 import { useCustomer } from "../_components/queries";
 import { AddressesCard } from "./_components/addresses-card";
 import { CustomerOrdersCard } from "./_components/orders-card";
@@ -56,7 +56,7 @@ export default function CustomerDetailPage() {
           </span>
         }
         description={
-          <a href={`tel:${c.phone}`} className="tabular inline-flex items-center gap-1.5 hover:text-foreground">
+          <a href={telHref(c.phone)} className="tabular inline-flex items-center gap-1.5 hover:text-foreground">
             <Phone className="size-3.5" /> {phone(c.phone)}
           </a>
         }

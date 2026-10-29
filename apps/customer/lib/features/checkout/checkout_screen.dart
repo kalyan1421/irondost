@@ -17,6 +17,7 @@ import '../../design/widgets/surfaces.dart';
 import '../../design/widgets/review_row.dart';
 import '../schedule/schedule_screen.dart';
 import '../addresses/addresses_controller.dart';
+import '../auth/session.dart';
 import '../addresses/addresses_screen.dart';
 import '../basket/basket.dart';
 import '../basket/quote.dart';
@@ -30,12 +31,23 @@ import 'checkout.dart';
 class CheckoutScreen extends ConsumerWidget {
   const CheckoutScreen({super.key});
 
+  /// A customer who signed in with Google has no verified number yet. The pickup partner calls it, so ask for it now
+  /// (a code by SMS) and carry on with the order once it is stored.
+  static Future<bool> _hasPhone(BuildContext context, WidgetRef ref) async {
+    final session = ref.read(sessionProvider).value;
+    if (session is SignedIn && !session.profile.hasPhone) {
+      return await context.push<bool>(Routes.addPhone) ?? false;
+    }
+    return true;
+  }
+
   Future<void> _place(
     BuildContext context,
     WidgetRef ref,
     Schedule schedule,
     AddressDto address,
   ) async {
+    if (!await _hasPhone(context, ref) || !context.mounted) return;
     final order = await ref
         .read(checkoutProvider.notifier)
         .place(schedule: schedule, address: address);
@@ -107,6 +119,9 @@ class CheckoutScreen extends ConsumerWidget {
           primaryLabel: 'OK',
           tone: StateTone.danger,
         );
+      case CheckoutProblem.phoneRequired:
+        // The app thought a number was on file but the server has none: ask for it, then the customer taps Place order again.
+        await context.push<bool>(Routes.addPhone);
       case CheckoutProblem.offline || CheckoutProblem.failed:
         // Shown inline above the button; nothing to ask.
         break;

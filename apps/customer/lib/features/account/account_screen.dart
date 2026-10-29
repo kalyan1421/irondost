@@ -71,10 +71,20 @@ class AccountScreen extends ConsumerWidget {
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
                         Text(profile.name ?? '', style: t.title),
-                        Text(
-                          IndianPhone.display(profile.phone),
-                          style: t.body.copyWith(color: c.textMuted),
-                        ),
+                        if (profile.phone != null)
+                          Text(
+                            IndianPhone.display(profile.phone!),
+                            style: t.body.copyWith(color: c.textMuted),
+                          )
+                        else
+                          // Signed in with Google: no verified number yet, and bookings need one.
+                          Align(
+                            alignment: Alignment.centerLeft,
+                            child: IdButton.text(
+                              label: 'Add mobile number',
+                              onPressed: () => context.push<bool>(Routes.addPhone),
+                            ),
+                          ),
                       ],
                     ),
                   ),

@@ -31,20 +31,33 @@ export class AuthService {
 
   /**
    * Called by every app right after sign-in.
-   * - Customers are created on first sign-in.
+   * - Customers are created on first sign-in, by phone code or by Google.
+   * - A Google customer has no phone until they link a verified number to the same Firebase account; the next call here
+   *   then stores it. Placing an order needs that number.
    * - Drivers and admins must have been added by an admin (matched by phone);
-   *   their Firebase UID is linked on first sign-in.
+   *   their Firebase UID is linked on first sign-in. Google can never sign in to those apps.
    * - An admin who signed in with email + password has no phone; they were linked when the password was checked.
    */
   async startSession(identity: VerifiedIdentity, app: ClientApp): Promise<User> {
+    const isGoogle = identity.provider === 'google';
+    if (isGoogle && app !== ClientApp.CUSTOMER) {
+      throw AppError.forbidden('WRONG_APP', 'This account cannot sign in to this app');
+    }
+
     let user = await this.prisma.user.findUnique({ where: { firebaseUid: identity.uid } });
 
     if (!user) {
-      if (!identity.phone) {
+      if (!identity.phone && !isGoogle) {
         throw AppError.forbidden('NOT_REGISTERED', 'This account is not registered. Ask a super admin to add you.');
       }
-      const byPhone = await this.prisma.user.findUnique({ where: { phone: identity.phone } });
+      const byPhone = identity.phone
+        ? await this.prisma.user.findUnique({ where: { phone: identity.phone } })
+        : null;
       if (byPhone) {
+        // A staff member's number must not be claimed through the customer app, even with a verified Google account.
+        if (isGoogle && byPhone.role !== Role.CUSTOMER) {
+          throw AppError.forbidden('WRONG_APP', 'This account cannot sign in to this app');
+        }
         // Same phone, new Firebase UID: either first sign-in of a provisioned
         // user, or the Firebase account was recreated. Firebase guarantees one
         // UID per phone, so relinking is safe.
@@ -54,7 +67,12 @@ export class AuthService {
         });
       } else if (app === ClientApp.CUSTOMER) {
         user = await this.prisma.user.create({
-          data: { firebaseUid: identity.uid, phone: identity.phone, role: Role.CUSTOMER },
+          data: {
+            firebaseUid: identity.uid,
+            phone: identity.phone,
+            role: Role.CUSTOMER,
+            ...(isGoogle ? { email: identity.email ?? null, name: identity.name ?? null } : {}),
+          },
         });
       } else {
         throw AppError.forbidden(
@@ -62,6 +80,13 @@ export class AuthService {
           'This number is not registered. Ask your administrator to add you.',
         );
       }
+    } else if (isGoogle && identity.phone && !user.phone) {
+      // The customer verified a number and linked it to their Google account. Never merge two accounts silently.
+      const owner = await this.prisma.user.findUnique({ where: { phone: identity.phone } });
+      if (owner && owner.id !== user.id) {
+        throw AppError.conflict('PHONE_IN_USE', 'This number already belongs to another account.');
+      }
+      user = await this.prisma.user.update({ where: { id: user.id }, data: { phone: identity.phone } });
     }
 
     if (!user.isActive || user.deletedAt) {

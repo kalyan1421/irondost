@@ -6,6 +6,7 @@ import '../../design/theme.dart';
 import '../../design/widgets/id_button.dart';
 import '../../design/widgets/policy_links.dart';
 import '../../design/widgets/surfaces.dart';
+import 'google_sign_in_button.dart';
 
 class WelcomeScreen extends StatelessWidget {
   const WelcomeScreen({super.key});
@@ -67,6 +68,10 @@ class WelcomeScreen extends StatelessWidget {
                   expand: true,
                   onPressed: () => context.push(Routes.login),
                 ),
+                const SizedBox(height: IdSpace.s3),
+                const OrDivider(),
+                const SizedBox(height: IdSpace.s3),
+                const GoogleSignInButton(),
                 const SizedBox(height: IdSpace.s3),
                 const PolicyLinks(),
               ],

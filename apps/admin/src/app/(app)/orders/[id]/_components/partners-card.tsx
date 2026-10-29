@@ -12,7 +12,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { api, unwrap } from "@/lib/api/client";
 import { useApiMutation } from "@/lib/api/mutation";
 import type { DispatchLeg, Driver, Order } from "@/lib/api/types";
-import { phone, relativeTime } from "@/lib/format";
+import { phone, relativeTime, telHref } from "@/lib/format";
 import { cn } from "@/lib/utils";
 
 type LegState = "waiting" | "assignable" | "assigned" | "in-progress" | "done" | "closed";
@@ -93,7 +93,7 @@ function LegRow({ order, leg, onAssign }: { order: Order; leg: DispatchLeg; onAs
       {person ? (
         <div className="flex flex-wrap items-center gap-x-3 gap-y-1">
           <span className="font-medium">{person.name ?? "Partner"}</span>
-          <a href={`tel:${person.phone}`} className="inline-flex items-center gap-1 text-sm text-muted-foreground hover:text-foreground">
+          <a href={telHref(person.phone)} className="inline-flex items-center gap-1 text-sm text-muted-foreground hover:text-foreground">
             <Phone className="size-3.5" /> {phone(person.phone)}
           </a>
           {state === "in-progress" ? <span className="text-xs text-blue-700 dark:text-blue-300">On the way</span> : null}

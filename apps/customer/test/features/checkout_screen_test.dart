@@ -7,6 +7,7 @@ import 'package:go_router/go_router.dart';
 import 'package:irondost_customer/app/routes.dart';
 import 'package:irondost_customer/data/api_client.dart';
 import 'package:irondost_customer/features/addresses/address_repository.dart';
+import 'package:irondost_customer/features/auth/session.dart';
 import 'package:irondost_customer/features/basket/basket.dart';
 import 'package:irondost_customer/features/basket/quote.dart';
 import 'package:irondost_customer/features/checkout/checkout_screen.dart';
@@ -16,6 +17,12 @@ import 'package:irondost_customer/features/push/push_source.dart';
 import 'package:irondost_customer/features/schedule/schedule.dart';
 
 import '../helpers.dart';
+
+/// A customer who signed in with Google and has not added a verified number yet.
+class _GoogleSession extends SessionController {
+  @override
+  Future<Session> build() async => const SignedIn(Profile(id: 'g1', name: 'Gina', email: 'gina@example.com', isComplete: true));
+}
 
 Future<void> settle(WidgetTester tester) async {
   await tester.pump(quoteDebounce + const Duration(milliseconds: 10));
@@ -31,6 +38,7 @@ void main() {
     AddressDto? address,
     FakeOrderRepository? orders,
     FakeScheduleRepository? schedule,
+    SessionController Function()? session,
   }) async {
     tester.view
       ..physicalSize = const Size(390 * 3, 1300 * 3)
@@ -45,6 +53,13 @@ void main() {
         Routes.orderPay: () => const Text('PAY PAGE'),
         Routes.home: () => const Text('HOME PAGE'),
         Routes.book: () => const Text('CATALOGUE PAGE'),
+        Routes.addPhone: () => Scaffold(
+          body: Center(
+            child: Builder(
+              builder: (context) => TextButton(onPressed: () => context.pop(true), child: const Text('ADD PHONE PAGE')),
+            ),
+          ),
+        ),
       },
       initial: '/schedule',
     );
@@ -52,7 +67,7 @@ void main() {
       themedRouter(
         router,
         overrides: [
-          ...await basketOverrides(saved: saved),
+          ...await basketOverrides(saved: saved, session: session),
           scheduleRepositoryProvider.overrideWithValue(schedule ?? FakeScheduleRepository()),
           orderRepositoryProvider.overrideWithValue(fake),
           addressRepositoryProvider.overrideWithValue(FakeAddressRepository([address ?? testAddress()])),
@@ -158,6 +173,60 @@ void main() {
     expect(router.state.matchedLocation, Routes.confirmed('o-1'));
     expect(find.text('CONFIRMED PAGE'), findsOneWidget);
     expect(container.read(basketProvider).isEmpty, isTrue);
+  });
+
+  group('a customer who signed in with Google', () {
+    testWidgets('is asked for a verified number before the order is placed, then the order goes through', (tester) async {
+      final (router, orders, _) = await pump(tester, session: _GoogleSession.new);
+      await tester.tap(find.text('Cash on delivery'));
+      await tester.pump();
+
+      await tester.tap(find.text('Place order ₹80'));
+      await settle(tester);
+      expect(find.text('ADD PHONE PAGE'), findsOneWidget);
+      expect(orders.placed, isEmpty, reason: 'nothing is sent to the server until the number is stored');
+
+      await tester.tap(find.text('ADD PHONE PAGE')); // the number was added: the screen pops true
+      await settle(tester);
+      expect(orders.placed, hasLength(1));
+      expect(router.state.matchedLocation, Routes.confirmed('o-1'));
+    });
+
+    testWidgets('can back out of adding a number and stays on checkout with the basket kept', (tester) async {
+      final (router, orders, container) = await pump(tester, session: _GoogleSession.new);
+      await tester.tap(find.text('Cash on delivery'));
+      await tester.pump();
+
+      await tester.tap(find.text('Place order ₹80'));
+      await settle(tester);
+      router.pop(); // back, without a result
+      await settle(tester);
+
+      expect(orders.placed, isEmpty);
+      expect(router.state.matchedLocation, Routes.checkout);
+      expect(container.read(basketProvider).isEmpty, isFalse);
+    });
+
+    testWidgets('a customer with a number is not asked', (tester) async {
+      final (_, orders, _) = await pump(tester);
+      await tester.tap(find.text('Cash on delivery'));
+      await tester.pump();
+      await tester.tap(find.text('Place order ₹80'));
+      await settle(tester);
+      expect(find.text('ADD PHONE PAGE'), findsNothing);
+      expect(orders.placed, hasLength(1));
+    });
+
+    testWidgets('the server saying a number is needed opens the same screen', (tester) async {
+      final orders = FakeOrderRepository()..failures.add(const ApiFailure(ApiFailureKind.rejected, statusCode: 400, code: 'PHONE_REQUIRED'));
+      await pump(tester, orders: orders); // the app thought a number was on file
+      await tester.tap(find.text('Cash on delivery'));
+      await tester.pump();
+
+      await tester.tap(find.text('Place order ₹80'));
+      await settle(tester);
+      expect(find.text('ADD PHONE PAGE'), findsOneWidget);
+    });
   });
 
   testWidgets('placing an online order goes on to the payment', (tester) async {

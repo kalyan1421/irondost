@@ -255,7 +255,7 @@ export class OrderItemDto {
 export class PersonRefDto {
   @ApiProperty() id!: string;
   @ApiProperty({ nullable: true, type: String }) name!: string | null;
-  @ApiProperty() phone!: string;
+  @ApiProperty({ nullable: true, type: String }) phone!: string | null;
 }
 
 export class OrderEventDto {

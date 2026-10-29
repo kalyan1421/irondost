@@ -52,6 +52,12 @@ class _Session extends SignedInSession {
   }
 }
 
+/// Signed in with Google: a name and email, but no verified mobile number yet.
+class _GoogleSession extends _Session {
+  @override
+  Future<Session> build() async => const SignedIn(Profile(id: 'g1', name: 'Gina Rossi', email: 'gina@example.com', isComplete: true));
+}
+
 const _config = PublicConfigDto(
   appName: 'IronDost',
   supportPhone: '+919063290012',
@@ -85,7 +91,7 @@ void main() {
       initialLocation: Routes.account,
       routes: [
         GoRoute(path: Routes.account, builder: (_, _) => const AccountScreen()),
-        for (final r in [Routes.editProfile, Routes.addresses, Routes.notifications, Routes.help, Routes.legalDoc, Routes.orders])
+        for (final r in [Routes.editProfile, Routes.addresses, Routes.notifications, Routes.help, Routes.legalDoc, Routes.orders, Routes.addPhone])
           GoRoute(path: r, builder: (_, state) => Text('page ${state.uri}')),
       ],
     );
@@ -120,6 +126,16 @@ void main() {
       expect(find.text('2'), findsOneWidget); // saved addresses
       expect(find.text('2 new'), findsOneWidget);
       expect(find.text('IronDost 2.0.0'), findsOneWidget);
+    });
+
+    testWidgets('a Google customer sees "Add mobile number" in place of a number, and it opens the add-number flow', (tester) async {
+      await openAccount(tester, as: _GoogleSession());
+      expect(find.text('Gina Rossi'), findsOneWidget);
+      expect(find.textContaining('+91'), findsNothing);
+
+      await tester.tap(find.text('Add mobile number'));
+      await tester.pumpAndSettle();
+      expect(find.text('page ${Routes.addPhone}'), findsOneWidget);
     });
 
     testWidgets('each row opens its page', (tester) async {

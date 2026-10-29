@@ -208,7 +208,29 @@ class _LockedPhone extends StatelessWidget {
   Widget build(BuildContext context) {
     final c = context.colors;
     final t = context.text;
-    final shown = phone == null ? '' : IndianPhone.display(phone!);
+    if (phone == null) {
+      // Signed in with Google: the number is added (and verified by SMS) rather than shown.
+      return Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            'Mobile number',
+            style: t.label.copyWith(fontWeight: FontWeight.w600),
+          ),
+          const SizedBox(height: 6),
+          Text(
+            'Not added yet. Your pickup partner calls this number, so it is needed before you book.',
+            style: t.caption.copyWith(color: c.textMuted),
+          ),
+          const SizedBox(height: IdSpace.s2),
+          IdButton.outline(
+            label: 'Add mobile number',
+            onPressed: () => context.push<bool>(Routes.addPhone),
+          ),
+        ],
+      );
+    }
+    final shown = IndianPhone.display(phone!);
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [

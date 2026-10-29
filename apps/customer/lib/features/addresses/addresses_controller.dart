@@ -10,9 +10,10 @@ final addressesProvider = AsyncNotifierProvider<AddressesController, List<Addres
 class AddressesController extends AsyncNotifier<List<AddressDto>> {
   @override
   Future<List<AddressDto>> build() async {
-    // Starts over whenever the session changes (sign-in, profile saved, sign-out).
-    final session = ref.watch(sessionProvider).value;
-    if (session is! SignedIn) return const [];
+    // Starts over when someone else signs in or the customer signs out. Saving the profile or adding a verified number
+    // changes the session but not whose addresses these are, and a restart there would also refresh the router mid-screen.
+    final userId = ref.watch(signedInUserIdProvider);
+    if (userId == null) return const [];
     return ref.read(addressRepositoryProvider).list();
   }
 

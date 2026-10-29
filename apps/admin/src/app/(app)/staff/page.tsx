@@ -10,7 +10,7 @@ import { Button } from "@/components/ui/button";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { api, unwrap } from "@/lib/api/client";
 import type { User } from "@/lib/api/types";
-import { date, phone } from "@/lib/format";
+import { date, phone, telHref } from "@/lib/format";
 import { useAuth } from "@/lib/auth/auth-provider";
 import { cn } from "@/lib/utils";
 import { ROLE_LABEL, ROLES_EXPLAINED, StaffDialog } from "./_components/staff-dialog";
@@ -87,7 +87,7 @@ export default function StaffPage() {
                         ) : null}
                       </TableCell>
                       <TableCell>
-                        <a href={`tel:${m.phone}`} className="tabular text-sm hover:underline">
+                        <a href={telHref(m.phone)} className="tabular text-sm hover:underline">
                           {phone(m.phone)}
                         </a>
                       </TableCell>

@@ -13,7 +13,7 @@ import { Label } from "@/components/ui/label";
 import { Skeleton } from "@/components/ui/skeleton";
 import { api, unwrap } from "@/lib/api/client";
 import type { User } from "@/lib/api/types";
-import { phone, relativeTime } from "@/lib/format";
+import { phone, relativeTime, telHref } from "@/lib/format";
 import { cn } from "@/lib/utils";
 import { AddCustomerDialog } from "@/app/(app)/customers/_components/add-customer-dialog";
 import { useDebounced } from "@/hooks/use-debounced";
@@ -52,7 +52,7 @@ export function CustomerStep({
             {c.name ?? "Unnamed customer"}
           </Link>
           <a
-            href={`tel:${c.phone}`}
+            href={telHref(c.phone)}
             className="tabular mt-0.5 flex w-fit items-center gap-1.5 text-sm text-muted-foreground hover:text-foreground"
           >
             <Phone className="size-3.5" /> {phone(c.phone)}

@@ -15,8 +15,12 @@ import 'auth_repository.dart';
 import 'login_controller.dart';
 import 'session.dart';
 
+/// The 6-digit code screen. With [linking] the code adds a number to a Google customer's account, and the screen pops `true`
+/// once the API has stored it.
 class OtpScreen extends ConsumerStatefulWidget {
-  const OtpScreen({super.key});
+  const OtpScreen({super.key, this.linking = false});
+
+  final bool linking;
 
   @override
   ConsumerState<OtpScreen> createState() => _OtpScreenState();
@@ -60,6 +64,10 @@ class _OtpScreenState extends ConsumerState<OtpScreen> {
     final c = context.colors;
     final t = context.text;
 
+    ref.listen(loginProvider.select((s) => s.linked), (_, linked) {
+      if (linked && widget.linking && mounted) context.pop(true);
+    });
+
     ref.listen(sessionProvider, (_, next) {
       if (next.value is WrongApp) {
         ScaffoldMessenger.of(context).showSnackBar(
@@ -99,6 +107,8 @@ class _OtpScreenState extends ConsumerState<OtpScreen> {
         'That code is incorrect. Check the SMS and try again.',
       AuthFailureKind.codeExpired =>
         'This code has expired. Tap Resend code for a new one.',
+      AuthFailureKind.phoneInUse =>
+        'This number is already linked to another IronDost account. Tap Change and use a different number.',
       AuthFailureKind.network =>
         "You're offline. Check your connection and try again.",
       AuthFailureKind.unknown => "We couldn't check the code. Try again.",

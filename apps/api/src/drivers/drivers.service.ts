@@ -141,7 +141,7 @@ export class DriversService {
     }
     return drivers.map((d) => ({
       id: d.id,
-      phone: d.phone,
+      phone: d.phone ?? '', // drivers are always created with a number
       name: d.name,
       isActive: d.isActive,
       isOnline: d.driver?.isOnline ?? false,

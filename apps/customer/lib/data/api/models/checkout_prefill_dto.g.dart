@@ -9,7 +9,7 @@ part of 'checkout_prefill_dto.dart';
 CheckoutPrefillDto _$CheckoutPrefillDtoFromJson(Map<String, dynamic> json) =>
     CheckoutPrefillDto(
       name: json['name'] as String?,
-      contact: json['contact'] as String,
+      contact: json['contact'] as String?,
       email: json['email'] as String?,
     );
 

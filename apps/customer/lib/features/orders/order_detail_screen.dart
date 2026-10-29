@@ -922,7 +922,7 @@ class _PartnerRow extends StatelessWidget {
               fixedSize: const Size(48, 48),
             ),
             icon: const Icon(LucideIcons.phone),
-            onPressed: () => Support.dial(person.phone),
+            onPressed: person.phone == null ? null : () => Support.dial(person.phone!),
           ),
         ],
       ),
