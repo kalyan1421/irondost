@@ -2,7 +2,12 @@
 
 The API is one Docker image (`apps/api/Dockerfile`). It needs PostgreSQL, and background jobs (pg-boss) run inside the API process and
 keep their state in that same database, so nothing else needs deploying. [`render.yaml`](../render.yaml) at the repo root describes the
-two Render services: the API and the admin console. Workspace: akvega's workspace, region Singapore (nearest to Hyderabad).
+two Render services: the API and the admin console. Workspace: Iron dost's workspace (moved from akvega's workspace in October 2026),
+region Singapore (nearest to Hyderabad).
+
+The services live at `https://irondost-api-8nwz.onrender.com` and `https://irondost-admin-sayn.onrender.com`. Render kept the old
+`irondost-api` / `irondost-admin` names reserved after the previous workspace's services were deleted, so the new ones got a suffix.
+The suffix is fixed when a service is created; renaming a service does not change its address.
 
 ## Where things live
 
@@ -33,7 +38,7 @@ that runs when the container starts. Until then the job logs a database warning 
 **The admin is left asleep on purpose.** Free Render gives the whole workspace 750 instance hours a month, and a service that never
 sleeps uses about 744. The API alone fits; the API plus the admin is about 1,490 hours, and Render then suspends every free service
 until the first of the next month. To keep the admin awake too, move both services to `starter` first, then set
-`KEEP_ALIVE_URLS=https://irondost-admin.onrender.com/login` on the API.
+`KEEP_ALIVE_URLS=https://irondost-admin-sayn.onrender.com/login` on the API.
 
 Limits: the job only runs while the API is up. If Render restarts it, the job starts again by itself, but nothing wakes a service
 that was already asleep before this change was deployed (open the API address once). Render also does not promise that a service
@@ -69,7 +74,7 @@ they are public by design; restrict the web API key to the admin's address in Go
 
 Two things outside the repo make sign-in work:
 
-- The admin's address (`irondost-admin.onrender.com`) must be in Firebase → Authentication → Settings → Authorized domains.
+- The admin's address (`irondost-admin-sayn.onrender.com`) must be in Firebase → Authentication → Settings → Authorized domains.
 - The same address is in the API's `CORS_ORIGINS` (set in `render.yaml`).
 
 The first super admin signs in with the number given to the seed, and then adds everyone else under Staff. That number must not
