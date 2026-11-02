@@ -1,8 +1,10 @@
 import { Body, Controller, Get, HttpCode, Param, ParseUUIDPipe, Post, Put, Query } from '@nestjs/common';
+import { EventEmitter2 } from '@nestjs/event-emitter';
 import { ApiBearerAuth, ApiTags } from '@nestjs/swagger';
 import { AuditService } from '../audit/audit.service.js';
 import { CurrentUser, Roles } from '../auth/decorators.js';
 import { AppError } from '../common/errors.js';
+import { Events, type PaymentCapturedEvent } from '../events.js';
 import type { User } from '../generated/prisma/client.js';
 import { OrderSource, OrderStatus, Role } from '../generated/prisma/enums.js';
 import {
@@ -16,7 +18,8 @@ import {
   toOrderDto,
   UpdateItemsDto,
 } from './order.dto.js';
-import { actorFor, OrdersService } from './orders.service.js';
+import { PaymentsService } from '../payments/payments.service.js';
+import { actorFor, orderRef, OrdersService } from './orders.service.js';
 
 @ApiTags('admin · orders')
 @ApiBearerAuth()
@@ -26,6 +29,8 @@ export class AdminOrdersController {
   constructor(
     private readonly orders: OrdersService,
     private readonly audit: AuditService,
+    private readonly payments: PaymentsService,
+    private readonly events: EventEmitter2,
   ) {}
 
   @Get()
@@ -64,11 +69,32 @@ export class AdminOrdersController {
     if (dto.status === OrderStatus.PICKUP_ASSIGNED || dto.status === OrderStatus.DELIVERY_ASSIGNED) {
       throw AppError.badRequest('USE_ASSIGN_ENDPOINT', 'Use POST /v1/admin/orders/:id/assign to assign a driver');
     }
+    if (dto.collectedCash && dto.status !== OrderStatus.DELIVERED) {
+      throw AppError.badRequest('CASH_ONLY_WITH_DELIVERY', 'collectedCash only applies when marking an order delivered');
+    }
+    // Cash taken at the door is recorded in the same transaction as the delivery, as the partner app does.
+    let cashPaise = 0;
     const order = await this.orders.transition(id, dto.status, actorFor(actor, 'ADMIN'), {
       note: dto.note,
       cancelReason: dto.status === OrderStatus.CANCELLED ? (dto.note ?? 'Cancelled by admin') : undefined,
+      inTx: dto.collectedCash
+        ? async (tx) => {
+            cashPaise = await this.payments.recordCashInTx(tx, id, actor.id);
+          }
+        : undefined,
     });
-    this.audit.log(actor.id, 'order.status_changed', 'order', id, { to: dto.status, note: dto.note });
+    if (cashPaise > 0) {
+      this.events.emit(Events.PaymentCaptured, {
+        ...orderRef(order),
+        amountPaise: cashPaise,
+        provider: 'CASH',
+      } satisfies PaymentCapturedEvent);
+    }
+    this.audit.log(actor.id, 'order.status_changed', 'order', id, {
+      to: dto.status,
+      note: dto.note,
+      ...(cashPaise > 0 ? { cashCollectedPaise: cashPaise } : {}),
+    });
     return toOrderDto(order, 'ADMIN');
   }
 

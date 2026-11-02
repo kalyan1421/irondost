@@ -4,6 +4,7 @@ import {
   ArrayMaxSize,
   ArrayMinSize,
   IsArray,
+  IsBoolean,
   IsEnum,
   IsIn,
   IsInt,
@@ -143,6 +144,13 @@ export class ChangeStatusDto {
   @IsString()
   @MaxLength(300)
   note?: string;
+
+  @ApiPropertyOptional({
+    description: 'With status DELIVERED: the partner or staff collected the balance in cash, so record it with the delivery.',
+  })
+  @IsOptional()
+  @IsBoolean()
+  collectedCash?: boolean;
 }
 
 export const ORDER_SCOPES = ['active', 'past'] as const;
@@ -193,6 +201,11 @@ export class AdminOrdersQuery extends PageQueryDto {
   @IsOptional()
   @Transform(({ value }: { value: unknown }) => value === 'true' || value === true)
   dispatchFailed?: boolean;
+
+  @ApiPropertyOptional({ description: 'Only orders where the customer is owed money back (cancelled after paying, or overpaid)' })
+  @IsOptional()
+  @Transform(({ value }: { value: unknown }) => value === 'true' || value === true)
+  refundDue?: boolean;
 }
 
 // ───────────── Responses ─────────────

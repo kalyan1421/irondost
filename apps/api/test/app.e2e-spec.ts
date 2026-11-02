@@ -1011,4 +1011,88 @@ describe('Laundry API (e2e)', () => {
       expect(detail.body.customer).toMatchObject({ id: googleCustomerId, phone: '+919777777777' });
     });
   });
+  describe('staff-run delivery, refunds due and the audit log', () => {
+    const orderPath = (id: string) => `/v1/admin/orders/${id}`;
+    const status = (id: string, body: Record<string, unknown>) => http.post(`${orderPath(id)}/status`).set(bearer(PHONES.admin)).send(body);
+    const assign = (id: string, leg: 'PICKUP' | 'DELIVERY') =>
+      http.post(`${orderPath(id)}/assign`).set(bearer(PHONES.admin)).send({ leg, driverId: driver1Id }).expect(200);
+
+    /** What staff do when nobody uses the partner app: every step from the admin. */
+    async function walkToOutForDelivery(id: string) {
+      await assign(id, 'PICKUP');
+      for (const next of ['PICKED_UP', 'PROCESSING', 'READY_FOR_DELIVERY']) await status(id, { status: next }).expect(200);
+      await assign(id, 'DELIVERY');
+      await status(id, { status: 'OUT_FOR_DELIVERY' }).expect(200);
+    }
+
+    const sarees = () => [{ catalogItemId: sareeId, quantity: 1 }];
+
+    it('records the cash with the delivery when staff say it was collected', async () => {
+      const order = await placeAndDispatch(sarees());
+      await walkToOutForDelivery(order.id);
+
+      const wrongStatus = await status(order.id, { status: 'READY_FOR_DELIVERY', collectedCash: true }).expect(400);
+      expect(wrongStatus.body.code).toBe('CASH_ONLY_WITH_DELIVERY');
+
+      const done = await status(order.id, { status: 'DELIVERED', collectedCash: true }).expect(200);
+      expect(done.body).toMatchObject({ status: 'DELIVERED', paymentStatus: 'PAID', paidPaise: 4000, amountDuePaise: 0 });
+
+      const payments = await prisma.payment.findMany({ where: { orderId: order.id } });
+      expect(payments).toEqual([expect.objectContaining({ provider: 'CASH', status: 'CAPTURED', amountPaise: 4000 })]);
+      const staff = await prisma.user.findFirstOrThrow({ where: { phone: `+91${PHONES.admin}` } });
+      expect(payments[0].collectedById).toBe(staff.id);
+      await waitFor(async () => (await prisma.notification.count({ where: { type: 'payment_received', data: { path: ['orderId'], equals: order.id } } })) === 1);
+    });
+
+    it('still lets staff deliver first and take the payment afterwards', async () => {
+      const order = await placeAndDispatch(sarees());
+      await walkToOutForDelivery(order.id);
+      const done = await status(order.id, { status: 'DELIVERED' }).expect(200);
+      expect(done.body).toMatchObject({ status: 'DELIVERED', paymentStatus: 'UNPAID', amountDuePaise: 4000 });
+      expect(await prisma.payment.count({ where: { orderId: order.id } })).toBe(0);
+    });
+
+    it('lists orders that owe the customer money, and counts them on the dashboard', async () => {
+      const paid = await placeAndDispatch(sarees());
+      await http.post(`${orderPath(paid.id)}/payments/cash`).set(bearer(PHONES.admin)).send({ amountPaise: 4000 }).expect(204);
+      await status(paid.id, { status: 'CANCELLED', note: 'Customer called' }).expect(200);
+      const unpaid = await placeAndDispatch(sarees());
+      await status(unpaid.id, { status: 'CANCELLED' }).expect(200);
+
+      const due = await http.get('/v1/admin/orders').set(bearer(PHONES.admin)).query({ refundDue: 'true' }).expect(200);
+      const ids = due.body.items.map((o: { id: string }) => o.id);
+      expect(ids).toContain(paid.id);
+      expect(ids).not.toContain(unpaid.id);
+      const dash = await http.get('/v1/admin/dashboard').set(bearer(PHONES.admin)).expect(200);
+      expect(dash.body.refundsDue).toBe(due.body.total);
+      await waitFor(async () => (await prisma.notification.count({ where: { type: 'refund_needed', data: { path: ['orderId'], equals: paid.id } } })) > 0);
+    });
+
+    it('tells the customer the new total when staff change the items, and staff when money must go back', async () => {
+      const order = await placeAndDispatch([{ catalogItemId: sareeId, quantity: 2 }]); // 8000
+      await http.post(`${orderPath(order.id)}/payments/cash`).set(bearer(PHONES.admin)).send({ amountPaise: 8000 }).expect(204);
+      await http.put(`${orderPath(order.id)}/items`).set(bearer(PHONES.admin)).send({ items: sarees() }).expect(200); // 4000
+
+      await waitFor(async () => (await prisma.notification.count({ where: { type: 'order_updated', data: { path: ['orderId'], equals: order.id } } })) === 1);
+      const note = await prisma.notification.findFirstOrThrow({ where: { type: 'order_updated', data: { path: ['orderId'], equals: order.id } } });
+      expect(note.body).toContain('new total is ₹40');
+      expect(note.body).toContain('return the extra ₹40');
+      await waitFor(async () => (await prisma.notification.count({ where: { type: 'refund_needed', data: { path: ['orderId'], equals: order.id } } })) > 0);
+      const due = await http.get('/v1/admin/orders').set(bearer(PHONES.admin)).query({ refundDue: 'true' }).expect(200);
+      expect(due.body.items.map((o: { id: string }) => o.id)).toContain(order.id);
+    });
+
+    it('shows super admins who changed what, newest first, and nobody else', async () => {
+      const order = await placeAndDispatch(sarees());
+      await status(order.id, { status: 'CANCELLED', note: 'Audit me' }).expect(200);
+      await waitFor(async () => {
+        const res = await http.get('/v1/admin/audit').set(bearer(PHONES.superAdmin)).query({ entity: 'order', entityId: order.id });
+        return res.body.total >= 1;
+      });
+      const log = await http.get('/v1/admin/audit').set(bearer(PHONES.superAdmin)).query({ entity: 'order', entityId: order.id }).expect(200);
+      expect(log.body.items[0]).toMatchObject({ action: 'order.status_changed', entity: 'order', entityId: order.id, actorName: 'Ops', data: { to: 'CANCELLED', note: 'Audit me' } });
+      const denied = await http.get('/v1/admin/audit').set(bearer(PHONES.admin)).expect(403);
+      expect(denied.body.code).toBe('FORBIDDEN_ROLE');
+    });
+  });
 });

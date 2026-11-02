@@ -43,6 +43,12 @@ export interface OrderStatusChangedEvent extends OrderRef {
 
 export interface OrderUpdatedEvent extends OrderRef {
   reason: 'items_changed' | 'payment_changed' | 'details_changed';
+  /** For items_changed: the total before and after, and the money in hand, so the customer can be told what it means. */
+  previousTotalPaise?: number;
+  totalPaise?: number;
+  paidPaise?: number;
+  refundedPaise?: number;
+  actorRole?: Role | null;
 }
 
 export interface OffersCreatedEvent {

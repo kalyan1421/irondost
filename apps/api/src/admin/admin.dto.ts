@@ -70,6 +70,38 @@ export class CustomerPageDto {
   @ApiProperty() total!: number;
 }
 
+export class AuditQuery extends PageQueryDto {
+  @ApiPropertyOptional({ description: 'Only this kind of record, e.g. order, user, app_version' })
+  @IsOptional()
+  @IsString()
+  @MaxLength(60)
+  entity?: string;
+
+  @ApiPropertyOptional({ description: 'Only this record, e.g. an order id' })
+  @IsOptional()
+  @IsString()
+  @MaxLength(80)
+  entityId?: string;
+}
+
+export class AuditEntryDto {
+  @ApiProperty() id!: string;
+  @ApiProperty() action!: string;
+  @ApiProperty() entity!: string;
+  @ApiProperty({ nullable: true, type: String }) entityId!: string | null;
+  @ApiProperty({ nullable: true, type: String }) actorId!: string | null;
+  @ApiProperty({ nullable: true, type: String }) actorName!: string | null;
+  @ApiProperty({ type: Object, nullable: true }) data!: unknown;
+  @ApiProperty() createdAt!: Date;
+}
+
+export class AuditPageDto {
+  @ApiProperty({ type: [AuditEntryDto] }) items!: AuditEntryDto[];
+  @ApiProperty() page!: number;
+  @ApiProperty() pageSize!: number;
+  @ApiProperty() total!: number;
+}
+
 export class CreateStaffDto {
   @ApiProperty({ example: '9876543210' })
   @IsString()
@@ -171,6 +203,8 @@ export class DashboardDto {
   @ApiProperty() deliveriesToday!: number;
   @ApiProperty() ordersToday!: number;
   @ApiProperty() needsAttention!: number;
+  @ApiProperty({ description: 'Orders where the customer is owed money back (cancelled after paying, or overpaid)' })
+  refundsDue!: number;
   @ApiProperty() driversOnline!: number;
   @ApiProperty() collectedTodayPaise!: number;
   @ApiProperty() collectedLast7DaysPaise!: number;

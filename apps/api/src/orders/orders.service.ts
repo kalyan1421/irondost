@@ -25,6 +25,7 @@ import { checkServiceArea } from '../settings/service-area.js';
 import { SettingsService } from '../settings/settings.service.js';
 import type { AdminOrdersQuery, OrderLineInput, OrderScope, OrderWithRelations, PlaceOrderDto, QuoteDto } from './order.dto.js';
 import { canTransition, FINAL_STATUSES, ITEMS_EDITABLE, type ActorKind } from './order-state.js';
+import { refundDueOrderIds } from './refund-due.js';
 import { computeQuote, paymentStatusFor, type PricingLine, type PricingPromotion, type Quote } from './pricing.js';
 
 export const ORDER_INCLUDE = {
@@ -377,7 +378,9 @@ export class OrdersService {
 
   async adminList(q: AdminOrdersQuery): Promise<Page<OrderWithRelations>> {
     const search = q.search?.trim();
+    const refundDueIds = q.refundDue ? await refundDueOrderIds(this.prisma) : null;
     const where: Prisma.OrderWhereInput = {
+      ...(refundDueIds ? { id: { in: refundDueIds } } : {}),
       ...(q.status?.length ? { status: { in: q.status } } : {}),
       ...(q.customerId ? { customerId: q.customerId } : {}),
       ...(q.driverId ? { OR: [{ pickupDriverId: q.driverId }, { deliveryDriverId: q.driverId }] } : {}),
@@ -582,7 +585,15 @@ export class OrdersService {
       return tx.order.findUniqueOrThrow({ where: { id: orderId }, include: ORDER_INCLUDE });
     });
 
-    this.events.emit(Events.OrderUpdated, { ...orderRef(updated), reason: 'items_changed' } satisfies OrderUpdatedEvent);
+    this.events.emit(Events.OrderUpdated, {
+      ...orderRef(updated),
+      reason: 'items_changed',
+      previousTotalPaise: order.totalPaise,
+      totalPaise: updated.totalPaise,
+      paidPaise: updated.paidPaise,
+      refundedPaise: updated.refundedPaise,
+      actorRole: actor.role,
+    } satisfies OrderUpdatedEvent);
     return updated;
   }
 }
