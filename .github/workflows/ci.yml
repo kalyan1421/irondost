@@ -63,6 +63,8 @@ jobs:
         run: |
           pnpm --filter @laundry/admin gen:api
           git diff --exit-code apps/admin/src/lib/api/schema.d.ts
+      - name: Generate Next's route types (LayoutProps, PageProps) for a fresh checkout
+        run: pnpm --filter @laundry/admin exec next typegen
       - run: pnpm --filter @laundry/admin exec tsc --noEmit
       - run: pnpm --filter @laundry/admin lint
       - run: pnpm --filter @laundry/admin build
