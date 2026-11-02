@@ -1,7 +1,7 @@
 # IronDost customer app
 
-Flutter app for iOS (`com.irondost.customer`) and Android (`com.cloudironingfactory.customer`,
-updating the existing Play listing). Plan, screens and API mapping: [docs/customer-app-plan.md](../../docs/customer-app-plan.md).
+Flutter app for iOS (`com.irondost.customer`) and Android (`com.irondost.customer`,
+a new Play listing). Plan, screens and API mapping: [docs/customer-app-plan.md](../../docs/customer-app-plan.md).
 
 ## Run it locally
 
@@ -54,14 +54,14 @@ The Google button shows a friendly message instead of opening Google until sign-
      the app does not call Google on iOS until it is there;
    - in `ios/Runner/Info.plist` add a **second** entry to `CFBundleURLTypes` (keep the existing Firebase one) whose
      `CFBundleURLSchemes` holds the `REVERSED_CLIENT_ID` value. Without this scheme the Google SDK ends the app when sign-in starts.
-3. **Android** (`com.cloudironingfactory.customer`). Add the SHA-1 and SHA-256 fingerprints of the debug key
+3. **Android** (`com.irondost.customer`). Add the SHA-1 and SHA-256 fingerprints of the debug key
    (`cd android && ./gradlew signingReport`), the upload key, and the **Play App Signing** key (Play Console → App integrity)
    under Project settings → Your apps → Android; then download the new `google-services.json` into `android/app/`. Its
    `oauth_client` entries make the Google Services plugin generate `default_web_client_id`, which Google sign-in uses.
 4. Rebuild the app. Nothing changes on the API: it already accepts Firebase ID tokens from this project.
 
-Apple's App Store rule 4.8 requires **Sign in with Apple** to be offered on iOS next to any other third-party sign-in. Add it
-before the iOS release that ships Google login.
+Apple's App Store rule 4.8 requires **Sign in with Apple** to be offered on iOS next to any other third-party sign-in. Until it is
+built, the iPhone app hides "Continue with Google" (`GoogleSignInOption.offered`) and signs in with a mobile number only.
 
 ## Maps and location
 

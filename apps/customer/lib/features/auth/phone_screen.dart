@@ -44,13 +44,17 @@ class _PhoneScreenState extends ConsumerState<PhoneScreen> {
 
   /// The account may already carry a verified number the API has not heard about yet: then there is nothing to type.
   Future<void> _finishIfAlreadyLinked() async {
-    if (await ref.read(loginProvider.notifier).syncLinkedPhone() && mounted) context.pop(true);
+    if (await ref.read(loginProvider.notifier).syncLinkedPhone() && mounted) {
+      context.pop(true);
+    }
   }
 
   Future<void> _submit() async {
     final linking = widget.linking;
     final phone = IndianPhone.national(_controller.text);
-    final opened = await ref.read(loginProvider.notifier).sendCode(phone, link: linking);
+    final opened = await ref
+        .read(loginProvider.notifier)
+        .sendCode(phone, link: linking);
     if (!mounted) return;
     if (linking && ref.read(loginProvider).linked) {
       // Android read the code itself: the number is stored already.
@@ -76,6 +80,14 @@ class _PhoneScreenState extends ConsumerState<PhoneScreen> {
     final state = ref.watch(loginProvider);
     final c = context.colors;
     final t = context.text;
+    final keyboardOpen = MediaQuery.viewInsetsOf(context).bottom > 0;
+    final alternatives = Column(
+      children: [
+        if (!widget.linking) const GoogleSignInOption(),
+        const SizedBox(height: IdSpace.s3),
+        const PolicyLinks(),
+      ],
+    );
     final error = switch (state.error) {
       AuthFailureKind.invalidNumber => 'Enter a 10-digit mobile number.',
       AuthFailureKind.phoneInUse => 'This number is already linked to another IronDost account. Use a different number.',
@@ -104,7 +116,9 @@ class _PhoneScreenState extends ConsumerState<PhoneScreen> {
                     Semantics(
                       header: true,
                       child: Text(
-                        widget.linking ? 'Add your mobile number' : 'Enter your mobile number',
+                        widget.linking
+                            ? 'Add your mobile number'
+                            : 'Enter your mobile number',
                         style: t.headline,
                       ),
                     ),
@@ -134,6 +148,9 @@ class _PhoneScreenState extends ConsumerState<PhoneScreen> {
                           ref.read(loginProvider.notifier).clearError(),
                       onSubmitted: (_) => _submit(),
                     ),
+                    // Keep secondary sign-in and policy links reachable without
+                    // letting their large-text height crowd out the input.
+                    if (keyboardOpen) alternatives,
                   ],
                 ),
               ),
@@ -152,14 +169,7 @@ class _PhoneScreenState extends ConsumerState<PhoneScreen> {
                       loading: state.busy,
                       onPressed: _submit,
                     ),
-                    if (!widget.linking) ...[
-                      const SizedBox(height: IdSpace.s3),
-                      const OrDivider(),
-                      const SizedBox(height: IdSpace.s3),
-                      const GoogleSignInButton(),
-                    ],
-                    const SizedBox(height: IdSpace.s3),
-                    const PolicyLinks(),
+                    if (!keyboardOpen) alternatives,
                   ],
                 ),
               ),

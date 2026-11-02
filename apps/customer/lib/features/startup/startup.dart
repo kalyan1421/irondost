@@ -5,6 +5,7 @@ import 'package:package_info_plus/package_info_plus.dart';
 
 import '../../core/version.dart';
 import '../../data/api_client.dart';
+import '../../data/wake_retry.dart';
 
 /// What the app learns from the API before anything else: business config and whether this
 /// build is still supported.
@@ -26,11 +27,14 @@ final startupProvider = FutureProvider<Startup>((ref) async {
   final api = ref.watch(apiProvider);
   final platform = Platform.isIOS ? DevicePlatform.ios : DevicePlatform.android;
   try {
-    final results = await Future.wait<Object?>([
-      api.config.publicConfigControllerGet(),
-      api.appVersions.appVersionsControllerGet(app: ClientApp.customer, platform: platform),
-      PackageInfo.fromPlatform(),
-    ], eagerError: true);
+    // A sleeping API can take a minute to answer the first call: wait for it rather than show an error.
+    final results = await WakeRetry.run(
+      () => Future.wait<Object?>([
+        api.config.publicConfigControllerGet(),
+        api.appVersions.appVersionsControllerGet(app: ClientApp.customer, platform: platform),
+        PackageInfo.fromPlatform(),
+      ], eagerError: true),
+    );
     final rawVersion = results[1];
     return Startup(
       config: results[0]! as PublicConfigDto,

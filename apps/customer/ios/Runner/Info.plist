@@ -73,6 +73,8 @@
 		<key>NSAllowsLocalNetworking</key>
 		<true/>
 	</dict>
+	<key>NSLocationAlwaysAndWhenInUseUsageDescription</key>
+	<string>IronDost uses your location only while the app is open, to find your pickup address. We never track you in the background.</string>
 	<key>NSLocationWhenInUseUsageDescription</key>
 	<string>IronDost uses your location to find your pickup address. We never track you in the background.</string>
 	<key>UIApplicationSceneManifest</key>

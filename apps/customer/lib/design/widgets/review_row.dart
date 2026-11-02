@@ -9,16 +9,18 @@ class ReviewRow extends StatelessWidget {
     required this.label,
     required this.value,
     this.action,
+    this.actionLabel,
   });
   final String label;
   final Widget value;
   final Widget? action;
+  final String? actionLabel;
   @override
   Widget build(BuildContext context) {
     final labelledAction = action == null
         ? null
         : Semantics(
-            label: 'Change ${label.toLowerCase()}',
+            label: actionLabel ?? 'Change ${label.toLowerCase()}',
             button: true,
             excludeSemantics: true,
             child: action!,

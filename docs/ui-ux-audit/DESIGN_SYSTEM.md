@@ -1,6 +1,8 @@
 # IronDost customer design system
 
-Version 2 implemented · 5 October 2026 · Based on the existing logo and local customer app.
+Version 3 implemented locally · 1 November 2026 · Based on the existing logo and local customer app.
+
+The clean, friendly refresh uses Junction headings, Figtree text and the existing IronDost blue. Selected payment, slot and address controls now share a soft-blue fill and a visible selection marker. Bottom navigation uses a soft-blue indicator. See [the current implementation report](../design/mobile-refresh/README.md) and [all-screen comparison](../design/mobile-refresh/index.html). Earlier captures and reports in this audit folder remain historical evidence.
 
 The final logo selection is packaged in `logo/`. The customer app uses this system. The token master is `packages/design-tokens/customer.tokens.json`; `apps/customer/tool/gen_tokens.dart` generates its Dart tokens. The shared `tokens.json` remains available for other applications. `implemented.html` compares the original and implemented Flutter screens; `index.html` retains the initial interactive concepts.
 
@@ -48,13 +50,13 @@ In dark mode, status summaries stay on a dark neutral surface. Do not use `surfa
 
 ## Typography
 
-Outfit is for the logo and screen/section headings. Figtree is for body text, controls, prices and lists. Geist Mono remains an exception for order IDs and coupon codes only. Bundle the required font assets and licences; production typography must not depend on the first network request. The application now bundles Outfit 500/600/700, Figtree 400/500/600/700 and Geist Mono 500 with their OFL licences in `apps/customer/assets/fonts`. Runtime Google Fonts fetching has been removed.
+The existing outlined Outfit logo artwork is retained. Junction Bold is for screen and section headings, selected after comparing adaptations of directions A and F on three real Flutter screens. Figtree is for body text, controls, important amounts and lists; it also supplies ₹ when used in a Junction heading. Geist Mono remains an exception for order IDs and coupon codes. Junction 400/700 and its OFL licence are bundled alongside the existing fonts. Production typography has no runtime font request. These changes adapt the heading treatment, not the original concepts' entire compositions.
 
 | Style | Size / line height | Weight | Use |
 |---|---|---|---|
-| display | 30 / 36 dp | 600 | A single important amount when warranted |
-| headline | 26 / 32 dp | 600 | Main screen heading |
-| title-lg | 20 / 26 dp | 600 | Compact app bar or section heading |
+| display | 30 / 38 dp | 700 | A single important amount or OTP digits, in Figtree |
+| headline | 28 / 36 dp | 700 | Main screen heading, in Junction |
+| title-lg | 21 / 28 dp | 700 | Compact app bar or section heading, in Junction |
 | title | 16 / 22 dp | 600 | Item name, order status, setting label |
 | body and body-lg | 16 / 24 dp | 400 | Instructions, addresses, input text |
 | label | 15 / 20 dp | 600 | Buttons |

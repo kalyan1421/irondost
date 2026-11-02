@@ -11,6 +11,10 @@ import type { Env } from './config/env.js';
 export function configureApp(app: INestApplication): Env {
   const env = app.get<Env>(APP_ENV);
 
+  if (env.TRUST_PROXY_HOPS > 0) {
+    // Without this the rate limiter keys on the load balancer's address, not the caller's.
+    (app.getHttpAdapter().getInstance() as express.Express).set('trust proxy', env.TRUST_PROXY_HOPS);
+  }
   app.setGlobalPrefix('v1');
   app.use(helmet());
   app.enableCors({ origin: env.CORS_ORIGINS, credentials: true, exposedHeaders: ['Idempotent-Replayed'] });

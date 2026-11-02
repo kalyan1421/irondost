@@ -71,7 +71,13 @@ class IdTextField extends StatelessWidget {
             child: Row(
               mainAxisSize: MainAxisSize.min,
               children: [
-                Text(prefixText!, style: t.bodyLg.copyWith(color: c.textMuted, fontWeight: FontWeight.w600)),
+                Text(
+                  prefixText!,
+                  style: t.bodyLg.copyWith(
+                    color: c.textMuted,
+                    fontWeight: FontWeight.w600,
+                  ),
+                ),
                 const SizedBox(width: 10),
                 Container(width: 1, height: 24, color: c.border),
                 const SizedBox(width: 10),
@@ -104,9 +110,11 @@ class IdTextField extends StatelessWidget {
           style: t.bodyLg,
           decoration: InputDecoration(
             hintText: hint,
-            helperText: error == null ? help : null,
             prefixIcon: prefix,
-            prefixIconConstraints: const BoxConstraints(minWidth: 0, minHeight: 0),
+            prefixIconConstraints: const BoxConstraints(
+              minWidth: 0,
+              minHeight: 0,
+            ),
             suffixIcon: trailing,
             error: error == null
                 ? null
@@ -115,14 +123,29 @@ class IdTextField extends StatelessWidget {
                     children: [
                       Padding(
                         padding: const EdgeInsets.only(top: 1),
-                        child: Icon(LucideIcons.circleAlert, size: IdSize.iconSm, color: c.danger),
+                        child: Icon(
+                          LucideIcons.circleAlert,
+                          size: IdSize.iconSm,
+                          color: c.danger,
+                        ),
                       ),
                       const SizedBox(width: 6),
-                      Expanded(child: Text(error!, style: t.caption.copyWith(color: c.danger))),
+                      Expanded(
+                        child: Text(
+                          error!,
+                          style: t.caption.copyWith(color: c.danger),
+                        ),
+                      ),
                     ],
                   ),
           ),
         ),
+        // Keep help outside InputDecorator's counter row. At large text that
+        // row narrows the explanation and truncates important instructions.
+        if (error == null && help != null) ...[
+          const SizedBox(height: IdSpace.s1),
+          Text(help!, style: t.caption.copyWith(color: c.textMuted)),
+        ],
       ],
     );
   }

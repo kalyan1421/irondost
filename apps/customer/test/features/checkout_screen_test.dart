@@ -87,6 +87,10 @@ void main() {
     await pump(tester);
 
     expect(find.text('Checkout'), findsOneWidget);
+    expect(find.text('Contact number'), findsOneWidget);
+    expect(find.text('+91 98765 43210'), findsOneWidget);
+    expect(tester.getTopLeft(find.text('To pay')).dy,
+        lessThan(tester.getTopLeft(find.text('Pay with')).dy));
     expect(find.text('Home'), findsOneWidget);
     expect(find.textContaining('302, Sai Residency'), findsOneWidget);
     expect(find.text('Pickup'), findsOneWidget);
@@ -113,9 +117,19 @@ void main() {
     expect(find.text('Secure payment by Razorpay'), findsNothing);
   });
 
+  Future<void> openNote(WidgetTester tester) async {
+    final note = find.text('Note for your pickup (optional)');
+    await tester.scrollUntilVisible(note.hitTestable(), 180, scrollable: find.byType(Scrollable).first);
+    await tester.tap(note.hitTestable());
+    await tester.pumpAndSettle();
+    await tester.ensureVisible(find.byType(TextField));
+    await tester.pumpAndSettle();
+  }
+
   group('note for the pickup', () {
     testWidgets('is optional, and says who sees it', (tester) async {
       final (_, orders, _) = await pump(tester);
+      await openNote(tester);
       expect(find.text('Note for your pickup (optional)'), findsOneWidget);
       expect(find.text('IronDost sees this with your order.'), findsOneWidget);
 
@@ -128,7 +142,10 @@ void main() {
     testWidgets('typed text and a quick phrase are sent together, and a phrase is only added once', (tester) async {
       final (_, orders, _) = await pump(tester);
 
+      await openNote(tester);
       await tester.enterText(find.byType(TextField), 'Gate code 4321');
+      await tester.ensureVisible(find.text('Call before arriving'));
+      await tester.pumpAndSettle();
       await tester.tap(find.text('Call before arriving'));
       await tester.pump();
       await tester.tap(find.text('Call before arriving'));
@@ -143,6 +160,7 @@ void main() {
 
     testWidgets('quick phrases are full-size touch targets', (tester) async {
       await pump(tester);
+      await openNote(tester);
       for (final phrase in ['Call before arriving', 'Leave with security', "Don't ring the bell"]) {
         final target = find.ancestor(of: find.text(phrase), matching: find.byType(InkWell)).first;
         expect(tester.getSize(target).height, greaterThanOrEqualTo(48), reason: phrase);
@@ -152,6 +170,7 @@ void main() {
     testWidgets('stops at the API limit of 500 characters', (tester) async {
       final (_, orders, _) = await pump(tester);
 
+      await openNote(tester);
       await tester.enterText(find.byType(TextField), 'a' * 600);
       await tester.pump();
       await tester.tap(find.text('Pay ₹80'));
@@ -176,6 +195,20 @@ void main() {
   });
 
   group('a customer who signed in with Google', () {
+    testWidgets('adding contact from the review keeps the basket and does not place an order', (tester) async {
+      final (router, orders, container) = await pump(tester, session: _GoogleSession.new);
+      expect(find.text('Add a number before booking'), findsOneWidget);
+      await tester.tap(find.text('Add number'));
+      await settle(tester);
+      expect(router.state.matchedLocation, Routes.addPhone);
+      expect(orders.placed, isEmpty);
+      router.pop();
+      await settle(tester);
+      expect(router.state.matchedLocation, Routes.checkout);
+      expect(container.read(basketProvider).count, 3);
+      expect(find.text('Pay ₹80'), findsOneWidget);
+    });
+
     testWidgets('is asked for a verified number before the order is placed, then the order goes through', (tester) async {
       final (router, orders, _) = await pump(tester, session: _GoogleSession.new);
       await tester.tap(find.text('Cash on delivery'));

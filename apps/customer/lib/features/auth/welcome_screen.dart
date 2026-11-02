@@ -4,6 +4,7 @@ import 'package:go_router/go_router.dart';
 import '../../app/routes.dart';
 import '../../design/theme.dart';
 import '../../design/widgets/id_button.dart';
+import '../../design/widgets/care_note.dart';
 import '../../design/widgets/policy_links.dart';
 import '../../design/widgets/surfaces.dart';
 import 'google_sign_in_button.dart';
@@ -40,16 +41,9 @@ class WelcomeScreen extends StatelessWidget {
                   ),
                 ),
                 const SizedBox(height: IdSpace.s6),
-                const Divider(),
-                const SizedBox(height: IdSpace.s4),
-                Text(
-                  'Choose your pickup and delivery times.',
-                  style: context.text.body,
-                ),
-                const SizedBox(height: IdSpace.s3),
-                Text(
-                  'Pay online or in cash at delivery.',
-                  style: context.text.body,
+                const CareNote(
+                  title: 'Choose your pickup and delivery times.',
+                  body: 'Pay online or in cash at delivery.',
                 ),
               ],
             ),
@@ -68,10 +62,7 @@ class WelcomeScreen extends StatelessWidget {
                   expand: true,
                   onPressed: () => context.push(Routes.login),
                 ),
-                const SizedBox(height: IdSpace.s3),
-                const OrDivider(),
-                const SizedBox(height: IdSpace.s3),
-                const GoogleSignInButton(),
+                const GoogleSignInOption(),
                 const SizedBox(height: IdSpace.s3),
                 const PolicyLinks(),
               ],

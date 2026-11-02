@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:lucide_icons_flutter/lucide_icons.dart';
@@ -13,15 +15,59 @@ import '../auth/session.dart';
 import '../startup/startup.dart';
 import '../support/support.dart';
 
-/// Shown while the app checks the API and the saved sign-in.
-class LaunchScreen extends StatelessWidget {
+/// Shown while the app checks the API and the saved sign-in. If that takes a while (the API wakes slowly after a quiet
+/// spell), it says so instead of leaving a bare logo.
+class LaunchScreen extends StatefulWidget {
   const LaunchScreen({super.key});
 
   @override
-  Widget build(BuildContext context) => Scaffold(
-    backgroundColor: context.colors.surface,
-    body: const Center(child: BrandLogo(height: 32)),
-  );
+  State<LaunchScreen> createState() => _LaunchScreenState();
+}
+
+class _LaunchScreenState extends State<LaunchScreen> {
+  Timer? _slow;
+  bool _showHint = false;
+
+  @override
+  void initState() {
+    super.initState();
+    _slow = Timer(const Duration(seconds: 6), () {
+      if (mounted) setState(() => _showHint = true);
+    });
+  }
+
+  @override
+  void dispose() {
+    _slow?.cancel();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final c = context.colors;
+    return Scaffold(
+      backgroundColor: c.surface,
+      body: Stack(
+        children: [
+          const Center(child: BrandLogo(height: 32)),
+          if (_showHint)
+            Positioned(
+              left: IdSpace.s5,
+              right: IdSpace.s5,
+              bottom: IdSpace.s12,
+              child: Semantics(
+                liveRegion: true,
+                child: Text(
+                  'Getting things ready. The first open can take a minute.',
+                  textAlign: TextAlign.center,
+                  style: context.text.body.copyWith(color: c.textMuted),
+                ),
+              ),
+            ),
+        ],
+      ),
+    );
+  }
 }
 
 /// No internet, or the API is down. Retries whatever failed.
