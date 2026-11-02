@@ -1,7 +1,7 @@
 "use client";
 
 import { useQuery } from "@tanstack/react-query";
-import { AlertTriangle, ArrowRight, Plus } from "lucide-react";
+import { AlertTriangle, ArrowRight, Plus, Undo2 } from "lucide-react";
 import Link from "next/link";
 import { EmptyState, ErrorState, PageBody, PageHeader } from "@/components/page";
 import { StatusBadge } from "@/components/status";
@@ -55,6 +55,22 @@ export default function DashboardPage() {
         ) : (
           <Kpis d={dashboard.data} />
         )}
+
+        {dashboard.data && dashboard.data.refundsDue > 0 ? (
+          <Card className="border-rose-300/70 bg-rose-50/60 dark:border-rose-400/30 dark:bg-rose-400/5">
+            <CardHeader className="flex-row items-center gap-2 space-y-0">
+              <Undo2 className="size-4 text-rose-600 dark:text-rose-300" />
+              <CardTitle className="text-base">
+                Customers are owed money back on {dashboard.data.refundsDue} order{dashboard.data.refundsDue === 1 ? "" : "s"}
+              </CardTitle>
+              <Button asChild variant="ghost" size="sm" className="ml-auto">
+                <Link href="/orders?refundDue=1">
+                  Review <ArrowRight />
+                </Link>
+              </Button>
+            </CardHeader>
+          </Card>
+        ) : null}
 
         {attention.data && attention.data.total > 0 ? (
           <Card className="border-amber-300/70 bg-amber-50/60 dark:border-amber-400/30 dark:bg-amber-400/5">

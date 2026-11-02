@@ -8,7 +8,9 @@ import {
   LogOut,
   Moon,
   PackageSearch,
+  ScrollText,
   Settings,
+  Smartphone,
   ShieldCheck,
   Shirt,
   Sun,
@@ -19,6 +21,7 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useTheme } from "next-themes";
 import { BrandWordmark } from "@/components/brand";
+import { NotificationsMenu } from "@/components/notifications-menu";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -73,6 +76,8 @@ const NAV: { label: string; items: NavItem[] }[] = [
     items: [
       { href: "/staff", label: "Staff", icon: ShieldCheck, superAdminOnly: true },
       { href: "/settings", label: "Business settings", icon: Settings },
+      { href: "/app-versions", label: "App versions", icon: Smartphone, superAdminOnly: true },
+      { href: "/audit", label: "Audit log", icon: ScrollText, superAdminOnly: true },
     ],
   },
 ];
@@ -126,6 +131,7 @@ export function AppSidebar() {
       </SidebarContent>
       <SidebarFooter>
         <SidebarMenu>
+          <NotificationsMenu />
           <SidebarMenuItem>
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
