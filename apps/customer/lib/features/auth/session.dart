@@ -3,6 +3,7 @@ import 'dart:async';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../data/api_client.dart';
+import '../../data/wake_retry.dart';
 import '../push/device_registrar.dart';
 import 'auth_repository.dart';
 
@@ -82,7 +83,7 @@ class SessionController extends AsyncNotifier<Session> {
   Future<Session> _start() async {
     final api = ref.read(apiProvider);
     try {
-      final user = await api.auth.authControllerSession(body: const StartSessionDto(app: ClientApp.customer));
+      final user = await WakeRetry.run(() => api.auth.authControllerSession(body: const StartSessionDto(app: ClientApp.customer)));
       // Push registration must never block or fail sign-in.
       unawaited(ref.read(deviceRegistrarProvider).register());
       return SignedIn(Profile.fromUser(user));

@@ -21,7 +21,7 @@ class IdCard extends StatelessWidget {
     final c = context.colors;
     final radius = BorderRadius.circular(IdRadius.lg);
     return DecoratedBox(
-      decoration: BoxDecoration(color: c.surface),
+      decoration: BoxDecoration(color: c.surface, borderRadius: radius),
       child: Material(
         type: MaterialType.transparency,
         child: InkWell(
@@ -119,7 +119,7 @@ class IdListRow extends StatelessWidget {
                       size: IdSize.iconMd,
                       color: destructive ? c.danger : c.textMuted,
                     ),
-                    const SizedBox(width: 14),
+                    const SizedBox(width: IdSpace.s4),
                     Expanded(
                       child: stacked
                           ? Column(

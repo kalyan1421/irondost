@@ -6,6 +6,7 @@ import {
   type OffersCreatedEvent,
   type OrderCreatedEvent,
   type OrderStatusChangedEvent,
+  type OrderUpdatedEvent,
   type PaymentCapturedEvent,
   type RefundCreatedEvent,
   type RefundFailedEvent,
@@ -14,6 +15,7 @@ import {
 import { rupees } from '../common/money.js';
 import { ClientApp, DispatchLeg, OrderStatus, Role } from '../generated/prisma/enums.js';
 import { PrismaService } from '../prisma/prisma.service.js';
+import { itemsChangedCopy } from './items-changed-copy.js';
 import { PushService } from './push.service.js';
 import { refundCopy, type RefundStage } from './refund-copy.js';
 
@@ -107,6 +109,44 @@ export class NotificationsListener {
         e.to === OrderStatus.PICKUP_ASSIGNED ? e.pickupDriverId : e.to === OrderStatus.DELIVERY_ASSIGNED ? e.deliveryDriverId : null;
       if (assigned && e.actorRole !== Role.DRIVER) {
         await this.inboxAndPush([assigned], 'task_assigned', 'New task assigned', `You have been assigned order ${e.orderNumber}.`, { orderId: e.orderId }, ClientApp.PARTNER);
+      }
+    } catch (err) {
+      this.logger.error(err);
+    }
+  }
+
+  /** Staff changed the items (usually after counting the clothes): the customer is told what the total is now. */
+  @OnEvent(Events.OrderUpdated, { async: true, suppressErrors: true })
+  async orderUpdated(e: OrderUpdatedEvent): Promise<void> {
+    try {
+      if (
+        e.reason !== 'items_changed' ||
+        e.actorRole === Role.CUSTOMER ||
+        e.previousTotalPaise === undefined ||
+        e.totalPaise === undefined ||
+        e.paidPaise === undefined
+      ) {
+        return;
+      }
+      const copy = itemsChangedCopy({
+        orderNumber: e.orderNumber,
+        previousTotalPaise: e.previousTotalPaise,
+        totalPaise: e.totalPaise,
+        paidPaise: e.paidPaise,
+        refundedPaise: e.refundedPaise ?? 0,
+      });
+      if (!copy) return;
+      const data = { orderId: e.orderId, orderNumber: e.orderNumber };
+      await this.inboxAndPush([e.customerId], 'order_updated', copy.title, copy.body, data, ClientApp.CUSTOMER);
+      if (copy.refundOwedPaise > 0) {
+        await this.inboxAndPush(
+          await this.adminIds(),
+          'refund_needed',
+          'Refund needed',
+          `Order ${e.orderNumber} was reduced to ${rupees(e.totalPaise)} after ${rupees(e.paidPaise)} was paid. Refund the extra ${rupees(copy.refundOwedPaise)} from the order page.`,
+          { orderId: e.orderId },
+          ClientApp.ADMIN,
+        );
       }
     } catch (err) {
       this.logger.error(err);

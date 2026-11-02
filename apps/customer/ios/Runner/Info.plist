@@ -22,6 +22,11 @@
 	<string>$(FLUTTER_BUILD_NAME)</string>
 	<key>CFBundleSignature</key>
 	<string>????</string>
+	<!-- The app has no deep links. Left on, Flutter hands every incoming URL to the router, including the
+	     callback Firebase uses to return from its phone-number check, and the router sends the customer
+	     back to Welcome before the code screen can open. Firebase still receives its own URLs. -->
+	<key>FlutterDeepLinkingEnabled</key>
+	<false/>
 	<key>CFBundleURLTypes</key>
 	<array>
 		<dict>
@@ -30,6 +35,14 @@
 			<key>CFBundleURLSchemes</key>
 			<array>
 				<string>app-1-264618787416-ios-cb0f4ba0c34909cec7c02d</string>
+			</array>
+		</dict>
+		<dict>
+			<key>CFBundleTypeRole</key>
+			<string>Editor</string>
+			<key>CFBundleURLSchemes</key>
+			<array>
+				<string>com.googleusercontent.apps.264618787416-g3bpe3q3rvsj0um0ulhee1j18cphsn2v</string>
 			</array>
 		</dict>
 	</array>
@@ -60,6 +73,8 @@
 		<key>NSAllowsLocalNetworking</key>
 		<true/>
 	</dict>
+	<key>NSLocationAlwaysAndWhenInUseUsageDescription</key>
+	<string>IronDost uses your location only while the app is open, to find your pickup address. We never track you in the background.</string>
 	<key>NSLocationWhenInUseUsageDescription</key>
 	<string>IronDost uses your location to find your pickup address. We never track you in the background.</string>
 	<key>UIApplicationSceneManifest</key>

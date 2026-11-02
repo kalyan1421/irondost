@@ -1,7 +1,7 @@
 "use client";
 
 import { keepPreviousData, useQuery } from "@tanstack/react-query";
-import { AlertTriangle, Plus, Search, X } from "lucide-react";
+import { AlertTriangle, Plus, Search, Undo2, X } from "lucide-react";
 import Link from "next/link";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import { Suspense, useEffect, useState } from "react";
@@ -28,7 +28,8 @@ function OrdersBoard() {
   const params = useSearchParams();
 
   const singleStatus = params.get("status") as OrderStatus | null;
-  const tab = singleStatus ? null : (params.get("tab") ?? "active");
+  const refundDue = params.get("refundDue") === "1";
+  const tab = singleStatus || refundDue ? null : (params.get("tab") ?? "active");
   const attention = params.get("attention") === "1";
   const page = Number(params.get("page") ?? "1") || 1;
   const pickupFrom = params.get("from") ?? "";
@@ -61,6 +62,7 @@ function OrdersBoard() {
     ...(statuses.length ? { status: statuses } : {}),
     ...(q ? { search: q } : {}),
     ...(attention ? { dispatchFailed: true } : {}),
+    ...(refundDue ? { refundDue: true } : {}),
     ...(pickupFrom ? { pickupFrom } : {}),
     ...(pickupTo ? { pickupTo } : {}),
   };
@@ -70,7 +72,7 @@ function OrdersBoard() {
     placeholderData: keepPreviousData,
   });
 
-  const filtered = Boolean(q || attention || pickupFrom || pickupTo || singleStatus);
+  const filtered = Boolean(q || attention || refundDue || pickupFrom || pickupTo || singleStatus);
 
   return (
     <>
@@ -87,7 +89,7 @@ function OrdersBoard() {
       />
       <PageBody className="gap-4">
         <div className="flex flex-col gap-3">
-          <Tabs value={tab ?? ""} onValueChange={(v) => update({ tab: v, status: null })}>
+          <Tabs value={tab ?? ""} onValueChange={(v) => update({ tab: v, status: null, refundDue: null })}>
             <div className="-mx-4 overflow-x-auto px-4 md:mx-0 md:px-0">
               <TabsList className="w-max">
                 {ORDER_TABS.map((t) => (
@@ -123,6 +125,13 @@ function OrdersBoard() {
               aria-pressed={attention}
             >
               <AlertTriangle /> Needs a partner
+            </Button>
+            <Button
+              variant={refundDue ? "default" : "outline"}
+              onClick={() => update({ refundDue: refundDue ? null : "1", tab: null, status: null })}
+              aria-pressed={refundDue}
+            >
+              <Undo2 /> Refund due
             </Button>
             {singleStatus ? (
               <Button variant="secondary" onClick={() => update({ status: null })}>

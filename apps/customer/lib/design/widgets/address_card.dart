@@ -44,7 +44,7 @@ class AddressCard extends StatelessWidget {
       child: Opacity(
         opacity: 1,
         child: Material(
-          color: c.surface,
+          color: isSelected ? c.primarySoft : c.surface,
           shape: RoundedRectangleBorder(
             borderRadius: radius,
             side: BorderSide(
@@ -56,11 +56,15 @@ class AddressCard extends StatelessWidget {
             borderRadius: radius,
             onTap: onTap,
             child: Padding(
-              padding: const EdgeInsets.symmetric(vertical: IdSpace.s4),
+              padding: const EdgeInsets.all(IdSpace.s4),
               child: Row(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Icon(addressIcon(address.label), size: IdSize.iconMd, color: c.textMuted),
+                  Icon(
+                    addressIcon(address.label),
+                    size: IdSize.iconMd,
+                    color: c.textMuted,
+                  ),
                   const SizedBox(width: IdSpace.s3),
                   Expanded(
                     child: Column(

@@ -24,6 +24,24 @@ void main() {
     expect(find.text('6'), findsOneWidget);
   });
 
+  testWidgets('OtpInput takes focus back after being disabled, so the keyboard stays up for the next SMS code', (tester) async {
+    final controller = TextEditingController();
+    Widget build({required bool enabled}) =>
+        themed(Scaffold(body: OtpInput(controller: controller, enabled: enabled, onCompleted: (_) {})));
+
+    await tester.pumpWidget(build(enabled: true));
+    await tester.pump();
+    expect(tester.widget<EditableText>(find.byType(EditableText)).focusNode.hasFocus, isTrue);
+
+    await tester.pumpWidget(build(enabled: false));
+    await tester.pump();
+    expect(tester.widget<EditableText>(find.byType(EditableText)).focusNode.hasFocus, isFalse);
+
+    await tester.pumpWidget(build(enabled: true));
+    await tester.pump();
+    expect(tester.widget<EditableText>(find.byType(EditableText)).focusNode.hasFocus, isTrue);
+  });
+
   testWidgets('IdButton ignores taps while loading and is announced as loading', (tester) async {
     var taps = 0;
     await tester.pumpWidget(themed(Scaffold(body: IdButton(label: 'Verify', loading: true, onPressed: () => taps++))));

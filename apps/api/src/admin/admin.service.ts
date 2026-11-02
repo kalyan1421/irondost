@@ -10,9 +10,12 @@ import {
   PaymentRecordStatus,
   Role,
 } from '../generated/prisma/enums.js';
+import { refundDueOrderIds } from '../orders/refund-due.js';
 import { PrismaService } from '../prisma/prisma.service.js';
 import { toUserDto } from '../users/user.dto.js';
 import type {
+  AuditPageDto,
+  AuditQuery,
   CreateCustomerDto,
   CreateStaffDto,
   CustomerPageDto,
@@ -192,6 +195,39 @@ export class AdminService {
     });
   }
 
+  // ───────────── Audit log ─────────────
+
+  async audit(q: AuditQuery): Promise<AuditPageDto> {
+    const where: Prisma.AuditLogWhereInput = {
+      ...(q.entity ? { entity: q.entity } : {}),
+      ...(q.entityId ? { entityId: q.entityId } : {}),
+    };
+    const [rows, total] = await Promise.all([
+      this.prisma.auditLog.findMany({
+        where,
+        include: { actor: { select: { name: true, phone: true } } },
+        orderBy: { createdAt: 'desc' },
+        ...pageArgs(q),
+      }),
+      this.prisma.auditLog.count({ where }),
+    ]);
+    return {
+      items: rows.map((r) => ({
+        id: r.id,
+        action: r.action,
+        entity: r.entity,
+        entityId: r.entityId,
+        actorId: r.actorId,
+        actorName: r.actor ? (r.actor.name ?? r.actor.phone) : null,
+        data: r.data,
+        createdAt: r.createdAt,
+      })),
+      page: q.page,
+      pageSize: q.pageSize,
+      total,
+    };
+  }
+
   // ───────────── Dashboard ─────────────
 
   async dashboard(): Promise<DashboardDto> {
@@ -216,6 +252,7 @@ export class AdminService {
       deliveriesToday,
       ordersToday,
       needsAttention,
+      refundsDue,
       driversOnline,
       c1,
       c7,
@@ -242,6 +279,7 @@ export class AdminService {
           status: { in: [OrderStatus.PENDING, OrderStatus.READY_FOR_DELIVERY] },
         },
       }),
+      refundDueOrderIds(this.prisma).then((ids) => ids.length),
       this.prisma.driverProfile.count({
         where: { isOnline: true, user: { isActive: true, deletedAt: null } },
       }),
@@ -268,6 +306,7 @@ export class AdminService {
       deliveriesToday,
       ordersToday,
       needsAttention,
+      refundsDue,
       driversOnline,
       collectedTodayPaise: c1,
       collectedLast7DaysPaise: c7,

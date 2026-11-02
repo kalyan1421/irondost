@@ -240,15 +240,13 @@ class _ActiveOrder extends ConsumerWidget {
       padding: const EdgeInsets.only(bottom: IdSpace.s6),
       child: DecoratedBox(
         decoration: BoxDecoration(
-          border: Border(
-            left: BorderSide(
-              color: missed ? context.colors.warning : context.colors.primary,
-              width: 3,
-            ),
-          ),
+          color: missed
+              ? context.colors.warningSoft
+              : context.colors.primarySoft,
+          borderRadius: BorderRadius.circular(IdRadius.lg),
         ),
         child: Padding(
-          padding: const EdgeInsets.only(left: IdSpace.s3),
+          padding: const EdgeInsets.all(IdSpace.s4),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [

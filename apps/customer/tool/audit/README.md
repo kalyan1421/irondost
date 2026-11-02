@@ -1,5 +1,7 @@
 # Customer UI audit capture tool
 
+The November 2026 refresh is reviewed in `docs/design/mobile-refresh/`. Keep the earlier audit captures intact. `AUDIT_TYPE=a` and `AUDIT_TYPE=f` compare Charis and Junction heading adaptations on the current layout. `AUDIT_CHECKOUT=true` captures the expanded pickup note and missing-contact state. Keyboard mode now includes the checkout note as an eighth form; the helper opens the disclosure, focuses the field, then reserves the keyboard inset to match the device interaction. Stress mode accepts `AUDIT_HEIGHT` (default 740) and `AUDIT_SCALE` (default 2), allowing a separate landscape pass. Historical counts below describe the October audit.
+
 This opt-in fixture renderer lives outside `test/`, so normal `flutter test` does not write screenshots or intentionally fail on known audit defects. It reuses existing repository fakes and loads fonts so visual layout checks use realistic text metrics. It does not call the real API, request device permissions, open Razorpay, or delete an account.
 
 From `apps/customer`:

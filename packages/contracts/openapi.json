@@ -1543,6 +1543,15 @@
             "schema": {
               "type": "boolean"
             }
+          },
+          {
+            "name": "refundDue",
+            "required": false,
+            "in": "query",
+            "description": "Only orders where the customer is owed money back (cancelled after paying, or overpaid)",
+            "schema": {
+              "type": "boolean"
+            }
           }
         ],
         "responses": {
@@ -2674,6 +2683,73 @@
             "bearer": []
           }
         ],
+        "tags": [
+          "admin · customers"
+        ]
+      }
+    },
+    "/v1/admin/audit": {
+      "get": {
+        "operationId": "AdminController_auditLog",
+        "parameters": [
+          {
+            "name": "page",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "minimum": 1,
+              "default": 1,
+              "type": "number"
+            }
+          },
+          {
+            "name": "pageSize",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "minimum": 1,
+              "maximum": 100,
+              "default": 20,
+              "type": "number"
+            }
+          },
+          {
+            "name": "entity",
+            "required": false,
+            "in": "query",
+            "description": "Only this kind of record, e.g. order, user, app_version",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "entityId",
+            "required": false,
+            "in": "query",
+            "description": "Only this record, e.g. an order id",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AuditPageDto"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Who changed what in the admin, newest first. Super admins only.",
         "tags": [
           "admin · customers"
         ]
@@ -5391,6 +5467,10 @@
           },
           "note": {
             "type": "string"
+          },
+          "collectedCash": {
+            "type": "boolean",
+            "description": "With status DELIVERED: the partner or staff collected the balance in cash, so record it with the delivery."
           }
         },
         "required": [
@@ -5962,6 +6042,10 @@
           "needsAttention": {
             "type": "number"
           },
+          "refundsDue": {
+            "type": "number",
+            "description": "Orders where the customer is owed money back (cancelled after paying, or overpaid)"
+          },
           "driversOnline": {
             "type": "number"
           },
@@ -6003,11 +6087,82 @@
           "deliveriesToday",
           "ordersToday",
           "needsAttention",
+          "refundsDue",
           "driversOnline",
           "collectedTodayPaise",
           "collectedLast7DaysPaise",
           "collectedLast30DaysPaise",
           "dailyOrders"
+        ]
+      },
+      "AuditEntryDto": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "action": {
+            "type": "string"
+          },
+          "entity": {
+            "type": "string"
+          },
+          "entityId": {
+            "type": "string",
+            "nullable": true
+          },
+          "actorId": {
+            "type": "string",
+            "nullable": true
+          },
+          "actorName": {
+            "type": "string",
+            "nullable": true
+          },
+          "data": {
+            "type": "object",
+            "nullable": true
+          },
+          "createdAt": {
+            "format": "date-time",
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "action",
+          "entity",
+          "entityId",
+          "actorId",
+          "actorName",
+          "data",
+          "createdAt"
+        ]
+      },
+      "AuditPageDto": {
+        "type": "object",
+        "properties": {
+          "items": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/AuditEntryDto"
+            }
+          },
+          "page": {
+            "type": "number"
+          },
+          "pageSize": {
+            "type": "number"
+          },
+          "total": {
+            "type": "number"
+          }
+        },
+        "required": [
+          "items",
+          "page",
+          "pageSize",
+          "total"
         ]
       },
       "CustomerListItemDto": {

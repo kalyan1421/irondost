@@ -9,6 +9,7 @@ import '../../app/env.dart';
 import '../../app/routes.dart';
 import '../../design/theme.dart';
 import '../../design/widgets/id_button.dart';
+import '../auth/session.dart';
 import 'address_args.dart';
 import 'location_service.dart';
 import 'map_pin_controller.dart';
@@ -63,6 +64,10 @@ class _MapPinScreenState extends ConsumerState<MapPinScreen> {
     await _map.moveTo(place.latitude, place.longitude);
   }
 
+  /// Setup has no back button, so this is the way out for someone who signed in with the wrong account or number.
+  VoidCallback? get _signOut =>
+      _onboarding ? () => ref.read(sessionProvider.notifier).signOut() : null;
+
   void _confirm(Place place) {
     if (widget.args.mode == PinMode.changeLocation) {
       context.pop(place);
@@ -103,6 +108,7 @@ class _MapPinScreenState extends ConsumerState<MapPinScreen> {
               onUseLocation: _useMyLocation,
               onSearch: _search,
               onConfirm: _confirm,
+              onSignOut: _signOut,
               onOpenSettings: () =>
                   ref.read(locationServiceProvider).openSettings(state.access),
             ),
@@ -192,6 +198,7 @@ class _MapPinScreenState extends ConsumerState<MapPinScreen> {
                 onUseLocation: _useMyLocation,
                 onSearch: _search,
                 onConfirm: _confirm,
+                onSignOut: _signOut,
                 onOpenSettings: () => ref
                     .read(locationServiceProvider)
                     .openSettings(state.access),
@@ -260,6 +267,7 @@ class _Sheet extends StatelessWidget {
     required this.onSearch,
     required this.onConfirm,
     required this.onOpenSettings,
+    this.onSignOut,
   });
 
   final MapPinState state;
@@ -268,6 +276,7 @@ class _Sheet extends StatelessWidget {
   final VoidCallback onSearch;
   final void Function(Place) onConfirm;
   final VoidCallback onOpenSettings;
+  final VoidCallback? onSignOut;
 
   @override
   Widget build(BuildContext context) {
@@ -368,6 +377,14 @@ class _Sheet extends StatelessWidget {
               expand: true,
               loading: state.locating,
               onPressed: onUseLocation,
+            ),
+          ],
+          if (onSignOut != null) ...[
+            const SizedBox(height: IdSpace.s2),
+            IdButton.text(
+              label: 'Use a different account',
+              expand: true,
+              onPressed: onSignOut,
             ),
           ],
         ],

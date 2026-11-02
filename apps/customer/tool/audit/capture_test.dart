@@ -88,6 +88,32 @@ void main() {
         );
       await loader.load();
     }
+    final junction = FontLoader('Junction');
+    for (final weight in ['regular', 'bold']) {
+      junction.addFont(rootBundle.load('assets/fonts/Junction-$weight.otf'));
+    }
+    await junction.load();
+    const direction = String.fromEnvironment('AUDIT_TYPE');
+    if (direction.isNotEmpty) {
+      final serif = direction == 'a';
+      final loader = FontLoader(serif ? 'Charis' : 'Junction');
+      for (final file
+          in serif
+              ? ['charis/Charis-Regular.ttf', 'charis/Charis-Bold.ttf']
+              : [
+                  'junction/Junction-regular.otf',
+                  'junction/Junction-bold.otf',
+                ]) {
+        loader.addFont(
+          Future.value(
+            ByteData.sublistView(
+              File('../../docs/design/round-1/fonts/$file').readAsBytesSync(),
+            ),
+          ),
+        );
+      }
+      await loader.load();
+    }
     final icon = FontLoader('packages/lucide_icons_flutter/Lucide')
       ..addFont(
         rootBundle.load('packages/lucide_icons_flutter/assets/lucide.ttf'),
@@ -646,6 +672,31 @@ void main() {
     ),
   };
 
+  if (const bool.fromEnvironment('AUDIT_CHECKOUT') ||
+      const bool.fromEnvironment('AUDIT_KEYBOARD')) {
+    final checkout = scenarios['Checkout']!;
+    if (const bool.fromEnvironment('AUDIT_CHECKOUT')) scenarios.clear();
+    scenarios['Checkout note'] = checkout;
+    scenarios['Checkout without phone'] = (b, s) async => auditRouter(
+      at('/checkout', const CheckoutScreen()),
+      overrides: [
+        ...await basketOverrides(
+          saved: {
+            'basket.v1': '{"lines":{"shirt":2,"saree":1},"promoCode":null}',
+          },
+          session: _AuditGoogleSession.new,
+        ),
+        scheduleRepositoryProvider.overrideWithValue(FakeScheduleRepository()),
+        orderRepositoryProvider.overrideWithValue(FakeOrderRepository()),
+        addressRepositoryProvider.overrideWithValue(
+          FakeAddressRepository([testAddress()]),
+        ),
+      ],
+      brightness: b,
+      textScale: s,
+    );
+  }
+
   // Supplemental lifecycle states are kept separate from the original 47-view comparison.
   if (const bool.fromEnvironment('AUDIT_EXTRA_STATES')) {
     scenarios.clear();
@@ -723,6 +774,7 @@ void main() {
       'Address form',
       'Catalogue search',
       'Place search',
+      'Checkout note',
     };
     scenarios.removeWhere((name, _) => !forms.contains(name));
   }
@@ -731,26 +783,42 @@ void main() {
     for (final entry in scenarios.entries) {
       for (final brightness in Brightness.values) {
         testWidgets(
-          'stress ${entry.key} ${brightness.name} ${const int.fromEnvironment('AUDIT_WIDTH', defaultValue: 320)}dp 200%',
+          'stress ${entry.key} ${brightness.name} ${const int.fromEnvironment('AUDIT_WIDTH', defaultValue: 320)}dp scale=${const String.fromEnvironment('AUDIT_SCALE', defaultValue: '2')}',
           (tester) async {
             const width = int.fromEnvironment('AUDIT_WIDTH', defaultValue: 320);
+            const height = int.fromEnvironment(
+              'AUDIT_HEIGHT',
+              defaultValue: 740,
+            );
             tester.view
-              ..physicalSize = const Size(width * 2.0, 740 * 2)
+              ..physicalSize = const Size(width * 2.0, height * 2.0)
               ..devicePixelRatio = 2;
             addTearDown(tester.view.reset);
-            if (const bool.fromEnvironment('AUDIT_KEYBOARD')) {
+            if (const bool.fromEnvironment('AUDIT_KEYBOARD') &&
+                entry.key != 'Checkout note') {
               tester.view.viewInsets = const FakeViewPadding(bottom: 600);
             }
             final errors = <String>[];
             final original = FlutterError.onError;
             FlutterError.onError = (details) => errors.add(details.toString());
             try {
-              await tester.pumpWidget(await entry.value(brightness, 2));
+              await tester.pumpWidget(
+                await entry.value(
+                  brightness,
+                  double.parse(
+                    const String.fromEnvironment(
+                      'AUDIT_SCALE',
+                      defaultValue: '2',
+                    ),
+                  ),
+                ),
+              );
               await tester.pump(
                 quoteDebounce + const Duration(milliseconds: 10),
               );
               await tester.pump(const Duration(milliseconds: 500));
               await tester.pump(const Duration(milliseconds: 500));
+              await prepareCheckoutNote(tester, entry.key);
               await tester.pumpWidget(const SizedBox());
               await tester.pump();
             } finally {
@@ -773,7 +841,8 @@ void main() {
           )
           ..devicePixelRatio = 2;
         addTearDown(tester.view.reset);
-        if (const bool.fromEnvironment('AUDIT_KEYBOARD')) {
+        if (const bool.fromEnvironment('AUDIT_KEYBOARD') &&
+            entry.key != 'Checkout note') {
           tester.view.viewInsets = const FakeViewPadding(bottom: 600);
         }
         final key = GlobalKey();
@@ -791,6 +860,7 @@ void main() {
         await tester.pump(quoteDebounce + const Duration(milliseconds: 10));
         await tester.pump(const Duration(milliseconds: 500));
         await tester.pump(const Duration(milliseconds: 500));
+        await prepareCheckoutNote(tester, entry.key);
         await tester.runAsync(() async {
           await Future<void>.delayed(const Duration(milliseconds: 100));
         });
@@ -817,7 +887,8 @@ void main() {
     }
   }
 
-  if (const bool.fromEnvironment('AUDIT_EXTRA_STATES') ||
+  if (const bool.fromEnvironment('AUDIT_CHECKOUT') ||
+      const bool.fromEnvironment('AUDIT_EXTRA_STATES') ||
       const bool.fromEnvironment('AUDIT_KEYBOARD')) {
     return;
   }
@@ -991,11 +1062,67 @@ class _Offline extends Reachability {
   bool build() => false;
 }
 
+Future<void> prepareCheckoutNote(WidgetTester tester, String name) async {
+  if (name != 'Checkout note') return;
+  final note = find.text('Note for your pickup (optional)');
+  await tester.scrollUntilVisible(
+    note.hitTestable(),
+    150,
+    scrollable: find.byType(Scrollable).first,
+  );
+  await tester.tap(note.hitTestable());
+  await tester.pumpAndSettle();
+  // Focus the input before reserving the keyboard inset, as on a device.
+  // This also keeps the editing field alive when the list viewport shrinks.
+  await tester.scrollUntilVisible(
+    find.byType(TextField),
+    120,
+    scrollable: find.byType(Scrollable).first,
+  );
+  await tester.showKeyboard(find.byType(TextField));
+  await tester.pumpAndSettle();
+  if (const bool.fromEnvironment('AUDIT_KEYBOARD')) {
+    tester.view.viewInsets = const FakeViewPadding(bottom: 600);
+    await tester.pumpAndSettle();
+  }
+  await tester.ensureVisible(find.byType(TextField));
+  await tester.pumpAndSettle();
+}
+
+class _AuditGoogleSession extends SessionController {
+  @override
+  Future<Session> build() async => const SignedIn(
+    Profile(
+      id: 'u1',
+      name: 'Priya Sharma',
+      email: 'priya@example.com',
+      isComplete: true,
+    ),
+  );
+}
+
 class _AuditLogin extends LoginController {
   @override
   LoginState build() => const LoginState(
     phone: '9876543210',
     challenge: PhoneChallenge(phone: '9876543210', verificationId: 'audit'),
+  );
+}
+
+// Compare heading directions on the same real screens, with identical body copy
+// and controls. This opt-in override never changes the production theme.
+TextStyle auditFont(String family, TextStyle style) {
+  const direction = String.fromEnvironment('AUDIT_TYPE');
+  if (direction.isNotEmpty && family == IdFont.display) {
+    return style.copyWith(
+      fontFamily: direction == 'a' ? 'Charis' : 'Junction',
+      fontWeight: FontWeight.w700,
+      fontFamilyFallback: ['Figtree', 'Roboto'],
+    );
+  }
+  return style.copyWith(
+    fontFamily: family,
+    fontFamilyFallback: ['Figtree', 'Roboto'],
   );
 }
 
@@ -1009,11 +1136,7 @@ Widget auditThemed(
   overrides: overrides,
   child: MaterialApp(
     debugShowCheckedModeBanner: false,
-    theme: buildTheme(
-      brightness,
-      font: (family, style) =>
-          style.copyWith(fontFamily: family, fontFamilyFallback: ['Roboto']),
-    ),
+    theme: buildTheme(brightness, font: auditFont),
     builder: (context, child) => MediaQuery(
       data: MediaQuery.of(context)
           .copyWith(textScaler: TextScaler.linear(textScale)),
@@ -1032,11 +1155,7 @@ Widget auditRouter(
   overrides: overrides,
   child: MaterialApp.router(
     debugShowCheckedModeBanner: false,
-    theme: buildTheme(
-      brightness,
-      font: (family, style) =>
-          style.copyWith(fontFamily: family, fontFamilyFallback: ['Roboto']),
-    ),
+    theme: buildTheme(brightness, font: auditFont),
     builder: (context, child) => MediaQuery(
       data: MediaQuery.of(context)
           .copyWith(textScaler: TextScaler.linear(textScale)),

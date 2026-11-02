@@ -199,6 +199,8 @@ class _OtpScreenState extends ConsumerState<OtpScreen> {
                   _Hint(
                     AppEnv.devAuth
                         ? 'Dev sign-in: any 6 digits work. 000000 acts like a wrong code.'
+                        : Theme.of(context).platform == TargetPlatform.iOS
+                        ? 'When the SMS arrives, tap the code above your keyboard.'
                         : 'We fill the code in for you when the SMS arrives.',
                   ),
                 ],

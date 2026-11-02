@@ -14,4 +14,15 @@ abstract final class AppEnv {
   /// Whether the Google Maps SDK key is configured (ios/Flutter/Secrets.xcconfig and
   /// android/secrets.properties). Without it the pin screen offers search and current location only.
   static const mapsEnabled = bool.fromEnvironment('MAPS_ENABLED');
+
+  /// What is wrong with this build's configuration for a store release, or null when it is fine. A release archived
+  /// without `--dart-define-from-file=env/prod.json` would otherwise quietly point at localhost with dev sign-in.
+  static String? get releaseProblem => problemFor(apiBaseUrl: apiBaseUrl, authMode: authMode, flavor: flavor);
+
+  static String? problemFor({required String apiBaseUrl, required String authMode, required String flavor}) {
+    if (flavor == 'dev') return 'FLAVOR is "dev"';
+    if (authMode == 'dev') return 'AUTH_MODE is "dev"';
+    if (!apiBaseUrl.startsWith('https://')) return 'API_BASE_URL is not an https address';
+    return null;
+  }
 }

@@ -274,8 +274,11 @@ class SegmentedTabs extends StatelessWidget {
       container: true,
       label: label,
       child: Container(
-        padding: const EdgeInsets.all(4),
-        decoration: BoxDecoration(color: c.surface),
+        padding: const EdgeInsets.all(IdSpace.s1),
+        decoration: BoxDecoration(
+          color: c.surfaceSoft,
+          borderRadius: BorderRadius.circular(IdRadius.md),
+        ),
         child: Row(
           children: [
             for (final (i, option) in options.indexed)
@@ -294,12 +297,10 @@ class SegmentedTabs extends StatelessWidget {
                       ),
                       alignment: Alignment.center,
                       decoration: BoxDecoration(
-                        border: Border(
-                          bottom: BorderSide(
-                            color: i == selected ? c.primary : c.border,
-                            width: i == selected ? 2 : 1,
-                          ),
-                        ),
+                        color: i == selected ? c.surface : Colors.transparent,
+                        border: i == selected
+                            ? Border.all(color: c.primary)
+                            : null,
                         borderRadius: BorderRadius.circular(IdRadius.sm),
                       ),
                       child: Text(

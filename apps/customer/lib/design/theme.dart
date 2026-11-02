@@ -7,8 +7,11 @@ export 'tokens.g.dart';
 /// Resolves the locally bundled font families; tests may supply their own resolver.
 typedef FontResolver = TextStyle Function(String family, TextStyle style);
 
-TextStyle plainFont(String family, TextStyle style) =>
-    style.copyWith(fontFamily: family);
+TextStyle plainFont(String family, TextStyle style) => style.copyWith(
+  fontFamily: family,
+  // Junction headings use Figtree for ₹ and other unsupported glyphs.
+  fontFamilyFallback: const ['Figtree'],
+);
 
 /// The design system's named text styles, coloured for the current theme. Read with `context.text`.
 @immutable
@@ -236,8 +239,10 @@ ThemeData buildTheme(Brightness brightness, {FontResolver font = plainFont}) {
       height: IdSize.bottomNav,
       backgroundColor: c.surface,
       surfaceTintColor: Colors.transparent,
-      indicatorColor: Colors.transparent,
-      indicatorShape: const RoundedRectangleBorder(),
+      indicatorColor: c.primarySoft,
+      indicatorShape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.all(Radius.circular(IdRadius.md)),
+      ),
       elevation: 0,
       labelBehavior: NavigationDestinationLabelBehavior.alwaysShow,
       labelTextStyle: WidgetStateProperty.resolveWith(

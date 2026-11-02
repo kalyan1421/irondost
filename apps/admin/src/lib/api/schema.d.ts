@@ -973,6 +973,23 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/v1/admin/audit": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Who changed what in the admin, newest first. Super admins only. */
+        get: operations["AdminController_auditLog"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/v1/admin/customers": {
         parameters: {
             query?: never;
@@ -1723,6 +1740,8 @@ export interface components {
         ChangeStatusDto: {
             status: components["schemas"]["OrderStatus"];
             note?: string;
+            /** @description With status DELIVERED: the partner or staff collected the balance in cash, so record it with the delivery. */
+            collectedCash?: boolean;
         };
         UpdateItemsDto: {
             items: components["schemas"]["OrderLineInput"][];
@@ -1878,6 +1897,8 @@ export interface components {
             deliveriesToday: number;
             ordersToday: number;
             needsAttention: number;
+            /** @description Orders where the customer is owed money back (cancelled after paying, or overpaid) */
+            refundsDue: number;
             driversOnline: number;
             collectedTodayPaise: number;
             collectedLast7DaysPaise: number;
@@ -1887,6 +1908,23 @@ export interface components {
                 orders: number;
                 valuePaise: number;
             }[];
+        };
+        AuditEntryDto: {
+            id: string;
+            action: string;
+            entity: string;
+            entityId: string | null;
+            actorId: string | null;
+            actorName: string | null;
+            data: Record<string, never> | null;
+            /** Format: date-time */
+            createdAt: string;
+        };
+        AuditPageDto: {
+            items: components["schemas"]["AuditEntryDto"][];
+            page: number;
+            pageSize: number;
+            total: number;
         };
         CustomerListItemDto: {
             id: string;
@@ -2934,6 +2972,8 @@ export interface operations {
                 driverId?: string;
                 /** @description Only orders where automatic dispatch found no driver */
                 dispatchFailed?: boolean;
+                /** @description Only orders where the customer is owed money back (cancelled after paying, or overpaid) */
+                refundDue?: boolean;
             };
             header?: never;
             path?: never;
@@ -3608,6 +3648,32 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["DashboardDto"];
+                };
+            };
+        };
+    };
+    AdminController_auditLog: {
+        parameters: {
+            query?: {
+                page?: number;
+                pageSize?: number;
+                /** @description Only this kind of record, e.g. order, user, app_version */
+                entity?: string;
+                /** @description Only this record, e.g. an order id */
+                entityId?: string;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["AuditPageDto"];
                 };
             };
         };

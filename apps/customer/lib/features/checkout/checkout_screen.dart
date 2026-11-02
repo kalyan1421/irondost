@@ -5,6 +5,7 @@ import 'package:lucide_icons_flutter/lucide_icons.dart';
 
 import '../../app/routes.dart';
 import '../../core/money.dart';
+import '../../core/phone.dart';
 import '../../core/slots.dart';
 import '../../data/api_client.dart';
 import '../../design/theme.dart';
@@ -62,7 +63,8 @@ class CheckoutScreen extends ConsumerWidget {
     CheckoutProblem problem,
   ) async {
     // Offline and unexpected failures stay as the line above the button until the next attempt.
-    if (problem != CheckoutProblem.offline && problem != CheckoutProblem.failed) {
+    if (problem != CheckoutProblem.offline &&
+        problem != CheckoutProblem.failed) {
       ref.read(checkoutProvider.notifier).dismissProblem();
     }
     switch (problem) {
@@ -201,13 +203,27 @@ class CheckoutScreen extends ConsumerWidget {
           IdSpace.s6,
         ),
         children: [
+          Semantics(
+            header: true,
+            child: Text('Your estimate', style: context.text.titleLg),
+          ),
+          if (quote.hasError && !quoting)
+            _QuoteFailure(onRetry: () => ref.invalidate(quoteProvider))
+          else
+            QuoteBill(quote: q, loading: quoting, pieces: basket.count),
+          Text(
+            'Your partner confirms the final count at pickup.',
+            style: context.text.caption.copyWith(
+              color: context.colors.textMuted,
+            ),
+          ),
+          const SizedBox(height: IdSpace.s6),
+          const _ContactNumber(),
           _Where(address: address, schedule: schedule),
           if (!servable) ...[
             const SizedBox(height: IdSpace.s3),
             _NotServed(address: address),
           ],
-          const SizedBox(height: IdSpace.s6),
-          const _Note(),
           const SizedBox(height: IdSpace.s6),
           Semantics(
             header: true,
@@ -234,10 +250,7 @@ class CheckoutScreen extends ConsumerWidget {
                 .chooseMethod(PaymentMethod.cod),
           ),
           const SizedBox(height: IdSpace.s6),
-          if (quote.hasError && !quoting)
-            _QuoteFailure(onRetry: () => ref.invalidate(quoteProvider))
-          else
-            QuoteBill(quote: q, loading: quoting, pieces: basket.count),
+          const _Note(),
         ],
       ),
       bottomNavigationBar: _Footer(
@@ -253,6 +266,48 @@ class CheckoutScreen extends ConsumerWidget {
   }
 }
 
+class _ContactNumber extends ConsumerWidget {
+  const _ContactNumber();
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final profile = switch (ref.watch(sessionProvider).value) {
+      SignedIn(:final profile) => profile,
+      _ => null,
+    };
+    final phone = profile?.phone;
+    return ReviewRow(
+      label: 'Contact number',
+      value: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            phone == null
+                ? 'Add a number before booking'
+                : IndianPhone.display(phone),
+            style: context.text.title,
+          ),
+          Text(
+            'Your pickup partner calls this number.',
+            style: context.text.caption.copyWith(
+              color: context.colors.textMuted,
+            ),
+          ),
+        ],
+      ),
+      actionLabel: 'Add contact number',
+      action: phone == null
+          ? IdButton.text(
+              label: 'Add number',
+              onPressed: ref.watch(checkoutProvider.select((s) => s.placing))
+                  ? null
+                  : () => context.push<bool>(Routes.addPhone),
+            )
+          : null,
+    );
+  }
+}
+
 class _Where extends ConsumerWidget {
   const _Where({required this.address, required this.schedule});
   final AddressDto address;
@@ -261,15 +316,54 @@ class _Where extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final t = context.text;
-    void changePickup() => context.canPop() ? context.pop() : context.go(Routes.schedule);
-    return Column(crossAxisAlignment: CrossAxisAlignment.stretch, children: [
-      ReviewRow(label: 'Pickup address', value: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [Text(address.label, style: t.title), Text([address.formatted, if(address.landmark?.isNotEmpty ?? false) address.landmark!].join(' · '), style: t.body)]), action: IdButton.text(label: 'Change', onPressed: () => showAddressPicker(context))),
-      ReviewRow(label: 'Pickup', value: Text(slotSummary(schedule.pickup!, today: schedule.today), style: t.body), action: IdButton.text(label: 'Change', onPressed: changePickup)),
-      ReviewRow(label: 'Delivery', value: Text(slotSummary(schedule.delivery!, today: schedule.today), style: t.body), action: IdButton.text(label: 'Change', onPressed: () => showDeliverySheet(context))),
-    ]);
+    void changePickup() =>
+        context.canPop() ? context.pop() : context.go(Routes.schedule);
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        ReviewRow(
+          label: 'Pickup address',
+          value: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(address.label, style: t.title),
+              Text(
+                [
+                  address.formatted,
+                  if (address.landmark?.isNotEmpty ?? false) address.landmark!,
+                ].join(' · '),
+                style: t.body,
+              ),
+            ],
+          ),
+          action: IdButton.text(
+            label: 'Change',
+            onPressed: () => showAddressPicker(context),
+          ),
+        ),
+        ReviewRow(
+          label: 'Pickup',
+          value: Text(
+            slotSummary(schedule.pickup!, today: schedule.today),
+            style: t.body,
+          ),
+          action: IdButton.text(label: 'Change', onPressed: changePickup),
+        ),
+        ReviewRow(
+          label: 'Delivery',
+          value: Text(
+            slotSummary(schedule.delivery!, today: schedule.today),
+            style: t.body,
+          ),
+          action: IdButton.text(
+            label: 'Change',
+            onPressed: () => showDeliverySheet(context),
+          ),
+        ),
+      ],
+    );
   }
 }
-
 
 /// Quick phrases for the note. Only things that are about the pickup, never promises about how the
 /// clothes are handled: care requests are typed in the customer's own words.
@@ -316,11 +410,26 @@ class _NoteState extends ConsumerState<_Note> {
   @override
   Widget build(BuildContext context) {
     final placing = ref.watch(checkoutProvider.select((s) => s.placing));
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.stretch,
+    return ExpansionTile(
+      key: const PageStorageKey('pickup-note'),
+      tilePadding: EdgeInsets.zero,
+      childrenPadding: const EdgeInsets.only(bottom: IdSpace.s4),
+      shape: const Border(),
+      collapsedShape: const Border(),
+      title: Text('Note for your pickup (optional)', style: context.text.title),
+      subtitle:
+          ref.watch(checkoutProvider.select((s) => s.instructions.isNotEmpty))
+          ? Text(
+              'Note added',
+              style: context.text.caption.copyWith(
+                color: context.colors.textMuted,
+              ),
+            )
+          : null,
       children: [
         IdTextField(
-          label: 'Note for your pickup (optional)',
+          key: const PageStorageKey('pickup-note-input'),
+          label: 'Pickup note',
           hint: 'e.g. Call before arriving',
           help: 'IronDost sees this with your order.',
           controller: _controller,

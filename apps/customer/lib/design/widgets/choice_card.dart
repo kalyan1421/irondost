@@ -30,19 +30,26 @@ class ChoiceCard extends StatelessWidget {
       label: '$title. $description',
       excludeSemantics: true,
       child: Material(
-        color: c.surface,
-        shape: Border(bottom: BorderSide(color: c.border)),
+        color: selected ? c.primarySoft : c.surface,
+        shape: RoundedRectangleBorder(
+          borderRadius: radius,
+          side: BorderSide(color: selected ? c.primary : c.borderStrong),
+        ),
         child: InkWell(
           borderRadius: radius,
           onTap: onTap,
           child: Padding(
             padding: const EdgeInsets.symmetric(
-              horizontal: 0,
-              vertical: 14,
+              horizontal: IdSpace.s4,
+              vertical: IdSpace.s4,
             ),
             child: Row(
               children: [
-                Icon(icon, size: IdSize.iconMd, color: c.textMuted),
+                Icon(
+                  icon,
+                  size: IdSize.iconMd,
+                  color: selected ? c.primary : c.textMuted,
+                ),
                 const SizedBox(width: IdSpace.s3),
                 Expanded(
                   child: Column(

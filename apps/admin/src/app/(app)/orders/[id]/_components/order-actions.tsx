@@ -4,6 +4,7 @@ import { Ban } from "lucide-react";
 import { useState } from "react";
 import { ConfirmDialog } from "@/components/confirm-dialog";
 import { Button } from "@/components/ui/button";
+import { Checkbox } from "@/components/ui/checkbox";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { api, unwrap } from "@/lib/api/client";
@@ -17,7 +18,7 @@ const FORWARD: OrderStatus[] = ["PICKED_UP", "PROCESSING", "READY_FOR_DELIVERY",
 
 export function useChangeStatus(order: Order) {
   return useApiMutation(
-    (vars: { status: OrderStatus; note?: string }) =>
+    (vars: { status: OrderStatus; note?: string; collectedCash?: boolean }) =>
       unwrap(api.POST("/v1/admin/orders/{id}/status", { params: { path: { id: order.id } }, body: vars })),
     {
       invalidate: [["order", order.id], ["orders"], ["dashboard"]],
@@ -29,6 +30,8 @@ export function useChangeStatus(order: Order) {
 export function OrderActions({ order }: { order: Order }) {
   const change = useChangeStatus(order);
   const [reason, setReason] = useState("");
+  // Cash on delivery is normally collected at the door; an online order with a balance is not.
+  const [collected, setCollected] = useState(order.paymentMethod === "COD");
 
   // READY_FOR_DELIVERY is only a forward step when coming from the workshop.
   const forward = order.allowedNextStatuses.filter(
@@ -73,12 +76,23 @@ export function OrderActions({ order }: { order: Order }) {
             title="Mark as delivered?"
             confirmLabel="Mark delivered"
             description={
-              due > 0
-                ? `${rupees(due)} is still unpaid. Record the payment in the Payments panel once it is collected.`
-                : "The customer will be told their clothes have arrived."
+              due > 0 ? (
+                <span className="grid gap-3">
+                  <span>{rupees(due)} is still unpaid.</span>
+                  <span className="flex items-start gap-2 text-foreground">
+                    <Checkbox id="cash-collected" checked={collected} onCheckedChange={(v) => setCollected(v === true)} className="mt-0.5" />
+                    <Label htmlFor="cash-collected" className="font-normal leading-snug">
+                      Cash collected at delivery. Records {rupees(due)} as paid.
+                    </Label>
+                  </span>
+                  <span>Leave it unticked if the customer will pay later; record it in the Payments panel when it arrives.</span>
+                </span>
+              ) : (
+                "The customer will be told their clothes have arrived."
+              )
             }
             trigger={<Button>{ACTION_LABEL[s]}</Button>}
-            onConfirm={() => change.mutateAsync({ status: s })}
+            onConfirm={() => change.mutateAsync({ status: s, ...(due > 0 && collected ? { collectedCash: true } : {}) })}
           />
         ) : (
           <Button key={s} disabled={change.isPending} onClick={() => change.mutate({ status: s })}>
