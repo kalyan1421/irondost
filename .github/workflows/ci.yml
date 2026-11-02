@@ -47,6 +47,10 @@ jobs:
   admin:
     name: Admin (typed client, typecheck, lint, build)
     runs-on: ubuntu-latest
+    env:
+      # pnpm install also runs apps/api's postinstall (prisma generate). That reads prisma.config.ts, which needs the
+      # variable to exist; it never connects. A placeholder, as in apps/api/Dockerfile.
+      DATABASE_URL: postgresql://build:build@localhost:5432/build
     steps:
       - uses: actions/checkout@v4
       - uses: pnpm/action-setup@v4
