@@ -38,6 +38,25 @@ Only the owner can do these before pressing "Add for Review":
 6. **Screenshots** in App Store Connect still show the pre-November design.
 7. A TestFlight run on a physical iPhone: sign in with the test number, add an address, cash order, pay online, track, cancel, delete account.
 
+## Google Play: what the console actually shows (3 Nov 2026)
+
+This corrects the older text below, which says nothing was uploaded.
+
+- The Play developer account is **"kalyan kumar b"** (an organization account), opened with `cloudironingfactory@gmail.com`. The app
+  `com.irondost.customer` is **live in production**: release **2.0.0 (100)**, 100% rollout, India, 3 installs. Build 100 has no Google sign-in.
+- **Play App Signing fingerprints**, added on 3 Nov 2026 to the Firebase Android app `1:264618787416:android:ad3c715399093417c7c02d`
+  (`firebase apps:android:sha:create` equivalent): SHA-1 `BB:68:65:75:43:B4:84:E2:BD:23:6B:F3:64:EF:C6:33:31:43:8D:59`, SHA-256
+  `98:D6:0D:20:6C:BC:43:56:64:5D:75:F1:DF:DA:A7:47:BE:83:E9:90:26:F5:F3:5B:EE:46:EE:4E:06:79:7B:F3`. Firebase then created the Android OAuth
+  client for it, and `android/app/google-services.json` was refreshed. Google sign-in on a Play-installed build needs this.
+- **Maps key** ("IronDost Maps Android", project `irondost-app`): it only allowed the old package, so maps were blank in the live app. Rows added
+  for `com.irondost.customer` with the Play signing SHA-1 and the upload-key SHA-1. Allow up to 5 minutes to take effect.
+- The Firebase MCP's default project was `aura-akvega`; always set the active project to `irondost-app` before changing anything.
+- **Release 2.0.0 (102)** was uploaded to the production track and sent for review on 3 Nov 2026 ("Start full rollout", Managed publishing off,
+  so it goes live by itself once Google approves). Release notes: waits for the servers on open, Google sign-in. It went straight to production,
+  not through Internal testing; check phone sign-in, Google sign-in, maps and an order on a real Android phone as soon as it is live.
+- Play still shows "4 recommended actions" for build 100 (edge-to-edge, large-screen orientation lock, deprecated APIs, bitmap downsampling).
+  None block a release.
+
 ## Where each store stands
 
 | Step | App Store | Google Play |

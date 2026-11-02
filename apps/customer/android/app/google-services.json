@@ -66,6 +66,14 @@
           }
         },
         {
+          "client_id": "264618787416-jbpq1vg5p116et42pnliks8scjskcaqe.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "com.irondost.customer",
+            "certificate_hash": "bb68657543b484e2bd236bf364efc63331438d59"
+          }
+        },
+        {
           "client_id": "264618787416-mg5hgu4725r0i0ur2jrq55g7osk7klke.apps.googleusercontent.com",
           "client_type": 1,
           "android_info": {
