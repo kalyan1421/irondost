@@ -7,7 +7,7 @@ What ships together: price approval and frozen quotes, order reports with photos
 ## 0. Know what production has
 
 - [ ] Open the Render service logs for the API and the latest successful deploy, and read the current database state: `cd apps/api && DATABASE_URL='<production session-pooler string>' pnpm exec prisma migrate status`. It lists applied and pending migrations (read-only).
-- [ ] Expect these to be pending unless a deploy already ran them: `20261103090000_customer_contact_phone`, `20261114090000_trust_core`, `20261115090000_issue_retry`, `20261115120000_payment_captured_at`, `20261115130000_issue_compensation`, `20261116100000_order_reschedule`, `20261116110000_push_deliveries`. All are additive (new tables and columns). Two contain data statements: `payment_captured_at` fills `captured_at` from `updated_at` for captured payments, and `trust_core` adds CHECK constraints on new tables only.
+- [ ] Expect these to be pending unless a deploy already ran them: `20261103090000_customer_contact_phone`, `20261114090000_trust_core`, `20261115090000_issue_retry`, `20261115120000_payment_captured_at`, `20261115130000_issue_compensation`, `20261116100000_order_reschedule`, `20261116110000_push_deliveries`, `20261117100000_travel_charge`, `20261117110000_service_area_rules`, `20261117120000_care_notes`. All are additive (new tables and columns). Two contain data statements: `payment_captured_at` fills `captured_at` from `updated_at` for captured payments, and `trust_core` adds CHECK constraints on new tables only.
 - [ ] Run the Tier 1 integrity checks below once **before** the release, so you have a baseline.
 
 ## 1. Back up and rehearse
@@ -64,11 +64,32 @@ SELECT count(*) FROM order_issues WHERE status = 'OPEN' AND acknowledged_at IS N
 
 ## 7. Known gaps at release
 
-- Report photos live at public, unguessable URLs. Move to signed or authenticated reads before the evidence is expected to be private.
+- Report photos and care-note photos live at public, unguessable URLs (the care photos use the `care/` folder of the same public bucket). Move to signed or authenticated reads before the evidence is expected to be private.
 - The first-reply promise for reports is **off** (no deadline shown); staffing is not confirmed.
 - No delivery partner app: staff do every step by hand. Cash is recorded per order, with no per-partner daily settlement.
 - Fixture captures and the local iPhone build are not a device pilot. Real-device VoiceOver/TalkBack, Razorpay success/pending/failure, push on a locked phone and the browser walkthrough of the admin are still open.
 - The privacy policy and store data-safety answers need a line for each phase that collects something new (ratings, intake photos, funnel and crash counters).
+
+## Settings to set after the API deploys (admin settings, super admin)
+
+None of these are changed by a migration except the capacity default, so set them on purpose:
+
+- **Service centre:** latitude **17.346688**, longitude **78.550438** (Plus Code 8HW2+M5, LB Nagar Circle), radius **6** km.
+- **Allowed PIN codes:** 500074, 500060, 500035, 500068, 500070, 500079, 500059.
+- **Travel charge:** 3000 paise (₹30). **Free travel from:** 20000 paise (₹200). **Minimum order:** 0 (a minimum above 0 blocks small orders instead of charging them).
+- **Pickups per time window:** the migration sets **8** on the existing settings row, so the cap is **live the moment the API deploys**. Check it in settings before deploying if 8 is not what you want.
+- Use the **Check an address** tool on a few known streets (LB Nagar, Dilsukhnagar, Nagole, Malakpet, Uppal) and on Sarada Nagar and Vaishali Nagar before opening bookings.
+- Existing customers with saved addresses outside the area keep them; they see "not in your area yet" and can ask to be told.
+- Existing orders are not repriced: orders booked before the travel rule have no frozen rule and keep the fee they were booked with.
+
+## Smoke tests for the new rules (use a test customer)
+
+- [ ] Book from an address inside the circle and one outside (outside is refused; "Tell me when you're here" adds a row on **Outside the area**).
+- [ ] Book ₹150 of items: the bill shows a ₹30 travel charge and the basket says how much more makes it free; book ₹200: travel is free; use a coupon on ₹210 and confirm it stays free.
+- [ ] Add a care note with a photo; the admin order shows it.
+- [ ] Fill a window (9th booking): it shows Full for customers; a phone order can override with a reason.
+- [ ] Count more items at pickup so the order crosses ₹200: the charge disappears inside the price request.
+- [ ] Cancel with "Partner already travelled" ticked: the refund excludes the ₹30 and the order says why.
 
 ## Later phases
 
