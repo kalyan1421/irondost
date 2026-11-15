@@ -1,0 +1,76 @@
+feature,area,status,evidence_url,notes
+"Home screen: banner carousel, Select Service tile row, Schedule Pickup CTA",onboarding,OBSERVED,https://www.youtube.com/watch?v=taOeVxhqn-4,~3:58 and ~10:22; same layout in iOS screenshots 6-8 of 8. Banner has 5 dash indicators and a FLAT 20% OFF badge.
+First-open onboarding slides,onboarding,INFERRED,https://apps.apple.com/in/app/tumbledry-dry-clean-laundry/id1481554539,Not observed in listings or video; no evidence either way. Treat as unknown.
+Banner promo 'Flat 20% off on first order' on home,offers/referral,OBSERVED,https://www.youtube.com/watch?v=taOeVxhqn-4,~10:22 shoe banner overlay; also iOS screenshots 6-8.
+Name + phone (+91) + email capture before first pickup,auth,OBSERVED,https://www.youtube.com/watch?v=taOeVxhqn-4,"~4:18 'Please enter your information', Submit bar. No password field."
+OTP verification after the info form,auth,INFERRED,https://www.youtube.com/watch?v=taOeVxhqn-4,Not observed; inferred only from the +91 phone-first form.
+Login needed before browsing services or finding nearby store,auth,CLAIMED,https://play.google.com/store/apps/details?id=com.quickdrycleaning.tumbledry&hl=en_IN&gl=IN,"Customer report, Play 2-star 14 Oct 2025 (AmitM): cannot read services without logging in. Not verified in UI."
+Logout and Delete Account in app,account,OBSERVED,https://www.youtube.com/watch?v=taOeVxhqn-4,Drawer Logout (~5:16); Settings list shows Delete Account (~9:21).
+My Profile entry in Settings,account,OBSERVED,https://www.youtube.com/watch?v=taOeVxhqn-4,~9:21 label only; screen not seen.
+Only one saved address supported; add-address glitchy,account,CLAIMED,https://play.google.com/store/apps/details?id=com.quickdrycleaning.tumbledry&hl=en_IN&gl=IN,Play 2-star 29 Aug 2026 (V Dwaraka Mai).
+Map-pin pickup address with house/flat and street/landmark fields,serviceability,OBSERVED,https://www.youtube.com/watch?v=taOeVxhqn-4,"~4:33-4:37; GPS-prefilled address line with 'Change' button, Confirm bar."
+No up-front pin-code serviceability check; store decides after booking,serviceability,CLAIMED,https://play.google.com/store/apps/details?id=com.quickdrycleaning.tumbledry&hl=en_IN&gl=IN,Play 1-star 10 May 2026 (Ankita Rai): slot changed because 'not in our range'. Not seen in UI; INFERRED nothing blocks booking.
+City dropdown (hundreds of cities) to find city rates,serviceability,OBSERVED,https://tumbledry.in/dry-cleaning-prices-near-me/,Dropdown + 'Download Price List' button; list not downloaded.
+"Store locator with store cards: Google rating, Get Directions, Check Pricing, Call Now, WhatsApp",serviceability,OBSERVED,https://tumbledry.in/best-laundry-in-saroornagar-hyderabad/,"Nearest store card = Kharmanghat, H No 10-1-80/1, Ramdev Plaza, 4.3 (95)."
+LB Nagar page maps to Vanasthalipuram store (no LB Nagar store card),serviceability,OBSERVED,https://tumbledry.in/best-laundry-in-l-b-nagar-hyderabad/,"Plot No18 M/P, Hill Colony, Near Panama Godown, 4.3 (160)."
+"Dilsukhnagar store card renders empty (name only, blank address, rating '4 ()')",serviceability,OBSERVED,https://tumbledry.in/best-laundry-in-dilsukhnagar-hyderabad/,Data-quality gap on a local landing page.
+"49 Hyderabad store cards with ratings (Kharmanghat, Vanasthalipuram, Uppal, Hayathnagar Khalsa, Malakpet Extension...)",serviceability,OBSERVED,https://tumbledry.in/best-dry-clean-shop-in-hyderabad/,Read via WebFetch text extract (first 100k of 129k chars).
+Outside coverage: drop clothes at nearest store,serviceability,CLAIMED,https://tumbledry.in/best-steam-ironing-in-dilsukhnagar-hyderabad/,Steam-ironing FAQ text via WebFetch.
+"Local SEO landing pages per locality and per service (Saroornagar, Dilsukhnagar, LB Nagar, Kothapet; laundry, steam iron, shoe)",serviceability,OBSERVED,https://tumbledry.in/best-laundry-in-saroornagar-hyderabad/,"Templated copy, repeated CTA pairs, FAQ accordions."
+"Service tiles on home: Dry Clean, Wash And Steam Iron, Wash And Fold (scrollable)",catalogue,OBSERVED,https://www.youtube.com/watch?v=taOeVxhqn-4,~3:58; iOS creatives 7-8 also show Shoe Cleaning and Steam Iron tiles.
+"Multi-select service grid with Proceed bar (5 services incl. Shoe Cleaning, Steam Iron)",catalogue,OBSERVED,https://www.youtube.com/watch?v=taOeVxhqn-4,~6:16; Dry Clean selected state is grey fill.
+Schedule Pickup disabled until a service is selected,catalogue,OBSERVED,https://www.youtube.com/watch?v=taOeVxhqn-4,Pale-yellow disabled pill on Android; grey on iOS creatives.
+"Household and special items: blankets, quilts, soft toys, suit cases, curtains, carpets, bags, leather, shoes",catalogue,OBSERVED,https://www.youtube.com/watch?v=taOeVxhqn-4,Price List tabs HOUSEHOLD/OTHERS/SHOES ~7:54-8:13; site services list at https://tumbledry.in/ .
+"In-app Price List: category dropdown, search, tab strip, name + right-aligned price rows",pricing,OBSERVED,https://www.youtube.com/watch?v=taOeVxhqn-4,~7:18-8:54.
+"Laundry priced per KG (Wash and Fold ₹90, Wash and Steam Iron ₹130 in the sampled store)",pricing,OBSERVED,https://www.youtube.com/watch?v=taOeVxhqn-4,~8:54; city not shown.
+Steam iron priced per piece with Plain / Heavy / Very Heavy classes,pricing,OBSERVED,https://www.youtube.com/watch?v=taOeVxhqn-4,"~8:33-8:40, e.g. Kurta Plain ₹30, Salwar Plain ₹40, Dupatta ₹20."
+"Shoe cleaning priced per shoe, left and right separately",pricing,OBSERVED,https://www.youtube.com/watch?v=taOeVxhqn-4,"~8:13, e.g. Ankle boot Left ₹350 / Right ₹350."
+Web shows no item prices; per-city downloadable rate card only,pricing,OBSERVED,https://tumbledry.in/dry-cleaning-prices-near-me/,'Find Your City's Rates' + 'Download Price List' (not downloaded).
+Prices vary by city and store,pricing,OBSERVED,https://tumbledry.in/best-laundry-in-l-b-nagar-hyderabad/,FAQ: 'Laundry prices vary as per the actual service taken as well as the store location'.
+Blog publishes indicative nationwide dry-clean ranges,pricing,OBSERVED,https://tumbledry.in/dry-cleaning-cost-in-india-what-affects-pricing/,"Dated Jan 24, 2026; e.g. suit 2-piece ₹700-₹1,500; no ironing prices."
+Price display glitch (₹110 shown as ₹11) and invoice not viewable in app,pricing,CLAIMED,https://play.google.com/store/apps/details?id=com.quickdrycleaning.tumbledry&hl=en_IN&gl=IN,Play 1-star 4 May 2026 (Saharsh Thanvi); Play 2-star 15 Jun 2026 (Avrajit Chakraborty).
+Date strip + hourly pickup slot grid (2:00-9:00 PM in creative),scheduling,OBSERVED,https://apps.apple.com/in/app/tumbledry-dry-clean-laundry/id1481554539,"iOS screenshot 3 of 8; Play screenshot 4 of 8. Marketing creative, likely 2022 (date strip Tue 26 Jul)."
+Pickup confirmation with date and window; Reschedule and Cancel buttons,scheduling,OBSERVED,https://www.youtube.com/watch?v=taOeVxhqn-4,"~6:30-6:35: '02 Sep 2026, 3:00 PM - 5:00 PM'."
+Cancel request with reason (Not Interested / Will Schedule again later / Others),scheduling,OBSERVED,https://www.youtube.com/watch?v=taOeVxhqn-4,~11:49.
+Store reschedules pickups on its own,scheduling,CLAIMED,https://play.google.com/store/apps/details?id=com.quickdrycleaning.tumbledry&hl=en_IN&gl=IN,Play 1-star 10 Oct 2026 (Somesh Bhatti).
+"Standard TAT: laundry 48 h, dry clean 72 h, shoes 3-5 days",scheduling,OBSERVED,https://tumbledry.in/,Vanasthalipuram store page says 3 days (WebFetch); steam press 24 h + 2-day delivery (WebFetch).
+Express: Same Day / Express Delivery icons beside slot picker,express,OBSERVED,https://apps.apple.com/in/app/tumbledry-dry-clean-laundry/id1481554539,iOS screenshot 3 of 8.
+"Express surcharge stated as 1.5x on home, steam-ironing and Vanasthalipuram pages",express,OBSERVED,https://tumbledry.in/,'Same-day or next-day delivery. Available for selected services'.
+Express surcharge stated as double on pricing page and Hyderabad local pages,express,OBSERVED,https://tumbledry.in/dry-cleaning-prices-near-me/,"Contradicts the 1.5x statements; also on Saroornagar, LB Nagar, Dilsukhnagar pages."
+Free pickup and delivery with minimum order 350 after all discounts,checkout,OBSERVED,https://tumbledry.in/best-laundry-in-l-b-nagar-hyderabad/,FAQ 'free home delivery?' expanded in browser.
+Possible Rs 50 charge to return clothes without service,checkout,CLAIMED,https://apps.apple.com/in/app/tumbledry-dry-clean-laundry/id1481554539,"App Store review 17 Aug (year not shown); customer's account, not policy text."
+No payment or order-review step at booking,checkout,INFERRED,https://www.youtube.com/watch?v=taOeVxhqn-4,Flow goes address -> confirmation; payment only seen for packages. Item pricing happens at store (see reviews).
+"Third-party payment sheet: Paytm PG with cards, UPI, net banking, EMI",payments,OBSERVED,https://www.youtube.com/watch?v=taOeVxhqn-4,"~5:57 for a ₹2,000 package purchase."
+Pay Now entry in drawer for dues,payments,OBSERVED,https://www.youtube.com/watch?v=taOeVxhqn-4,Label only (~5:16); screen not seen.
+Store collects on personal QR; app keeps showing due,payments,CLAIMED,https://play.google.com/store/apps/details?id=com.quickdrycleaning.tumbledry&hl=en_IN&gl=IN,Play 3-star 26 Dec 2025 (Hitesh Sahu).
+"Website membership tiers VALUE ₹2000 10%, PLUS ₹5000 15%, MAX ₹10000 20%; not applicable to laundry",wallet/plans,OBSERVED,https://tumbledry.in/dry-cleaning-prices-near-me/,"No joining fee, no expiry, valid at all stores, cancel anytime for full refund (CLAIMED terms)."
+"In-app Packages tab: Available / Active, 2x2 cards, Unlimited validity",wallet/plans,OBSERVED,https://www.youtube.com/watch?v=taOeVxhqn-4,"~5:37-5:39: Smart2000 10%, Select3500 15%, Super5000 20%, Gold10000 30%; Active tab empty 'No Active Packages'."
+Package detail with Back / Buy Now,wallet/plans,OBSERVED,https://www.youtube.com/watch?v=taOeVxhqn-4,"~5:42: Smart2000, pay ₹2000 get ₹2200 worth, SAVE ₹200."
+Wallet balance not visible in app,wallet/plans,CLAIMED,https://play.google.com/store/apps/details?id=com.quickdrycleaning.tumbledry&hl=en_IN&gl=IN,Play 2-star 21 Apr 2026 (Rohit Gupta) and 3-star 12 Sep 2025 (Deepak Kumar).
+Package terms inconsistent across surfaces (web vs app vs call-centre sale),wallet/plans,OBSERVED,https://www.trustpilot.com/reviews/6ab65277a058c5a35f28a65a,"Web PLUS ₹5000=15% vs app Super5000=20%; Trustpilot reviewer sold ₹3,500 package 'with 25% discount'."
+Flat 20% off first order (site-wide),offers/referral,OBSERVED,https://tumbledry.in/,Also on every local page; reviewer says it was not auto-applied (Trustpilot).
+Refer-and-win banner: refer and get Rs.100 off along with friend,offers/referral,OBSERVED,https://tumbledry.in/best-laundry-in-saroornagar-hyderabad/,"Older composite image, 'Online laundry service' section; not seen in current app."
+Promotion & Offers entry in drawer,offers/referral,OBSERVED,https://www.youtube.com/watch?v=taOeVxhqn-4,Label only (~5:16); screen not seen.
+"Orders tab: Pending / Completed with counters Orders, Processing, Due, Ready",tracking,OBSERVED,https://www.youtube.com/watch?v=taOeVxhqn-4,~10:31; empty state 'No orders found'. No per-stage timeline seen.
+Status not updated properly; order stuck 'in progress',tracking,CLAIMED,https://play.google.com/store/apps/details?id=com.quickdrycleaning.tumbledry&hl=en_IN&gl=IN,Play 2-star 19 Jun 2026 (THILAK G V); App Store US feed 28 Jan 2026.
+Real-time tracking claimed by a reviewer,tracking,CLAIMED,https://apps.apple.com/in/app/tumbledry-dry-clean-laundry/id1481554539?see-all=reviews,App Store 5-star review 19/07/2023 (Saurabh6114).
+Notification bell with red count badge,notifications,OBSERVED,https://www.youtube.com/watch?v=taOeVxhqn-4,App bar (~3:58); badge '18' in older composite on SAR page; contents not seen.
+"Phone icon in app bar, Call Us in Settings, WhatsApp bottom tab",support,OBSERVED,https://www.youtube.com/watch?v=taOeVxhqn-4,~3:58 and ~9:21.
+"Contact / feedback form: complaint type dropdown, 1000-char text, photo attach, Call / Send",support,OBSERVED,https://www.youtube.com/watch?v=taOeVxhqn-4,~9:12.
+"Website floating rail: WhatsApp, call, app-store buttons on every page",support,OBSERVED,https://tumbledry.in/,Plus 'Chat On WhatsApp' / 'Schedule Free Pickup' pair after most sections.
+Support unreachable or hanging up; unresolved escalations,support,CLAIMED,https://www.trustpilot.com/review/tumbledry.in,Multiple Trustpilot and Play reviews (see reviews.csv).
+"6-stage process: Sorting & Inspection, Stain Treatment, Processing, Finishing, Quality Check, Packing",trust/quality,OBSERVED,https://tumbledry.in/,Numbered vertical stepper on home and local pages.
+"Tumbledry vs Other tick/cross comparison table (separate wash, care-label adherence, zero shrinkage, Whitex 3 shades brighter)",trust/quality,OBSERVED,https://tumbledry.in/best-laundry-in-saroornagar-hyderabad/,"Marketing claim, no third-party proof."
+Machinery badges: Hohenstein and Woolmark certified machinery,trust/quality,CLAIMED,https://tumbledry.in/,Badges on home page; not independently verified.
+"Complimentary add-ons: softener, cuff and collar cleaning, disinfectant, lint and minor stain removal, moth proofing, button stitching",trust/quality,OBSERVED,https://tumbledry.in/dry-cleaning-prices-near-me/,Listed per service type.
+"Packing choice: folded, hanger or vacuum",trust/quality,OBSERVED,https://tumbledry.in/,Stage 6 of the process.
+Garment photos sent on WhatsApp at pickup,trust/quality,CLAIMED,https://apps.apple.com/in/app/tumbledry-dry-clean-laundry/id1481554539?see-all=reviews,App Store 5-star review 22/04/2023 (Kunal0709); not seen in UI.
+Per-store Google rating and review snippets embedded on local pages,trust/quality,OBSERVED,https://tumbledry.in/best-laundry-in-saroornagar-hyderabad/,Kharmanghat 4.3 (95) with a 5-star review snippet.
+Franchise opportunity (Get Franchise nav link),B2B,OBSERVED,https://tumbledry.in/,Top navigation; franchise cities list at page bottom.
+Corporate / B2B laundry offering,B2B,INFERRED,https://tumbledry.in/,Not observed on pages read.
+"White-label platform: same developer ships sibling brand apps (Fabrico, FABO, REVIVO, Washodry, Laundry Legend...)",platform,OBSERVED,https://apps.apple.com/in/app/tumbledry-dry-clean-laundry/id1481554539,'More by DC WEB SERVICES PRIVATE LIMITED' list; Play 'More by Quick Dry Cleaning Software'.
+App version shown in drawer footer (16.0.8 (446)) and Android Version differs from iOS 10.0.6,platform,OBSERVED,https://www.youtube.com/watch?v=taOeVxhqn-4,Drawer footer ~5:16; iOS listing 'Version 10.0.6'.
+English-only app on iOS; Hindi/Telugu UI not observed,localisation,INFERRED,https://apps.apple.com/in/app/tumbledry-dry-clean-laundry/id1481554539,iOS 'Languages: English'; Play language not shown. A Telugu-language YouTube store video exists but is not app UI.
+Developer has not declared accessibility features (iOS),accessibility,OBSERVED,https://apps.apple.com/in/app/tumbledry-dry-clean-laundry/id1481554539,Plus white-on-amber and white-on-lime contrast estimated about 1.6-1.8:1 (INFERRED from eyeballed colours).
+Dark mode,accessibility,INFERRED,https://www.youtube.com/watch?v=taOeVxhqn-4,Not observed in any app frame.
+Privacy declarations conflict: iOS lists identifiers used to track; Play says no data collected,trust/quality,OBSERVED,https://play.google.com/store/apps/details?id=com.quickdrycleaning.tumbledry&hl=en_IN&gl=IN,Compare iOS 'App Privacy' with Play 'Data safety'.

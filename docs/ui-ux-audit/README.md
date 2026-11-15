@@ -1,5 +1,9 @@
 # Customer UI/UX audit and implementation
 
+**Latest review — 14 November 2026:** [Customer app and admin audit](review-2026-11-14/REPORT.md), with 27 open findings, 39 missing/partial feature entries, priorities, source evidence, vanity assessment and continuation criteria. Download the [issue tracker](review-2026-11-14/issues.csv) and [feature inventory](review-2026-11-14/features.csv). Fresh customer captures/checks are included; admin findings are source-reviewed and the remaining browser/device checks are explicit.
+
+## Historical customer implementation
+
 Scope: IronDost Flutter customer app only. The approved UI pass is implemented locally.
 
 Open [implemented.html](implemented.html) for actual before-and-after captures of all 47 representative views, in both themes. [index.html](index.html) retains the original six interactive concepts for reference.

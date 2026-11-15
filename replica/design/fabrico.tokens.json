@@ -1,0 +1,16 @@
+{
+  "_about": "Fabrico customer app. Values MEASURED from pixels of the public App Store listing screenshots (replica/screens/fabrico/ios-01..06.jpg, saved 2026-11-07), inside the phone frames. Store images are JPEG marketing art, so expect a few units of error per channel. Roles are inferred from where the colour appears. Brand colour recorded as a role only; not for reuse.",
+  "color": {
+    "bg": "#FDFDFD",
+    "field": "#DDDDDD",
+    "accent": "#4DC1AC",
+    "on-accent": "#FFFFFF",
+    "accent-tint": "#E7F7F4",
+    "text-muted": "#7E7E7E"
+  },
+  "pairs": [
+    ["on-accent", "accent"],
+    ["accent", "bg"],
+    ["text-muted", "field"]
+  ]
+}

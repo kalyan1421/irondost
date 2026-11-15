@@ -1,0 +1,17 @@
+{
+  "avoid": ["Tumbledry", "Tumble Dry", "DhobiLite", "Dhobi Lite", "Fabrico", "UClean", "FABO", "Washmart", "Pick My Laundry", "Cleanovo", "Easy Spin"],
+  "_source": "Copied unchanged from docs/customer-app-release.md section 5 (the current draft), so the check below is of what IronDost actually plans to ship.",
+  "app_store": {
+    "name": "IronDost: Laundry & Ironing",
+    "subtitle": "Pickup and delivery in a day",
+    "promotional_text": "",
+    "description": "IronDost collects your clothes, cleans or irons them, and brings them back to your door.\n\n• Choose ironing, wash and iron, or dry cleaning, with prices shown before you book.\n• Pick the pickup and delivery times that suit you.\n• Pay online with UPI, cards or netbanking, or pay cash when your clothes arrive.\n• Follow your order from pickup to delivery and get a notification at each step.\n• Apply offers and promo codes in your basket.\n• Cancel before pickup, or call us from the app if something is wrong.\n\nAvailable in Hyderabad. Sign in with your mobile number (we send a one-time code by SMS), or with Google on Android.",
+    "keywords": "laundry,ironing,dry clean,wash,pickup,delivery,clothes,Hyderabad,press,steam iron",
+    "whats_new": "A new, faster IronDost: easier booking, live order tracking, online payment and offers."
+  },
+  "google_play": {
+    "title": "IronDost: Laundry & Ironing",
+    "short_description": "Book ironing, wash and dry cleaning. We pick up and deliver to your door.",
+    "full_description": "IronDost collects your clothes, cleans or irons them, and brings them back to your door.\n\n• Choose ironing, wash and iron, or dry cleaning, with prices shown before you book.\n• Pick the pickup and delivery times that suit you.\n• Pay online with UPI, cards or netbanking, or pay cash when your clothes arrive.\n• Follow your order from pickup to delivery and get a notification at each step.\n• Apply offers and promo codes in your basket.\n• Cancel before pickup, or call us from the app if something is wrong.\n\nAvailable in Hyderabad. Sign in with your mobile number (we send a one-time code by SMS), or with Google on Android."
+  }
+}

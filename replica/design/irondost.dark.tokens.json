@@ -1,0 +1,32 @@
+{
+  "_about": "IronDost customer app, DARK theme, copied from docs/ui-ux-audit/DESIGN_SYSTEM.md (Version 3, 1 Nov 2026).",
+  "color": {
+    "bg": "#101820",
+    "surface": "#18222F",
+    "surface-soft": "#223041",
+    "border": "#344254",
+    "border-input": "#6F82A6",
+    "text": "#EEF3FA",
+    "text-muted": "#AFBED1",
+    "accent": "#7FA2FF",
+    "on-accent": "#0E1E3D",
+    "accent-soft": "#1C2F63",
+    "offer": "#FFC93C",
+    "on-offer": "#0E1E3D"
+  },
+  "pairs": [
+    ["text", "bg"],
+    ["text", "surface"],
+    ["text", "surface-soft"],
+    ["text-muted", "bg"],
+    ["text-muted", "surface"],
+    ["text-muted", "surface-soft"],
+    ["on-accent", "accent"],
+    ["accent", "bg"],
+    ["accent", "surface"],
+    ["accent", "accent-soft"],
+    ["on-offer", "offer"],
+    ["border-input", "bg", "ui"],
+    ["border-input", "surface", "ui"]
+  ]
+}

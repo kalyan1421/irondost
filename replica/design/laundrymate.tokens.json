@@ -1,0 +1,18 @@
+{
+  "_about": "LaundryMate customer app. MEASURED from pixels of public store-listing screenshots (replica/screens/laundrymate/ios-01..05.jpg), inside the phone frames, 2026-11-07. Roles inferred from position. Text colour on the yellow buttons was not sampled, so no yellow-button pair is tested.",
+  "color": {
+    "bg": "#FDFDFE",
+    "brand-yellow": "#FECC04",
+    "blue": "#0274BC",
+    "text-muted": "#585858",
+    "teal-label": "#177777",
+    "indigo-sprint": "#2B1D81"
+  },
+  "pairs": [
+    ["text-muted", "bg"],
+    ["blue", "bg"],
+    ["teal-label", "bg"],
+    ["indigo-sprint", "bg"],
+    ["blue", "brand-yellow"]
+  ]
+}

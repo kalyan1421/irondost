@@ -1,0 +1,39 @@
+{
+  "_about": "IronDost customer app, LIGHT theme, copied from docs/ui-ux-audit/DESIGN_SYSTEM.md (Version 3, 1 Nov 2026). Source of truth in the repo is packages/design-tokens/customer.tokens.json; this file only exists so replica-design's contrast.py can check the roles.",
+  "color": {
+    "bg": "#F7F8FA",
+    "surface": "#FFFFFF",
+    "surface-soft": "#F0F3F7",
+    "border": "#DFE5ED",
+    "border-input": "#7D8BA3",
+    "text": "#0E1E3D",
+    "text-muted": "#526078",
+    "accent": "#1F4FD1",
+    "on-accent": "#FFFFFF",
+    "accent-soft": "#E8EEFC",
+    "offer": "#FFC93C",
+    "on-offer": "#0E1E3D"
+  },
+  "pairs": [
+    ["text", "bg"],
+    ["text", "surface"],
+    ["text", "surface-soft"],
+    ["text-muted", "bg"],
+    ["text-muted", "surface"],
+    ["text-muted", "surface-soft"],
+    ["on-accent", "accent"],
+    ["accent", "bg"],
+    ["accent", "surface"],
+    ["accent", "accent-soft"],
+    ["on-offer", "offer"],
+    ["border-input", "bg", "ui"],
+    ["border-input", "surface", "ui"]
+  ],
+  "font": {
+    "sans": "Figtree, system-ui, sans-serif",
+    "display": "Junction, Figtree, sans-serif",
+    "mono": "Geist Mono, ui-monospace, monospace"
+  },
+  "space": [0, 4, 8, 12, 16, 20, 24, 32, 48],
+  "radius": {"sm": 8, "md": 10, "lg": 12, "xl": 20, "pill": 999}
+}

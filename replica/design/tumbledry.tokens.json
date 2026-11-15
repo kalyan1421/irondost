@@ -1,0 +1,18 @@
+{
+  "_about": "Tumbledry customer app. Values MEASURED from pixels of the public App Store listing screenshots (replica/screens/tumbledry/ios-01..08.jpg, saved 2026-11-07), inside the phone frames. The app mixes a dark charcoal home/splash with a light schedule screen (observed). Lime on white is the logo wordmark, which WCAG exempts, so it is not in the pairs list.",
+  "color": {
+    "bg": "#232323",
+    "text": "#FAFAFA",
+    "accent": "#A4CC34",
+    "cta": "#243C64",
+    "on-cta": "#FFFFFF",
+    "highlight": "#FCC40C",
+    "on-highlight": "#232323"
+  },
+  "pairs": [
+    ["text", "bg"],
+    ["accent", "bg"],
+    ["on-cta", "cta"],
+    ["on-highlight", "highlight"]
+  ]
+}

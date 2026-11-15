@@ -1,0 +1,68 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>F</title>
+<style>
+@font-face{font-family:"Junction";src:url("fonts/junction/Junction-light.otf");font-weight:300}
+@font-face{font-family:"Junction";src:url("fonts/junction/Junction-regular.otf");font-weight:400}
+@font-face{font-family:"Junction";src:url("fonts/junction/Junction-bold.otf");font-weight:700}
+@font-face{font-family:"Rs";src:url("fonts/charis/Charis-Regular.ttf");font-weight:400;unicode-range:U+20B9}
+@font-face{font-family:"Rs";src:url("fonts/charis/Charis-Bold.ttf");font-weight:700;unicode-range:U+20B9}
+
+:root{--s:min(8.5vw,4.4rem)}
+html{background-color:#EEF1F3}
+body{
+  margin:0;
+  font-family:"Junction","Rs","Gill Sans","Trebuchet MS",sans-serif;
+  font-weight:400;
+  font-size:1.15rem;
+  line-height:1.4;
+  padding:clamp(2rem,7vh,5rem) clamp(1.25rem,5vw,4rem) 8rem;
+}
+p{margin:0 0 1.5rem}
+.out{color:#2E3FA3}
+.mid{color:#23262B}
+.back{color:#D4531A}
+
+.l0{margin-left:0}
+.l1{margin-left:var(--s)}
+.l2{margin-left:calc(var(--s)*2)}
+.l3{margin-left:calc(var(--s)*3)}
+.l4{margin-left:calc(var(--s)*4)}
+
+.brand{font-weight:700;letter-spacing:.02em;margin-bottom:2.4rem}
+h1{margin:0 0 3rem;font-weight:700;font-size:clamp(2.1rem,8.4vw,4.8rem);line-height:1.02;letter-spacing:-.02em;max-width:12em}
+.tight{margin-bottom:.15rem}
+.last{margin-bottom:1.5rem}
+.light{font-weight:300}
+.go{font-weight:700;font-size:1.5rem;margin-top:3rem}
+</style>
+</head>
+<body>
+<main>
+  <p class="mid brand l0">IronDost</p>
+  <h1 class="out l0">Fresh clothes, back at your door.</h1>
+
+  <p class="out l1">Choose your pickup and delivery times.</p>
+  <div class="out l2">
+    <p class="tight">Morning 7 – 11 AM</p>
+    <p class="tight">Afternoon 11 AM – 4 PM</p>
+    <p class="last">Evening 4 – 8 PM</p>
+  </div>
+  <p class="out l3">Your partner arrives within the window you pick.</p>
+
+  <p class="mid l4">A rough count is fine. Your partner confirms it at pickup.</p>
+  <p class="mid l4 light">Ironing, washing and dry cleaning, picked up and delivered.</p>
+
+  <div class="back l3">
+    <p class="tight">Shirt / T-shirt ₹35 per piece</p>
+    <p class="tight">Trousers / Jeans ₹40 per piece</p>
+    <p class="last">Bedsheet (double) ₹70 per piece</p>
+  </div>
+  <p class="back l2">Pay online or in cash at delivery.</p>
+  <p class="back l0 go">Get started</p>
+</main>
+</body>
+</html>

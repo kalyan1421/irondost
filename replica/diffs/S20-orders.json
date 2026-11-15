@@ -1,0 +1,73 @@
+{
+  "mode": "layout",
+  "original": {
+    "width": 720,
+    "height": 1600
+  },
+  "clone": {
+    "width": 780,
+    "height": 1688
+  },
+  "compared_at": {
+    "width": 480,
+    "height": 1039
+  },
+  "height_delta_pct": -2.6,
+  "score": 17.9,
+  "verdict": "different",
+  "regions": [
+    {
+      "x": 0,
+      "y": 0,
+      "w": 720,
+      "h": 960,
+      "cells": 114,
+      "where": "top centre"
+    },
+    {
+      "x": 0,
+      "y": 840,
+      "w": 720,
+      "h": 300,
+      "cells": 32,
+      "where": "middle centre"
+    },
+    {
+      "x": 0,
+      "y": 1260,
+      "w": 300,
+      "h": 120,
+      "cells": 9,
+      "where": "bottom left"
+    },
+    {
+      "x": 360,
+      "y": 1260,
+      "w": 120,
+      "h": 120,
+      "cells": 4,
+      "where": "bottom centre"
+    },
+    {
+      "x": 0,
+      "y": 1500,
+      "w": 240,
+      "h": 60,
+      "cells": 4,
+      "where": "bottom left"
+    },
+    {
+      "x": 540,
+      "y": 1260,
+      "w": 120,
+      "h": 120,
+      "cells": 3,
+      "where": "bottom right"
+    }
+  ],
+  "files": {
+    "original": "diffs/ref-png/S20-orders.png",
+    "clone": "clone-screens/S20-orders.png"
+  },
+  "diff_image": "diffs/S20-orders.diff.png"
+}

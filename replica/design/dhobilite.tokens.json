@@ -1,0 +1,23 @@
+{
+  "_about": "DhobiLite customer app. Values MEASURED from pixels of public store-listing screenshots saved 2026-11-07: the CURRENT Android listing (replica/screens/dhobilite/play-01..07.jpg) shows a dark UI, which is what the first block below records. The older iOS listing (ios-01..07.jpg) shows a navy home screen with white tiles and a cyan marketing gradient; those are recorded under legacy-*. White text on dark is assumed from the visuals (small text, not separately sampled).",
+  "color": {
+    "bg": "#171717",
+    "card": "#212530",
+    "text": "#FFFFFF",
+    "accent-orange": "#FD931B",
+    "on-accent-orange": "#171717",
+    "cta-blue": "#4288D4",
+    "on-cta-blue": "#FFFFFF",
+    "legacy-navy": "#044C6C",
+    "legacy-marketing-cyan": "#98F5F7"
+  },
+  "pairs": [
+    ["text", "bg"],
+    ["text", "card"],
+    ["accent-orange", "bg"],
+    ["accent-orange", "card"],
+    ["on-accent-orange", "accent-orange"],
+    ["on-cta-blue", "cta-blue"],
+    ["text", "legacy-navy"]
+  ]
+}

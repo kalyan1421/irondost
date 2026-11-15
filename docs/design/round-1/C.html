@@ -1,0 +1,66 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>C</title>
+<style>
+@font-face{font-family:"Bonum";src:url("fonts/tex-gyre/texgyrebonum-regular.otf");font-weight:400;font-style:normal}
+@font-face{font-family:"Bonum";src:url("fonts/tex-gyre/texgyrebonum-italic.otf");font-weight:400;font-style:italic}
+@font-face{font-family:"Bonum";src:url("fonts/tex-gyre/texgyrebonum-bold.otf");font-weight:700;font-style:normal}
+@font-face{font-family:"Rs";src:url("fonts/charis/Charis-Regular.ttf");font-weight:400;unicode-range:U+20B9}
+
+html{background-color:#FCEBDD}
+body{
+  margin:0;
+  color:#2B1B17;
+  font-family:"Bonum","Rs",Georgia,serif;
+  font-size:1.05rem;
+  line-height:1.5;
+  padding:clamp(1.75rem,6vh,4rem) clamp(1.25rem,7vw,6rem) 10rem;
+}
+p{margin:0}
+.brand{font-weight:700;font-size:1.25rem}
+.brand .d{color:#C23B22}
+
+.say{color:#C23B22;font-style:italic;text-transform:lowercase;margin-top:12vh}
+.big{font-size:clamp(2.4rem,11.5vw,6.6rem);line-height:1.02;letter-spacing:-.015em;margin-top:16vh;max-width:11em}
+.mid{font-size:clamp(1.4rem,5.6vw,2.6rem);line-height:1.15;max-width:15em}
+
+.aside{margin:2.2rem 0 0 clamp(1.5rem,16vw,12rem);max-width:24ch}
+.aside p+p{margin-top:.35rem}
+.aside .gapp{margin-top:1.4rem}
+.go{margin-top:2rem;font-weight:700;font-size:1.2rem}
+</style>
+</head>
+<body>
+<main>
+  <p class="brand"><span class="i">Iron</span><span class="d">Dost</span></p>
+
+  <h1 class="say big">Fresh clothes, <br>back at your door.</h1>
+  <p class="say mid">Ironing, washing and dry cleaning, picked up and delivered.</p>
+
+  <div class="aside">
+    <p>Choose your pickup and delivery times.</p>
+    <p class="gapp">Morning 7 – 11 AM</p>
+    <p>Afternoon 11 AM – 4 PM</p>
+    <p>Evening 4 – 8 PM</p>
+  </div>
+
+  <p class="say mid">Your partner arrives within the window you pick.</p>
+
+  <div class="aside">
+    <p>Shirt / T-shirt ₹35 per piece</p>
+    <p>Trousers / Jeans ₹40 per piece</p>
+    <p>Bedsheet (double) ₹70 per piece</p>
+  </div>
+
+  <p class="say mid">A rough count is fine. Your partner confirms it at pickup.</p>
+
+  <div class="aside">
+    <p>Pay online or in cash at delivery.</p>
+    <p class="go">Get started</p>
+  </div>
+</main>
+</body>
+</html>

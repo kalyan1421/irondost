@@ -1,0 +1,73 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>A</title>
+<style>
+@font-face{font-family:"Charis";src:url("fonts/charis/Charis-Regular.ttf");font-weight:400;font-style:normal}
+@font-face{font-family:"Charis";src:url("fonts/charis/Charis-Italic.ttf");font-weight:400;font-style:italic}
+@font-face{font-family:"Charis";src:url("fonts/charis/Charis-SemiBold.ttf");font-weight:600;font-style:normal}
+@font-face{font-family:"Cursor";src:url("fonts/tex-gyre/texgyrecursor-regular.otf");font-weight:400}
+@font-face{font-family:"Rs";src:url("fonts/charis/Charis-Regular.ttf");font-weight:400;unicode-range:U+20B9}
+
+html{background-color:#F2EADA}
+body{
+  margin:0;
+  color:#1E1A14;
+  font-family:"Charis",Georgia,serif;
+  font-size:1.125rem;
+  line-height:1.45;
+  padding:clamp(2.5rem,9vh,6rem) clamp(1.25rem,10vw,9rem) 9rem;
+  hyphens:manual;
+}
+main{max-width:34rem}
+p{margin:0}
+.red{color:#A8321F}
+.num{font-family:"Cursor","Rs","Courier New",monospace;font-size:1.05rem;font-variant-numeric:tabular-nums}
+
+.mark{font-variant-caps:all-small-caps;letter-spacing:.14em;font-size:1.05rem}
+h1{margin:2.6rem 0 1.4rem;font-weight:600;font-size:clamp(1.9rem,6.6vw,2.55rem);line-height:1.12;letter-spacing:-.005em}
+.lede{margin-bottom:4.2rem}
+.ask{font-style:italic;margin-bottom:1.5rem}
+
+.rows{display:grid;row-gap:.85rem}
+.row{display:grid;grid-template-columns:minmax(0,1fr) auto;column-gap:1.5rem;align-items:baseline}
+.row .num{justify-self:end}
+.name{font-variant-caps:all-small-caps;letter-spacing:.07em;font-size:1.15rem}
+
+.note{font-style:italic;margin-top:1.7rem}
+.gap{margin-top:4.2rem}
+
+.items .row{grid-template-columns:minmax(0,1fr) 3.2rem 5.3rem}
+.items .per{font-style:italic;justify-self:end;font-size:1rem}
+
+.go{margin-top:2.2rem;font-weight:600}
+</style>
+</head>
+<body>
+<main>
+  <p class="mark">IronDost</p>
+  <h1>Fresh clothes, back at your door.</h1>
+  <p class="lede">Ironing, washing and dry cleaning, picked up and delivered.</p>
+
+  <p class="ask">Choose your pickup and delivery times.</p>
+  <div class="rows">
+    <p class="row"><span class="name">Morning</span> <span class="num">7 – 11 AM</span></p>
+    <p class="row"><span class="name">Afternoon</span> <span class="num">11 AM – 4 PM</span></p>
+    <p class="row"><span class="name">Evening</span> <span class="num">4 – 8 PM</span></p>
+  </div>
+  <p class="note red">Your partner arrives within the window you pick.</p>
+
+  <div class="rows items gap">
+    <p class="row"><span>Shirt / T-shirt</span> <span class="num">₹35</span> <span class="per">per piece</span></p>
+    <p class="row"><span>Trousers / Jeans</span> <span class="num">₹40</span> <span class="per">per piece</span></p>
+    <p class="row"><span>Bedsheet (double)</span> <span class="num">₹70</span> <span class="per">per piece</span></p>
+  </div>
+  <p class="note red">A rough count is fine. Your partner confirms it at pickup.</p>
+
+  <p class="gap">Pay online or in cash at delivery.</p>
+  <p class="go">Get started</p>
+</main>
+</body>
+</html>
