@@ -143,10 +143,8 @@ void main() {
       expect(find.text('Ravi K.'), findsOneWidget);
       expect(find.text('Picked up your clothes'), findsOneWidget);
       expect(find.byTooltip('Call Ravi'), findsOneWidget);
-      expect(
-        find.text('₹180 is due. Pay the partner in cash or pay online now.'),
-        findsOneWidget,
-      );
+      expect(find.text('Pay ₹180 online'), findsOneWidget);
+      expect(find.text('Or pay the partner in cash when your clothes come back.'), findsOneWidget);
       expect(
         find.text('Thu 1 Oct, 5:40 PM · 12 items counted'),
         findsOneWidget,
@@ -170,36 +168,27 @@ void main() {
     expect(find.text('Out for delivery'), findsWidgets);
     expect(find.text('Arriving tomorrow, 4\u00A0\u2060–\u2060\u00A08\u00A0PM'), findsOneWidget);
     expect(find.text('Bringing your clothes back'), findsOneWidget);
-    expect(
-      find.text(
-        '₹180 is due. Pay Ravi in cash at the door, or pay online now.',
-      ),
-      findsOneWidget,
-    );
+    expect(find.text('Or pay Ravi in cash at the door.'), findsOneWidget);
   });
 
   group('the status hero and the partner card', () {
-    /// Fill colour of each of the five progress segments, left to right.
-    List<Color?> bar(WidgetTester tester) => [
-      for (final w in tester.widgetList<Container>(
-        find.byWidgetPredicate(
-          (w) =>
-              w is Container &&
-              w.constraints?.minHeight == 4 &&
-              w.constraints?.maxHeight == 4,
-        ),
-      ))
-        (w.decoration! as BoxDecoration).color,
-    ];
-
-    IdColors colors(WidgetTester tester) =>
-        tester.element(find.byType(Scaffold).first).colors;
+    /// The five-segment bar that used to repeat the timeline: any 4 dp tall container.
+    int barSegments(WidgetTester tester) => tester
+        .widgetList<Container>(
+          find.byWidgetPredicate(
+            (w) =>
+                w is Container &&
+                w.constraints?.minHeight == 4 &&
+                w.constraints?.maxHeight == 4,
+          ),
+        )
+        .length;
 
     Finder callButtons() => find.byWidgetPredicate(
       (w) => w is IconButton && (w.tooltip ?? '').startsWith('Call '),
     );
 
-    testWidgets('the bar fills to the current step, in the primary colour while on time', (
+    testWidgets('progress is the words and the timeline, with no second bar, and nothing to call about while on time', (
       tester,
     ) async {
       await pump(
@@ -211,14 +200,13 @@ void main() {
           pickupDriver: ravi,
         ),
       );
-      final c = colors(tester);
 
-      expect(bar(tester), [c.primary, c.primary, c.primary, c.border, c.border]);
-      expect(find.text('Step 3 of 5'), findsOneWidget, reason: 'the words stay');
+      expect(barSegments(tester), 0);
+      expect(find.text('Step 3 of 5'), findsOneWidget);
       expect(find.text('Call us'), findsNothing, reason: 'nothing is late');
     });
 
-    testWidgets('a missed delivery estimate turns the bar amber and offers a call', (
+    testWidgets('a missed delivery estimate is one notice that holds the sentence and the call', (
       tester,
     ) async {
       await pump(
@@ -228,14 +216,18 @@ void main() {
           pickedUpAt: pickedUp,
         ).withPickupDriver(ravi),
       );
-      final c = colors(tester);
 
-      expect(bar(tester), [c.warning, c.warning, c.warning, c.border, c.border]);
+      expect(barSegments(tester), 0);
       expect(find.textContaining('Delivery estimate missed:'), findsOneWidget);
       expect(find.text('Call us'), findsOneWidget);
+      final amber = tester.element(find.byType(Scaffold).first).colors.warningSoft;
+      final panel = find.byWidgetPredicate((w) => w is Container && w.decoration is BoxDecoration && (w.decoration! as BoxDecoration).color == amber);
+      expect(find.descendant(of: panel.first, matching: find.textContaining('Delivery estimate missed:')), findsOneWidget);
+      expect(find.descendant(of: panel.first, matching: find.text('Call us')), findsOneWidget,
+        reason: 'the call is inside the same amber panel as the sentence, not a button floating below it');
     });
 
-    testWidgets('a late pickup has an amber bar and still exactly one Call us', (
+    testWidgets('a late pickup still has exactly one Call us', (
       tester,
     ) async {
       await pump(
@@ -245,9 +237,8 @@ void main() {
           dispatchFailedAt: DateTime.utc(2026, 10, 3, 9, 30),
         ),
       );
-      final c = colors(tester);
 
-      expect(bar(tester), [c.warning, c.border, c.border, c.border, c.border]);
+      expect(barSegments(tester), 0);
       expect(find.text('Call us'), findsOneWidget, reason: 'the notice has it; the hero adds none');
     });
 
@@ -309,12 +300,8 @@ void main() {
         tester,
         testOrder(method: PaymentMethod.online, pickupDate: today),
       );
-      expect(
-        find.text(
-          "₹248 isn't paid yet. Pay online now, or switch to cash on delivery.",
-        ),
-        findsOneWidget,
-      );
+      expect(find.text('Pay ₹248'), findsOneWidget);
+      expect(find.text('Not paid yet. You can also switch to cash on delivery.'), findsOneWidget);
     },
   );
 
@@ -375,6 +362,19 @@ void main() {
     expect(find.text('Paid'), findsOneWidget, reason: 'the line no longer claims a refund state the notice above denies');
     expect(find.textContaining('refund pending'), findsNothing);
     expect(find.text('Book again'), findsOneWidget);
+  });
+
+  testWidgets('being ironed with no partner on record shows no placeholder to wait for', (tester) async {
+    await pump(tester, testOrder(status: OrderStatus.processing, pickedUpAt: pickedUp));
+    expect(find.text('Your partner'), findsNothing);
+    expect(find.textContaining("You'll see your partner's name"), findsNothing);
+  });
+
+  testWidgets('delivered without a pickup time has no Picked up row with a dash in it', (tester) async {
+    await pump(tester, testOrder(status: OrderStatus.delivered, paymentStatus: PaymentStatus.paid, paidPaise: 24800, deliveredAt: DateTime.utc(2026, 10, 4, 12)));
+    expect(find.text('Picked up'), findsNothing);
+    expect(find.text('—'), findsNothing);
+    expect(find.text('Count'), findsOneWidget);
   });
 
   group('cancelled and paid, with refund records', () {

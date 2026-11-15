@@ -162,6 +162,7 @@ class OrderDetailScreen extends ConsumerWidget {
             expand: true,
             onPressed: () => showPayDueSheet(context, order),
           ),
+          _FooterNote(dueCaption(order)),
           if (cancel)
             IdButton.outline(
               label: 'Cancel order',
@@ -199,7 +200,6 @@ class OrderDetailScreen extends ConsumerWidget {
     required bool delayed,
   }) {
     final partner = partnerFor(order);
-    final due = canPayNow(order);
     return [
       if (delayed) ...[
         _DelayedNotice(order: order),
@@ -213,19 +213,10 @@ class OrderDetailScreen extends ConsumerWidget {
           role: partnerRole(order),
           caption: partnerCaption(order),
         ),
-      ] else if (!delayed) ...[
+      ] else if (!delayed && order.status == OrderStatus.pending) ...[
+        // Only while no one has been assigned yet. Later with no partner on record there is nothing to wait for.
         const SizedBox(height: IdSpace.s4),
         const _PartnerPending(),
-      ],
-      if (due) ...[
-        const SizedBox(height: IdSpace.s4),
-        _Notice(
-          icon: order.paymentMethod == PaymentMethod.online
-              ? LucideIcons.circleAlert
-              : LucideIcons.banknote,
-          tone: _NoticeTone.warning,
-          text: dueText(order),
-        ),
       ],
       const SizedBox(height: IdSpace.s4),
       _BillRow(order: order),
@@ -245,13 +236,10 @@ class OrderDetailScreen extends ConsumerWidget {
       IdCard(
         child: Column(
           children: [
-            _Line(
-              'Picked up',
-              order.pickedUpAt == null
-                  ? '—'
-                  : istDateTimeLabel(order.pickedUpAt!),
-            ),
-            const SizedBox(height: 10),
+            if (order.pickedUpAt != null) ...[
+              _Line('Picked up', istDateTimeLabel(order.pickedUpAt!)),
+              const SizedBox(height: 10),
+            ],
             _Line('Count', piecesLabel(order)),
             const SizedBox(height: 10),
             Row(
@@ -381,19 +369,18 @@ String partnerCaption(OrderDto o) => switch (o.status) {
   _ => 'Picked up your clothes',
 };
 
-/// The warning under the timeline: how much is owed and the ways to pay it.
-String dueText(OrderDto o) {
-  final amount = rupees(o.amountDuePaise);
+/// Under the Pay button: the other way to settle what is owed. The amount is on the button.
+String dueCaption(OrderDto o) {
   if (o.paymentMethod == PaymentMethod.online) {
-    return "$amount isn't paid yet. Pay online now, or switch to cash on delivery.";
+    return 'Not paid yet. You can also switch to cash on delivery.';
   }
   final delivering =
       o.status == OrderStatus.deliveryAssigned ||
       o.status == OrderStatus.outForDelivery;
   final first = o.deliveryDriver?.name?.split(' ').first;
   return delivering && first != null
-      ? '$amount is due. Pay $first in cash at the door, or pay online now.'
-      : '$amount is due. Pay the partner in cash or pay online now.';
+      ? 'Or pay $first in cash at the door.'
+      : 'Or pay the partner in cash when your clothes come back.';
 }
 
 /// Opens the cancel sheet, and says so when the order was cancelled.
@@ -625,11 +612,35 @@ class _Hero extends StatelessWidget {
     // No card around the hero: it is the page's own colour, so padding or a clip here would only
     // push the text 20 dp off the grid the timeline and partner card sit on, and a clip would cut
     // the edge of anything drawn right at the margin (a glyph, a button outline).
+    final statusLine = Row(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        ExcludeSemantics(
+          child: Padding(
+            // Centres the 20 dp icon on the first line of text.
+            padding: const EdgeInsets.only(top: 1),
+            child: Icon(
+              late ? LucideIcons.circleAlert : LucideIcons.clock,
+              size: IdSize.iconMd,
+              color: accent,
+            ),
+          ),
+        ),
+        const SizedBox(width: IdSpace.s2),
+        Expanded(
+          child: Text(
+            // The hours stay on one line: a wrap inside "4 – 8 PM" reads as two times.
+            keepWindowTogether(body),
+            // The time to look for is the point of this line.
+            style: t.title.copyWith(color: c.text),
+          ),
+        ),
+      ],
+    );
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
-        // The status is announced when it changes; the button below is kept out of this region
-        // so that announcing a new status does not also announce a button.
+        // The status is announced when it changes. The timeline below carries the progress, so there is no second bar.
         Semantics(
           container: true,
           liveRegion: true,
@@ -641,91 +652,36 @@ class _Hero extends StatelessWidget {
                 style: t.labelSm.copyWith(color: c.textMuted),
               ),
               Text(title, style: t.headline.copyWith(color: c.text)),
-              const SizedBox(height: IdSpace.s2),
-              Row(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  ExcludeSemantics(
-                    child: Padding(
-                      // Centres the 20 dp icon on the first line of text.
-                      padding: const EdgeInsets.only(top: 1),
-                      child: Icon(
-                        late ? LucideIcons.circleAlert : LucideIcons.clock,
-                        size: IdSize.iconMd,
-                        color: accent,
-                      ),
-                    ),
-                  ),
-                  const SizedBox(width: IdSpace.s2),
-                  Expanded(
-                    child: Text(
-                      // The hours stay on one line: a wrap inside "4 – 8 PM" reads as two times.
-                      keepWindowTogether(body),
-                      // The time to look for is the point of this line; a late message is a
-                      // sentence, so it stays at body weight.
-                      style: (missed ? t.body : t.title).copyWith(
-                        color: c.text,
-                      ),
-                    ),
-                  ),
-                ],
-              ),
-              const SizedBox(height: IdSpace.s4),
-              _StepBar(step: step, color: accent),
+              if (!missed) ...[const SizedBox(height: IdSpace.s2), statusLine],
             ],
           ),
         ),
-        if (missed) ...[const SizedBox(height: IdSpace.s4), const _CallUs()],
+        // A missed estimate is one amber notice: the sentence and the way to call, together.
+        if (missed) ...[
+          const SizedBox(height: IdSpace.s3),
+          _Notice(
+            icon: LucideIcons.circleAlert,
+            tone: _NoticeTone.warning,
+            text: keepWindowTogether(body),
+            actions: const [_CallUs()],
+          ),
+        ],
       ],
     );
   }
 }
 
-/// Five short segments, one per timeline step: those reached are filled. It repeats what "Step n of
-/// 5" and the timeline already say, so it is hidden from screen readers.
-class _StepBar extends StatelessWidget {
-  const _StepBar({required this.step, required this.color});
-  final int step;
-  final Color color;
-
-  @override
-  Widget build(BuildContext context) {
-    final c = context.colors;
-    return ExcludeSemantics(
-      child: Row(
-        children: [
-          for (var i = 1; i <= 5; i++) ...[
-            if (i > 1) const SizedBox(width: IdSpace.s1),
-            Expanded(
-              child: Container(
-                height: 4,
-                decoration: BoxDecoration(
-                  color: i <= step ? color : c.border,
-                  borderRadius: BorderRadius.circular(IdRadius.full),
-                ),
-              ),
-            ),
-          ],
-        ],
-      ),
-    );
-  }
-}
-
-/// Dials support. Shown when the delivery estimate has passed, next to the words that say so.
+/// Dials support. Sits inside the notice that says the delivery estimate has passed.
 class _CallUs extends ConsumerWidget {
   const _CallUs();
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final support = Support.of(ref);
-    return Align(
-      alignment: Alignment.centerLeft,
-      child: IdButton.outline(
-        label: 'Call us',
-        icon: LucideIcons.phone,
-        onPressed: () => Support.dial(support.phone, context: context, fallback: support),
-      ),
+    return IdButton.text(
+      label: 'Call us',
+      icon: LucideIcons.phone,
+      onPressed: () => Support.dial(support.phone, context: context, fallback: support),
     );
   }
 }
@@ -999,6 +955,19 @@ class _Line extends StatelessWidget {
         child: Text(v, style: context.text.bodyLg, textAlign: TextAlign.end),
       ),
     ],
+  );
+}
+
+/// A line of explanation inside the footer, directly under the button it explains.
+class _FooterNote extends StatelessWidget {
+  const _FooterNote(this.text);
+  final String text;
+
+  @override
+  Widget build(BuildContext context) => Text(
+    text,
+    style: context.text.caption.copyWith(color: context.colors.textMuted),
+    textAlign: TextAlign.center,
   );
 }
 

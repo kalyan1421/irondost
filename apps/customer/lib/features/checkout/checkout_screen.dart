@@ -225,31 +225,6 @@ class CheckoutScreen extends ConsumerWidget {
             _NotServed(address: address),
           ],
           const SizedBox(height: IdSpace.s6),
-          Semantics(
-            header: true,
-            child: Text('Pay with', style: context.text.titleLg),
-          ),
-          const SizedBox(height: IdSpace.s3),
-          ChoiceCard(
-            icon: LucideIcons.smartphone,
-            title: 'Pay online',
-            description: 'UPI, cards and netbanking',
-            selected: online,
-            onTap: () => ref
-                .read(checkoutProvider.notifier)
-                .chooseMethod(PaymentMethod.online),
-          ),
-          const SizedBox(height: IdSpace.s2),
-          ChoiceCard(
-            icon: LucideIcons.banknote,
-            title: 'Cash on delivery',
-            description: 'Pay the partner when your clothes come back',
-            selected: !online,
-            onTap: () => ref
-                .read(checkoutProvider.notifier)
-                .chooseMethod(PaymentMethod.cod),
-          ),
-          const SizedBox(height: IdSpace.s6),
           const _Note(),
         ],
       ),
@@ -260,6 +235,7 @@ class CheckoutScreen extends ConsumerWidget {
         enabled: canPlace,
         offline: checkout.problem == CheckoutProblem.offline,
         failed: checkout.problem == CheckoutProblem.failed,
+        onChooseMethod: ref.read(checkoutProvider.notifier).chooseMethod,
         onPlace: () => _place(context, ref, schedule, address),
       ),
     );
@@ -578,6 +554,7 @@ class _Footer extends StatelessWidget {
     required this.enabled,
     required this.offline,
     required this.failed,
+    required this.onChooseMethod,
     required this.onPlace,
   });
 
@@ -587,12 +564,20 @@ class _Footer extends StatelessWidget {
   final bool enabled;
   final bool offline;
   final bool failed;
+  final ValueChanged<PaymentMethod> onChooseMethod;
   final VoidCallback onPlace;
 
   @override
   Widget build(BuildContext context) {
     final c = context.colors;
     final t = context.text;
+    // While the keyboard is up (the pickup note) the footer shrinks to the button, so the field keeps its room.
+    final keyboardUp = MediaQuery.viewInsetsOf(context).bottom > 0;
+    final stacked = MediaQuery.textScalerOf(context).scale(1) > 1.3;
+    final methods = [
+      ChoiceCard(dense: true, title: 'Pay online', selected: online, onTap: () => onChooseMethod(PaymentMethod.online)),
+      ChoiceCard(dense: true, title: 'Cash on delivery', selected: !online, onTap: () => onChooseMethod(PaymentMethod.cod)),
+    ];
     final amount = totalPaise == null ? '' : ' ${rupees(totalPaise!)}';
     final label = online ? 'Pay$amount' : 'Place order$amount';
     return DecoratedBox(
@@ -625,6 +610,32 @@ class _Footer extends StatelessWidget {
                   ),
                 ),
                 const SizedBox(height: IdSpace.s2),
+              ],
+              // The way to pay stays on screen next to the button, so it never sits below the fold.
+              if (!keyboardUp) ...[
+                Semantics(
+                  header: true,
+                  child: Text('Pay with', style: t.labelSm),
+                ),
+                const SizedBox(height: IdSpace.s2),
+                if (stacked)
+                  Column(
+                    crossAxisAlignment: CrossAxisAlignment.stretch,
+                    children: [methods[0], const SizedBox(height: IdSpace.s2), methods[1]],
+                  )
+                else
+                  // Equal-height cards side by side: the row is only as tall as the taller card.
+                  IntrinsicHeight(
+                    child: Row(
+                      crossAxisAlignment: CrossAxisAlignment.stretch,
+                      children: [
+                        Expanded(child: methods[0]),
+                        const SizedBox(width: IdSpace.s2),
+                        Expanded(child: methods[1]),
+                      ],
+                    ),
+                  ),
+                const SizedBox(height: IdSpace.s3),
               ],
               IdButton(
                 label: label,

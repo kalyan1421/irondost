@@ -41,6 +41,8 @@ class WelcomeScreen extends StatelessWidget {
                   ),
                 ),
                 const SizedBox(height: IdSpace.s6),
+                const _WelcomeArt(),
+                const SizedBox(height: IdSpace.s5),
                 const CareNote(
                   title: 'Choose your pickup and delivery times.',
                   body: 'Pay online or in cash at delivery.',
@@ -72,4 +74,31 @@ class WelcomeScreen extends StatelessWidget {
       ),
     ),
   );
+}
+
+/// The two services the home screen leads with, as the same bundled 3D artwork, so the first screen already looks like
+/// the app. Decorative: the headline and the care note carry the meaning.
+class _WelcomeArt extends StatelessWidget {
+  const _WelcomeArt();
+
+  @override
+  Widget build(BuildContext context) {
+    final c = context.colors;
+    return ExcludeSemantics(
+      child: Container(
+        padding: const EdgeInsets.symmetric(vertical: IdSpace.s5, horizontal: IdSpace.s4),
+        decoration: BoxDecoration(
+          color: c.primarySoft,
+          borderRadius: BorderRadius.circular(IdRadius.xl),
+        ),
+        child: Row(
+          mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+          children: [
+            for (final asset in const ['assets/services/ironing-3d.png', 'assets/services/wash-and-iron-3d.png'])
+              Flexible(child: Image.asset(asset, height: 104, fit: BoxFit.contain, cacheHeight: 312)),
+          ],
+        ),
+      ),
+    );
+  }
 }

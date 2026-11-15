@@ -11,6 +11,7 @@ class ChoiceCard extends StatelessWidget {
     this.description,
     required this.selected,
     required this.onTap,
+    this.dense = false,
   });
 
   final IconData? icon;
@@ -18,6 +19,9 @@ class ChoiceCard extends StatelessWidget {
   final String? description;
   final bool selected;
   final VoidCallback onTap;
+
+  /// Shorter padding and a smaller title, for two options side by side.
+  final bool dense;
 
   @override
   Widget build(BuildContext context) {
@@ -39,9 +43,9 @@ class ChoiceCard extends StatelessWidget {
           borderRadius: radius,
           onTap: onTap,
           child: Padding(
-            padding: const EdgeInsets.symmetric(
-              horizontal: IdSpace.s4,
-              vertical: IdSpace.s4,
+            padding: EdgeInsets.symmetric(
+              horizontal: dense ? IdSpace.s3 : IdSpace.s4,
+              vertical: dense ? IdSpace.s3 : IdSpace.s4,
             ),
             child: Row(
               children: [
@@ -57,7 +61,7 @@ class ChoiceCard extends StatelessWidget {
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      Text(title, style: t.title),
+                      Text(title, style: dense ? t.label : t.title),
                       if (description != null)
                         Text(
                           description!,

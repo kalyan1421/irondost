@@ -57,12 +57,8 @@ class OrderBillScreen extends ConsumerWidget {
                 _Head(order),
                 const SizedBox(height: IdSpace.s4),
                 IdCard(
-                  padding: const EdgeInsets.fromLTRB(
-                    IdSpace.s5,
-                    IdSpace.s1,
-                    IdSpace.s5,
-                    IdSpace.s1,
-                  ),
+                  // No side padding: the items line up with the totals below, on the page's own 20 dp edge.
+                  padding: const EdgeInsets.symmetric(vertical: IdSpace.s1),
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.stretch,
                     children: [
@@ -125,7 +121,10 @@ class OrderBillScreen extends ConsumerWidget {
                 ),
                 const SizedBox(height: IdSpace.s4),
                 _Bill(order),
-                RefundList(order: order),
+                if (order.refunds?.isNotEmpty ?? false) ...[
+                  const SizedBox(height: IdSpace.s5),
+                  RefundList(order: order),
+                ],
               ],
             ),
     );

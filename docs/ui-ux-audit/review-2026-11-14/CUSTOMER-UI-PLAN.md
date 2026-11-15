@@ -52,24 +52,32 @@ Order is by risk and reuse: shared components first so later screens inherit the
 - Keep one refund banner and one refund row (amount, status chip, method on one line, note below); drop the "Amount" repetition; make the status chip content-width.
 - Done when: the refund amount appears once in the captures for pending, completed and failed refunds.
 
-**Step 5. Order detail (U07).**
+**Step 5. Order detail (U07)** (done 15 Nov, local).
 - Remove the segmented bar (keep the timeline), put "Call us" in the header help row or beside the status, show the partner row only when a delivery partner is assigned, and fold the due message into the sticky Pay bar.
 - Done when: tracking, paid and cancelled captures keep every existing fact with fewer repeated lines.
 
-**Step 6. Welcome and checkout (U08, U09), then polish (U10, U11).**
+**Step 6. Welcome and checkout (U08, U09), then polish (U10, U11)** (done 15 Nov, local; see Status for what changed from the plan).
 - Welcome: reuse the existing product renders with one headline and the same two buttons; no new copy claims.
 - Checkout: compact payment summary row with Change near the footer, then re-check the fold at 390 dp.
 - Replace the "—" placeholders with "Calculating..." or hide the row; fix the "Your reports" sentence.
 
 ## Status
 
-Steps 1 to 4 are implemented locally.
+Steps 1 to 6 are implemented locally. Steps 1 to 4 are committed (`e9b0741`); steps 5 and 6 are not yet committed.
 
 - Steps 1 and 2: link theme without side padding, no-break spacing for time windows and the last two words of headlines, new `IdSelectField` (sheet picker) and `IdFieldError`, report form, reply box and report list links on `IdTextField`/`IdButton.text`.
-- Step 3: the price-approval sheet is a before/after bill. Changed items come first with the quantity change marked ("4 to 6"), new and removed items are tagged, old line totals are struck through, amounts are right-aligned, and the new total is the only large figure.
-- Step 4: each refund is one row (amount, content-width status chip, method and date, note) under a "Refund" heading. The "refund pending" sentence only appears when there are no refund rows or money no refund accounts for; the cancelled card says "Paid" instead of repeating a refund state; the "Cancelled" chip hugs its label.
+- Step 3: the price-approval sheet is a before/after bill (changed items first, quantity change marked, new and removed items tagged, right-aligned amounts, one large new total).
+- Step 4: each refund is one row (amount, content-width status chip, method and date, note) under a "Refund" heading; the refund sentence only appears when there are no rows or money no refund accounts for; the "Cancelled" chip hugs its label.
+- Step 5: the five-segment bar is gone (the words and the timeline carry progress). A missed delivery estimate is one amber notice with Call us inside it. The "Your partner ... once they accept" placeholder only shows while the order is still pending. The due-amount notice moved into the pay bar as one line under the Pay button.
+- Step 6: the welcome screen shows the same bundled iron and washer artwork as home. The bill's items line up with its totals. A delivered order with no pickup time has no "Picked up" row instead of a dash.
 
-488 tests pass, `flutter analyze` is clean, fixture captures render in light and dark, and the 200% text stress suites pass at 320, 390 and 430 dp. Steps 5 and 6 are not started. Captures are fixtures, not a device.
+Changes from the plan:
+
+- **Checkout (U09):** instead of a Change sheet, both payment options sit in the footer beside the Pay button ("Pay with": Pay online, Cash on delivery), so cash on delivery stays one tap away and nothing is below the fold. The footer shrinks to the button while the note keyboard is up.
+- **Basket total (U10):** the "—" while a new price is on its way is kept. It is deliberate (the bar does not change width) and has an accessible label.
+- The text-link padding change in step 1 broke the spacing between "Terms of service" and "Privacy policy"; it is fixed by setting the gap on the links row. No other adjacent links depended on the old padding.
+
+493 tests pass, `flutter analyze` is clean, fixture captures render in light and dark, and the 200% text stress suites pass at 320, 390 and 430 dp (including keyboard layouts and the report and refund screens). Captures are fixtures, not a device.
 
 ## Verification for every step
 

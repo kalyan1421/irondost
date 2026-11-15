@@ -114,6 +114,27 @@ void main() {
     expect(find.text('Secure payment by Razorpay'), findsOneWidget);
   });
 
+  testWidgets('the way to pay is always on screen beside the button, and steps aside for the keyboard', (tester) async {
+    tester.view.physicalSize = const Size(390 * 3, 844 * 3);
+    tester.view.devicePixelRatio = 3;
+    addTearDown(tester.view.reset);
+    await pump(tester);
+
+    final viewHeight = tester.view.physicalSize.height / tester.view.devicePixelRatio;
+    expect(find.text('Pay with'), findsOneWidget);
+    for (final label in ['Pay online', 'Cash on delivery']) {
+      expect(tester.getRect(find.text(label)).bottom, lessThanOrEqualTo(viewHeight), reason: '$label needs no scrolling');
+      expect(tester.getRect(find.text(label)).top, greaterThan(viewHeight / 2), reason: '$label sits with the button at the bottom');
+    }
+    expect(tester.getTopLeft(find.text('Pay with')).dy, lessThan(tester.getTopLeft(find.text('Pay ₹80')).dy));
+
+    tester.view.viewInsets = const FakeViewPadding(bottom: 300 * 3);
+    await tester.pumpAndSettle();
+    expect(find.text('Pay with'), findsNothing, reason: 'the footer shrinks to the button while the note keyboard is up');
+    expect(find.text('Pay ₹80'), findsOneWidget);
+    addTearDown(tester.view.resetViewInsets);
+  });
+
   testWidgets('cash on delivery changes the button and the reassurance line', (tester) async {
     await pump(tester);
     await tester.tap(find.text('Cash on delivery'));
