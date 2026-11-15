@@ -15,6 +15,8 @@ import 'clients/banners_client.dart';
 import 'clients/app_versions_client.dart';
 import 'clients/orders_client.dart';
 import 'clients/payments_client.dart';
+import 'clients/issues_client.dart';
+import 'clients/uploads_client.dart';
 
 /// Laundry API `v1.0`.
 ///
@@ -42,6 +44,8 @@ class IronDostApi {
   AppVersionsClient? _appVersions;
   OrdersClient? _orders;
   PaymentsClient? _payments;
+  IssuesClient? _issues;
+  UploadsClient? _uploads;
 
   AuthClient get auth => _auth ??= AuthClient(_dio, baseUrl: _baseUrl);
 
@@ -64,4 +68,8 @@ class IronDostApi {
   OrdersClient get orders => _orders ??= OrdersClient(_dio, baseUrl: _baseUrl);
 
   PaymentsClient get payments => _payments ??= PaymentsClient(_dio, baseUrl: _baseUrl);
+
+  IssuesClient get issues => _issues ??= IssuesClient(_dio, baseUrl: _baseUrl);
+
+  UploadsClient get uploads => _uploads ??= UploadsClient(_dio, baseUrl: _baseUrl);
 }

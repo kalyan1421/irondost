@@ -9,10 +9,6 @@ import '../helpers.dart';
 /// Session that records sign-ins instead of calling the API.
 class _FakeSession extends SessionController {
   int signIns = 0;
-  int phoneLinks = 0;
-
-  /// Set to make the API refuse the number, as it does when another account has it.
-  AuthFailure? linkFailure;
 
   @override
   Future<Session> build() async => const SignedOut();
@@ -21,13 +17,6 @@ class _FakeSession extends SessionController {
   Future<void> signedIn() async {
     signIns++;
     state = const AsyncData(SignedIn(Profile(id: 'u1', phone: '+919876543210', isComplete: false)));
-  }
-
-  @override
-  Future<void> phoneLinked() async {
-    phoneLinks++;
-    if (linkFailure != null) throw linkFailure!;
-    state = const AsyncData(SignedIn(Profile(id: 'g1', phone: '+919876543210', name: 'Gina', isComplete: true)));
   }
 }
 
@@ -109,62 +98,6 @@ void main() {
       auth.googleFailure = const AuthFailure(AuthFailureKind.googleUnavailable);
       expect(await login().signInWithGoogle(), AuthFailureKind.googleUnavailable);
       expect(session.signIns, 0);
-    });
-  });
-
-  group('adding a number to a Google account', () {
-    test('verifies the number with a link request and has the API store it, without signing in again', () async {
-      expect(await login().sendCode('9876543210', link: true), isTrue);
-      expect(auth.linkRequests, [true]);
-      expect(state().link, isTrue);
-
-      await login().verify('482916');
-      expect(auth.verifiedPhone, isTrue);
-      expect(session.phoneLinks, 1);
-      expect(session.signIns, 0);
-      expect(state().linked, isTrue);
-      expect(state().error, isNull);
-    });
-
-    test('a number that belongs to another account is refused, with a clear reason and nothing stored', () async {
-      await login().sendCode('9876543210', link: true);
-      session.linkFailure = const AuthFailure(AuthFailureKind.phoneInUse);
-      await login().verify('482916');
-      expect(state().error, AuthFailureKind.phoneInUse);
-      expect(state().linked, isFalse);
-      expect(state().busy, isFalse);
-    });
-
-    test('Firebase refusing the link (number already on another login) shows the same reason', () async {
-      await login().sendCode('9876543210', link: true);
-      auth.confirmFailure = const AuthFailure(AuthFailureKind.phoneInUse);
-      await login().verify('482916');
-      expect(state().error, AuthFailureKind.phoneInUse);
-      expect(session.phoneLinks, 0);
-    });
-
-    test('resend keeps adding a number rather than signing in', () async {
-      await login().sendCode('9876543210', link: true);
-      await login().resend();
-      expect(auth.linkRequests, [true, true]);
-    });
-
-    test('an account that already has a verified number only needs the API to read it', () async {
-      auth.verifiedPhone = true;
-      expect(await login().syncLinkedPhone(), isTrue);
-      expect(session.phoneLinks, 1);
-      expect(state().linked, isTrue);
-    });
-
-    test('with no verified number yet there is nothing to sync', () async {
-      expect(await login().syncLinkedPhone(), isFalse);
-      expect(session.phoneLinks, 0);
-    });
-
-    test('sending a code to a bad number does not link anything', () async {
-      expect(await login().sendCode('12345', link: true), isFalse);
-      expect(state().error, AuthFailureKind.invalidNumber);
-      expect(auth.sentTo, isEmpty);
     });
   });
 }

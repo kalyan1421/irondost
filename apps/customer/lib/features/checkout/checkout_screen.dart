@@ -32,8 +32,8 @@ import 'checkout.dart';
 class CheckoutScreen extends ConsumerWidget {
   const CheckoutScreen({super.key});
 
-  /// A customer who signed in with Google has no verified number yet. The pickup partner calls it, so ask for it now
-  /// (a code by SMS) and carry on with the order once it is stored.
+  /// A customer who signed in with Google has no number yet. The pickup partner calls it, so ask for it now (typed, no SMS
+  /// code) and carry on with the order once it is saved.
   static Future<bool> _hasPhone(BuildContext context, WidgetRef ref) async {
     final session = ref.read(sessionProvider).value;
     if (session is SignedIn && !session.profile.hasPhone) {
@@ -295,10 +295,11 @@ class _ContactNumber extends ConsumerWidget {
           ),
         ],
       ),
-      actionLabel: 'Add contact number',
-      action: phone == null
+      actionLabel: phone == null ? 'Add contact number' : 'Change contact number',
+      // A number that signs the customer in is fixed; one typed here can be corrected.
+      action: phone == null || profile?.phoneVerified == false
           ? IdButton.text(
-              label: 'Add number',
+              label: phone == null ? 'Add number' : 'Change',
               onPressed: ref.watch(checkoutProvider.select((s) => s.placing))
                   ? null
                   : () => context.push<bool>(Routes.addPhone),

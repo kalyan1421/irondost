@@ -6,8 +6,15 @@ part of 'update_me_dto.dart';
 // JsonSerializableGenerator
 // **************************************************************************
 
-UpdateMeDto _$UpdateMeDtoFromJson(Map<String, dynamic> json) =>
-    UpdateMeDto(name: json['name'] as String?, email: json['email'] as String?);
+UpdateMeDto _$UpdateMeDtoFromJson(Map<String, dynamic> json) => UpdateMeDto(
+  name: json['name'] as String?,
+  email: json['email'] as String?,
+  phone: json['phone'] as String?,
+);
 
 Map<String, dynamic> _$UpdateMeDtoToJson(UpdateMeDto instance) =>
-    <String, dynamic>{'name': instance.name, 'email': instance.email};
+    <String, dynamic>{
+      'name': instance.name,
+      'email': instance.email,
+      'phone': instance.phone,
+    };

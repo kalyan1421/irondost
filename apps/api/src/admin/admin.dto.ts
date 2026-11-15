@@ -12,6 +12,7 @@ import {
   IsNumber,
   IsOptional,
   IsString,
+  IsUUID,
   Length,
   Matches,
   Max,
@@ -71,6 +72,10 @@ export class CustomerPageDto {
 }
 
 export class AuditQuery extends PageQueryDto {
+  @ApiPropertyOptional() @IsOptional() @IsUUID() actorId?: string;
+  @ApiPropertyOptional() @IsOptional() @IsString() @MaxLength(100) action?: string;
+  @ApiPropertyOptional() @IsOptional() @Matches(/^\d{4}-\d{2}-\d{2}$/) from?: string;
+  @ApiPropertyOptional() @IsOptional() @Matches(/^\d{4}-\d{2}-\d{2}$/) to?: string;
   @ApiPropertyOptional({ description: 'Only this kind of record, e.g. order, user, app_version' })
   @IsOptional()
   @IsString()
@@ -137,6 +142,9 @@ export class UpdateStaffDto {
 }
 
 export class UpdateSettingsDto {
+  @ApiPropertyOptional({ description: 'Price-approval expiry, in hours.' }) @IsOptional() @IsInt() @Min(1) @Max(168) adjustmentExpiryHours?: number;
+  @ApiPropertyOptional({ nullable: true, type: Number, description: 'Public first-response target; null keeps the promise off.' })
+  @IsOptional() @ValidateIf((_, v) => v !== null) @IsInt() @Min(1) @Max(168) issueFirstResponseHours?: number | null;
   @ApiPropertyOptional() @IsOptional() @IsInt() @Min(0) minOrderPaise?: number;
   @ApiPropertyOptional() @IsOptional() @IsInt() @Min(0) deliveryFeePaise?: number;
   @ApiPropertyOptional({ nullable: true, type: Number })
@@ -198,6 +206,9 @@ export class UpdateSettingsDto {
 }
 
 export class DashboardDto {
+  @ApiProperty() openIssues!: number;
+  @ApiProperty() overdueIssues!: number;
+  @ApiProperty() pendingAdjustments!: number;
   @ApiProperty({ description: 'Count of orders per status' }) byStatus!: Record<string, number>;
   @ApiProperty() pickupsToday!: number;
   @ApiProperty() deliveriesToday!: number;
@@ -214,6 +225,8 @@ export class DashboardDto {
 }
 
 export class BusinessSettingsDto {
+  @ApiProperty() adjustmentExpiryHours!: number;
+  @ApiProperty({ nullable: true, type: Number }) issueFirstResponseHours!: number | null;
   @ApiProperty() minOrderPaise!: number;
   @ApiProperty() deliveryFeePaise!: number;
   @ApiProperty({ nullable: true, type: Number }) freeDeliveryAbovePaise!: number | null;

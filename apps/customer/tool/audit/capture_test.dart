@@ -1,3 +1,9 @@
+import 'dart:convert';
+import '../../test/features/issues_test.dart' show Reports;
+import '../../test/features/price_approval_test.dart' show Decisions;
+import 'package:irondost_customer/features/issues/issues.dart';
+import 'package:irondost_customer/features/issues/issue_screens.dart';
+import 'package:irondost_customer/features/orders/price_approval.dart';
 import 'package:irondost_customer/features/orders/pay_due.dart';
 import 'package:irondost_customer/features/orders/cancel_order.dart';
 import 'package:irondost_customer/features/basket/promo_sheet.dart';
@@ -618,14 +624,7 @@ void main() {
     'Payment receipt': (b, s) async => auditRouter(
       at(
         '/paid',
-        PaymentReceiptScreen(
-          orderId: 'o-1',
-          initial: testOrder(
-            method: PaymentMethod.online,
-            paymentStatus: PaymentStatus.paid,
-            paidPaise: 24800,
-          ),
-        ),
+        const PaymentReceiptScreen(orderId: 'o-1'),
       ),
       overrides: [
         orderRepositoryProvider.overrideWithValue(
@@ -671,6 +670,34 @@ void main() {
       textScale: s,
     ),
   };
+
+  if (const bool.fromEnvironment('AUDIT_TRUST')) {
+    const line = AdjustmentLineDto(catalogItemId: 'shirt', name: 'Shirt / T-shirt', unit: ItemUnit.piece, unitPricePaise: 1500, quantity: 4, lineTotalPaise: 6000);
+    final adjustment = OrderAdjustmentDto(id: 'price-1', status: AdjustmentStatus.pendingCustomer, reason: 'Two extra shirts counted at collection.',
+      oldTotalPaise: 6000, newTotalPaise: 9000, subtotalPaise: 9000, discountPaise: 0, deliveryFeePaise: 0, itemsBefore: [line],
+      itemsAfter: [const AdjustmentLineDto(catalogItemId: 'shirt', name: 'Shirt / T-shirt', unit: ItemUnit.piece, unitPricePaise: 1500, quantity: 6, lineTotalPaise: 9000)],
+      expiresAt: now.add(const Duration(hours: 12)), decidedAt: null, createdAt: now);
+    final pendingRefund = testOrder(status: OrderStatus.cancelled, paymentStatus: PaymentStatus.refunded, method: PaymentMethod.online, totalPaise: 25500, paidPaise: 25500,
+      refundedPaise: 25500, cancelledAt: now, refunds: [RefundDto(id: 'refund-1', amountPaise: 25500, method: RefundMethod.razorpay, status: RefundStatus.pending,
+        note: 'Order cancelled before collection.', createdAt: now, processedAt: null, failureReason: null)]);
+    scenarios.clear();
+    scenarios.addAll({
+      'Price approval review': (b, s) async => auditThemed(Scaffold(appBar: AppBar(title: const Text('Price change')), body: ListView(padding: const EdgeInsets.all(20), children: [PriceApprovalCard(order: testOrder(totalPaise: 6000, adjustments: [adjustment]))])),
+        brightness: b, textScale: s, overrides: [adjustmentRepositoryProvider.overrideWithValue(Decisions())]),
+      'Refund pending tracking': (b, s) async => auditRouter(at('/order', const OrderDetailScreen(orderId: 'o-1')), brightness: b, textScale: s,
+        overrides: [startup, orderRepositoryProvider.overrideWithValue(FakeOrderRepository()..orders['o-1'] = pendingRefund)]),
+      'Refund pending bill': (b, s) async => auditThemed(const OrderBillScreen(orderId: 'o-1'), brightness: b, textScale: s,
+        overrides: [orderRepositoryProvider.overrideWithValue(FakeOrderRepository()..orders['o-1'] = pendingRefund)]),
+      'Receipt offline': (b, s) async => auditThemed(const PaymentReceiptScreen(orderId: 'o-1'), brightness: b, textScale: s,
+        overrides: [orderRepositoryProvider.overrideWithValue(FakeOrderRepository()..getFailure = const ApiFailure(ApiFailureKind.offline))]),
+      'Report problem': (b, s) async => auditThemed(const ReportProblemScreen(orderId: 'o-1'), brightness: b, textScale: s,
+        overrides: [...await basketOverrides(saved: {'issue.draft.o-1': jsonEncode({'category': 'QUALITY', 'description': 'My shirt still has creases around the collar.', 'photos': [], 'pending': []})}),
+          orderRepositoryProvider.overrideWithValue(FakeOrderRepository()), issueRepositoryProvider.overrideWithValue(Reports())]),
+      'Your reports': (b, s) async => auditThemed(const IssuesScreen(), brightness: b, textScale: s, overrides: [issueRepositoryProvider.overrideWithValue(Reports())]),
+      'Report conversation': (b, s) async => auditThemed(const IssueDetailScreen(id: 'issue-1'), brightness: b, textScale: s, overrides: [issueRepositoryProvider.overrideWithValue(Reports())]),
+      'Report resolved': (b, s) async => auditThemed(const IssueDetailScreen(id: 'issue-1'), brightness: b, textScale: s, overrides: [issueRepositoryProvider.overrideWithValue(Reports()..status = IssueStatus.resolved)]),
+    });
+  }
 
   if (const bool.fromEnvironment('AUDIT_CHECKOUT') ||
       const bool.fromEnvironment('AUDIT_KEYBOARD')) {
@@ -818,6 +845,7 @@ void main() {
               );
               await tester.pump(const Duration(milliseconds: 500));
               await tester.pump(const Duration(milliseconds: 500));
+              if (entry.key == 'Price approval review') { await tester.tap(find.text('Review price change')); await tester.pumpAndSettle(); }
               await prepareCheckoutNote(tester, entry.key);
               await tester.pumpWidget(const SizedBox());
               await tester.pump();
@@ -860,6 +888,7 @@ void main() {
         await tester.pump(quoteDebounce + const Duration(milliseconds: 10));
         await tester.pump(const Duration(milliseconds: 500));
         await tester.pump(const Duration(milliseconds: 500));
+        if (entry.key == 'Price approval review') { await tester.tap(find.text('Review price change')); await tester.pumpAndSettle(); }
         await prepareCheckoutNote(tester, entry.key);
         await tester.runAsync(() async {
           await Future<void>.delayed(const Duration(milliseconds: 100));
@@ -887,7 +916,7 @@ void main() {
     }
   }
 
-  if (const bool.fromEnvironment('AUDIT_CHECKOUT') ||
+  if (const bool.fromEnvironment('AUDIT_TRUST') || const bool.fromEnvironment('AUDIT_CHECKOUT') ||
       const bool.fromEnvironment('AUDIT_EXTRA_STATES') ||
       const bool.fromEnvironment('AUDIT_KEYBOARD')) {
     return;

@@ -1372,6 +1372,92 @@
         ]
       }
     },
+    "/v1/orders/{id}/adjustments/{adjustmentId}/approve": {
+      "post": {
+        "operationId": "OrdersController_approve",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "adjustmentId",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/OrderDto"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "tags": [
+          "orders"
+        ]
+      }
+    },
+    "/v1/orders/{id}/adjustments/{adjustmentId}/decline": {
+      "post": {
+        "operationId": "OrdersController_decline",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "adjustmentId",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/OrderDto"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "tags": [
+          "orders"
+        ]
+      }
+    },
     "/v1/orders/{id}/pay-on-delivery": {
       "post": {
         "operationId": "OrdersController_payOnDelivery",
@@ -1480,6 +1566,74 @@
             }
           },
           {
+            "name": "createdFrom",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "createdTo",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "deliveryFrom",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "deliveryTo",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "excludeCancelled",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "type": "boolean"
+            }
+          },
+          {
+            "name": "approvalPending",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "type": "boolean"
+            }
+          },
+          {
+            "name": "unpaid",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "type": "boolean"
+            }
+          },
+          {
+            "name": "overdue",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "type": "string",
+              "enum": [
+                "pickup",
+                "delivery"
+              ]
+            }
+          },
+          {
             "name": "status",
             "required": false,
             "in": "query",
@@ -1577,7 +1731,17 @@
       },
       "post": {
         "operationId": "AdminOrdersController_place",
-        "parameters": [],
+        "parameters": [
+          {
+            "name": "Idempotency-Key",
+            "in": "header",
+            "description": "Reuse the same key when retrying one phone-order draft.",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
         "requestBody": {
           "required": true,
           "content": {
@@ -1767,6 +1931,51 @@
               "application/json": {
                 "schema": {
                   "$ref": "#/components/schemas/OrderDto"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "tags": [
+          "admin · orders"
+        ]
+      }
+    },
+    "/v1/admin/orders/{id}/items/quote": {
+      "post": {
+        "operationId": "AdminOrdersController_previewItems",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UpdateItemsDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ItemEditPreviewDto"
                 }
               }
             }
@@ -1974,6 +2183,539 @@
         "summary": "Refund money on an order, with a note the customer sees. Works in any status.",
         "tags": [
           "admin · orders"
+        ]
+      }
+    },
+    "/v1/orders/{id}/issues": {
+      "post": {
+        "operationId": "CustomerIssuesController_create",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "Idempotency-Key",
+            "in": "header",
+            "description": "Reuse one key to retry the same report after a lost response.",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CreateIssueDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/IssueDto"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "tags": [
+          "issues"
+        ]
+      }
+    },
+    "/v1/me/issues": {
+      "get": {
+        "operationId": "CustomerIssuesController_list",
+        "parameters": [
+          {
+            "name": "page",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "minimum": 1,
+              "default": 1,
+              "type": "number"
+            }
+          },
+          {
+            "name": "pageSize",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "minimum": 1,
+              "maximum": 100,
+              "default": 20,
+              "type": "number"
+            }
+          },
+          {
+            "name": "status",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "$ref": "#/components/schemas/IssueStatus"
+            }
+          },
+          {
+            "name": "orderId",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "handledById",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "search",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "overdue",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "type": "boolean"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/IssuePageDto"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "tags": [
+          "issues"
+        ]
+      }
+    },
+    "/v1/me/issues/{id}": {
+      "get": {
+        "operationId": "CustomerIssuesController_get",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/IssueDto"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "tags": [
+          "issues"
+        ]
+      }
+    },
+    "/v1/me/issues/{id}/messages": {
+      "post": {
+        "operationId": "CustomerIssuesController_message",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/IssueMessageBodyDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/IssueDto"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "tags": [
+          "issues"
+        ]
+      }
+    },
+    "/v1/admin/issues": {
+      "get": {
+        "operationId": "AdminIssuesController_list",
+        "parameters": [
+          {
+            "name": "page",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "minimum": 1,
+              "default": 1,
+              "type": "number"
+            }
+          },
+          {
+            "name": "pageSize",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "minimum": 1,
+              "maximum": 100,
+              "default": 20,
+              "type": "number"
+            }
+          },
+          {
+            "name": "status",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "$ref": "#/components/schemas/IssueStatus"
+            }
+          },
+          {
+            "name": "orderId",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "handledById",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "search",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "overdue",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "type": "boolean"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/IssuePageDto"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "tags": [
+          "admin · reports"
+        ]
+      }
+    },
+    "/v1/admin/issues/{id}": {
+      "get": {
+        "operationId": "AdminIssuesController_get",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/IssueDto"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "tags": [
+          "admin · reports"
+        ]
+      },
+      "patch": {
+        "operationId": "AdminIssuesController_update",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UpdateIssueDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/IssueDto"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "tags": [
+          "admin · reports"
+        ]
+      }
+    },
+    "/v1/admin/issues/{id}/messages": {
+      "post": {
+        "operationId": "AdminIssuesController_message",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/IssueMessageBodyDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/IssueDto"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "tags": [
+          "admin · reports"
+        ]
+      }
+    },
+    "/v1/admin/uploads/images": {
+      "post": {
+        "operationId": "UploadsController_uploadImage",
+        "parameters": [],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "multipart/form-data": {
+              "schema": {
+                "type": "object",
+                "required": [
+                  "file",
+                  "purpose"
+                ],
+                "properties": {
+                  "file": {
+                    "type": "string",
+                    "format": "binary"
+                  },
+                  "purpose": {
+                    "type": "string",
+                    "enum": [
+                      "catalog",
+                      "promotion",
+                      "banner"
+                    ]
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ImageUploadDto"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Upload an image (max 8 MB). It is cleaned, resized and stored as WebP; use the returned URL in imageUrl.",
+        "tags": [
+          "admin · uploads"
+        ]
+      }
+    },
+    "/v1/me/uploads/images": {
+      "post": {
+        "operationId": "CustomerUploadsController_upload",
+        "parameters": [],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "multipart/form-data": {
+              "schema": {
+                "type": "object",
+                "required": [
+                  "file"
+                ],
+                "properties": {
+                  "file": {
+                    "type": "string",
+                    "format": "binary"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ImageUploadDto"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "tags": [
+          "uploads"
         ]
       }
     },
@@ -2714,6 +3456,38 @@
             }
           },
           {
+            "name": "actorId",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "action",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "from",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "to",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
             "name": "entity",
             "required": false,
             "in": "query",
@@ -3286,61 +4060,6 @@
           "admin · staff"
         ]
       }
-    },
-    "/v1/admin/uploads/images": {
-      "post": {
-        "operationId": "UploadsController_uploadImage",
-        "parameters": [],
-        "requestBody": {
-          "required": true,
-          "content": {
-            "multipart/form-data": {
-              "schema": {
-                "type": "object",
-                "required": [
-                  "file",
-                  "purpose"
-                ],
-                "properties": {
-                  "file": {
-                    "type": "string",
-                    "format": "binary"
-                  },
-                  "purpose": {
-                    "type": "string",
-                    "enum": [
-                      "catalog",
-                      "promotion",
-                      "banner"
-                    ]
-                  }
-                }
-              }
-            }
-          }
-        },
-        "responses": {
-          "201": {
-            "description": "",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ImageUploadDto"
-                }
-              }
-            }
-          }
-        },
-        "security": [
-          {
-            "bearer": []
-          }
-        ],
-        "summary": "Upload an image (max 8 MB). It is cleaned, resized and stored as WebP; use the returned URL in imageUrl.",
-        "tags": [
-          "admin · uploads"
-        ]
-      }
     }
   },
   "info": {
@@ -3401,8 +4120,12 @@
           "phone": {
             "type": "string",
             "nullable": true,
-            "description": "Null for a customer who signed in with Google and has not added a verified number yet.",
+            "description": "The number to call: the sign-in number, or the one typed at checkout. Null until a Google customer adds one.",
             "example": "+919876543210"
+          },
+          "phoneVerified": {
+            "type": "boolean",
+            "description": "True when the number signs the user in (confirmed by an SMS code); false when a customer typed it at checkout."
           },
           "name": {
             "type": "string",
@@ -3434,6 +4157,7 @@
         "required": [
           "id",
           "phone",
+          "phoneVerified",
           "name",
           "email",
           "role",
@@ -3665,8 +4389,12 @@
           "phone": {
             "type": "string",
             "nullable": true,
-            "description": "Null for a customer who signed in with Google and has not added a verified number yet.",
+            "description": "The number to call: the sign-in number, or the one typed at checkout. Null until a Google customer adds one.",
             "example": "+919876543210"
+          },
+          "phoneVerified": {
+            "type": "boolean",
+            "description": "True when the number signs the user in (confirmed by an SMS code); false when a customer typed it at checkout."
           },
           "name": {
             "type": "string",
@@ -3707,6 +4435,7 @@
         "required": [
           "id",
           "phone",
+          "phoneVerified",
           "name",
           "email",
           "role",
@@ -3726,6 +4455,11 @@
             "type": "string",
             "nullable": true,
             "example": "priya@example.com"
+          },
+          "phone": {
+            "type": "string",
+            "example": "9876543210",
+            "description": "Customers only, and only while they have no sign-in number. Any common Indian format; stored as +91XXXXXXXXXX without an SMS code."
           }
         }
       },
@@ -4824,6 +5558,124 @@
           "paymentMethod"
         ]
       },
+      "AdjustmentStatus": {
+        "type": "string",
+        "enum": [
+          "PENDING_CUSTOMER",
+          "APPROVED",
+          "DECLINED",
+          "EXPIRED"
+        ]
+      },
+      "AdjustmentLineDto": {
+        "type": "object",
+        "properties": {
+          "catalogItemId": {
+            "type": "string",
+            "nullable": true
+          },
+          "name": {
+            "type": "string"
+          },
+          "unit": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/ItemUnit"
+              }
+            ]
+          },
+          "unitPricePaise": {
+            "type": "number"
+          },
+          "quantity": {
+            "type": "number"
+          },
+          "lineTotalPaise": {
+            "type": "number"
+          }
+        },
+        "required": [
+          "catalogItemId",
+          "name",
+          "unit",
+          "unitPricePaise",
+          "quantity",
+          "lineTotalPaise"
+        ]
+      },
+      "OrderAdjustmentDto": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "status": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/AdjustmentStatus"
+              }
+            ]
+          },
+          "reason": {
+            "type": "string"
+          },
+          "oldTotalPaise": {
+            "type": "number"
+          },
+          "newTotalPaise": {
+            "type": "number"
+          },
+          "subtotalPaise": {
+            "type": "number"
+          },
+          "discountPaise": {
+            "type": "number"
+          },
+          "deliveryFeePaise": {
+            "type": "number"
+          },
+          "itemsBefore": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/AdjustmentLineDto"
+            }
+          },
+          "itemsAfter": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/AdjustmentLineDto"
+            }
+          },
+          "expiresAt": {
+            "format": "date-time",
+            "type": "string"
+          },
+          "decidedAt": {
+            "format": "date-time",
+            "type": "string",
+            "nullable": true
+          },
+          "createdAt": {
+            "format": "date-time",
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "status",
+          "reason",
+          "oldTotalPaise",
+          "newTotalPaise",
+          "subtotalPaise",
+          "discountPaise",
+          "deliveryFeePaise",
+          "itemsBefore",
+          "itemsAfter",
+          "expiresAt",
+          "decidedAt",
+          "createdAt"
+        ]
+      },
       "OrderStatus": {
         "type": "string",
         "enum": [
@@ -5123,9 +5975,58 @@
           "failureReason"
         ]
       },
+      "PaymentProvider": {
+        "type": "string",
+        "enum": [
+          "RAZORPAY",
+          "CASH"
+        ]
+      },
+      "OrderPaymentDto": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "provider": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/PaymentProvider"
+              }
+            ]
+          },
+          "amountPaise": {
+            "type": "number"
+          },
+          "reference": {
+            "type": "string",
+            "nullable": true
+          },
+          "capturedAt": {
+            "format": "date-time",
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "provider",
+          "amountPaise",
+          "reference",
+          "capturedAt"
+        ]
+      },
       "OrderDto": {
         "type": "object",
         "properties": {
+          "revision": {
+            "type": "number"
+          },
+          "adjustments": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/OrderAdjustmentDto"
+            }
+          },
           "id": {
             "type": "string"
           },
@@ -5311,6 +6212,13 @@
             "items": {
               "$ref": "#/components/schemas/RefundDto"
             }
+          },
+          "payments": {
+            "description": "Captured transactions only; excludes raw provider payloads and staff identities.",
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/OrderPaymentDto"
+            }
           }
         },
         "required": [
@@ -5480,6 +6388,10 @@
       "UpdateItemsDto": {
         "type": "object",
         "properties": {
+          "expectedRevision": {
+            "type": "number",
+            "description": "Revision displayed when this edit was started. A stale edit returns ORDER_CHANGED."
+          },
           "items": {
             "type": "array",
             "items": {
@@ -5493,6 +6405,48 @@
         },
         "required": [
           "items"
+        ]
+      },
+      "ItemEditPreviewDto": {
+        "type": "object",
+        "properties": {
+          "revision": {
+            "type": "number"
+          },
+          "oldTotalPaise": {
+            "type": "number"
+          },
+          "newTotalPaise": {
+            "type": "number"
+          },
+          "subtotalPaise": {
+            "type": "number"
+          },
+          "discountPaise": {
+            "type": "number"
+          },
+          "deliveryFeePaise": {
+            "type": "number"
+          },
+          "requiresApproval": {
+            "type": "boolean"
+          },
+          "lines": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/QuoteLineDto"
+            }
+          }
+        },
+        "required": [
+          "revision",
+          "oldTotalPaise",
+          "newTotalPaise",
+          "subtotalPaise",
+          "discountPaise",
+          "deliveryFeePaise",
+          "requiresApproval",
+          "lines"
         ]
       },
       "CheckoutPrefillDto": {
@@ -5579,13 +6533,6 @@
         },
         "required": [
           "paymentStatus"
-        ]
-      },
-      "PaymentProvider": {
-        "type": "string",
-        "enum": [
-          "RAZORPAY",
-          "CASH"
         ]
       },
       "PaymentRecordStatus": {
@@ -5676,6 +6623,270 @@
           "amountPaise",
           "method",
           "note"
+        ]
+      },
+      "IssueCategory": {
+        "type": "string",
+        "enum": [
+          "LATE",
+          "MISSED_PICKUP",
+          "DAMAGED",
+          "MISSING_ITEM",
+          "QUALITY",
+          "BILLING",
+          "RIDER",
+          "OTHER"
+        ]
+      },
+      "CreateIssueDto": {
+        "type": "object",
+        "properties": {
+          "category": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/IssueCategory"
+              }
+            ]
+          },
+          "description": {
+            "type": "string"
+          },
+          "photoUrls": {
+            "maxItems": 5,
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          }
+        },
+        "required": [
+          "category",
+          "description"
+        ]
+      },
+      "IssueStatus": {
+        "type": "string",
+        "enum": [
+          "OPEN",
+          "ACKNOWLEDGED",
+          "RESOLVED",
+          "REJECTED"
+        ]
+      },
+      "IssueMessageDto": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "fromStaff": {
+            "type": "boolean"
+          },
+          "body": {
+            "type": "string"
+          },
+          "createdAt": {
+            "format": "date-time",
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "fromStaff",
+          "body",
+          "createdAt"
+        ]
+      },
+      "IssueDto": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "orderId": {
+            "type": "string"
+          },
+          "orderNumber": {
+            "type": "string"
+          },
+          "category": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/IssueCategory"
+              }
+            ]
+          },
+          "status": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/IssueStatus"
+              }
+            ]
+          },
+          "description": {
+            "type": "string"
+          },
+          "photoUrls": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "firstResponseDueAt": {
+            "format": "date-time",
+            "type": "string",
+            "nullable": true
+          },
+          "acknowledgedAt": {
+            "format": "date-time",
+            "type": "string",
+            "nullable": true
+          },
+          "resolvedAt": {
+            "format": "date-time",
+            "type": "string",
+            "nullable": true
+          },
+          "resolutionNote": {
+            "type": "string",
+            "nullable": true
+          },
+          "compensationPaise": {
+            "type": "number",
+            "nullable": true,
+            "description": "Agreed remedy in paise; null until one is recorded."
+          },
+          "handledById": {
+            "type": "string",
+            "nullable": true
+          },
+          "refundId": {
+            "type": "string",
+            "nullable": true,
+            "description": "Staff only."
+          },
+          "createdAt": {
+            "format": "date-time",
+            "type": "string"
+          },
+          "updatedAt": {
+            "format": "date-time",
+            "type": "string"
+          },
+          "messages": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/IssueMessageDto"
+            }
+          }
+        },
+        "required": [
+          "id",
+          "orderId",
+          "orderNumber",
+          "category",
+          "status",
+          "description",
+          "photoUrls",
+          "firstResponseDueAt",
+          "acknowledgedAt",
+          "resolvedAt",
+          "resolutionNote",
+          "compensationPaise",
+          "createdAt",
+          "updatedAt",
+          "messages"
+        ]
+      },
+      "IssuePageDto": {
+        "type": "object",
+        "properties": {
+          "items": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/IssueDto"
+            }
+          },
+          "page": {
+            "type": "number"
+          },
+          "pageSize": {
+            "type": "number"
+          },
+          "total": {
+            "type": "number"
+          }
+        },
+        "required": [
+          "items",
+          "page",
+          "pageSize",
+          "total"
+        ]
+      },
+      "IssueMessageBodyDto": {
+        "type": "object",
+        "properties": {
+          "body": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "body"
+        ]
+      },
+      "UpdateIssueDto": {
+        "type": "object",
+        "properties": {
+          "status": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/IssueStatus"
+              }
+            ]
+          },
+          "handledById": {
+            "type": "string",
+            "nullable": true
+          },
+          "resolutionNote": {
+            "type": "string"
+          },
+          "compensationPaise": {
+            "type": "number",
+            "nullable": true,
+            "description": "Agreed remedy in paise, with a RESOLVED or REJECTED status. 0 means no money. null clears it."
+          },
+          "refundId": {
+            "type": "string",
+            "nullable": true,
+            "description": "A refund made on this order that pays the remedy. null unlinks it."
+          }
+        }
+      },
+      "ImageUploadDto": {
+        "type": "object",
+        "properties": {
+          "url": {
+            "type": "string",
+            "description": "Public URL to save in imageUrl fields"
+          },
+          "width": {
+            "type": "number"
+          },
+          "height": {
+            "type": "number"
+          },
+          "bytes": {
+            "type": "number",
+            "description": "Stored size in bytes"
+          }
+        },
+        "required": [
+          "url",
+          "width",
+          "height",
+          "bytes"
         ]
       },
       "SetOnlineDto": {
@@ -6023,6 +7234,15 @@
       "DashboardDto": {
         "type": "object",
         "properties": {
+          "openIssues": {
+            "type": "number"
+          },
+          "overdueIssues": {
+            "type": "number"
+          },
+          "pendingAdjustments": {
+            "type": "number"
+          },
           "byStatus": {
             "type": "object",
             "additionalProperties": {
@@ -6082,6 +7302,9 @@
           }
         },
         "required": [
+          "openIssues",
+          "overdueIssues",
+          "pendingAdjustments",
           "byStatus",
           "pickupsToday",
           "deliveriesToday",
@@ -6174,8 +7397,12 @@
           "phone": {
             "type": "string",
             "nullable": true,
-            "description": "Null for a customer who signed in with Google and has not added a verified number yet.",
+            "description": "The number to call: the sign-in number, or the one typed at checkout. Null until a Google customer adds one.",
             "example": "+919876543210"
+          },
+          "phoneVerified": {
+            "type": "boolean",
+            "description": "True when the number signs the user in (confirmed by an SMS code); false when a customer typed it at checkout."
           },
           "name": {
             "type": "string",
@@ -6215,6 +7442,7 @@
         "required": [
           "id",
           "phone",
+          "phoneVerified",
           "name",
           "email",
           "role",
@@ -6295,6 +7523,13 @@
       "BusinessSettingsDto": {
         "type": "object",
         "properties": {
+          "adjustmentExpiryHours": {
+            "type": "number"
+          },
+          "issueFirstResponseHours": {
+            "type": "number",
+            "nullable": true
+          },
           "minOrderPaise": {
             "type": "number"
           },
@@ -6364,6 +7599,8 @@
           }
         },
         "required": [
+          "adjustmentExpiryHours",
+          "issueFirstResponseHours",
           "minOrderPaise",
           "deliveryFeePaise",
           "freeDeliveryAbovePaise",
@@ -6388,6 +7625,15 @@
       "UpdateSettingsDto": {
         "type": "object",
         "properties": {
+          "adjustmentExpiryHours": {
+            "type": "number",
+            "description": "Price-approval expiry, in hours."
+          },
+          "issueFirstResponseHours": {
+            "type": "number",
+            "nullable": true,
+            "description": "Public first-response target; null keeps the promise off."
+          },
           "minOrderPaise": {
             "type": "number"
           },
@@ -6503,31 +7749,6 @@
             "type": "boolean"
           }
         }
-      },
-      "ImageUploadDto": {
-        "type": "object",
-        "properties": {
-          "url": {
-            "type": "string",
-            "description": "Public URL to save in imageUrl fields"
-          },
-          "width": {
-            "type": "number"
-          },
-          "height": {
-            "type": "number"
-          },
-          "bytes": {
-            "type": "number",
-            "description": "Stored size in bytes"
-          }
-        },
-        "required": [
-          "url",
-          "width",
-          "height",
-          "bytes"
-        ]
       }
     }
   }

@@ -86,7 +86,7 @@ export class DriverController {
     if (order.pickupDriverId !== user.id || order.status !== OrderStatus.PICKUP_ASSIGNED) {
       throw AppError.conflict('ITEMS_LOCKED', 'Items can only be changed at pickup');
     }
-    return toOrderDto(await this.orders.updateItems(id, dto.items, actorFor(user, 'DRIVER'), dto.note), 'DRIVER');
+    return toOrderDto(await this.orders.updateItems(id, dto.items, actorFor(user, 'DRIVER'), dto.note, dto.expectedRevision), 'DRIVER');
   }
 
   @Post('orders/:id/picked-up')

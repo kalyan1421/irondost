@@ -1,6 +1,7 @@
-import { Body, Controller, Get, HttpCode, Param, ParseUUIDPipe, Post, Put, Query } from '@nestjs/common';
+import { Body, Controller, Get, Headers, HttpCode, Param, ParseUUIDPipe, Post, Put, Query, Res } from '@nestjs/common';
+import type { Response } from 'express';
 import { EventEmitter2 } from '@nestjs/event-emitter';
-import { ApiBearerAuth, ApiTags } from '@nestjs/swagger';
+import { ApiBearerAuth, ApiHeader, ApiTags } from '@nestjs/swagger';
 import { AuditService } from '../audit/audit.service.js';
 import { CurrentUser, Roles } from '../auth/decorators.js';
 import { AppError } from '../common/errors.js';
@@ -17,6 +18,7 @@ import {
   QuoteRequestDto,
   toOrderDto,
   UpdateItemsDto,
+  ItemEditPreviewDto,
 } from './order.dto.js';
 import { PaymentsService } from '../payments/payments.service.js';
 import { actorFor, orderRef, OrdersService } from './orders.service.js';
@@ -52,9 +54,15 @@ export class AdminOrdersController {
 
   /** Place an order on a customer's behalf (phone orders). */
   @Post()
-  async place(@CurrentUser() actor: User, @Body() dto: AdminPlaceOrderDto): Promise<OrderDto> {
-    const { order } = await this.orders.place(dto.customerId, dto, OrderSource.ADMIN, actor);
-    this.audit.log(actor.id, 'order.placed_for_customer', 'order', order.id, { orderNumber: order.orderNumber });
+  @ApiHeader({ name: 'Idempotency-Key', required: false, description: 'Reuse the same key when retrying one phone-order draft.' })
+  async place(@CurrentUser() actor: User, @Body() dto: AdminPlaceOrderDto,
+    @Headers('idempotency-key') key: string | undefined, @Res({ passthrough: true }) res: Response): Promise<OrderDto> {
+    if (key !== undefined && !/^[A-Za-z0-9_-]{8,100}$/.test(key)) {
+      throw AppError.badRequest('INVALID_IDEMPOTENCY_KEY', 'Idempotency-Key must be 8–100 letters, digits, "-" or "_"');
+    }
+    const { order, replayed } = await this.orders.place(dto.customerId, dto, OrderSource.ADMIN, actor, key ? `admin_${actor.id}_${key}` : undefined);
+    if (replayed) res.setHeader('Idempotent-Replayed', 'true');
+    else this.audit.log(actor.id, 'order.placed_for_customer', 'order', order.id, { orderNumber: order.orderNumber });
     return toOrderDto(order, 'ADMIN');
   }
 
@@ -104,8 +112,14 @@ export class AdminOrdersController {
     @Param('id', ParseUUIDPipe) id: string,
     @Body() dto: UpdateItemsDto,
   ): Promise<OrderDto> {
-    const order = await this.orders.updateItems(id, dto.items, actorFor(actor, 'ADMIN'), dto.note);
+    const order = await this.orders.updateItems(id, dto.items, actorFor(actor, 'ADMIN'), dto.note, dto.expectedRevision);
     this.audit.log(actor.id, 'order.items_updated', 'order', id, dto);
     return toOrderDto(order, 'ADMIN');
+  }
+
+  @Post(':id/items/quote')
+  @HttpCode(200)
+  previewItems(@Param('id', ParseUUIDPipe) id: string, @Body() dto: UpdateItemsDto): Promise<ItemEditPreviewDto> {
+    return this.orders.previewItems(id, dto.items, dto.expectedRevision);
   }
 }

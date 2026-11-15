@@ -4,7 +4,6 @@ import { Ban } from "lucide-react";
 import { useState } from "react";
 import { ConfirmDialog } from "@/components/confirm-dialog";
 import { Button } from "@/components/ui/button";
-import { Checkbox } from "@/components/ui/checkbox";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { api, unwrap } from "@/lib/api/client";
@@ -31,7 +30,7 @@ export function OrderActions({ order }: { order: Order }) {
   const change = useChangeStatus(order);
   const [reason, setReason] = useState("");
   // Cash on delivery is normally collected at the door; an online order with a balance is not.
-  const [collected, setCollected] = useState(order.paymentMethod === "COD");
+  const [collected, setCollected] = useState<boolean | null>(null);
 
   // READY_FOR_DELIVERY is only a forward step when coming from the workshop.
   const forward = order.allowedNextStatuses.filter(
@@ -47,6 +46,7 @@ export function OrderActions({ order }: { order: Order }) {
           destructive
           title={`Cancel order ${order.orderNumber}?`}
           confirmLabel="Cancel order"
+          cancelLabel="Keep order"
           description={
             <span className="grid gap-3">
               <span>The customer and any assigned partner are notified. This cannot be undone.</span>
@@ -75,17 +75,18 @@ export function OrderActions({ order }: { order: Order }) {
             key={s}
             title="Mark as delivered?"
             confirmLabel="Mark delivered"
+            cancelLabel="Don't mark delivered"
+            onOpen={() => setCollected(null)}
+            confirmDisabled={due > 0 && collected === null}
             description={
               due > 0 ? (
                 <span className="grid gap-3">
                   <span>{rupees(due)} is still unpaid.</span>
-                  <span className="flex items-start gap-2 text-foreground">
-                    <Checkbox id="cash-collected" checked={collected} onCheckedChange={(v) => setCollected(v === true)} className="mt-0.5" />
-                    <Label htmlFor="cash-collected" className="font-normal leading-snug">
-                      Cash collected at delivery. Records {rupees(due)} as paid.
-                    </Label>
+                  <span role="radiogroup" aria-label="Was the balance collected?" className="grid gap-3 text-foreground">
+                    <Label className="font-normal"><input type="radio" name="cash-confirmation" checked={collected === true} onChange={() => setCollected(true)} /> Cash collected: record {rupees(due)} as paid.</Label>
+                    <Label className="font-normal"><input type="radio" name="cash-confirmation" checked={collected === false} onChange={() => setCollected(false)} /> Not collected: keep {rupees(due)} unpaid.</Label>
                   </span>
-                  <span>Leave it unticked if the customer will pay later; record it in the Payments panel when it arrives.</span>
+                  <span>Choose what happened at the door. Record any later payment in the Payments panel.</span>
                 </span>
               ) : (
                 "The customer will be told their clothes have arrived."

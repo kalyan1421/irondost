@@ -464,6 +464,38 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/v1/orders/{id}/adjustments/{adjustmentId}/approve": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post: operations["OrdersController_approve"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/v1/orders/{id}/adjustments/{adjustmentId}/decline": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post: operations["OrdersController_decline"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/v1/orders/{id}/pay-on-delivery": {
         parameters: {
             query?: never;
@@ -580,6 +612,22 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/v1/admin/orders/{id}/items/quote": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post: operations["AdminOrdersController_previewItems"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/v1/orders/{id}/payments/razorpay": {
         parameters: {
             query?: never;
@@ -659,6 +707,151 @@ export interface paths {
          * @description Errors: NOTHING_TO_REFUND, REFUND_EXCEEDS_PAID and REFUND_EXCEEDS_ONLINE_PAID (409, details.refundablePaise), NO_ONLINE_PAYMENT (409), REFUND_GATEWAY_ERROR (502, with Razorpay's message; nothing is saved).
          */
         post: operations["AdminRefundsController_create"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/v1/orders/{id}/issues": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post: operations["CustomerIssuesController_create"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/v1/me/issues": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["CustomerIssuesController_list"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/v1/me/issues/{id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["CustomerIssuesController_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/v1/me/issues/{id}/messages": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post: operations["CustomerIssuesController_message"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/v1/admin/issues": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["AdminIssuesController_list"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/v1/admin/issues/{id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["AdminIssuesController_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch: operations["AdminIssuesController_update"];
+        trace?: never;
+    };
+    "/v1/admin/issues/{id}/messages": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post: operations["AdminIssuesController_message"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/v1/admin/uploads/images": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Upload an image (max 8 MB). It is cleaned, resized and stored as WebP; use the returned URL in imageUrl. */
+        post: operations["UploadsController_uploadImage"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/v1/me/uploads/images": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post: operations["CustomerUploadsController_upload"];
         delete?: never;
         options?: never;
         head?: never;
@@ -1106,23 +1299,6 @@ export interface paths {
         patch: operations["AdminStaffController_update"];
         trace?: never;
     };
-    "/v1/admin/uploads/images": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        get?: never;
-        put?: never;
-        /** Upload an image (max 8 MB). It is cleaned, resized and stored as WebP; use the returned URL in imageUrl. */
-        post: operations["UploadsController_uploadImage"];
-        delete?: never;
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
-    };
 }
 export type webhooks = Record<string, never>;
 export interface components {
@@ -1137,10 +1313,12 @@ export interface components {
         UserDto: {
             id: string;
             /**
-             * @description Null for a customer who signed in with Google and has not added a verified number yet.
+             * @description The number to call: the sign-in number, or the one typed at checkout. Null until a Google customer adds one.
              * @example +919876543210
              */
             phone: string | null;
+            /** @description True when the number signs the user in (confirmed by an SMS code); false when a customer typed it at checkout. */
+            phoneVerified: boolean;
             name: string | null;
             email: string | null;
             role: components["schemas"]["Role"];
@@ -1209,10 +1387,12 @@ export interface components {
         MeDto: {
             id: string;
             /**
-             * @description Null for a customer who signed in with Google and has not added a verified number yet.
+             * @description The number to call: the sign-in number, or the one typed at checkout. Null until a Google customer adds one.
              * @example +919876543210
              */
             phone: string | null;
+            /** @description True when the number signs the user in (confirmed by an SMS code); false when a customer typed it at checkout. */
+            phoneVerified: boolean;
             name: string | null;
             email: string | null;
             role: components["schemas"]["Role"];
@@ -1228,6 +1408,11 @@ export interface components {
             name?: string;
             /** @example priya@example.com */
             email?: string | null;
+            /**
+             * @description Customers only, and only while they have no sign-in number. Any common Indian format; stored as +91XXXXXXXXXX without an SMS code.
+             * @example 9876543210
+             */
+            phone?: string;
         };
         /** @enum {string} */
         DevicePlatform: "ANDROID" | "IOS" | "WEB";
@@ -1585,6 +1770,34 @@ export interface components {
             instructions?: string;
         };
         /** @enum {string} */
+        AdjustmentStatus: "PENDING_CUSTOMER" | "APPROVED" | "DECLINED" | "EXPIRED";
+        AdjustmentLineDto: {
+            catalogItemId: string | null;
+            name: string;
+            unit: components["schemas"]["ItemUnit"];
+            unitPricePaise: number;
+            quantity: number;
+            lineTotalPaise: number;
+        };
+        OrderAdjustmentDto: {
+            id: string;
+            status: components["schemas"]["AdjustmentStatus"];
+            reason: string;
+            oldTotalPaise: number;
+            newTotalPaise: number;
+            subtotalPaise: number;
+            discountPaise: number;
+            deliveryFeePaise: number;
+            itemsBefore: components["schemas"]["AdjustmentLineDto"][];
+            itemsAfter: components["schemas"]["AdjustmentLineDto"][];
+            /** Format: date-time */
+            expiresAt: string;
+            /** Format: date-time */
+            decidedAt: string | null;
+            /** Format: date-time */
+            createdAt: string;
+        };
+        /** @enum {string} */
         OrderStatus: "PENDING" | "PICKUP_ASSIGNED" | "PICKED_UP" | "PROCESSING" | "READY_FOR_DELIVERY" | "DELIVERY_ASSIGNED" | "OUT_FOR_DELIVERY" | "DELIVERED" | "CANCELLED";
         /** @enum {string} */
         OrderSource: "CUSTOMER_APP" | "ADMIN";
@@ -1655,7 +1868,19 @@ export interface components {
             /** @description Staff member who issued it. Admin view only. */
             createdBy?: components["schemas"]["StaffRefDto"] | null;
         };
+        /** @enum {string} */
+        PaymentProvider: "RAZORPAY" | "CASH";
+        OrderPaymentDto: {
+            id: string;
+            provider: components["schemas"]["PaymentProvider"];
+            amountPaise: number;
+            reference: string | null;
+            /** Format: date-time */
+            capturedAt: string;
+        };
         OrderDto: {
+            revision?: number;
+            adjustments?: components["schemas"]["OrderAdjustmentDto"][];
             id: string;
             /** @example LD001042 */
             orderNumber: string;
@@ -1705,6 +1930,8 @@ export interface components {
             events?: components["schemas"]["OrderEventDto"][];
             /** @description Oldest first. Customer and admin views only. */
             refunds?: components["schemas"]["RefundDto"][];
+            /** @description Captured transactions only; excludes raw provider payloads and staff identities. */
+            payments?: components["schemas"]["OrderPaymentDto"][];
         };
         OrderPageDto: {
             items: components["schemas"]["OrderDto"][];
@@ -1744,9 +1971,21 @@ export interface components {
             collectedCash?: boolean;
         };
         UpdateItemsDto: {
+            /** @description Revision displayed when this edit was started. A stale edit returns ORDER_CHANGED. */
+            expectedRevision?: number;
             items: components["schemas"]["OrderLineInput"][];
             /** @example 2 extra shirts counted at pickup */
             note?: string;
+        };
+        ItemEditPreviewDto: {
+            revision: number;
+            oldTotalPaise: number;
+            newTotalPaise: number;
+            subtotalPaise: number;
+            discountPaise: number;
+            deliveryFeePaise: number;
+            requiresApproval: boolean;
+            lines: components["schemas"]["QuoteLineDto"][];
         };
         CheckoutPrefillDto: {
             name: string | null;
@@ -1771,8 +2010,6 @@ export interface components {
             paymentStatus: string;
         };
         /** @enum {string} */
-        PaymentProvider: "RAZORPAY" | "CASH";
-        /** @enum {string} */
         PaymentRecordStatus: "CREATED" | "CAPTURED" | "FAILED" | "REFUNDED";
         PaymentDto: {
             id: string;
@@ -1794,6 +2031,74 @@ export interface components {
             method: components["schemas"]["RefundMethod"];
             /** @description Shown to the customer in the app and in their notification */
             note: string;
+        };
+        /** @enum {string} */
+        IssueCategory: "LATE" | "MISSED_PICKUP" | "DAMAGED" | "MISSING_ITEM" | "QUALITY" | "BILLING" | "RIDER" | "OTHER";
+        CreateIssueDto: {
+            category: components["schemas"]["IssueCategory"];
+            description: string;
+            photoUrls?: string[];
+        };
+        /** @enum {string} */
+        IssueStatus: "OPEN" | "ACKNOWLEDGED" | "RESOLVED" | "REJECTED";
+        IssueMessageDto: {
+            id: string;
+            fromStaff: boolean;
+            body: string;
+            /** Format: date-time */
+            createdAt: string;
+        };
+        IssueDto: {
+            id: string;
+            orderId: string;
+            orderNumber: string;
+            category: components["schemas"]["IssueCategory"];
+            status: components["schemas"]["IssueStatus"];
+            description: string;
+            photoUrls: string[];
+            /** Format: date-time */
+            firstResponseDueAt: string | null;
+            /** Format: date-time */
+            acknowledgedAt: string | null;
+            /** Format: date-time */
+            resolvedAt: string | null;
+            resolutionNote: string | null;
+            /** @description Agreed remedy in paise; null until one is recorded. */
+            compensationPaise: number | null;
+            handledById?: string | null;
+            /** @description Staff only. */
+            refundId?: string | null;
+            /** Format: date-time */
+            createdAt: string;
+            /** Format: date-time */
+            updatedAt: string;
+            messages: components["schemas"]["IssueMessageDto"][];
+        };
+        IssuePageDto: {
+            items: components["schemas"]["IssueDto"][];
+            page: number;
+            pageSize: number;
+            total: number;
+        };
+        IssueMessageBodyDto: {
+            body: string;
+        };
+        UpdateIssueDto: {
+            status?: components["schemas"]["IssueStatus"];
+            handledById?: string | null;
+            resolutionNote?: string;
+            /** @description Agreed remedy in paise, with a RESOLVED or REJECTED status. 0 means no money. null clears it. */
+            compensationPaise?: number | null;
+            /** @description A refund made on this order that pays the remedy. null unlinks it. */
+            refundId?: string | null;
+        };
+        ImageUploadDto: {
+            /** @description Public URL to save in imageUrl fields */
+            url: string;
+            width: number;
+            height: number;
+            /** @description Stored size in bytes */
+            bytes: number;
         };
         SetOnlineDto: {
             isOnline: boolean;
@@ -1889,6 +2194,9 @@ export interface components {
             total: number;
         };
         DashboardDto: {
+            openIssues: number;
+            overdueIssues: number;
+            pendingAdjustments: number;
             /** @description Count of orders per status */
             byStatus: {
                 [key: string]: number;
@@ -1929,10 +2237,12 @@ export interface components {
         CustomerListItemDto: {
             id: string;
             /**
-             * @description Null for a customer who signed in with Google and has not added a verified number yet.
+             * @description The number to call: the sign-in number, or the one typed at checkout. Null until a Google customer adds one.
              * @example +919876543210
              */
             phone: string | null;
+            /** @description True when the number signs the user in (confirmed by an SMS code); false when a customer typed it at checkout. */
+            phoneVerified: boolean;
             name: string | null;
             email: string | null;
             role: components["schemas"]["Role"];
@@ -1967,6 +2277,8 @@ export interface components {
             isActive?: boolean;
         };
         BusinessSettingsDto: {
+            adjustmentExpiryHours: number;
+            issueFirstResponseHours: number | null;
             minOrderPaise: number;
             deliveryFeePaise: number;
             freeDeliveryAbovePaise: number | null;
@@ -1989,6 +2301,10 @@ export interface components {
             updatedAt: string;
         };
         UpdateSettingsDto: {
+            /** @description Price-approval expiry, in hours. */
+            adjustmentExpiryHours?: number;
+            /** @description Public first-response target; null keeps the promise off. */
+            issueFirstResponseHours?: number | null;
             minOrderPaise?: number;
             deliveryFeePaise?: number;
             freeDeliveryAbovePaise?: number | null;
@@ -2031,14 +2347,6 @@ export interface components {
             /** @enum {string} */
             role?: "ADMIN" | "SUPER_ADMIN";
             isActive?: boolean;
-        };
-        ImageUploadDto: {
-            /** @description Public URL to save in imageUrl fields */
-            url: string;
-            width: number;
-            height: number;
-            /** @description Stored size in bytes */
-            bytes: number;
         };
     };
     responses: never;
@@ -2910,6 +3218,50 @@ export interface operations {
             };
         };
     };
+    OrdersController_approve: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+                adjustmentId: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["OrderDto"];
+                };
+            };
+        };
+    };
+    OrdersController_decline: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+                adjustmentId: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["OrderDto"];
+                };
+            };
+        };
+    };
     OrdersController_payOnDelivery: {
         parameters: {
             query?: never;
@@ -2961,6 +3313,14 @@ export interface operations {
             query?: {
                 page?: number;
                 pageSize?: number;
+                createdFrom?: string;
+                createdTo?: string;
+                deliveryFrom?: string;
+                deliveryTo?: string;
+                excludeCancelled?: boolean;
+                approvalPending?: boolean;
+                unpaid?: boolean;
+                overdue?: "pickup" | "delivery";
                 status?: components["schemas"]["OrderStatus"][];
                 /** @description Order number, customer phone or name */
                 search?: string;
@@ -2994,7 +3354,10 @@ export interface operations {
     AdminOrdersController_place: {
         parameters: {
             query?: never;
-            header?: never;
+            header?: {
+                /** @description Reuse the same key when retrying one phone-order draft. */
+                "Idempotency-Key"?: string;
+            };
             path?: never;
             cookie?: never;
         };
@@ -3110,6 +3473,31 @@ export interface operations {
             };
         };
     };
+    AdminOrdersController_previewItems: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["UpdateItemsDto"];
+            };
+        };
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ItemEditPreviewDto"];
+                };
+            };
+        };
+    };
     PaymentsController_createRazorpayOrder: {
         parameters: {
             query?: never;
@@ -3219,6 +3607,259 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["OrderDto"];
+                };
+            };
+        };
+    };
+    CustomerIssuesController_create: {
+        parameters: {
+            query?: never;
+            header?: {
+                /** @description Reuse one key to retry the same report after a lost response. */
+                "Idempotency-Key"?: string;
+            };
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["CreateIssueDto"];
+            };
+        };
+        responses: {
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["IssueDto"];
+                };
+            };
+        };
+    };
+    CustomerIssuesController_list: {
+        parameters: {
+            query?: {
+                page?: number;
+                pageSize?: number;
+                status?: components["schemas"]["IssueStatus"];
+                orderId?: string;
+                handledById?: string;
+                search?: string;
+                overdue?: boolean;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["IssuePageDto"];
+                };
+            };
+        };
+    };
+    CustomerIssuesController_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["IssueDto"];
+                };
+            };
+        };
+    };
+    CustomerIssuesController_message: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["IssueMessageBodyDto"];
+            };
+        };
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["IssueDto"];
+                };
+            };
+        };
+    };
+    AdminIssuesController_list: {
+        parameters: {
+            query?: {
+                page?: number;
+                pageSize?: number;
+                status?: components["schemas"]["IssueStatus"];
+                orderId?: string;
+                handledById?: string;
+                search?: string;
+                overdue?: boolean;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["IssuePageDto"];
+                };
+            };
+        };
+    };
+    AdminIssuesController_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["IssueDto"];
+                };
+            };
+        };
+    };
+    AdminIssuesController_update: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["UpdateIssueDto"];
+            };
+        };
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["IssueDto"];
+                };
+            };
+        };
+    };
+    AdminIssuesController_message: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["IssueMessageBodyDto"];
+            };
+        };
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["IssueDto"];
+                };
+            };
+        };
+    };
+    UploadsController_uploadImage: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "multipart/form-data": {
+                    /** Format: binary */
+                    file: string;
+                    /** @enum {string} */
+                    purpose: "catalog" | "promotion" | "banner";
+                };
+            };
+        };
+        responses: {
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ImageUploadDto"];
+                };
+            };
+        };
+    };
+    CustomerUploadsController_upload: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "multipart/form-data": {
+                    /** Format: binary */
+                    file: string;
+                };
+            };
+        };
+        responses: {
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ImageUploadDto"];
                 };
             };
         };
@@ -3657,6 +4298,10 @@ export interface operations {
             query?: {
                 page?: number;
                 pageSize?: number;
+                actorId?: string;
+                action?: string;
+                from?: string;
+                to?: string;
                 /** @description Only this kind of record, e.g. order, user, app_version */
                 entity?: string;
                 /** @description Only this record, e.g. an order id */
@@ -3987,34 +4632,6 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["UserDto"];
-                };
-            };
-        };
-    };
-    UploadsController_uploadImage: {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        requestBody: {
-            content: {
-                "multipart/form-data": {
-                    /** Format: binary */
-                    file: string;
-                    /** @enum {string} */
-                    purpose: "catalog" | "promotion" | "banner";
-                };
-            };
-        };
-        responses: {
-            201: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["ImageUploadDto"];
                 };
             };
         };

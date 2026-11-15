@@ -4,6 +4,7 @@ import { useQuery } from "@tanstack/react-query";
 import { Bell } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
+import { ErrorState, Pager, TableSkeleton } from "@/components/page";
 import { Button } from "@/components/ui/button";
 import { Sheet, SheetContent, SheetDescription, SheetHeader, SheetTitle, SheetTrigger } from "@/components/ui/sheet";
 import { SidebarMenuBadge, SidebarMenuButton, SidebarMenuItem } from "@/components/ui/sidebar";
@@ -18,10 +19,11 @@ import { cn } from "@/lib/utils";
  */
 export function NotificationsMenu() {
   const [open, setOpen] = useState(false);
+  const [page, setPage] = useState(1);
   const router = useRouter();
   const inbox = useQuery({
-    queryKey: ["notifications"],
-    queryFn: () => unwrap(api.GET("/v1/me/notifications", { params: { query: { pageSize: 30 } } })),
+    queryKey: ["notifications", page],
+    queryFn: () => unwrap(api.GET("/v1/me/notifications", { params: { query: { pageSize: 30, page } } })),
     refetchInterval: 60_000,
   });
   const read = useApiMutation(
@@ -55,15 +57,17 @@ export function NotificationsMenu() {
             <SheetDescription>New orders, orders with no partner, and refunds that need you.</SheetDescription>
           </SheetHeader>
           <div className="flex items-center justify-between px-4 pb-2 text-sm text-muted-foreground">
-            <span>{unread > 0 ? `${unread} unread` : "All caught up"}</span>
-            <Button variant="ghost" size="sm" disabled={unread === 0 || readAll.isPending} onClick={() => readAll.mutate(undefined)}>
+            <span role="status">{inbox.isError ? "Alerts could not refresh" : !inbox.data ? "Loading alerts…" : unread > 0 ? `${unread} unread` : "All caught up"}</span>
+            <Button variant="ghost" size="sm" disabled={!inbox.data || inbox.isError || unread === 0 || readAll.isPending} onClick={() => { if (window.confirm(`Mark all ${unread} unread alerts as read, including alerts on other pages?`)) readAll.mutate(undefined); }}>
               Mark all read
             </Button>
           </div>
           <ul className="flex-1 divide-y overflow-y-auto border-t">
+            {inbox.isError ? <li><ErrorState error={inbox.error} onRetry={() => void inbox.refetch()} /></li> : !inbox.data ? <li><TableSkeleton rows={3} /></li> : null}
             {inbox.data?.items.length === 0 ? <li className="px-4 py-10 text-center text-sm text-muted-foreground">Nothing yet.</li> : null}
             {inbox.data?.items.map((n) => {
               const orderId = (n.data as { orderId?: string } | null)?.orderId;
+              const issueId = (n.data as { issueId?: string } | null)?.issueId;
               return (
                 <li key={n.id}>
                   <button
@@ -71,9 +75,9 @@ export function NotificationsMenu() {
                     className={cn("flex w-full flex-col gap-0.5 px-4 py-3 text-left hover:bg-accent/50", !n.readAt && "bg-accent/30")}
                     onClick={() => {
                       if (!n.readAt) read.mutate(n.id);
-                      if (orderId) {
+                      if (issueId || orderId) {
                         setOpen(false);
-                        router.push(`/orders/${orderId}`);
+                        router.push(issueId ? `/issues/${issueId}` : `/orders/${orderId}`);
                       }
                     }}
                   >
@@ -88,6 +92,7 @@ export function NotificationsMenu() {
               );
             })}
           </ul>
+          {inbox.data ? <div className="border-t p-4"><Pager page={page} pageSize={30} total={inbox.data.total} onPage={setPage} /></div> : null}
         </SheetContent>
       </Sheet>
     </SidebarMenuItem>

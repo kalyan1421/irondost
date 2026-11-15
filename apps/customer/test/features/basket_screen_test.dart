@@ -42,7 +42,7 @@ void main() {
     expect(find.text('Ironing'), findsOneWidget);
     expect(find.text('15 items'), findsOneWidget);
     expect(find.text('Shirt / T-shirt'), findsOneWidget);
-    expect(find.text('₹15 each'), findsNWidgets(2));
+    expect(find.text('₹15 per piece'), findsNWidgets(2));
     expect(find.text('₹150'), findsOneWidget, reason: 'ten shirts');
     await tester.scrollUntilVisible(find.text('To pay'), 200, scrollable: find.byType(Scrollable).first);
     await tester.pumpAndSettle();

@@ -1,3 +1,4 @@
+import '../../core/quantities.dart';
 import 'package:flutter/material.dart';
 
 import '../../core/money.dart';
@@ -91,7 +92,8 @@ class QuoteBill extends StatelessWidget {
           label: 'Bill, to pay ${rupees(q.totalPaise)}',
           child: Column(
             children: [
-              row('Items ($pieces)', rupees(q.subtotalPaise)),
+              row(q.lines.every((l) => l.unit == ItemUnit.piece) ? 'Items ($pieces)' : 'Items', rupees(q.subtotalPaise)),
+              if (q.lines.any((l) => l.unit != ItemUnit.piece)) Text(quantitySummary(q.lines.map((l) => (l.unit, l.quantity))), style: t.caption),
               if (q.discountPaise > 0) ...[
                 const SizedBox(height: 10),
                 row(

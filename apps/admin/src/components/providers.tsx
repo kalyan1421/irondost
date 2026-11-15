@@ -7,7 +7,6 @@ import { Toaster } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { ApiError } from "@/lib/api/client";
 import { AuthProvider } from "@/lib/auth/auth-provider";
-import { RealtimeBridge } from "@/lib/realtime";
 
 export function Providers({ children }: { children: React.ReactNode }) {
   const [queryClient] = useState(
@@ -30,7 +29,6 @@ export function Providers({ children }: { children: React.ReactNode }) {
         <AuthProvider>
           <TooltipProvider delayDuration={300}>
             {children}
-            <RealtimeBridge />
             <Toaster position="top-right" richColors closeButton />
           </TooltipProvider>
         </AuthProvider>

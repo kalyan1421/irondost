@@ -6,6 +6,7 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:go_router/go_router.dart';
 import 'package:irondost_customer/app/routes.dart';
 import 'package:irondost_customer/data/api_client.dart';
+import 'package:irondost_customer/design/widgets/review_row.dart';
 import 'package:irondost_customer/features/addresses/address_repository.dart';
 import 'package:irondost_customer/features/auth/session.dart';
 import 'package:irondost_customer/features/basket/basket.dart';
@@ -22,6 +23,12 @@ import '../helpers.dart';
 class _GoogleSession extends SessionController {
   @override
   Future<Session> build() async => const SignedIn(Profile(id: 'g1', name: 'Gina', email: 'gina@example.com', isComplete: true));
+}
+
+/// A Google customer who typed their number at checkout earlier (not verified by an SMS code).
+class _TypedNumberSession extends SessionController {
+  @override
+  Future<Session> build() async => const SignedIn(Profile(id: 'g1', phone: '+919876543210', name: 'Gina', email: 'gina@example.com', isComplete: true));
 }
 
 Future<void> settle(WidgetTester tester) async {
@@ -209,7 +216,18 @@ void main() {
       expect(find.text('Pay ₹80'), findsOneWidget);
     });
 
-    testWidgets('is asked for a verified number before the order is placed, then the order goes through', (tester) async {
+    testWidgets('can correct a number they typed earlier from the review', (tester) async {
+      final (router, orders, _) = await pump(tester, session: _TypedNumberSession.new);
+      expect(find.text('+91 98765 43210'), findsOneWidget);
+      expect(find.text('Add a number before booking'), findsNothing);
+      final contactRow = find.ancestor(of: find.text('Contact number'), matching: find.byType(ReviewRow));
+      await tester.tap(find.descendant(of: contactRow, matching: find.text('Change')));
+      await settle(tester);
+      expect(router.state.matchedLocation, Routes.addPhone);
+      expect(orders.placed, isEmpty);
+    });
+
+    testWidgets('is asked for a number before the order is placed, then the order goes through', (tester) async {
       final (router, orders, _) = await pump(tester, session: _GoogleSession.new);
       await tester.tap(find.text('Cash on delivery'));
       await tester.pump();

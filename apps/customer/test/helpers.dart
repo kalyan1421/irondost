@@ -59,11 +59,6 @@ class FakeAuth implements AuthRepository {
   final sentTo = <String>[];
   int googleSignIns = 0;
 
-  /// Whether the signed-in account already carries a verified number.
-  bool verifiedPhone = false;
-  int unlinks = 0;
-  final linkRequests = <bool>[];
-
   @override
   Future<bool> hasCredentials() async => signedIn;
 
@@ -71,20 +66,15 @@ class FakeAuth implements AuthRepository {
   Future<String?> token({bool forceRefresh = false}) async => signedIn ? 'test-token' : null;
 
   @override
-  Future<PhoneChallenge> sendCode(String phone, {PhoneChallenge? resendOf, void Function()? onAutoVerified, bool link = false}) async {
+  Future<PhoneChallenge> sendCode(String phone, {PhoneChallenge? resendOf, void Function()? onAutoVerified}) async {
     sentTo.add(phone);
-    linkRequests.add(link);
     if (sendFailure != null) throw sendFailure!;
-    return PhoneChallenge(phone: phone, verificationId: 'v-${sentTo.length}', link: link);
+    return PhoneChallenge(phone: phone, verificationId: 'v-${sentTo.length}');
   }
 
   @override
   Future<void> confirmCode(PhoneChallenge challenge, String code) async {
     if (confirmFailure != null) throw confirmFailure!;
-    if (challenge.link) {
-      verifiedPhone = true;
-      return;
-    }
     signedIn = true;
   }
 
@@ -93,15 +83,6 @@ class FakeAuth implements AuthRepository {
     googleSignIns++;
     if (googleFailure != null) throw googleFailure!;
     signedIn = true;
-  }
-
-  @override
-  Future<bool> hasVerifiedPhone() async => verifiedPhone;
-
-  @override
-  Future<void> unlinkPhone() async {
-    unlinks++;
-    verifiedPhone = false;
   }
 
   @override
@@ -216,7 +197,7 @@ class FakeLocation implements LocationService {
 /// A signed-in session, so providers that need one (addresses) work without the API.
 class SignedInSession extends SessionController {
   @override
-  Future<Session> build() async => const SignedIn(Profile(id: 'u1', phone: '+919876543210', name: 'Priya Sharma', isComplete: true));
+  Future<Session> build() async => const SignedIn(Profile(id: 'u1', phone: '+919876543210', phoneVerified: true, name: 'Priya Sharma', isComplete: true));
 }
 
 // ── Catalogue and basket ───────────────────────────────────────────────────
@@ -440,6 +421,9 @@ OrderDto testOrder({
   PersonRefDto? deliveryDriver,
   DateTime? dispatchFailedAt,
   List<OrderEventDto>? events,
+  List<OrderPaymentDto>? payments,
+  List<OrderAdjustmentDto>? adjustments,
+  List<RefundDto>? refunds,
   String id = 'o-1',
   String number = 'ID001046',
   PaymentMethod method = PaymentMethod.cod,
@@ -455,6 +439,8 @@ OrderDto testOrder({
     OrderDto(
       id: id,
       orderNumber: number,
+      revision: 0,
+      adjustments: adjustments,
       status: status,
       source: OrderSource.customerApp,
       instructions: null,
@@ -475,6 +461,13 @@ OrderDto testOrder({
       totalPaise: totalPaise,
       paidPaise: paidPaise,
       refundedPaise: refundedPaise,
+      payments: payments ?? [if (paidPaise > 0) OrderPaymentDto(
+        id: 'payment-1', provider: method == PaymentMethod.cod && status == OrderStatus.delivered ? PaymentProvider.cash : PaymentProvider.razorpay,
+        amountPaise: paidPaise, reference: 'pay_test', capturedAt: DateTime.utc(2026, 10, 3, 12),
+      )],
+      refunds: refunds ?? [if (refundedPaise > 0) RefundDto(id: 'refund-1', amountPaise: refundedPaise,
+        method: RefundMethod.razorpay, status: RefundStatus.processed, note: 'Order cancelled',
+        createdAt: DateTime.utc(2026, 10, 3, 12), processedAt: DateTime.utc(2026, 10, 4, 12), failureReason: null)],
       amountDuePaise: totalPaise - paidPaise,
       promoCode: null,
       paymentMethod: method,

@@ -337,8 +337,8 @@ void main() {
       expect(find.text('Delivered'), findsOneWidget);
       expect(find.text('Sat 3 Oct, 5:32 PM · by Ravi K.'), findsOneWidget);
       expect(find.text('Thu 1 Oct, 5:40 PM'), findsOneWidget);
-      expect(find.text('12, ironed'), findsOneWidget);
-      expect(find.text('₹180 in cash'), findsOneWidget);
+      expect(find.text('12 items'), findsOneWidget);
+    expect(find.text('₹180 · Paid in cash'), findsOneWidget);
       expect(find.text('Items and bill'), findsOneWidget);
       expect(find.text('Something wrong with an item?'), findsOneWidget);
       expect(find.text('Book the same again'), findsOneWidget);
@@ -367,7 +367,7 @@ void main() {
       findsOneWidget,
     );
     expect(
-      find.textContaining('₹248 is awaiting refund confirmation'),
+      find.textContaining('₹248 has no confirmed refund'),
       findsOneWidget,
     );
     expect(find.text('₹248 · refund pending'), findsOneWidget);
@@ -581,7 +581,7 @@ void main() {
           findsOneWidget,
         );
         expect(
-          find.text('12 items, ironed. Delivery Sun 4 Oct, 4 – 8 PM.'),
+          find.text('12 items. Delivery Sun 4 Oct, 4 – 8 PM.'),
           findsOneWidget,
         );
 
@@ -727,7 +727,7 @@ void main() {
 
         expect(find.text('Items and bill'), findsWidgets);
         expect(find.text('Counted at pickup'), findsOneWidget);
-        expect(find.text('8 × ₹15'), findsOneWidget);
+        expect(find.text('8 × ₹15 per piece'), findsOneWidget);
         expect(find.text('₹120'), findsOneWidget);
         expect(find.text('Items (8)'), findsOneWidget);
         expect(find.text('Free'), findsOneWidget);

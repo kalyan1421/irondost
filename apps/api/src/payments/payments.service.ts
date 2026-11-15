@@ -1,6 +1,8 @@
 import { HttpStatus, Injectable, Logger } from '@nestjs/common';
 import { EventEmitter2 } from '@nestjs/event-emitter';
+import { Clock } from '../common/clock.js';
 import { AppError } from '../common/errors.js';
+import { customerPhone } from '../common/phone.js';
 import { Events, type PaymentCapturedEvent } from '../events.js';
 import type { Payment, Prisma, User } from '../generated/prisma/client.js';
 import { OrderStatus, PaymentProvider, PaymentRecordStatus } from '../generated/prisma/enums.js';
@@ -37,6 +39,7 @@ export class PaymentsService {
     private readonly razorpay: RazorpayGateway,
     private readonly events: EventEmitter2,
     private readonly refunds: RefundsService,
+    private readonly clock: Clock,
   ) {}
 
   private requireRazorpay(): void {
@@ -50,6 +53,7 @@ export class PaymentsService {
     this.requireRazorpay();
     const order = await this.prisma.order.findFirst({ where: { id: orderId, customerId: customer.id } });
     if (!order) throw AppError.notFound('Order');
+    await this.requireNoPendingAdjustment(orderId);
     if (order.status === OrderStatus.CANCELLED) throw AppError.conflict('ORDER_CANCELLED', 'This order was cancelled');
     const due = order.totalPaise - order.paidPaise;
     if (due <= 0) throw AppError.conflict('NOTHING_DUE', 'This order is already paid');
@@ -70,7 +74,7 @@ export class PaymentsService {
       amountPaise: due,
       currency: 'INR',
       orderNumber: order.orderNumber,
-      prefill: { name: customer.name, contact: customer.phone, email: customer.email },
+      prefill: { name: customer.name, contact: customerPhone(customer), email: customer.email },
     };
   }
 
@@ -129,7 +133,7 @@ export class PaymentsService {
     const result = await this.prisma.$transaction(async (tx) => {
       const res = await tx.payment.updateMany({
         where: { id: payment.id, status: { in: [PaymentRecordStatus.CREATED, PaymentRecordStatus.FAILED] } },
-        data: { status: PaymentRecordStatus.CAPTURED, razorpayPaymentId, amountPaise, raw },
+        data: { status: PaymentRecordStatus.CAPTURED, razorpayPaymentId, amountPaise, raw, capturedAt: this.clock.now() },
       });
       if (res.count === 0) {
         return { order: await tx.order.findUniqueOrThrow({ where: { id: payment.orderId } }), captured: false };
@@ -151,6 +155,8 @@ export class PaymentsService {
    * (used when a driver marks an order delivered). Returns the amount recorded.
    */
   async recordCashInTx(tx: Tx, orderId: string, collectedById: string): Promise<number> {
+    await tx.$queryRaw`SELECT id FROM orders WHERE id = ${orderId}::uuid FOR UPDATE`;
+    await this.requireNoPendingAdjustment(orderId, tx);
     const order = await tx.order.findUniqueOrThrow({ where: { id: orderId } });
     const due = order.totalPaise - order.paidPaise;
     if (due <= 0) return 0;
@@ -161,6 +167,7 @@ export class PaymentsService {
         status: PaymentRecordStatus.CAPTURED,
         amountPaise: due,
         collectedById,
+        capturedAt: this.clock.now(),
       },
     });
     await this.addPaid(tx, orderId, due);
@@ -170,8 +177,10 @@ export class PaymentsService {
   /** Admin records a cash payment taken outside the delivery flow. */
   async recordCash(orderId: string, amountPaise: number, collectedBy: User): Promise<void> {
     const order = await this.prisma.$transaction(async (tx) => {
+      await tx.$queryRaw`SELECT id FROM orders WHERE id = ${orderId}::uuid FOR UPDATE`;
       const current = await tx.order.findUnique({ where: { id: orderId } });
       if (!current) throw AppError.notFound('Order');
+      await this.requireNoPendingAdjustment(orderId, tx);
       if (amountPaise > current.totalPaise - current.paidPaise) {
         throw AppError.badRequest('OVERPAYMENT', 'Amount is more than what is due');
       }
@@ -182,6 +191,7 @@ export class PaymentsService {
           status: PaymentRecordStatus.CAPTURED,
           amountPaise,
           collectedById: collectedBy.id,
+          capturedAt: this.clock.now(),
         },
       });
       return this.addPaid(tx, orderId, amountPaise);
@@ -195,6 +205,12 @@ export class PaymentsService {
 
   listForOrder(orderId: string): Promise<Payment[]> {
     return this.prisma.payment.findMany({ where: { orderId }, orderBy: { createdAt: 'asc' } });
+  }
+
+  private async requireNoPendingAdjustment(orderId: string, db: Pick<Tx, 'orderAdjustment'> = this.prisma): Promise<void> {
+    if (await db.orderAdjustment.findFirst({ where: { orderId, status: 'PENDING_CUSTOMER', expiresAt: { gt: this.clock.now() } } })) {
+      throw AppError.conflict('APPROVAL_PENDING', 'Decide the proposed total before making a payment.');
+    }
   }
 
   private async addPaid(tx: Tx, orderId: string, amountPaise: number) {

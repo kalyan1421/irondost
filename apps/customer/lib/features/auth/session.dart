@@ -2,6 +2,7 @@ import 'dart:async';
 
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../../core/phone.dart';
 import '../../data/api_client.dart';
 import '../../data/wake_retry.dart';
 import '../push/device_registrar.dart';
@@ -9,22 +10,26 @@ import 'auth_repository.dart';
 
 /// The signed-in customer, as the app needs them.
 class Profile {
-  const Profile({required this.id, this.phone, this.name, this.email, required this.isComplete});
+  const Profile({required this.id, this.phone, this.phoneVerified = false, this.name, this.email, required this.isComplete});
 
   factory Profile.fromUser(UserDto u) =>
-      Profile(id: u.id, phone: u.phone, name: u.name, email: u.email, isComplete: u.isProfileComplete);
+      Profile(id: u.id, phone: u.phone, phoneVerified: u.phoneVerified, name: u.name, email: u.email, isComplete: u.isProfileComplete);
   factory Profile.fromMe(MeDto u) =>
-      Profile(id: u.id, phone: u.phone, name: u.name, email: u.email, isComplete: u.isProfileComplete);
+      Profile(id: u.id, phone: u.phone, phoneVerified: u.phoneVerified, name: u.name, email: u.email, isComplete: u.isProfileComplete);
 
   final String id;
 
-  /// E.164, e.g. +919876543210. Null for a customer who signed in with Google and has not added a verified number yet.
+  /// E.164, e.g. +919876543210. Null for a customer who signed in with Google and has not added a number yet.
   final String? phone;
+
+  /// The number signs this customer in (confirmed by an SMS code), so it cannot be changed here. False when the customer
+  /// typed it at checkout; they can change it.
+  final bool phoneVerified;
   final String? name;
   final String? email;
   final bool isComplete;
 
-  /// Orders need a verified number: the pickup partner calls it.
+  /// Orders need a number: the pickup partner calls it.
   bool get hasPhone => phone != null;
 
   String get firstName => (name ?? '').trim().split(RegExp(r'\s+')).first;
@@ -110,21 +115,11 @@ class SessionController extends AsyncNotifier<Session> {
     state = await AsyncValue.guard(_start);
   }
 
-  /// A verified number was just attached to this account: asks the API to store it. Unlike [signedIn] this keeps the current
-  /// screen (checkout) in place. If another account already has the number, the attached number is taken back and
-  /// [AuthFailureKind.phoneInUse] is thrown, so the customer can try another.
-  Future<void> phoneLinked() async {
-    try {
-      final user = await ref.read(apiProvider).auth.authControllerSession(body: const StartSessionDto(app: ClientApp.customer));
-      state = AsyncData(SignedIn(Profile.fromUser(user)));
-    } catch (error) {
-      final failure = ApiFailure.from(error);
-      if (failure.code == 'PHONE_IN_USE') {
-        await ref.read(authRepositoryProvider).unlinkPhone();
-        throw const AuthFailure(AuthFailureKind.phoneInUse);
-      }
-      throw failure;
-    }
+  /// Saves the mobile number a customer typed at checkout. There is no SMS code: the pickup partner only needs a number to call.
+  /// [phone] is the 10-digit national number. Throws [ApiFailure] when the API refuses it or cannot be reached.
+  Future<void> savePhone(String phone) async {
+    final me = await ref.read(apiProvider).me.usersControllerUpdate(body: UpdateMeDto(phone: IndianPhone.e164(phone)));
+    state = AsyncData(SignedIn(Profile.fromMe(me)));
   }
 
   Future<void> retry() async {

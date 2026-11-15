@@ -15,6 +15,7 @@ import { APP_ENV, ConfigModule } from './config/config.module.js';
 import type { Env } from './config/env.js';
 import { DriversModule } from './drivers/drivers.module.js';
 import { HealthController } from './health/health.controller.js';
+import { IssuesModule } from './issues/issues.controller.js';
 import { JobsModule } from './jobs/jobs.module.js';
 import { KeepAliveModule } from './keep-alive/keep-alive.service.js';
 import { NotificationsModule } from './notifications/notifications.module.js';
@@ -61,6 +62,7 @@ import { UsersModule } from './users/users.module.js';
     BannersModule,
     AppVersionsModule,
     OrdersModule,
+    IssuesModule,
     PaymentsModule,
     DriversModule,
     NotificationsModule,

@@ -45,6 +45,18 @@ abstract class OrdersClient {
     @Path('id') required String id,
   });
 
+  @POST('/v1/orders/{id}/adjustments/{adjustmentId}/approve')
+  Future<OrderDto> ordersControllerApprove({
+    @Path('id') required String id,
+    @Path('adjustmentId') required String adjustmentId,
+  });
+
+  @POST('/v1/orders/{id}/adjustments/{adjustmentId}/decline')
+  Future<OrderDto> ordersControllerDecline({
+    @Path('id') required String id,
+    @Path('adjustmentId') required String adjustmentId,
+  });
+
   /// For an online order that has not been paid (a failed or abandoned payment): the partner collects the amount at delivery.
   @POST('/v1/orders/{id}/pay-on-delivery')
   Future<OrderDto> ordersControllerPayOnDelivery({

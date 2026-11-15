@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
 import '../data/api_client.dart';
+import '../features/issues/issue_screens.dart';
 import '../features/account/account_screen.dart';
 import '../features/account/edit_profile_screen.dart';
 import '../features/account/help_screen.dart';
@@ -14,6 +15,7 @@ import '../features/addresses/addresses_controller.dart';
 import '../features/addresses/addresses_screen.dart';
 import '../features/addresses/map_pin_screen.dart';
 import '../features/addresses/place_search_screen.dart';
+import '../features/auth/add_phone_screen.dart';
 import '../features/auth/name_screen.dart';
 import '../features/auth/otp_screen.dart';
 import '../features/auth/phone_screen.dart';
@@ -71,11 +73,7 @@ final routerProvider = Provider<GoRouter>((ref) {
         builder: (_, _) => const PhoneScreen(),
         routes: [GoRoute(path: 'code', builder: (_, _) => const OtpScreen())],
       ),
-      GoRoute(
-        path: Routes.addPhone,
-        builder: (_, _) => const PhoneScreen(linking: true),
-        routes: [GoRoute(path: 'code', builder: (_, _) => const OtpScreen(linking: true))],
-      ),
+      GoRoute(path: Routes.addPhone, builder: (_, _) => const AddPhoneScreen()),
       GoRoute(path: Routes.setupName, builder: (_, _) => const NameScreen()),
       GoRoute(
         path: Routes.setupPin,
@@ -107,6 +105,9 @@ final routerProvider = Provider<GoRouter>((ref) {
       ),
       GoRoute(path: Routes.editProfile, builder: (_, _) => const EditProfileScreen()),
       GoRoute(path: Routes.help, builder: (_, _) => const HelpScreen()),
+      GoRoute(path: Routes.issues, builder: (_, state) => IssuesScreen(orderId: state.uri.queryParameters['orderId'])),
+      GoRoute(path: Routes.issueDetail, builder: (_, state) => IssueDetailScreen(id: state.pathParameters['issueId']!)),
+      GoRoute(path: Routes.reportProblem, builder: (_, state) => ReportProblemScreen(orderId: state.pathParameters['id']!)),
       GoRoute(
         path: Routes.legalDoc,
         redirect: (_, state) => LegalDoc.fromSlug(state.pathParameters['doc']) == null ? Routes.help : null,
@@ -132,7 +133,7 @@ final routerProvider = Provider<GoRouter>((ref) {
       ),
       GoRoute(
         path: Routes.orderPaid,
-        builder: (_, state) => PaymentReceiptScreen(orderId: state.pathParameters['id']!, initial: state.extra as OrderDto?),
+        builder: (_, state) => PaymentReceiptScreen(orderId: state.pathParameters['id']!),
       ),
       StatefulShellRoute.indexedStack(
         builder: (_, _, shell) => AppShell(shell: shell),

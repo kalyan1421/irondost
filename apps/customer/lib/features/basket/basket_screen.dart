@@ -1,3 +1,4 @@
+import '../../core/quantities.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
@@ -86,11 +87,13 @@ class _Line {
     required this.name,
     required this.unitPaise,
     required this.quantity,
+    required this.unit,
   });
   final String id;
   final String name;
   final num unitPaise;
   final int quantity;
+  final ItemUnit unit;
 }
 
 class _Items extends ConsumerWidget {
@@ -116,6 +119,7 @@ class _Items extends ConsumerWidget {
         return _Line(
           id: id,
           name: item.name,
+          unit: item.unit,
           unitPaise: item.effectivePricePaise,
           quantity: qty,
         );
@@ -126,6 +130,7 @@ class _Items extends ConsumerWidget {
           : _Line(
               id: id,
               name: line.name,
+              unit: line.unit,
               unitPaise: line.unitPricePaise,
               quantity: qty,
             );
@@ -172,10 +177,10 @@ class _Items extends ConsumerWidget {
                   else
                     const Spacer(),
                   const SizedBox(width: IdSpace.s2),
-                  Text(
-                    _pieces(lines.fold(0, (a, l) => a + l.quantity)),
-                    style: t.caption.copyWith(color: c.textMuted),
-                  ),
+                  Flexible(child: Text(
+                    quantitySummary(lines.map((l) => (l.unit, l.quantity))),
+                    style: t.caption.copyWith(color: c.textMuted), textAlign: TextAlign.end,
+                  )),
                 ],
               ),
             ),
@@ -198,7 +203,6 @@ class _Items extends ConsumerWidget {
     );
   }
 
-  static String _pieces(int n) => '$n ${n == 1 ? 'item' : 'items'}';
 }
 
 class _BasketRow extends ConsumerWidget {
@@ -211,7 +215,7 @@ class _BasketRow extends ConsumerWidget {
     final t = context.text;
     return Padding(padding: const EdgeInsets.symmetric(vertical: IdSpace.s4), child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
       Row(crossAxisAlignment: CrossAxisAlignment.start, children: [
-        Expanded(child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [Text(line.name, style: t.title), Text('${rupees(line.unitPaise)} each', style: t.caption.copyWith(color: c.textMuted))])),
+        Expanded(child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [Text(line.name, style: t.title), Text('${rupees(line.unitPaise)} ${unitRateLabel(line.unit)}', style: t.caption.copyWith(color: c.textMuted))])),
         const SizedBox(width: IdSpace.s3),
         // Not Flexible: next to the Expanded name it would take half the row and start mid-screen.
         Text(rupees(line.unitPaise * line.quantity), textAlign: TextAlign.end, style: t.label.copyWith(fontFeatures: const [FontFeature.tabularFigures()])),

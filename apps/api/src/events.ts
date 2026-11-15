@@ -5,6 +5,8 @@ import type { DispatchLeg, OrderStatus, RefundMethod, RefundStatus, Role } from 
  * database transaction commits; listeners handle push, realtime and dispatch.
  */
 export const Events = {
+  IssueChanged: 'issue.changed',
+  AdjustmentChanged: 'adjustment.changed',
   OrderCreated: 'order.created',
   OrderStatusChanged: 'order.status_changed',
   OrderUpdated: 'order.updated',

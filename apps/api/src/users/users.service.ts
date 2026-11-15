@@ -1,6 +1,7 @@
 import { Injectable, Logger } from '@nestjs/common';
 import { FirebaseService } from '../auth/firebase.service.js';
 import { AppError } from '../common/errors.js';
+import { normalizeIndianPhone } from '../common/phone.js';
 import type { User } from '../generated/prisma/client.js';
 import { OrderStatus, Role } from '../generated/prisma/enums.js';
 import { PrismaService } from '../prisma/prisma.service.js';
@@ -26,11 +27,35 @@ export class UsersService {
   }
 
   async update(user: User, dto: UpdateMeDto): Promise<MeDto> {
+    const contactPhone = this.contactPhoneFor(user, dto.phone);
     const updated = await this.prisma.user.update({
       where: { id: user.id },
-      data: { name: dto.name?.trim(), email: dto.email === null ? null : dto.email?.trim().toLowerCase() },
+      data: {
+        name: dto.name?.trim(),
+        email: dto.email === null ? null : dto.email?.trim().toLowerCase(),
+        ...(contactPhone ? { contactPhone } : {}),
+      },
     });
     return this.me(updated);
+  }
+
+  /**
+   * The number a customer typed at checkout, ready to store, or null when there is nothing to change. It is not verified by
+   * an SMS code, so it goes in `contactPhone`, never in the unique sign-in `phone`. A customer who signed in with a phone
+   * code already has a verified number, which cannot be swapped for an unverified one here.
+   */
+  private contactPhoneFor(user: User, input: string | undefined): string | null {
+    if (input === undefined) return null;
+    if (user.role !== Role.CUSTOMER) {
+      throw AppError.forbidden('PHONE_MANAGED', 'Staff numbers are changed by an administrator');
+    }
+    const phone = normalizeIndianPhone(input);
+    if (!phone) throw AppError.badRequest('INVALID_PHONE', 'Enter a valid 10-digit Indian mobile number');
+    if (user.phone) {
+      if (user.phone === phone) return null;
+      throw AppError.badRequest('PHONE_VERIFIED', 'Your number is verified with a code and cannot be changed here');
+    }
+    return phone;
   }
 
   /** Registers (or moves) an FCM token to this user. */
@@ -81,6 +106,7 @@ export class UsersService {
         where: { id: user.id },
         data: {
           phone: `deleted:${user.id}`,
+          contactPhone: null,
           firebaseUid: null,
           name: null,
           email: null,

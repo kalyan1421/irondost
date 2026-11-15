@@ -74,3 +74,10 @@ export function relativeTime(value: string | Date): string {
   if (h < 24) return `${h} h ago`;
   return date(value);
 }
+
+/** Physical units stay separate: kilograms are not garment pieces. */
+export function quantitySummary(items: ReadonlyArray<{ unit: 'PIECE' | 'PAIR' | 'SET' | 'KG'; quantity: number }>): string {
+  const counts = new Map<string, number>();
+  for (const i of items) counts.set(i.unit, (counts.get(i.unit) ?? 0) + i.quantity);
+  return [...counts].map(([unit, n]) => `${n} ${unit === 'KG' ? 'kg' : unit === 'PAIR' ? (n === 1 ? 'pair' : 'pairs') : unit === 'SET' ? (n === 1 ? 'set' : 'sets') : (n === 1 ? 'item' : 'items')}`).join(' · ');
+}

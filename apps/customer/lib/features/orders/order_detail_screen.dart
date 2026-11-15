@@ -23,6 +23,8 @@ import '../support/support.dart';
 import 'cancel_order.dart';
 import 'order_repository.dart';
 import 'pay_due.dart';
+import 'refund_list.dart';
+import 'price_approval.dart';
 
 /// One order: where it is, who has it, what is owed, and what to do next. Shows [initial] (from the
 /// list) at once, then the order as the API has it now.
@@ -99,6 +101,7 @@ class OrderDetailScreen extends ConsumerWidget {
             IdSpace.s6,
           ),
           children: [
+            PriceApprovalCard(order: order),
             _Hero(order: order, delayed: delayed),
             const SizedBox(height: IdSpace.s4),
             if (order.status == OrderStatus.cancelled)
@@ -107,6 +110,11 @@ class OrderDetailScreen extends ConsumerWidget {
               ..._deliveredBody(context, ref, order)
             else
               ..._activeBody(context, ref, order, delayed: delayed),
+            const SizedBox(height: IdSpace.s4),
+            IdListGroup(children: [
+              if (order.status != OrderStatus.cancelled) IdListRow(icon: LucideIcons.messageSquare, label: 'Report a problem', onTap: () => context.push(Routes.report(order.id))),
+              IdListRow(icon: LucideIcons.messagesSquare, label: 'Reports for this order', onTap: () => context.push('${Routes.issues}?orderId=${order.id}')),
+            ]),
           ],
         ),
       ),
@@ -243,7 +251,7 @@ class OrderDetailScreen extends ConsumerWidget {
                   : istDateTimeLabel(order.pickedUpAt!),
             ),
             const SizedBox(height: 10),
-            _Line('Items', '${pieceCount(order)}, ironed'),
+            _Line('Count', piecesLabel(order)),
             const SizedBox(height: 10),
             Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -277,7 +285,7 @@ class OrderDetailScreen extends ConsumerWidget {
                         Flexible(
                           child: Text(
                             paid
-                                ? '${rupees(order.paidPaise)} ${paidHow(order) == 'Paid in cash' ? 'in cash' : 'online'}'
+                                ? '${rupees(order.paidPaise)} · ${paidHow(order)}'
                                 : '${rupees(order.amountDuePaise)} due',
                             style: t.labelSm.copyWith(color: paymentColor),
                           ),
@@ -311,17 +319,16 @@ class OrderDetailScreen extends ConsumerWidget {
 
   List<Widget> _cancelledBody(BuildContext context, OrderDto order) {
     final paid = order.paidPaise > 0;
-    final refunded = order.refundedPaise >= order.paidPaise;
+    final refunded = completedRefundPaise(order) >= order.paidPaise;
     return [
       if (paid)
         _Notice(
           icon: LucideIcons.refreshCw,
           tone: _NoticeTone.info,
-          text: refunded
-              ? 'Your ${rupees(order.refundedPaise)} refund has been sent to the account you paid from.'
-              : '${rupees(order.paidPaise)} is awaiting refund confirmation. Contact support for the current status.',
+          text: refundSummary(order),
         ),
       if (paid) const SizedBox(height: IdSpace.s4),
+      if (paid) RefundList(order: order),
       IdCard(
         child: Column(
           children: [
@@ -330,7 +337,7 @@ class OrderDetailScreen extends ConsumerWidget {
               '${dayLong(order.pickupDate)}, ${windowFromLabel(order.pickupSlotLabel)}',
             ),
             const SizedBox(height: 10),
-            _Line('Items', '${pieceCount(order)}'),
+            _Line('Count', piecesLabel(order)),
             const SizedBox(height: 10),
             _Line(
               'Amount',
@@ -461,7 +468,7 @@ Future<void> showOrderHelp(
             label: 'Call ${IndianPhone.display(support.phone)}',
             icon: LucideIcons.phone,
             expand: true,
-            onPressed: () => Support.dial(support.phone),
+            onPressed: () => Support.dial(support.phone, context: context, fallback: support),
           ),
           if (support.email != null) ...[
             const SizedBox(height: IdSpace.s2),
@@ -469,7 +476,7 @@ Future<void> showOrderHelp(
               label: 'Email ${support.email}',
               icon: LucideIcons.mail,
               expand: true,
-              onPressed: () => Support.mail(support.email!),
+              onPressed: () => Support.mail(support.email!, context: context, fallback: support, orderNumber: order.orderNumber),
             ),
           ],
         ],
@@ -715,7 +722,7 @@ class _CallUs extends ConsumerWidget {
       child: IdButton.outline(
         label: 'Call us',
         icon: LucideIcons.phone,
-        onPressed: () => Support.dial(support.phone),
+        onPressed: () => Support.dial(support.phone, context: context, fallback: support),
       ),
     );
   }
@@ -799,7 +806,7 @@ class _DelayedNotice extends ConsumerWidget {
       actions: [
         IdButton.outline(
           label: 'Call us',
-          onPressed: () => Support.dial(support.phone),
+          onPressed: () => Support.dial(support.phone, context: context, fallback: support),
         ),
         IdButton.text(
           label: 'Cancel order',
@@ -922,7 +929,7 @@ class _PartnerRow extends StatelessWidget {
               fixedSize: const Size(48, 48),
             ),
             icon: const Icon(LucideIcons.phone),
-            onPressed: person.phone == null ? null : () => Support.dial(person.phone!),
+            onPressed: person.phone == null ? null : () => Support.dial(person.phone!, context: context),
           ),
         ],
       ),

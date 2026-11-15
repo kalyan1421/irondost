@@ -3,6 +3,7 @@
 import { useQuery } from "@tanstack/react-query";
 import { Minus, Pencil, Plus } from "lucide-react";
 import { useMemo, useState } from "react";
+import { useGuardedClose } from "@/hooks/use-unsaved-changes";
 import { Button } from "@/components/ui/button";
 import { Card, CardAction, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
@@ -11,23 +12,27 @@ import { Label } from "@/components/ui/label";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Table, TableBody, TableCell, TableFooter, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { api, unwrap } from "@/lib/api/client";
+import { api, ApiError, unwrap } from "@/lib/api/client";
 import { useApiMutation } from "@/lib/api/mutation";
 import type { Order } from "@/lib/api/types";
-import { rupees } from "@/lib/format";
+import { ErrorState } from "@/components/page";
+import { useDebounced } from "@/hooks/use-debounced";
+import { quantitySummary, rupees } from "@/lib/format";
 
 const EDITABLE = ["PENDING", "PICKUP_ASSIGNED", "PICKED_UP", "PROCESSING"];
 
 export function ItemsCard({ order }: { order: Order }) {
   const [editing, setEditing] = useState(false);
-  const count = order.items.reduce((n, i) => n + i.quantity, 0);
-  const editable = EDITABLE.includes(order.status);
+  const count = quantitySummary(order.items);
+  const pending = order.adjustments?.find((a) => a.status === 'PENDING_CUSTOMER');
+  const latest = order.adjustments?.[0];
+  const editable = EDITABLE.includes(order.status) && !pending;
 
   return (
     <Card>
       <CardHeader>
         <CardTitle className="text-base">
-          Items <span className="tabular font-normal text-muted-foreground">· {count} pieces</span>
+          Items <span className="tabular font-normal text-muted-foreground">· {count}</span>
         </CardTitle>
         {editable ? (
           <CardAction>
@@ -38,6 +43,11 @@ export function ItemsCard({ order }: { order: Order }) {
         ) : null}
       </CardHeader>
       <CardContent className="px-0">
+        {latest ? <div role="status" className="mx-6 mb-4 grid gap-1 rounded-md border p-3 text-sm">
+          <p className="font-medium">{pending ? 'Waiting for customer approval' : `Price request: ${latest.status.toLowerCase()}`}</p>
+          <p>{rupees(latest.oldTotalPaise)} → {rupees(latest.newTotalPaise)} · {latest.reason}</p>
+          <p>{pending ? 'The accepted bill is unchanged. Collection and delivery steps wait for the decision.' : latest.status === 'APPROVED' ? 'The customer approved this bill.' : 'The original bill stands. Continue with the agreed items, contact the customer, or cancel the order.'}</p>
+        </div> : null}
         <Table>
           <TableHeader>
             <TableRow>
@@ -90,6 +100,16 @@ function EditItemsDialog({ order, onClose }: { order: Order; onClose: () => void
     Object.fromEntries(order.items.filter((i) => i.catalogItemId).map((i) => [i.catalogItemId!, i.quantity])),
   );
   const [note, setNote] = useState("");
+  const [revision, setRevision] = useState(order.revision);
+  const lines = useMemo(() => Object.entries(qty).filter(([, q]) => q > 0).map(([catalogItemId, quantity]) => ({ catalogItemId, quantity })), [qty]);
+  const quotedLines = useDebounced(lines, 300);
+  const preview = useQuery({
+    queryKey: ['item-edit-quote', order.id, revision, quotedLines],
+    queryFn: () => unwrap(api.POST('/v1/admin/orders/{id}/items/quote', { params: { path: { id: order.id } }, body: { items: quotedLines, expectedRevision: revision } })),
+    enabled: quotedLines.length > 0,
+  });
+  const quoteCurrent = preview.isSuccess && !preview.isFetching && JSON.stringify(lines) === JSON.stringify(quotedLines);
+  const requiresApproval = preview.data?.requiresApproval === true;
 
   const save = useApiMutation(
     () =>
@@ -97,32 +117,30 @@ function EditItemsDialog({ order, onClose }: { order: Order; onClose: () => void
         api.PUT("/v1/admin/orders/{id}/items", {
           params: { path: { id: order.id } },
           body: {
-            items: Object.entries(qty)
-              .filter(([, q]) => q > 0)
-              .map(([catalogItemId, quantity]) => ({ catalogItemId, quantity })),
+            items: lines,
+            expectedRevision: revision,
             note: note.trim() || undefined,
           },
         }),
       ),
-    { invalidate: [["order", order.id], ["orders"]], success: "Items updated", onSuccess: onClose },
+    { invalidate: [["order", order.id], ["orders"]], success: (o) => o.adjustments?.some((a) => a.status === "PENDING_CUSTOMER") ? "Approval requested. The accepted bill is unchanged." : "Items updated", onSuccess: onClose },
   );
 
-  const prices = useMemo(() => {
-    const m = new Map<string, number>();
-    for (const c of catalog.data ?? []) for (const i of c.items) m.set(i.id, i.effectivePricePaise);
-    return m;
-  }, [catalog.data]);
-  const subtotal = Object.entries(qty).reduce((n, [id, q]) => n + (prices.get(id) ?? 0) * q, 0);
-  const anyItems = Object.values(qty).some((q) => q > 0);
+
+  const conflict = (save.error instanceof ApiError && save.error.code === "ORDER_CHANGED") || (preview.error instanceof ApiError && preview.error.code === "ORDER_CHANGED");
+  const latest = useQuery({ queryKey: ["order-reconcile", order.id], queryFn: () => unwrap(api.GET("/v1/admin/orders/{id}", { params: { path: { id: order.id } } })), enabled: conflict, staleTime: 0 });
+  const fingerprint = JSON.stringify({ qty, note });
+  const [initialFields] = useState(fingerprint);
+  const close = useGuardedClose(fingerprint !== initialFields, save.isPending, onClose);
 
   return (
-    <Dialog open onOpenChange={(o) => !o && onClose()}>
+    <Dialog open onOpenChange={(o) => !o && close()}>
       <DialogContent className="max-h-[calc(100dvh-2rem)] grid-rows-[auto_minmax(0,1fr)_auto_auto] sm:max-w-lg">
         <DialogHeader>
           <DialogTitle>Edit items</DialogTitle>
-          <DialogDescription>Prices come from the current catalogue. The order&apos;s promotion is applied again on save.</DialogDescription>
+          <DialogDescription>Booked items keep their accepted rates. New items use today&apos;s price. Any increase needs the customer&apos;s approval.</DialogDescription>
         </DialogHeader>
-        {catalog.data ? (
+        {catalog.isError ? <ErrorState error={catalog.error} onRetry={() => void catalog.refetch()} /> : catalog.data ? (
           <ScrollArea className="min-h-0 pr-3">
             <div className="grid gap-5">
               {catalog.data.map((cat) => {
@@ -135,7 +153,7 @@ function EditItemsDialog({ order, onClose }: { order: Order; onClose: () => void
                       <div key={i.id} className="flex items-center gap-3">
                         <div className="min-w-0 flex-1">
                           <div className="truncate text-sm">{i.name}</div>
-                          <div className="tabular text-xs text-muted-foreground">{rupees(i.effectivePricePaise)} each</div>
+                          <div className="tabular text-xs text-muted-foreground">{rupees(preview.data?.lines.find((l) => l.catalogItemId === i.id)?.unitPricePaise ?? order.items.find((l) => l.catalogItemId === i.id)?.unitPricePaise ?? i.effectivePricePaise)} per {i.unit.toLowerCase()}{i.unit === "KG" ? " (whole kg increments)" : ""}</div>
                         </div>
                         <Stepper value={qty[i.id] ?? 0} onChange={(v) => setQty((q) => ({ ...q, [i.id]: v }))} label={i.name} />
                       </div>
@@ -149,13 +167,30 @@ function EditItemsDialog({ order, onClose }: { order: Order; onClose: () => void
           <Skeleton className="h-48" />
         )}
         <div className="grid gap-1.5">
-          <Label htmlFor="items-note">Note for the timeline (optional)</Label>
+          <Label htmlFor="items-note">Reason for the changed count</Label>
           <Input id="items-note" placeholder="e.g. 2 extra shirts counted at pickup" value={note} onChange={(e) => setNote(e.target.value)} />
         </div>
-        <DialogFooter className="items-center sm:justify-between">
-          <span className="tabular text-sm text-muted-foreground">Subtotal before discount: {rupees(subtotal)}</span>
-          <Button disabled={!anyItems || save.isPending} onClick={() => save.mutate(undefined)}>
-            Save items
+        {conflict ? <div role="alert" className="grid gap-2 rounded-md border border-warning p-3 text-sm">
+          <p className="font-medium">Someone changed this bill while you were editing. Your quantities are kept.</p>
+          {latest.isError ? <ErrorState error={latest.error} onRetry={() => void latest.refetch()} /> : !latest.data ? <p>Loading the current bill…</p> : <>
+            <p>Current accepted total: {rupees(latest.data.totalPaise)}</p>
+            <ul className="list-inside list-disc">{latest.data.items.map((item) => <li key={item.id}>{item.name}: {item.quantity} {item.unit.toLowerCase()} × {rupees(item.unitPricePaise)}</li>)}</ul>
+            <p>Compare these with your quantities above. Continuing refreshes the server preview before you can save.</p>
+            <Button variant="outline" disabled={latest.data.adjustments?.some((a) => a.status === "PENDING_CUSTOMER")} onClick={() => { setRevision(latest.data!.revision); save.reset(); }}>Review my draft against this bill</Button>
+            {latest.data.adjustments?.some((a) => a.status === "PENDING_CUSTOMER") ? <p>A price request is already awaiting the customer. Close this editor until it is decided.</p> : null}
+          </>}
+        </div> : null}
+        {preview.isError && !conflict ? <ErrorState error={preview.error} onRetry={() => void preview.refetch()} /> : null}
+        {preview.data ? <div role="status" className="grid gap-1 border-t pt-3 text-sm">
+          <p>Accepted total: {rupees(preview.data.oldTotalPaise)}</p>
+          <p>Items {rupees(preview.data.subtotalPaise)} · Discount {rupees(preview.data.discountPaise)} · Delivery {rupees(preview.data.deliveryFeePaise)}</p>
+          <p className="font-medium">Proposed total: {rupees(preview.data.newTotalPaise)} ({preview.data.newTotalPaise >= preview.data.oldTotalPaise ? '+' : '−'}{rupees(Math.abs(preview.data.newTotalPaise - preview.data.oldTotalPaise))})</p>
+          {requiresApproval ? <p>The accepted total stays unchanged until the customer approves.</p> : null}
+        </div> : null}
+        <DialogFooter>
+          <Button variant="ghost" onClick={close}>Close</Button>
+          <Button disabled={conflict || !quoteCurrent || !catalog.data || save.isPending || (requiresApproval && !note.trim())} onClick={() => save.mutate(undefined)}>
+            {save.isPending ? 'Saving…' : requiresApproval ? 'Request customer approval' : 'Save items'}
           </Button>
         </DialogFooter>
       </DialogContent>

@@ -18,13 +18,16 @@ import {
   ValidateNested,
 } from 'class-validator';
 import { PageQueryDto } from '../common/pagination.js';
+import { customerPhone } from '../common/phone.js';
 import { fromDbDate } from '../common/time.js';
-import type { Order, OrderEvent, OrderItem, Refund, User } from '../generated/prisma/client.js';
+import type { Order, OrderAdjustment, OrderEvent, OrderItem, Payment, Refund, User } from '../generated/prisma/client.js';
 import {
   ItemUnit,
+  AdjustmentStatus,
   OrderSource,
   OrderStatus,
   PaymentMethod,
+  PaymentProvider,
   PaymentStatus,
   RefundMethod,
   RefundStatus,
@@ -119,6 +122,9 @@ export class CancelOrderDto {
 }
 
 export class UpdateItemsDto {
+  @ApiPropertyOptional({ description: 'Revision displayed when this edit was started. A stale edit returns ORDER_CHANGED.' })
+  @IsOptional() @IsInt() @Min(0)
+  expectedRevision?: number;
   @ApiProperty({ type: [OrderLineInput] })
   @IsArray()
   @ArrayMinSize(1)
@@ -164,6 +170,14 @@ export class CustomerOrdersQuery extends PageQueryDto {
 }
 
 export class AdminOrdersQuery extends PageQueryDto {
+  @ApiPropertyOptional() @IsOptional() @Matches(/^\d{4}-\d{2}-\d{2}$/) createdFrom?: string;
+  @ApiPropertyOptional() @IsOptional() @Matches(/^\d{4}-\d{2}-\d{2}$/) createdTo?: string;
+  @ApiPropertyOptional() @IsOptional() @Matches(/^\d{4}-\d{2}-\d{2}$/) deliveryFrom?: string;
+  @ApiPropertyOptional() @IsOptional() @Matches(/^\d{4}-\d{2}-\d{2}$/) deliveryTo?: string;
+  @ApiPropertyOptional() @IsOptional() @Transform(({ value }) => value === true || value === 'true') @IsBoolean() excludeCancelled?: boolean;
+  @ApiPropertyOptional() @IsOptional() @Transform(({ value }) => value === true || value === 'true') @IsBoolean() approvalPending?: boolean;
+  @ApiPropertyOptional() @IsOptional() @Transform(({ value }) => value === true || value === 'true') @IsBoolean() unpaid?: boolean;
+  @ApiPropertyOptional({ enum: ['pickup', 'delivery'] }) @IsOptional() @IsIn(['pickup', 'delivery']) overdue?: 'pickup' | 'delivery';
   @ApiPropertyOptional({ enum: OrderStatus, enumName: 'OrderStatus', isArray: true })
   @IsOptional()
   @Transform(({ value }: { value: unknown }) => (typeof value === 'string' ? value.split(',') : value))
@@ -301,6 +315,8 @@ export class RefundDto {
 }
 
 export class OrderDto {
+  @ApiPropertyOptional() revision?: number;
+  @ApiPropertyOptional({ type: () => [OrderAdjustmentDto] }) adjustments?: OrderAdjustmentDto[];
   @ApiProperty() id!: string;
   @ApiProperty({ example: 'LD001042' }) orderNumber!: string;
   @ApiProperty({ enum: OrderStatus, enumName: 'OrderStatus' }) status!: OrderStatus;
@@ -343,6 +359,52 @@ export class OrderDto {
   @ApiPropertyOptional({ type: [OrderEventDto] }) events?: OrderEventDto[];
   /** Oldest first. Customer and admin views only. */
   @ApiPropertyOptional({ type: [RefundDto] }) refunds?: RefundDto[];
+  /** Captured transactions only; excludes raw provider payloads and staff identities. */
+  @ApiPropertyOptional({ type: () => [OrderPaymentDto] }) payments?: OrderPaymentDto[];
+}
+
+export class OrderPaymentDto {
+  @ApiProperty() id!: string;
+  @ApiProperty({ enum: PaymentProvider, enumName: 'PaymentProvider' }) provider!: PaymentProvider;
+  @ApiProperty() amountPaise!: number;
+  @ApiProperty({ nullable: true, type: String }) reference!: string | null;
+  @ApiProperty() capturedAt!: Date;
+}
+
+export class OrderAdjustmentDto {
+  @ApiProperty() id!: string;
+  @ApiProperty({ enum: AdjustmentStatus, enumName: 'AdjustmentStatus' }) status!: AdjustmentStatus;
+  @ApiProperty() reason!: string;
+  @ApiProperty() oldTotalPaise!: number;
+  @ApiProperty() newTotalPaise!: number;
+  @ApiProperty() subtotalPaise!: number;
+  @ApiProperty() discountPaise!: number;
+  @ApiProperty() deliveryFeePaise!: number;
+  @ApiProperty({ type: () => [AdjustmentLineDto] }) itemsBefore!: AdjustmentLineDto[];
+  @ApiProperty({ type: () => [AdjustmentLineDto] }) itemsAfter!: AdjustmentLineDto[];
+  @ApiProperty() expiresAt!: Date;
+  @ApiProperty({ nullable: true, type: Date }) decidedAt!: Date | null;
+  @ApiProperty() createdAt!: Date;
+}
+
+export class AdjustmentLineDto {
+  @ApiProperty({ nullable: true, type: String }) catalogItemId!: string | null;
+  @ApiProperty() name!: string;
+  @ApiProperty({ enum: ItemUnit, enumName: 'ItemUnit' }) unit!: ItemUnit;
+  @ApiProperty() unitPricePaise!: number;
+  @ApiProperty() quantity!: number;
+  @ApiProperty() lineTotalPaise!: number;
+}
+
+export class ItemEditPreviewDto {
+  @ApiProperty() revision!: number;
+  @ApiProperty() oldTotalPaise!: number;
+  @ApiProperty() newTotalPaise!: number;
+  @ApiProperty() subtotalPaise!: number;
+  @ApiProperty() discountPaise!: number;
+  @ApiProperty() deliveryFeePaise!: number;
+  @ApiProperty() requiresApproval!: boolean;
+  @ApiProperty({ type: [QuoteLineDto] }) lines!: QuoteLineDto[];
 }
 
 export class OrderPageDto {
@@ -358,11 +420,13 @@ export type OrderWithRelations = Order & {
   pickupDriver?: User | null;
   deliveryDriver?: User | null;
   events?: OrderEvent[];
+  payments?: Payment[];
+  adjustments?: OrderAdjustment[];
   refunds?: (Refund & { createdBy?: { id: string; name: string | null } | null })[];
 };
 
 const person = (u: User | null | undefined): PersonRefDto | null =>
-  u ? { id: u.id, name: u.name, phone: u.phone } : null;
+  u ? { id: u.id, name: u.name, phone: customerPhone(u) } : null;
 
 function toRefundDto(r: NonNullable<OrderWithRelations['refunds']>[number], viewer: ActorKind): RefundDto {
   return {
@@ -382,6 +446,13 @@ export function toOrderDto(o: OrderWithRelations, viewer: ActorKind): OrderDto {
   const showRefunds = viewer === 'CUSTOMER' || viewer === 'ADMIN';
   return {
     id: o.id,
+    revision: o.revision,
+    ...(o.adjustments ? { adjustments: o.adjustments.map((a) => ({
+      id: a.id, status: a.status, reason: a.reason, oldTotalPaise: a.oldTotalPaise, newTotalPaise: a.newTotalPaise,
+      subtotalPaise: a.subtotalPaise, discountPaise: a.discountPaise, deliveryFeePaise: a.deliveryFeePaise,
+      itemsBefore: a.itemsBefore as unknown as AdjustmentLineDto[], itemsAfter: a.itemsAfter as unknown as AdjustmentLineDto[],
+      expiresAt: a.expiresAt, decidedAt: a.decidedAt, createdAt: a.createdAt,
+    })) } : {}),
     orderNumber: o.orderNumber,
     status: o.status,
     source: o.source,
@@ -437,5 +508,9 @@ export function toOrderDto(o: OrderWithRelations, viewer: ActorKind): OrderDto {
         }
       : {}),
     ...(showRefunds && o.refunds ? { refunds: o.refunds.map((r) => toRefundDto(r, viewer)) } : {}),
+    ...(showRefunds && o.payments ? { payments: o.payments.filter((p) => p.status === 'CAPTURED').map((p) => ({
+      id: p.id, provider: p.provider, amountPaise: p.amountPaise,
+      reference: p.razorpayPaymentId, capturedAt: p.capturedAt ?? p.updatedAt,
+    })) } : {}),
   };
 }

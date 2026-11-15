@@ -6,6 +6,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 import '../../data/api_client.dart';
+import '../../core/quantities.dart';
 import '../auth/session.dart';
 import '../catalogue/catalogue.dart';
 
@@ -169,4 +170,9 @@ final basketEstimateProvider = Provider<int>((ref) {
     if (item != null) total += item.effectivePricePaise.round() * e.value;
   }
   return total;
+});
+
+final basketQuantityLabelProvider = Provider<String>((ref) {
+  final basket = ref.watch(basketProvider); final items = ref.watch(catalogItemsProvider);
+  return quantitySummary(basket.lines.entries.map((entry) => (items[entry.key]?.unit ?? ItemUnit.$unknown, entry.value)));
 });

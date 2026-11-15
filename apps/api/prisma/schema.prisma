@@ -15,6 +15,31 @@ datasource db {
 
 // ───────────────────────────── Enums ─────────────────────────────
 
+enum AdjustmentStatus {
+  PENDING_CUSTOMER
+  APPROVED
+  DECLINED
+  EXPIRED
+}
+
+enum IssueCategory {
+  LATE
+  MISSED_PICKUP
+  DAMAGED
+  MISSING_ITEM
+  QUALITY
+  BILLING
+  RIDER
+  OTHER
+}
+
+enum IssueStatus {
+  OPEN
+  ACKNOWLEDGED
+  RESOLVED
+  REJECTED
+}
+
 enum Role {
   CUSTOMER
   DRIVER
@@ -123,36 +148,44 @@ enum ClientApp {
 // ───────────────────────────── Identity ─────────────────────────────
 
 model User {
-  id          String    @id @default(uuid()) @db.Uuid
+  id           String    @id @default(uuid()) @db.Uuid
   /// Firebase Auth UID. Null for staff provisioned by an admin who have not logged in yet.
-  firebaseUid String?   @unique @map("firebase_uid")
+  firebaseUid  String?   @unique @map("firebase_uid")
   /// E.164, e.g. +919876543210. Null for a customer who signed in with Google and has not added a number yet;
   /// staff and drivers always have one. Unique, and Postgres allows many nulls.
-  phone       String?   @unique
-  name        String?
-  email       String?
+  phone        String?   @unique
+  /// E.164. The number a customer typed at checkout without verifying it by SMS code; the pickup partner calls it.
+  /// Not unique and not a login: `phone` is the verified one and wins when both exist (see `customerPhone`).
+  contactPhone String?   @map("contact_phone")
+  name         String?
+  email        String?
   /// scrypt hash for an admin who signs in with email + password instead of a phone code. Never returned by the API.
-  passwordHash String?  @map("password_hash")
-  role        Role
-  isActive    Boolean   @default(true) @map("is_active")
-  lastLoginAt DateTime? @map("last_login_at")
-  createdAt   DateTime  @default(now()) @map("created_at")
-  updatedAt   DateTime  @updatedAt @map("updated_at")
-  deletedAt   DateTime? @map("deleted_at")
+  passwordHash String?   @map("password_hash")
+  role         Role
+  isActive     Boolean   @default(true) @map("is_active")
+  lastLoginAt  DateTime? @map("last_login_at")
+  createdAt    DateTime  @default(now()) @map("created_at")
+  updatedAt    DateTime  @updatedAt @map("updated_at")
+  deletedAt    DateTime? @map("deleted_at")
 
-  driver         DriverProfile?
-  addresses      Address[]
-  orders         Order[]         @relation("CustomerOrders")
-  pickupLegs     Order[]         @relation("PickupDriver")
-  deliveryLegs   Order[]         @relation("DeliveryDriver")
-  ordersCreated  Order[]         @relation("OrderCreatedBy")
-  offers         DispatchOffer[]
-  devices        Device[]
-  notifications  Notification[]
-  orderEvents    OrderEvent[]
-  paymentsLogged Payment[]       @relation("PaymentCollectedBy")
-  refundsCreated Refund[]        @relation("RefundCreatedBy")
-  auditLogs      AuditLog[]
+  driver               DriverProfile?
+  addresses            Address[]
+  orders               Order[]             @relation("CustomerOrders")
+  pickupLegs           Order[]             @relation("PickupDriver")
+  deliveryLegs         Order[]             @relation("DeliveryDriver")
+  ordersCreated        Order[]             @relation("OrderCreatedBy")
+  offers               DispatchOffer[]
+  devices              Device[]
+  notifications        Notification[]
+  orderEvents          OrderEvent[]
+  paymentsLogged       Payment[]           @relation("PaymentCollectedBy")
+  refundsCreated       Refund[]            @relation("RefundCreatedBy")
+  auditLogs            AuditLog[]
+  adjustmentsRequested OrderAdjustment[]
+  issuesCreated        OrderIssue[]        @relation("IssueCustomer")
+  issuesHandled        OrderIssue[]        @relation("IssueHandler")
+  issueMessages        OrderIssueMessage[]
+  issuePhotos          IssuePhoto[]
 
   @@index([role, isActive])
   @@map("users")
@@ -361,11 +394,14 @@ model Order {
   deliveryAddressRef Address?   @relation("DeliveryAddress", fields: [deliveryAddressId], references: [id], onDelete: SetNull)
   promotion          Promotion? @relation(fields: [promotionId], references: [id], onDelete: SetNull)
 
-  items    OrderItem[]
-  events   OrderEvent[]
-  offers   DispatchOffer[]
-  payments Payment[]
-  refunds  Refund[]
+  items       OrderItem[]
+  events      OrderEvent[]
+  offers      DispatchOffer[]
+  payments    Payment[]
+  refunds     Refund[]
+  adjustments OrderAdjustment[]
+  issues      OrderIssue[]
+  revision    Int               @default(0)
 
   @@unique([customerId, idempotencyKey])
   @@index([customerId, createdAt(sort: Desc)])
@@ -445,6 +481,8 @@ model Payment {
   /// Driver or admin who recorded a cash payment.
   collectedById     String?             @map("collected_by_id") @db.Uuid
   raw               Json?
+  /// When the money was confirmed. `updatedAt` moves on any later write, so receipts use this.
+  capturedAt        DateTime?           @map("captured_at")
   createdAt         DateTime            @default(now()) @map("created_at")
   updatedAt         DateTime            @updatedAt @map("updated_at")
 
@@ -476,9 +514,10 @@ model Refund {
   createdAt        DateTime     @default(now()) @map("created_at")
   updatedAt        DateTime     @updatedAt @map("updated_at")
 
-  order     Order    @relation(fields: [orderId], references: [id], onDelete: Restrict)
-  payment   Payment? @relation(fields: [paymentId], references: [id], onDelete: Restrict)
-  createdBy User?    @relation("RefundCreatedBy", fields: [createdById], references: [id], onDelete: SetNull)
+  order     Order        @relation(fields: [orderId], references: [id], onDelete: Restrict)
+  payment   Payment?     @relation(fields: [paymentId], references: [id], onDelete: Restrict)
+  createdBy User?        @relation("RefundCreatedBy", fields: [createdById], references: [id], onDelete: SetNull)
+  issues    OrderIssue[] @relation("IssueRefund")
 
   @@index([orderId, createdAt])
   @@index([paymentId])
@@ -506,6 +545,8 @@ model Notification {
 /// Single-row table (id = 1) of business rules editable from the admin.
 model BusinessSettings {
   id                          Int      @id @default(1)
+  adjustmentExpiryHours       Int      @default(12) @map("adjustment_expiry_hours")
+  issueFirstResponseHours     Int?     @map("issue_first_response_hours")
   minOrderPaise               Int      @default(0) @map("min_order_paise")
   deliveryFeePaise            Int      @default(0) @map("delivery_fee_paise")
   freeDeliveryAbovePaise      Int?     @map("free_delivery_above_paise")
@@ -574,4 +615,92 @@ model ServiceHeartbeat {
   lastBeatAt DateTime @map("last_beat_at")
 
   @@map("service_heartbeats")
+}
+
+/// A proposed bill never replaces the accepted order until the customer approves it.
+model OrderAdjustment {
+  id               String           @id @default(uuid()) @db.Uuid
+  orderId          String           @map("order_id") @db.Uuid
+  status           AdjustmentStatus @default(PENDING_CUSTOMER)
+  reason           String
+  oldTotalPaise    Int              @map("old_total_paise")
+  newTotalPaise    Int              @map("new_total_paise")
+  subtotalPaise    Int              @map("subtotal_paise")
+  discountPaise    Int              @map("discount_paise")
+  deliveryFeePaise Int              @map("delivery_fee_paise")
+  baseRevision     Int              @map("base_revision")
+  itemsBefore      Json             @map("items_before")
+  itemsAfter       Json             @map("items_after")
+  requestedById    String           @map("requested_by_id") @db.Uuid
+  decidedAt        DateTime?        @map("decided_at")
+  expiresAt        DateTime         @map("expires_at")
+  createdAt        DateTime         @default(now()) @map("created_at")
+  updatedAt        DateTime         @updatedAt @map("updated_at")
+  order            Order            @relation(fields: [orderId], references: [id], onDelete: Cascade)
+  requestedBy      User             @relation(fields: [requestedById], references: [id], onDelete: Restrict)
+
+  @@index([orderId, createdAt])
+  @@index([status, expiresAt])
+  @@map("order_adjustments")
+}
+
+model OrderIssue {
+  id                 String              @id @default(uuid()) @db.Uuid
+  orderId            String              @map("order_id") @db.Uuid
+  customerId         String              @map("customer_id") @db.Uuid
+  requestKey         String?             @map("request_key")
+  requestHash        String?             @map("request_hash")
+  category           IssueCategory
+  description        String
+  photoUrls          String[]            @default([]) @map("photo_urls")
+  status             IssueStatus         @default(OPEN)
+  firstResponseDueAt DateTime?           @map("first_response_due_at")
+  overdueNotifiedAt  DateTime?           @map("overdue_notified_at")
+  acknowledgedAt     DateTime?           @map("acknowledged_at")
+  resolvedAt         DateTime?           @map("resolved_at")
+  resolutionNote     String?             @map("resolution_note")
+  /// The remedy agreed with the customer, in paise, recorded when the report is resolved. Zero means no money.
+  compensationPaise  Int?                @map("compensation_paise")
+  /// The refund that pays it out, when it is paid as a refund. The refund itself is made from the order's Payments panel.
+  refundId           String?             @map("refund_id") @db.Uuid
+  handledById        String?             @map("handled_by_id") @db.Uuid
+  createdAt          DateTime            @default(now()) @map("created_at")
+  updatedAt          DateTime            @updatedAt @map("updated_at")
+  order              Order               @relation(fields: [orderId], references: [id], onDelete: Restrict)
+  customer           User                @relation("IssueCustomer", fields: [customerId], references: [id], onDelete: Restrict)
+  handledBy          User?               @relation("IssueHandler", fields: [handledById], references: [id], onDelete: SetNull)
+  refund             Refund?             @relation("IssueRefund", fields: [refundId], references: [id], onDelete: SetNull)
+  messages           OrderIssueMessage[]
+
+  @@unique([customerId, requestKey])
+  @@index([orderId])
+  @@index([customerId, createdAt(sort: Desc)])
+  @@index([status, firstResponseDueAt])
+  @@index([refundId])
+  @@map("order_issues")
+}
+
+model OrderIssueMessage {
+  id        String     @id @default(uuid()) @db.Uuid
+  issueId   String     @map("issue_id") @db.Uuid
+  authorId  String     @map("author_id") @db.Uuid
+  fromStaff Boolean    @map("from_staff")
+  body      String
+  createdAt DateTime   @default(now()) @map("created_at")
+  issue     OrderIssue @relation(fields: [issueId], references: [id], onDelete: Cascade)
+  author    User       @relation(fields: [authorId], references: [id], onDelete: Restrict)
+
+  @@index([issueId, createdAt])
+  @@map("order_issue_messages")
+}
+
+model IssuePhoto {
+  id        String   @id @default(uuid()) @db.Uuid
+  userId    String   @map("user_id") @db.Uuid
+  key       String   @unique
+  createdAt DateTime @default(now()) @map("created_at")
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId, createdAt])
+  @@map("issue_photos")
 }

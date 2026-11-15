@@ -119,7 +119,7 @@ describe('Laundry API (e2e)', () => {
 
     it('creates customers on first sign-in but not staff', async () => {
       const res = await session(PHONES.customer, 'CUSTOMER').expect(200);
-      expect(res.body).toMatchObject({ phone: `+91${PHONES.customer}`, role: 'CUSTOMER', isProfileComplete: false });
+      expect(res.body).toMatchObject({ phone: `+91${PHONES.customer}`, phoneVerified: true, role: 'CUSTOMER', isProfileComplete: false });
       const denied = await session(PHONES.driver1, 'PARTNER').expect(403);
       expect(denied.body.code).toBe('NOT_REGISTERED');
     });
@@ -375,8 +375,11 @@ describe('Laundry API (e2e)', () => {
         .set(bearer(PHONES.driver1))
         .send({ items: [{ catalogItemId: shirtId, quantity: 5 }, { catalogItemId: sareeId, quantity: 1 }], note: '1 extra shirt' })
         .expect(200);
+      const request = res.body.adjustments.find((a: { status: string }) => a.status === 'PENDING_CUSTOMER');
+      expect(request).toBeDefined();
+      const accepted = await http.post(`/v1/orders/${order1Id}/adjustments/${request.id}/approve`).set(bearer(PHONES.customer)).expect(200);
       // 5×1500 + 4000 = 11500, minus 10% = 10350
-      expect(res.body).toMatchObject({ subtotalPaise: 11500, discountPaise: 1150, totalPaise: 10350 });
+      expect(accepted.body).toMatchObject({ subtotalPaise: 11500, discountPaise: 1150, totalPaise: 10350 });
     });
 
     it('moves through pickup and the workshop', async () => {
@@ -421,7 +424,8 @@ describe('Laundry API (e2e)', () => {
       expect(res.body.events.map((e: { toStatus: string }) => e.toStatus)).toEqual([
         'PENDING',
         'PICKUP_ASSIGNED',
-        'PICKUP_ASSIGNED', // items recounted
+        'PICKUP_ASSIGNED', // proposed count, accepted bill unchanged
+        'PICKUP_ASSIGNED', // customer approved the proposed bill
         'PICKED_UP',
         'PROCESSING',
         'READY_FOR_DELIVERY',
@@ -657,6 +661,172 @@ describe('Laundry API (e2e)', () => {
     });
   });
 
+  it('replays a committed staff order and refuses a changed draft with the same key', async () => {
+    const me = await http.get('/v1/me').set(bearer(PHONES.customer)).expect(200);
+    const draft = { customerId: me.body.id, items: [{ catalogItemId: shirtId, quantity: 2 }],
+      pickupDate: tomorrow, pickupSlot: 'MORNING', deliveryDate: dayAfter, deliverySlot: 'EVENING', pickupAddressId: addressId, paymentMethod: 'COD' };
+    const send = (quantity = 2) => http.post('/v1/admin/orders').set(bearer(PHONES.admin)).set('Idempotency-Key', 'staff-response-loss-1')
+      .send({ ...draft, items: [{ catalogItemId: shirtId, quantity }] });
+    const first = await send().expect(201);
+    const replay = await send().expect(201);
+    expect(replay.body.id).toBe(first.body.id);
+    expect(replay.headers['idempotent-replayed']).toBe('true');
+    expect((await send(3).expect(409)).body.code).toBe('IDEMPOTENCY_KEY_REUSED');
+  });
+
+  describe('customer-approved bill changes', () => {
+    const draft = () => ({ items: [{ catalogItemId: shirtId, quantity: 2 }], pickupDate: tomorrow, pickupSlot: 'MORNING',
+      deliveryDate: dayAfter, deliverySlot: 'EVENING', pickupAddressId: addressId, paymentMethod: 'COD' });
+    const create = () => http.post('/v1/orders').set(bearer(PHONES.customer)).send(draft()).expect(201);
+    const edit = (id: string, revision: number, quantity = 3) => http.put(`/v1/admin/orders/${id}/items`).set(bearer(PHONES.admin))
+      .send({ items: [{ catalogItemId: shirtId, quantity }], expectedRevision: revision, note: 'One extra shirt counted' });
+    const decide = (id: string, requestId: string, decision = 'approve', phone = PHONES.customer) =>
+      http.post(`/v1/orders/${id}/adjustments/${requestId}/${decision}`).set(bearer(phone));
+
+    it('freezes rates, requests approval, checks ownership and blocks collection until decided', async () => {
+      const placed = await create();
+      const originalRate = await prisma.catalogItem.findUniqueOrThrow({ where: { id: shirtId } });
+      await prisma.catalogItem.update({ where: { id: shirtId }, data: { pricePaise: originalRate.pricePaise + 1000 } });
+      try {
+        const proposed = await edit(placed.body.id, placed.body.revision).expect(200);
+        const adjustment = proposed.body.adjustments[0];
+        expect(proposed.body.totalPaise).toBe(placed.body.totalPaise);
+        expect(proposed.body.items[0].quantity).toBe(2);
+        expect(adjustment.itemsAfter[0].unitPricePaise).toBe(originalRate.pricePaise);
+        expect(adjustment.newTotalPaise).toBe(originalRate.pricePaise * 3);
+        await decide(placed.body.id, adjustment.id, 'approve', PHONES.otherCustomer).expect(404);
+        expect((await http.post(`/v1/admin/orders/${placed.body.id}/payments/cash`).set(bearer(PHONES.admin)).send({ amountPaise: 100 }).expect(409)).body.code).toBe('APPROVAL_PENDING');
+        await http.post(`/v1/orders/${placed.body.id}/payments/razorpay`).set(bearer(PHONES.customer)).expect(409);
+        await edit(placed.body.id, proposed.body.revision).expect(409);
+        const accepted = await decide(placed.body.id, adjustment.id).expect(200);
+        expect(accepted.body.totalPaise).toBe(adjustment.newTotalPaise);
+        expect(accepted.body.items[0].quantity).toBe(3);
+        const replay = await decide(placed.body.id, adjustment.id).expect(200);
+        expect(replay.body.revision).toBe(accepted.body.revision);
+        expect((await edit(placed.body.id, placed.body.revision, 1).expect(409)).body.code).toBe('ORDER_CHANGED');
+      } finally {
+        await prisma.catalogItem.update({ where: { id: shirtId }, data: { pricePaise: originalRate.pricePaise } });
+      }
+    });
+
+    it('decline and expiry preserve the original bill; decreases apply immediately', async () => {
+      const placed = await create();
+      const proposed = await edit(placed.body.id, placed.body.revision).expect(200);
+      const declined = await decide(placed.body.id, proposed.body.adjustments[0].id, 'decline').expect(200);
+      expect(declined.body.totalPaise).toBe(placed.body.totalPaise);
+      await decide(placed.body.id, proposed.body.adjustments[0].id, 'decline').expect(200);
+      await decide(placed.body.id, proposed.body.adjustments[0].id).expect(409);
+      const second = await edit(placed.body.id, declined.body.revision).expect(200);
+      await prisma.orderAdjustment.update({ where: { id: second.body.adjustments[0].id }, data: { expiresAt: new Date(Date.now() - 1000) } });
+      await jobs.run('adjustments-expire');
+      const expired = await http.get(`/v1/orders/${placed.body.id}`).set(bearer(PHONES.customer)).expect(200);
+      expect(expired.body.adjustments[0].status).toBe('EXPIRED');
+      expect(expired.body.totalPaise).toBe(placed.body.totalPaise);
+      const decreased = await edit(placed.body.id, expired.body.revision, 1).expect(200);
+      expect(decreased.body.totalPaise).toBe(placed.body.totalPaise / 2);
+    });
+
+    it('allows only one concurrent replacement of a displayed revision', async () => {
+      const placed = await create();
+      const responses = await Promise.all([edit(placed.body.id, placed.body.revision), edit(placed.body.id, placed.body.revision, 4)]);
+      expect(responses.map((r) => r.status).sort()).toEqual([200, 409]);
+      expect(await prisma.orderAdjustment.count({ where: { orderId: placed.body.id, status: 'PENDING_CUSTOMER' } })).toBe(1);
+    });
+  });
+
+  describe('order-linked problem reports', () => {
+    let reportId: string;
+    let ownPhoto: string;
+    it('accepts a cleaned customer image and refuses another customer’s photo or order', async () => {
+      const image = await sharp({ create: { width: 30, height: 20, channels: 3, background: '#123456' } }).png().toBuffer();
+      const uploaded = await http.post('/v1/me/uploads/images').set(bearer(PHONES.customer)).attach('file', image, 'garment.png').expect(201);
+      ownPhoto = uploaded.body.url;
+      expect(ownPhoto).toContain('/issues/');
+      await http.post('/v1/me/uploads/images').set(bearer(PHONES.customer)).attach('file', Buffer.from('not an image'), 'fake.jpg').expect(400);
+      await http.post(`/v1/orders/${order1Id}/issues`).set(bearer(PHONES.otherCustomer)).send({ category: 'MISSING_ITEM', description: 'Not mine' }).expect(404);
+      const reportBody = { category: 'MISSING_ITEM', description: 'One shirt is missing', photoUrls: [ownPhoto] };
+      const reportKey = 'missing-shirt-20261115';
+      const created = await http.post(`/v1/orders/${order1Id}/issues`).set(bearer(PHONES.customer)).set('Idempotency-Key', reportKey)
+        .send(reportBody).expect(201);
+      reportId = created.body.id;
+      expect(created.body).toMatchObject({ status: 'OPEN', firstResponseDueAt: null, description: 'One shirt is missing', photoUrls: [ownPhoto], messages: [] });
+      const replay = await http.post(`/v1/orders/${order1Id}/issues`).set(bearer(PHONES.customer)).set('Idempotency-Key', reportKey)
+        .send(reportBody).expect(201);
+      expect(replay.body.id).toBe(reportId);
+      expect(replay.headers['idempotent-replayed']).toBe('true');
+      expect(await prisma.orderIssue.count({ where: { orderId: order1Id, requestKey: reportKey } })).toBe(1);
+      await http.post(`/v1/orders/${order1Id}/issues`).set(bearer(PHONES.customer)).set('Idempotency-Key', reportKey)
+        .send({ ...reportBody, description: 'A different report' }).expect(409);
+      await http.get(`/v1/me/issues/${reportId}`).set(bearer(PHONES.otherCustomer)).expect(404);
+      await http.post(`/v1/me/issues/${reportId}/messages`).set(bearer(PHONES.otherCustomer)).send({ body: 'Not mine' }).expect(404);
+      expect((await http.get('/v1/me/issues').set(bearer(PHONES.otherCustomer)).expect(200)).body.items).toEqual([]);
+      const other = await prisma.user.findUniqueOrThrow({ where: { phone: `+91${PHONES.otherCustomer}` } });
+      const badUrl = ownPhoto.replace((await prisma.user.findUniqueOrThrow({ where: { phone: `+91${PHONES.customer}` } })).id, other.id);
+      await http.post(`/v1/orders/${order1Id}/issues`).set(bearer(PHONES.customer)).send({ category: 'DAMAGED', description: 'Check', photoUrls: [badUrl] }).expect(400);
+      await http.get('/v1/admin/issues').set(bearer(PHONES.customer)).expect(403);
+    });
+    it('keeps a two-way thread, requires a resolution and preserves ownership', async () => {
+      const reply = await http.post(`/v1/admin/issues/${reportId}/messages`).set(bearer(PHONES.admin)).send({ body: 'We are checking the intake count.' }).expect(200);
+      expect(reply.body.status).toBe('ACKNOWLEDGED');
+      expect(reply.body.messages[0]).toMatchObject({ fromStaff: true, body: 'We are checking the intake count.' });
+      expect(reply.body.handledById).toBeTruthy();
+      const mine = await http.post(`/v1/me/issues/${reportId}/messages`).set(bearer(PHONES.customer)).send({ body: 'It is a blue shirt.' }).expect(200);
+      expect(mine.body.messages).toHaveLength(2);
+      expect(mine.body.handledById).toBeUndefined();
+      await http.patch(`/v1/admin/issues/${reportId}`).set(bearer(PHONES.admin)).send({ status: 'RESOLVED' }).expect(400);
+      const resolved = await http.patch(`/v1/admin/issues/${reportId}`).set(bearer(PHONES.admin)).send({ status: 'RESOLVED', resolutionNote: 'Shirt located and returned to the customer.' }).expect(200);
+      expect(resolved.body.resolvedAt).toBeTruthy();
+      await http.post(`/v1/me/issues/${reportId}/messages`).set(bearer(PHONES.customer)).send({ body: 'Closed' }).expect(409);
+    });
+    it('only schedules and publishes a response clock when explicitly configured', async () => {
+      await http.patch('/v1/admin/settings').set(bearer(PHONES.superAdmin)).send({ issueFirstResponseHours: 1 }).expect(200);
+      const issue = await http.post(`/v1/orders/${order1Id}/issues`).set(bearer(PHONES.customer)).send({ category: 'QUALITY', description: 'Please check the finish.' }).expect(201);
+      expect(issue.body.firstResponseDueAt).toBeTruthy();
+      await prisma.orderIssue.update({ where: { id: issue.body.id }, data: { firstResponseDueAt: new Date(Date.now() - 1000) } });
+      await jobs.run('issues-first-response');
+      const overdue = await http.get('/v1/admin/issues').set(bearer(PHONES.admin)).query({ overdue: true }).expect(200);
+      expect(overdue.body.items.map((i: { id: string }) => i.id)).toContain(issue.body.id);
+      await http.patch('/v1/admin/settings').set(bearer(PHONES.superAdmin)).send({ issueFirstResponseHours: null }).expect(200);
+    });
+    it('records the agreed remedy and links a refund made on the same order', async () => {
+      const report = await http.post(`/v1/orders/${order1Id}/issues`).set(bearer(PHONES.customer))
+        .send({ category: 'DAMAGED', description: 'A button came off.' }).expect(201);
+      const url = `/v1/admin/issues/${report.body.id}`;
+      // A remedy belongs to a resolved report.
+      await http.patch(url).set(bearer(PHONES.admin)).send({ status: 'ACKNOWLEDGED', compensationPaise: 5000 }).expect(400);
+      // A refund from another order cannot be linked.
+      const otherOrder = await prisma.order.findFirstOrThrow({ where: { NOT: { id: order1Id } } });
+      const foreign = await prisma.refund.create({ data: { orderId: otherOrder.id, method: 'CASH', status: 'PROCESSED', amountPaise: 3000, note: 'Not this order' } });
+      await http.patch(url).set(bearer(PHONES.admin)).send({ status: 'RESOLVED', resolutionNote: 'Button refunded.', compensationPaise: 3000, refundId: foreign.id }).expect(400);
+      // The refund may not exceed the remedy.
+      const own = await prisma.refund.create({ data: { orderId: order1Id, method: 'CASH', status: 'PROCESSED', amountPaise: 5000, note: 'Button repair' } });
+      await http.patch(url).set(bearer(PHONES.admin)).send({ status: 'RESOLVED', resolutionNote: 'Button refunded.', compensationPaise: 4000, refundId: own.id }).expect(400);
+      const resolved = await http.patch(url).set(bearer(PHONES.admin))
+        .send({ status: 'RESOLVED', resolutionNote: 'Button refunded.', compensationPaise: 5000, refundId: own.id }).expect(200);
+      expect(resolved.body).toMatchObject({ compensationPaise: 5000, refundId: own.id });
+      // The customer sees the amount, not the staff-side link.
+      const mine = await http.get(`/v1/me/issues/${report.body.id}`).set(bearer(PHONES.customer)).expect(200);
+      expect(mine.body.compensationPaise).toBe(5000);
+      expect(mine.body.refundId).toBeUndefined();
+      // Reopening clears the remedy with the resolution.
+      const reopened = await http.patch(url).set(bearer(PHONES.admin)).send({ status: 'ACKNOWLEDGED' }).expect(200);
+      expect(reopened.body).toMatchObject({ compensationPaise: null, refundId: null });
+      // These refunds were inserted directly; remove them so the refund tests below start from the same books.
+      await prisma.refund.deleteMany({ where: { id: { in: [foreign.id, own.id] } } });
+    });
+    it('allows a billing report after an order is cancelled', async () => {
+      const placed = await http.post('/v1/orders').set(bearer(PHONES.customer)).send({
+        items: [{ catalogItemId: shirtId, quantity: 1 }], pickupDate: tomorrow, pickupSlot: 'NOON',
+        deliveryDate: dayAfter, deliverySlot: 'EVENING', pickupAddressId: addressId, paymentMethod: 'COD',
+      }).expect(201);
+      await http.post(`/v1/admin/orders/${placed.body.id}/status`).set(bearer(PHONES.admin))
+        .send({ status: 'CANCELLED', note: 'Customer requested cancellation' }).expect(200);
+      const report = await http.post(`/v1/orders/${placed.body.id}/issues`).set(bearer(PHONES.customer))
+        .send({ category: 'BILLING', description: 'Please check the cancellation balance.' }).expect(201);
+      expect(report.body).toMatchObject({ orderId: placed.body.id, category: 'BILLING', status: 'OPEN' });
+    });
+  });
+
   describe('refunds', () => {
     // The main customer pays online in two goes for an order that is then cancelled.
     let onlineOrderId: string;
@@ -707,7 +877,8 @@ describe('Laundry API (e2e)', () => {
       expect(placed.body).toMatchObject({ totalPaise: 4000, refundedPaise: 0, refunds: [] });
       await payOnline(onlineOrderId, 'pay_refund_a');
       // Two more sarees counted; the customer pays the difference online.
-      await http.put(`/v1/admin/orders/${onlineOrderId}/items`).set(bearer(PHONES.admin)).send({ items: [{ catalogItemId: sareeId, quantity: 3 }] }).expect(200);
+      const proposed = await http.put(`/v1/admin/orders/${onlineOrderId}/items`).set(bearer(PHONES.admin)).send({ items: [{ catalogItemId: sareeId, quantity: 3 }] }).expect(200);
+      await http.post(`/v1/orders/${onlineOrderId}/adjustments/${proposed.body.adjustments[0].id}/approve`).set(bearer(PHONES.customer)).expect(200);
       await payOnline(onlineOrderId, 'pay_refund_b');
       const cancelled = await http
         .post(`/v1/admin/orders/${onlineOrderId}/status`)
@@ -1003,14 +1174,43 @@ describe('Laundry API (e2e)', () => {
       await http.get(`/v1/admin/customers/${googleCustomerId}`).set(bearer(PHONES.admin)).expect(200);
     });
 
-    it('takes the order once a verified number is stored, and gives the partner that number', async () => {
-      await prisma.user.update({ where: { id: googleCustomerId }, data: { phone: '+919777777777' } });
+    it('takes the order once they type a number, with no SMS code, and gives the partner that number', async () => {
+      const bad = await http.patch('/v1/me').set(google).send({ phone: '12345' }).expect(400);
+      expect(bad.body.code).toBe('INVALID_PHONE');
+
+      const saved = await http.patch('/v1/me').set(google).send({ phone: '97777 77777' }).expect(200);
+      expect(saved.body).toMatchObject({ phone: '+919777777777', phoneVerified: false });
+      // Kept apart from the unique sign-in number, so a mistyped number cannot take over someone else's account.
+      expect(await prisma.user.findUnique({ where: { phone: '+919777777777' } })).toBeNull();
+      expect((await http.get('/v1/me').set(google).expect(200)).body.phone).toBe('+919777777777');
+
       const placed = await http.post('/v1/orders').set(google).send(orderBody()).expect(201);
       expect(placed.body.pickupAddress.contactPhone).toBe('+919777777777');
       const detail = await http.get(`/v1/admin/orders/${placed.body.id}`).set(bearer(PHONES.admin)).expect(200);
       expect(detail.body.customer).toMatchObject({ id: googleCustomerId, phone: '+919777777777' });
+
+      const found = await http.get('/v1/admin/customers').set(bearer(PHONES.admin)).query({ search: '9777777777' }).expect(200);
+      expect(found.body.items.map((c: { id: string }) => c.id)).toEqual([googleCustomerId]);
+    });
+
+    it('lets two customers share a contact number, and keeps a code-verified number as it is', async () => {
+      await prisma.user.create({
+        data: { firebaseUid: 'dev-google-hari@example.com', phone: null, email: 'hari@example.com', name: 'Hari', role: 'CUSTOMER' },
+      });
+      const shared = await http
+        .patch('/v1/me')
+        .set({ Authorization: 'Bearer dev-google:hari@example.com' })
+        .send({ phone: '9777777777' })
+        .expect(200);
+      expect(shared.body.phone).toBe('+919777777777');
+
+      const swap = await http.patch('/v1/me').set(bearer(PHONES.customer)).send({ phone: '9777777777' }).expect(400);
+      expect(swap.body.code).toBe('PHONE_VERIFIED');
+      const verified = await prisma.user.findUniqueOrThrow({ where: { phone: `+91${PHONES.customer}` } });
+      expect(verified.contactPhone).toBeNull();
     });
   });
+
   describe('staff-run delivery, refunds due and the audit log', () => {
     const orderPath = (id: string) => `/v1/admin/orders/${id}`;
     const status = (id: string, body: Record<string, unknown>) => http.post(`${orderPath(id)}/status`).set(bearer(PHONES.admin)).send(body);

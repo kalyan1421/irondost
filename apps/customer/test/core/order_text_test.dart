@@ -1,14 +1,34 @@
 import 'package:flutter_test/flutter_test.dart';
 import 'package:irondost_customer/core/order_text.dart';
+import 'package:irondost_customer/core/quantities.dart';
 import 'package:irondost_customer/data/api_client.dart';
 
 import '../helpers.dart';
 
 void main() {
+  test('mixed quantities keep kilograms separate from garments, pairs and sets', () {
+    expect(quantitySummary([(ItemUnit.piece, 2), (ItemUnit.kg, 3), (ItemUnit.pair, 1), (ItemUnit.valueSet, 2)]), '2 items · 3 kg · 1 pair · 2 sets');
+  });
   OrderDto order({OrderStatus status = OrderStatus.pending, PaymentMethod method = PaymentMethod.cod, PaymentStatus paid = PaymentStatus.unpaid, int paidPaise = 0, int total = 24800, int refunded = 0}) =>
       testOrder(status: status, method: method, paymentStatus: paid, paidPaise: paidPaise, totalPaise: total, refundedPaise: refunded);
 
   group('paidHow', () {
+    test('a delivered COD order paid online stays online, and mixed records stay mixed', () {
+      final online = OrderPaymentDto(id: 'p', provider: PaymentProvider.razorpay, amountPaise: 10000, reference: 'pay_1', capturedAt: DateTime.utc(2026));
+      final cash = OrderPaymentDto(id: 'c', provider: PaymentProvider.cash, amountPaise: 14800, reference: null, capturedAt: DateTime.utc(2026));
+      expect(paidHow(testOrder(status: OrderStatus.delivered, payments: [online])), 'Paid online');
+      expect(paidHow(testOrder(payments: [online, cash])), 'Paid online and in cash');
+      expect(paidHow(testOrder(payments: [])), 'Payment received');
+    });
+    test('pending and failed refunds never count as completed', () {
+      RefundDto refund(RefundStatus state) => RefundDto(id: 'r', amountPaise: 24800, method: RefundMethod.bankTransfer,
+        status: state, note: 'Refund', createdAt: DateTime.utc(2026), processedAt: null, failureReason: null);
+      final pending = testOrder(status: OrderStatus.cancelled, paidPaise: 24800, refundedPaise: 24800, refunds: [refund(RefundStatus.pending)]);
+      expect(completedRefundPaise(pending), 0);
+      expect(settledNote(pending), 'Refund pending');
+      expect(refundSummary(pending), '₹248 refund pending.');
+      expect(completedRefundPaise(testOrder(refunds: [refund(RefundStatus.failed)])), 0);
+    });
     test('an online order was paid online', () => expect(paidHow(order(method: PaymentMethod.online, paid: PaymentStatus.paid, paidPaise: 24800)), 'Paid online'));
 
     test('a cash order paid before it was delivered was paid online, since cash is only taken at the door', () {

@@ -1,4 +1,9 @@
 abstract final class Routes {
+  static const issues = '/reports';
+  static const issueDetail = '/reports/:issueId';
+  static String issue(String id) => '/reports/$id';
+  static const reportProblem = '/order/:id/report';
+  static String report(String id) => '/order/$id/report';
   static const launch = '/launch';
   static const unavailable = '/unavailable';
   static const update = '/update';
@@ -8,9 +13,8 @@ abstract final class Routes {
   static const login = '/login';
   static const loginCode = '/login/code';
 
-  /// A Google customer adding a verified mobile number before their first booking (pops `true` when stored).
+  /// Typing the mobile number the pickup partner calls, at checkout or from the account (pops `true` when saved).
   static const addPhone = '/phone/add';
-  static const addPhoneCode = '/phone/add/code';
   static const setupName = '/setup/name';
   static const setupPin = '/setup/pin';
   static const setupDetails = '/setup/pin/details';

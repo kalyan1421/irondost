@@ -12,6 +12,7 @@ import 'package:irondost_customer/features/account/legal_screen.dart';
 import 'package:irondost_customer/features/account/account_repository.dart';
 import 'package:irondost_customer/features/addresses/address_repository.dart';
 import 'package:irondost_customer/features/addresses/addresses_screen.dart';
+import 'package:irondost_customer/features/auth/add_phone_screen.dart';
 import 'package:irondost_customer/features/auth/auth_repository.dart';
 import 'package:irondost_customer/features/auth/name_screen.dart';
 import 'package:irondost_customer/features/auth/phone_screen.dart';
@@ -97,7 +98,7 @@ void main() {
         ),
     'Welcome': (b, s) async => themedRouter(testRouter({Routes.welcome: () => const WelcomeScreen()}, initial: Routes.welcome), brightness: b, textScale: s),
     'Phone': (b, s) async => themed(const PhoneScreen(), overrides: [authRepositoryProvider.overrideWithValue(FakeAuth())], brightness: b, textScale: s),
-    'Add mobile number': (b, s) async => themed(const PhoneScreen(linking: true), overrides: [authRepositoryProvider.overrideWithValue(FakeAuth())], brightness: b, textScale: s),
+    'Add mobile number': (b, s) async => themed(const AddPhoneScreen(), overrides: [sessionProvider.overrideWith(_GoogleSession.new)], brightness: b, textScale: s),
     'Basket': (b, s) async => themed(
           const BasketScreen(),
           overrides: await basketOverrides(saved: {'basket.v1': '{"lines":{"shirt":10,"trousers":4,"saree":1},"promoCode":null}'}),
@@ -308,6 +309,12 @@ void main() {
 }
 
 /// Starts with the API unreachable, so the banner is showing.
+/// Signed in with Google: no mobile number yet.
+class _GoogleSession extends SessionController {
+  @override
+  Future<Session> build() async => const SignedIn(Profile(id: 'g1', name: 'Gina', email: 'gina@example.com', isComplete: true));
+}
+
 class _Offline extends Reachability {
   @override
   bool build() => false;

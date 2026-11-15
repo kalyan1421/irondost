@@ -24,6 +24,9 @@ export function ConfirmDialog({
   confirmLabel = "Confirm",
   destructive = false,
   onConfirm,
+  cancelLabel = 'Go back',
+  confirmDisabled = false,
+  onOpen,
 }: {
   trigger: React.ReactNode;
   title: string;
@@ -31,12 +34,15 @@ export function ConfirmDialog({
   confirmLabel?: string;
   destructive?: boolean;
   onConfirm: () => Promise<unknown> | void;
+  cancelLabel?: string;
+  confirmDisabled?: boolean;
+  onOpen?: () => void;
 }) {
   const [open, setOpen] = useState(false);
   const [busy, setBusy] = useState(false);
 
   return (
-    <AlertDialog open={open} onOpenChange={(o) => !busy && setOpen(o)}>
+    <AlertDialog open={open} onOpenChange={(o) => { if (!busy) { if (o) onOpen?.(); setOpen(o); } }}>
       <AlertDialogTrigger asChild>{trigger}</AlertDialogTrigger>
       <AlertDialogContent>
         <AlertDialogHeader>
@@ -44,9 +50,9 @@ export function ConfirmDialog({
           {description ? <AlertDialogDescription>{description}</AlertDialogDescription> : null}
         </AlertDialogHeader>
         <AlertDialogFooter>
-          <AlertDialogCancel disabled={busy}>Keep it</AlertDialogCancel>
+          <AlertDialogCancel disabled={busy}>{cancelLabel}</AlertDialogCancel>
           <AlertDialogAction
-            disabled={busy}
+            disabled={busy || confirmDisabled}
             className={destructive ? "bg-destructive text-white hover:bg-destructive/90" : undefined}
             onClick={async (e) => {
               e.preventDefault();

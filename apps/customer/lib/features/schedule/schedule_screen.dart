@@ -589,7 +589,7 @@ class _NothingOpen extends ConsumerWidget {
             IdButton.outline(
               label: 'Call ${IndianPhone.display(phone)}',
               icon: LucideIcons.phone,
-              onPressed: () => Support.dial(phone),
+              onPressed: () => Support.dial(phone, context: context),
             ),
           ],
         ),

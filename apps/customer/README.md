@@ -37,13 +37,16 @@ flutter run --dart-define-from-file=env/dev-firebase.json
 
 The welcome and mobile-number screens offer **Continue with Google**. A Google customer is signed up on the first use, with the
 name and email from Google, and has **no mobile number yet**. They can browse, build a basket and pick times. The first time they
-book (or from Account → Add mobile number) the app asks for a number, sends an SMS code, and links that verified number to the
-same Firebase account (`linkWithCredential`). The API reads the verified `phone_number` from the refreshed ID token and stores
-it; `POST /v1/orders` answers `PHONE_REQUIRED` until it is there, and `PHONE_IN_USE` if another customer already has the number.
-Accounts are never merged by email: a Google sign-in is a new account unless that Firebase user already exists.
+book (or from Account → Add mobile number) the app asks them to type a number the pickup partner can call. **There is no SMS
+code**: the app sends it with `PATCH /v1/me { phone }` and the API stores it in `users.contact_phone`, kept apart from the unique,
+verified `users.phone` that signs people in, so a mistyped number can never take over someone else's login. The number can be
+corrected later (checkout → Change, or Edit profile); `phoneVerified` in the user record says whether it signs the customer in.
+`POST /v1/orders` answers `PHONE_REQUIRED` until a number is there. A customer who signed in with a phone code keeps that verified
+number, which cannot be swapped here (`PHONE_VERIFIED`). Accounts are never merged by email: a Google sign-in is a new account
+unless that Firebase user already exists.
 
-In dev mode (`AUTH_MODE=dev`) the Google button signs in as `dev.customer@example.com` (token `dev-google:<email>`, with
-`dev-google:<email>:<phone>` once a number is added), so the whole flow works against a local API with `AUTH_DEV_BYPASS=true`.
+In dev mode (`AUTH_MODE=dev`) the Google button signs in as `dev.customer@example.com` (token `dev-google:<email>`), so the whole
+flow works against a local API with `AUTH_DEV_BYPASS=true`.
 
 The Google button shows a friendly message instead of opening Google until sign-in is set up for the build. To set it up:
 

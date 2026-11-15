@@ -68,6 +68,11 @@ export class RealtimeGateway implements OnGatewayConnection {
     this.server?.to(rooms).emit('order.updated', payload);
   }
 
+  @OnEvent(Events.IssueChanged)
+  onIssue(e: { customerId: string; orderId: string; issueId: string }): void {
+    this.server?.to([ADMIN_ROOM, userRoom(e.customerId)]).emit('issue.updated', { orderId: e.orderId, issueId: e.issueId });
+  }
+
   @OnEvent(Events.OrderCreated)
   onCreated(e: OrderCreatedEvent): void {
     this.toOrderParties(e, { orderId: e.orderId, orderNumber: e.orderNumber, status: e.status, reason: 'created' });

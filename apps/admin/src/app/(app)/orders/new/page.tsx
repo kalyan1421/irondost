@@ -4,12 +4,12 @@ import { keepPreviousData, useQuery } from "@tanstack/react-query";
 import { ArrowLeft, X } from "lucide-react";
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
-import { Suspense, useMemo, useState } from "react";
+import { Suspense, useEffect, useMemo, useState } from "react";
 import { PageBody, PageHeader } from "@/components/page";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { api, unwrap } from "@/lib/api/client";
+import { api, ApiError, unwrap } from "@/lib/api/client";
 import { useApiMutation } from "@/lib/api/mutation";
 import type { components } from "@/lib/api/schema";
 import type { PaymentMethod } from "@/lib/api/types";
@@ -24,15 +24,32 @@ import { OrderSummary, promoMessage } from "./_components/order-summary";
 import { INSTRUCTIONS_MAX, PaymentStep } from "./_components/payment-step";
 import { isBookable, ScheduleStep, type SlotChoice } from "./_components/schedule-step";
 import { Section } from "./_components/section";
+import { z } from "zod";
+import { useAuth } from "@/lib/auth/auth-provider";
+import { useUnsavedChanges } from "@/hooks/use-unsaved-changes";
+
+const slotSchema = z.object({ date: z.string(), slot: z.enum(["MORNING", "NOON", "EVENING"]), label: z.string() });
+const bodySchema = z.object({ customerId: z.uuid(), items: z.array(z.object({ catalogItemId: z.uuid(), quantity: z.number().int().min(1).max(500) })),
+  pickupAddressId: z.uuid(), pickupDate: z.string(), pickupSlot: z.enum(["MORNING", "NOON", "EVENING"]), deliveryDate: z.string(), deliverySlot: z.enum(["MORNING", "NOON", "EVENING"]),
+  paymentMethod: z.enum(["COD", "ONLINE"]), promoCode: z.string().optional(), instructions: z.string().optional() });
+const draftSchema = z.object({ version: z.literal(1), customerId: z.string().nullable(), addressChoice: z.string().nullable(), qty: z.record(z.string(), z.number().int().min(0).max(500)),
+  promo: z.string(), pickup: slotSchema.nullable(), delivery: slotSchema.nullable(), paymentMethod: z.enum(["COD", "ONLINE"]), instructions: z.string(), attemptKey: z.uuid(), submitted: bodySchema.nullable() });
 
 type PlaceOrderBody = components["schemas"]["AdminPlaceOrderDto"];
 
 const SLOT_DAYS = 7;
+const draftVersion = 1;
+
 
 function NewOrderForm() {
   const router = useRouter();
   const params = useSearchParams();
   const customerId = params.get("customer");
+  const { user } = useAuth();
+  const draftKey = `irondost.order.draft.${user?.id}`;
+  const [restored, setRestored] = useState(false);
+  const [submitted, setSubmitted] = useState<PlaceOrderBody | null>(null);
+  const [draftNotice, setDraftNotice] = useState("");
 
   const [addressChoice, setAddressChoice] = useState<string | null>(null);
   const [qty, setQty] = useState<Record<string, number>>({});
@@ -41,6 +58,35 @@ function NewOrderForm() {
   const [delivery, setDelivery] = useState<SlotChoice | null>(null);
   const [paymentMethod, setPaymentMethod] = useState<PaymentMethod>("COD");
   const [instructions, setInstructions] = useState("");
+  const [attemptKey, setAttemptKey] = useState(() => crypto.randomUUID());
+
+  useEffect(() => {
+    let active = true;
+    void Promise.resolve().then(() => {
+      if (!active) return;
+      try {
+        const saved = draftSchema.safeParse(JSON.parse(sessionStorage.getItem(draftKey) ?? "null"));
+        // A draft for another customer must not hijack a link that opened this form for someone else, unless it holds an unconfirmed submission.
+        if (saved.success && (!customerId || saved.data.customerId === customerId || saved.data.submitted)) {
+          const d = saved.data;
+          setAddressChoice(d.addressChoice); setQty(d.qty); setPromo(d.promo); setPickup(d.pickup); setDelivery(d.delivery);
+          setPaymentMethod(d.paymentMethod); setInstructions(d.instructions); setAttemptKey(d.attemptKey); setSubmitted(d.submitted);
+          setDraftNotice("Your draft was restored in this tab. Review it before continuing.");
+          if (d.customerId !== customerId) router.replace(d.customerId ? `/orders/new?customer=${d.customerId}` : "/orders/new", { scroll: false });
+        }
+      } catch { setDraftNotice("Draft recovery is unavailable. Keep this tab open until the order is confirmed."); }
+      setRestored(true);
+    });
+    return () => { active = false; };
+    // Restore once when this signed-in form mounts; customer changes are handled below.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [draftKey]);
+  const draft = { version: draftVersion, customerId, addressChoice, qty, promo, pickup, delivery, paymentMethod, instructions, attemptKey, submitted };
+  const serializedDraft = JSON.stringify(draft);
+  useEffect(() => {
+    if (!restored) return;
+    try { sessionStorage.setItem(draftKey, serializedDraft); } catch { /* The leave guard still protects this tab. */ }
+  }, [draftKey, serializedDraft, restored]);
 
   // ── Customer and address ──
   const customer = useCustomer(customerId);
@@ -50,7 +96,13 @@ function NewOrderForm() {
   const address = addressList.find((a) => a.id === addressChoice) ?? addressList.find((a) => a.isPrimary) ?? addressList[0];
 
   function selectCustomer(id: string | null) {
+    if (id === customerId) return;
+    if (submitted || place.isPending) return;
+    if ((Object.values(qty).some((n) => n > 0) || instructions || promo || pickup) && !window.confirm('Start a new order for a different customer? This clears the current items, instructions and times.')) return;
     setAddressChoice(null);
+    setQty({}); setPromo(''); setPickup(null); setDelivery(null); setInstructions(''); setPaymentMethod('COD');
+    setAttemptKey(crypto.randomUUID());
+    setDraftNotice('New order started. The previous customer details were cleared.');
     router.replace(id ? `/orders/new?customer=${id}` : "/orders/new", { scroll: false });
   }
 
@@ -97,12 +149,13 @@ function NewOrderForm() {
   const deliveryOk = isBookable(delivery, deliverySlots.data);
 
   // ── Placing ──
-  const place = useApiMutation((body: PlaceOrderBody) => unwrap(api.POST("/v1/admin/orders", { body })), {
+  const place = useApiMutation(({ body, key }: { body: PlaceOrderBody; key: string }) => unwrap(api.POST("/v1/admin/orders", { body, headers: { 'Idempotency-Key': key } })), {
     invalidate: [["orders"], ["dashboard"], ["customers"]],
     success: (o) => `Order ${o.orderNumber} placed`,
-    onSuccess: (o) => router.push(`/orders/${o.id}`),
+    onSuccess: (o) => { try { sessionStorage.removeItem(draftKey); } catch {} router.push(`/orders/${o.id}`); },
   });
 
+  useUnsavedChanges(!place.isSuccess && (Boolean(submitted) || Object.values(qty).some((n) => n > 0) || Boolean(instructions || promo || pickup)));
   const c = customer.data;
   const missing: string[] = [];
   if (!customerId) missing.push("Choose a customer");
@@ -113,7 +166,7 @@ function NewOrderForm() {
   if (!deliveryOk) missing.push("Choose a delivery slot");
 
   const canPlace =
-    missing.length === 0 &&
+    restored && !submitted && missing.length === 0 &&
     Boolean(c?.isActive && address) &&
     quoteCurrent &&
     quote.data?.canPlaceOrder === true &&
@@ -121,31 +174,25 @@ function NewOrderForm() {
     !place.isPending &&
     !place.isSuccess;
 
+  function send(body: PlaceOrderBody, key: string) {
+    place.mutate({ body, key }, { onError: (error) => {
+      // A transport/5xx failure may have committed. Keep the exact body and key locked for replay.
+      // The API replays a committed attempt before it validates, so a 4xx on any attempt (including a retry) means no order exists.
+      if (error instanceof ApiError && error.status >= 400 && error.status < 500 && error.code !== "IDEMPOTENCY_KEY_REUSED") {
+        setSubmitted(null); setAttemptKey(crypto.randomUUID());
+        void pickupSlots.refetch(); if (pickup) void deliverySlots.refetch(); void quote.refetch();
+      }
+    } });
+  }
   function submit() {
     if (!canPlace || !customerId || !address || !pickup || !delivery) return;
     const note = instructions.trim();
-    place.mutate(
-      {
-        customerId,
-        items: lines,
-        ...(promoCode ? { promoCode } : {}),
-        pickupDate: pickup.date,
-        pickupSlot: pickup.slot,
-        deliveryDate: delivery.date,
-        deliverySlot: delivery.slot,
-        pickupAddressId: address.id,
-        paymentMethod,
-        ...(note ? { instructions: note } : {}),
-      },
-      {
-        // Slots, prices or promo limits may have changed since the form was filled in.
-        onError: () => {
-          void pickupSlots.refetch();
-          if (pickup) void deliverySlots.refetch();
-          void quote.refetch();
-        },
-      },
-    );
+    const body: PlaceOrderBody = { customerId, items: lines, ...(promoCode ? { promoCode } : {}), pickupDate: pickup.date, pickupSlot: pickup.slot,
+      deliveryDate: delivery.date, deliverySlot: delivery.slot, pickupAddressId: address.id, paymentMethod, ...(note ? { instructions: note } : {}) };
+    // Write the intent before sending so a page reload can retry the same request.
+    try { sessionStorage.setItem(draftKey, JSON.stringify({ ...draft, submitted: body })); }
+    catch { setDraftNotice("Draft saving is unavailable. Keep this tab open until the order is confirmed."); }
+    setSubmitted(body); send(body, attemptKey);
   }
 
   // ── Promo status, next to the field ──
@@ -171,8 +218,16 @@ function NewOrderForm() {
     <>
       <PageHeader back={back} title="New order" description="Book a pickup for a customer who called in." />
       <PageBody>
+        {draftNotice ? <p role="status" className="text-sm text-muted-foreground">{draftNotice}</p> : null}
+        {submitted && !place.isSuccess ? <div role="status" className="grid gap-3 rounded-lg border border-warning/50 bg-warning/5 p-4">
+          <p className="font-medium">{place.isPending ? "Confirming this order…" : "This order has not been confirmed in this tab."}</p>
+          <p className="text-sm">Retry sends the same order with the same submission key. If it was already created, you will open that order. Keep the details unchanged until this is resolved.</p>
+          <Button className="justify-self-start" disabled={place.isPending} onClick={() => send(submitted, attemptKey)}>{place.isPending ? "Checking…" : "Retry same order"}</Button>
+          <Link href="/orders" className="text-sm underline">Review existing orders</Link>
+        </div> : null}
         <div className="grid items-start gap-6 lg:grid-cols-[minmax(0,1fr)_20rem] xl:grid-cols-[minmax(0,1fr)_24rem]">
-          <div className="flex min-w-0 flex-col gap-6">
+          <fieldset disabled={!restored || Boolean(submitted) || place.isPending || place.isSuccess} className="flex min-w-0 flex-col gap-6">
+            <legend className="sr-only">New order details</legend>
             <Section step={1} title="Customer" done={Boolean(c?.isActive)}>
               <CustomerStep customer={customer} customerId={customerId} onSelect={selectCustomer} />
             </Section>
@@ -255,7 +310,7 @@ function NewOrderForm() {
                 onInstructions={setInstructions}
               />
             </Section>
-          </div>
+          </fieldset>
 
           <div className="min-w-0 lg:sticky lg:top-4">
             <OrderSummary

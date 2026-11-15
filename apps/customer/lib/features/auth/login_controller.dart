@@ -15,8 +15,6 @@ class LoginState {
     this.googleBusy = false,
     this.error,
     this.resendAt,
-    this.link = false,
-    this.linked = false,
   });
 
   /// 10-digit national number.
@@ -27,12 +25,6 @@ class LoginState {
   /// The Google account picker or sign-in is running.
   final bool googleBusy;
   final AuthFailureKind? error;
-
-  /// The code adds a number to the signed-in (Google) account instead of signing in.
-  final bool link;
-
-  /// The number was verified and the API has stored it (only in [link] mode).
-  final bool linked;
 
   /// When "Resend code" becomes available.
   final DateTime? resendAt;
@@ -46,7 +38,6 @@ class LoginState {
     bool? googleBusy,
     Object? error = _keep,
     Object? resendAt = _keep,
-    bool? linked,
   }) =>
       LoginState(
         phone: phone ?? this.phone,
@@ -55,15 +46,12 @@ class LoginState {
         googleBusy: googleBusy ?? this.googleBusy,
         error: identical(error, _keep) ? this.error : error as AuthFailureKind?,
         resendAt: identical(resendAt, _keep) ? this.resendAt : resendAt as DateTime?,
-        link: link,
-        linked: linked ?? this.linked,
       );
 }
 
 final loginProvider = NotifierProvider<LoginController, LoginState>(LoginController.new);
 
-/// Phone → SMS code → session, or Google → session. Also adds a verified number to a Google customer ([LoginState.link]).
-/// Screens read [LoginState] and call these methods.
+/// Phone → SMS code → session, or Google → session. Screens read [LoginState] and call these methods.
 class LoginController extends Notifier<LoginState> {
   static const resendDelay = Duration(seconds: 30);
 
@@ -72,18 +60,17 @@ class LoginController extends Notifier<LoginState> {
 
   AuthRepository get _auth => ref.read(authRepositoryProvider);
 
-  /// Returns true when the code screen should open (code sent, or the number is locked). In [link] mode, when Android read the
-  /// code itself the number is already stored, [LoginState.linked] is set and the caller should finish instead.
-  Future<bool> sendCode(String phone, {bool link = false}) async {
+  /// Returns true when the code screen should open (code sent, or the number is locked).
+  Future<bool> sendCode(String phone) async {
     if (!IndianPhone.isValid(phone)) {
-      state = LoginState(phone: phone, link: link, error: AuthFailureKind.invalidNumber);
+      state = LoginState(phone: phone, error: AuthFailureKind.invalidNumber);
       return false;
     }
-    state = LoginState(phone: phone, busy: true, link: link);
+    state = LoginState(phone: phone, busy: true);
     try {
-      final challenge = await _auth.sendCode(phone, onAutoVerified: _autoVerified, link: link);
+      final challenge = await _auth.sendCode(phone, onAutoVerified: _autoVerified);
       state = state.copyWith(challenge: challenge, busy: false, resendAt: DateTime.now().add(resendDelay));
-      if (challenge.autoVerified) await _finish(challenge);
+      if (challenge.autoVerified) await _finish();
       return true;
     } on AuthFailure catch (f) {
       state = state.copyWith(busy: false, error: f.kind);
@@ -110,29 +97,12 @@ class LoginController extends Notifier<LoginState> {
     }
   }
 
-  /// A Google account that already has a verified number (added earlier, but the API did not hear about it) only needs the API
-  /// to read the refreshed token. Returns true when that was enough and there is nothing to type.
-  Future<bool> syncLinkedPhone() async {
-    if (!await _auth.hasVerifiedPhone()) return false;
-    try {
-      await _auth.token(forceRefresh: true);
-      await ref.read(sessionProvider.notifier).phoneLinked();
-      state = state.copyWith(linked: true);
-      return true;
-    } on AuthFailure catch (f) {
-      state = state.copyWith(error: f.kind);
-      return false;
-    } on ApiFailure {
-      return false;
-    }
-  }
-
   Future<void> resend() async {
     final previous = state.challenge;
     if (previous == null || state.busy) return;
     state = state.copyWith(busy: true, error: null);
     try {
-      final challenge = await _auth.sendCode(state.phone, resendOf: previous, onAutoVerified: _autoVerified, link: state.link);
+      final challenge = await _auth.sendCode(state.phone, resendOf: previous, onAutoVerified: _autoVerified);
       state = state.copyWith(challenge: challenge, busy: false, resendAt: DateTime.now().add(resendDelay));
     } on AuthFailure catch (f) {
       state = state.copyWith(busy: false, error: f.kind);
@@ -145,7 +115,7 @@ class LoginController extends Notifier<LoginState> {
     state = state.copyWith(busy: true, error: null);
     try {
       await _auth.confirmCode(challenge, code);
-      await _finish(challenge);
+      await _finish();
       state = state.copyWith(busy: false);
     } on AuthFailure catch (f) {
       state = state.copyWith(busy: false, error: f.kind);
@@ -154,28 +124,19 @@ class LoginController extends Notifier<LoginState> {
     }
   }
 
-  /// The code was accepted: start the session, or (adding a number) have the API store it.
-  Future<void> _finish(PhoneChallenge challenge) async {
-    final session = ref.read(sessionProvider.notifier);
-    if (challenge.link) {
-      await session.phoneLinked();
-      state = state.copyWith(linked: true);
-    } else {
-      await session.signedIn();
-    }
-  }
+  /// The code was accepted: start the session.
+  Future<void> _finish() => ref.read(sessionProvider.notifier).signedIn();
 
   void clearError() {
     if (state.error != null) state = state.copyWith(error: null);
   }
 
   /// Start over with another number.
-  void reset() => state = LoginState(phone: state.phone, link: state.link);
+  void reset() => state = LoginState(phone: state.phone);
 
   Future<void> _autoVerified() async {
-    final challenge = state.challenge;
     try {
-      await _finish(challenge ?? PhoneChallenge(phone: state.phone, verificationId: '', link: state.link));
+      await _finish();
     } on AuthFailure catch (f) {
       state = state.copyWith(error: f.kind);
     } on ApiFailure {

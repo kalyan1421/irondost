@@ -8,6 +8,8 @@ part of 'order_dto.dart';
 
 OrderDto _$OrderDtoFromJson(Map<String, dynamic> json) => OrderDto(
   instructions: json['instructions'] as String?,
+  updatedAt: DateTime.parse(json['updatedAt'] as String),
+  id: json['id'] as String,
   orderNumber: json['orderNumber'] as String,
   status: OrderStatus.fromJson(json['status'] as String),
   source: OrderSource.fromJson(json['source'] as String),
@@ -23,7 +25,7 @@ OrderDto _$OrderDtoFromJson(Map<String, dynamic> json) => OrderDto(
   deliveryAddress: OrderAddressDto.fromJson(
     json['deliveryAddress'] as Map<String, dynamic>,
   ),
-  id: json['id'] as String,
+  createdAt: DateTime.parse(json['createdAt'] as String),
   items: (json['items'] as List<dynamic>)
       .map((e) => OrderItemDto.fromJson(e as Map<String, dynamic>))
       .toList(),
@@ -33,11 +35,15 @@ OrderDto _$OrderDtoFromJson(Map<String, dynamic> json) => OrderDto(
   totalPaise: json['totalPaise'] as num,
   paidPaise: json['paidPaise'] as num,
   refundedPaise: json['refundedPaise'] as num,
-  updatedAt: DateTime.parse(json['updatedAt'] as String),
+  cancelledAt: json['cancelledAt'] == null
+      ? null
+      : DateTime.parse(json['cancelledAt'] as String),
   amountDuePaise: json['amountDuePaise'] as num,
   promoCode: json['promoCode'] as String?,
   paymentMethod: PaymentMethod.fromJson(json['paymentMethod'] as String),
-  createdAt: DateTime.parse(json['createdAt'] as String),
+  deliveredAt: json['deliveredAt'] == null
+      ? null
+      : DateTime.parse(json['deliveredAt'] as String),
   customer: json['customer'] == null
       ? null
       : PersonRefDto.fromJson(json['customer'] as Map<String, dynamic>),
@@ -57,23 +63,26 @@ OrderDto _$OrderDtoFromJson(Map<String, dynamic> json) => OrderDto(
   pickedUpAt: json['pickedUpAt'] == null
       ? null
       : DateTime.parse(json['pickedUpAt'] as String),
-  deliveredAt: json['deliveredAt'] == null
-      ? null
-      : DateTime.parse(json['deliveredAt'] as String),
-  cancelledAt: json['cancelledAt'] == null
-      ? null
-      : DateTime.parse(json['cancelledAt'] as String),
   paymentStatus: PaymentStatus.fromJson(json['paymentStatus'] as String),
   refundablePaise: json['refundablePaise'] as num?,
+  revision: json['revision'] as num?,
+  adjustments: (json['adjustments'] as List<dynamic>?)
+      ?.map((e) => OrderAdjustmentDto.fromJson(e as Map<String, dynamic>))
+      .toList(),
   events: (json['events'] as List<dynamic>?)
       ?.map((e) => OrderEventDto.fromJson(e as Map<String, dynamic>))
       .toList(),
   refunds: (json['refunds'] as List<dynamic>?)
       ?.map((e) => RefundDto.fromJson(e as Map<String, dynamic>))
       .toList(),
+  payments: (json['payments'] as List<dynamic>?)
+      ?.map((e) => OrderPaymentDto.fromJson(e as Map<String, dynamic>))
+      .toList(),
 );
 
 Map<String, dynamic> _$OrderDtoToJson(OrderDto instance) => <String, dynamic>{
+  'revision': instance.revision,
+  'adjustments': instance.adjustments,
   'id': instance.id,
   'orderNumber': instance.orderNumber,
   'status': instance.status,
@@ -112,4 +121,5 @@ Map<String, dynamic> _$OrderDtoToJson(OrderDto instance) => <String, dynamic>{
   'updatedAt': instance.updatedAt.toIso8601String(),
   'events': instance.events,
   'refunds': instance.refunds,
+  'payments': instance.payments,
 };

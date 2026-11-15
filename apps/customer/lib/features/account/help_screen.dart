@@ -70,14 +70,14 @@ class HelpScreen extends ConsumerWidget {
                 icon: LucideIcons.phone,
                 title: 'Call us',
                 detail: IndianPhone.display(support.phone),
-                onTap: () => Support.dial(support.phone),
+                onTap: () => Support.dial(support.phone, context: context, fallback: support),
               ),
               if (support.email != null)
                 _ContactRow(
                   icon: LucideIcons.mail,
                   title: 'Email us',
                   detail: support.email!,
-                  onTap: () => Support.mail(support.email!),
+                  onTap: () => Support.mail(support.email!, context: context, fallback: support),
                 ),
             ],
           ),

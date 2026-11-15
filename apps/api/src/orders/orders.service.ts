@@ -1,12 +1,14 @@
 import { createHash } from 'node:crypto';
-import { Inject, Injectable } from '@nestjs/common';
+import { Inject, Injectable, Logger, OnModuleInit, Optional } from '@nestjs/common';
 import { EventEmitter2 } from '@nestjs/event-emitter';
 import { formatAddress } from '../addresses/address.dto.js';
 import { AddressesService } from '../addresses/addresses.service.js';
+import { JobScheduler } from '../jobs/job-scheduler.js';
 import { Clock } from '../common/clock.js';
 import { AppError } from '../common/errors.js';
 import { pageArgs, type Page } from '../common/pagination.js';
-import { toDbDate } from '../common/time.js';
+import { customerPhone } from '../common/phone.js';
+import { addDays, istDate, istInstant, slotEnd, SLOT_ORDER, toDbDate } from '../common/time.js';
 import { APP_ENV } from '../config/config.module.js';
 import type { Env } from '../config/env.js';
 import {
@@ -33,7 +35,18 @@ export const ORDER_INCLUDE = {
   customer: true,
   pickupDriver: true,
   deliveryDriver: true,
+  adjustments: { orderBy: { createdAt: 'desc' } },
+  payments: { where: { status: 'CAPTURED' }, orderBy: { createdAt: 'asc' } },
   refunds: { orderBy: { createdAt: 'asc' }, include: { createdBy: { select: { id: true, name: true } } } },
+} as const satisfies Prisma.OrderInclude;
+
+/**
+ * For lists: only the newest price request. A pending one is always the newest (a new request waits for the decision), and
+ * a list row needs no more than that, so the item snapshots of older requests are not read for every order on the page.
+ */
+export const ORDER_LIST_INCLUDE = {
+  ...ORDER_INCLUDE,
+  adjustments: { orderBy: { createdAt: 'desc' }, take: 1 },
 } as const satisfies Prisma.OrderInclude;
 
 export interface TransitionActor {
@@ -78,7 +91,8 @@ export function orderRef(o: Order): OrderRef {
 }
 
 @Injectable()
-export class OrdersService {
+export class OrdersService implements OnModuleInit {
+  private readonly logger = new Logger(OrdersService.name);
   constructor(
     private readonly prisma: PrismaService,
     private readonly settings: SettingsService,
@@ -86,7 +100,15 @@ export class OrdersService {
     private readonly events: EventEmitter2,
     private readonly clock: Clock,
     @Inject(APP_ENV) private readonly env: Env,
+    @Optional() private readonly jobs?: JobScheduler,
   ) {}
+
+  async onModuleInit(): Promise<void> {
+    if (!this.jobs) return;
+    this.jobs.register<{ adjustmentId: string }>('adjustments-expire', (data) => this.expireAdjustment(data.adjustmentId));
+    const pending = await this.prisma.orderAdjustment.findMany({ where: { status: 'PENDING_CUSTOMER' }, select: { id: true, expiresAt: true } });
+    for (const request of pending) await this.jobs.schedule('adjustments-expire', { adjustmentId: request.id }, { startAfter: request.expiresAt, jobId: request.id });
+  }
 
   // ───────────── Pricing ─────────────
 
@@ -185,9 +207,9 @@ export class OrdersService {
     }
 
     const customer = await this.activeCustomer(customerId);
-    // A customer who signed in with Google has no number until they verify one; the pickup partner needs it.
-    if (!customer.phone) {
-      throw AppError.badRequest('PHONE_REQUIRED', 'Add and verify your mobile number to place an order');
+    // A customer who signed in with Google has no number until they add one; the pickup partner needs it.
+    if (!customerPhone(customer)) {
+      throw AppError.badRequest('PHONE_REQUIRED', 'Add your mobile number to place an order');
     }
 
     const settings = await this.settings.get();
@@ -316,7 +338,7 @@ export class OrdersService {
     const [items, total] = await Promise.all([
       this.prisma.order.findMany({
         where,
-        include: ORDER_INCLUDE,
+        include: ORDER_LIST_INCLUDE,
         orderBy: { createdAt: 'desc' },
         ...pageArgs({ page, pageSize }),
       }),
@@ -331,6 +353,9 @@ export class OrdersService {
       include: { ...ORDER_INCLUDE, events: { orderBy: { createdAt: 'asc' } } },
     });
     if (!order) throw AppError.notFound('Order');
+    if (order.adjustments.some((a) => a.status === 'PENDING_CUSTOMER' && a.expiresAt <= this.clock.now())) {
+      return this.getById(id);
+    }
     return order;
   }
 
@@ -368,6 +393,7 @@ export class OrdersService {
   }
 
   async getById(id: string): Promise<OrderWithRelations> {
+    await this.expireOrderAdjustments(id);
     const order = await this.prisma.order.findUnique({
       where: { id },
       include: { ...ORDER_INCLUDE, events: { orderBy: { createdAt: 'asc' } } },
@@ -381,6 +407,16 @@ export class OrdersService {
     const refundDueIds = q.refundDue ? await refundDueOrderIds(this.prisma) : null;
     const where: Prisma.OrderWhereInput = {
       ...(refundDueIds ? { id: { in: refundDueIds } } : {}),
+      ...(q.excludeCancelled ? { NOT: { status: OrderStatus.CANCELLED } } : {}),
+      ...(q.approvalPending ? { adjustments: { some: { status: 'PENDING_CUSTOMER', expiresAt: { gt: this.clock.now() } } } } : {}),
+      ...(q.unpaid ? { paidPaise: { lt: this.prisma.order.fields.totalPaise } } : {}),
+      ...(q.createdFrom || q.createdTo ? { createdAt: {
+        ...(q.createdFrom ? { gte: istInstant(q.createdFrom, 0) } : {}),
+        ...(q.createdTo ? { lt: istInstant(addDays(q.createdTo, 1), 0) } : {}),
+      } } : {}),
+      ...(q.deliveryFrom || q.deliveryTo ? { deliveryDate: {
+        ...(q.deliveryFrom ? { gte: toDbDate(q.deliveryFrom) } : {}), ...(q.deliveryTo ? { lte: toDbDate(q.deliveryTo) } : {}),
+      } } : {}),
       ...(q.status?.length ? { status: { in: q.status } } : {}),
       ...(q.customerId ? { customerId: q.customerId } : {}),
       ...(q.driverId ? { OR: [{ pickupDriverId: q.driverId }, { deliveryDriverId: q.driverId }] } : {}),
@@ -400,6 +436,7 @@ export class OrdersService {
                 OR: [
                   { orderNumber: { contains: search, mode: 'insensitive' } },
                   { customer: { phone: { contains: search.replace(/\s/g, '') } } },
+                  { customer: { contactPhone: { contains: search.replace(/\s/g, '') } } },
                   { customer: { name: { contains: search, mode: 'insensitive' } } },
                 ],
               },
@@ -407,8 +444,16 @@ export class OrdersService {
           }
         : {}),
     };
+    if (q.overdue) {
+      const now = this.clock.now(); const today = istDate(now);
+      const pickup = q.overdue === 'pickup'; const dateKey = pickup ? 'pickupDate' : 'deliveryDate'; const slotKey = pickup ? 'pickupSlot' : 'deliverySlot';
+      const condition: Prisma.OrderWhereInput = { status: { in: pickup ? [OrderStatus.PENDING, OrderStatus.PICKUP_ASSIGNED]
+        : [OrderStatus.PICKED_UP, OrderStatus.PROCESSING, OrderStatus.READY_FOR_DELIVERY, OrderStatus.DELIVERY_ASSIGNED, OrderStatus.OUT_FOR_DELIVERY] },
+        OR: [{ [dateKey]: { lt: toDbDate(today) } }, ...SLOT_ORDER.filter((slot) => slotEnd(today, slot) <= now).map((slot) => ({ [dateKey]: toDbDate(today), [slotKey]: slot }))] };
+      where.AND = [...(Array.isArray(where.AND) ? where.AND : where.AND ? [where.AND] : []), condition];
+    }
     const [items, total] = await Promise.all([
-      this.prisma.order.findMany({ where, include: ORDER_INCLUDE, orderBy: { createdAt: 'desc' }, ...pageArgs(q) }),
+      this.prisma.order.findMany({ where, include: ORDER_LIST_INCLUDE, orderBy: { createdAt: 'desc' }, ...pageArgs(q) }),
       this.prisma.order.count({ where }),
     ]);
     return { items, page: q.page, pageSize: q.pageSize, total };
@@ -427,6 +472,8 @@ export class OrdersService {
     actor: TransitionActor,
     opts: TransitionOptions = {},
   ): Promise<OrderWithRelations> {
+    // An elapsed price request must not block pickup or delivery just because its expiry job has not run yet.
+    await this.expireOrderAdjustments(orderId);
     const before = await this.prisma.order.findUnique({ where: { id: orderId } });
     if (!before) throw AppError.notFound('Order');
     if (!canTransition(before.status, to, actor.kind)) {
@@ -477,6 +524,11 @@ export class OrdersService {
       if (res.count === 0) {
         throw AppError.conflict('ORDER_CHANGED', 'The order was just updated by someone else. Refresh and try again.');
       }
+      if (['PICKED_UP', 'READY_FOR_DELIVERY', 'OUT_FOR_DELIVERY', 'DELIVERED'].includes(to) &&
+        await tx.orderAdjustment.findFirst({ where: { orderId, status: 'PENDING_CUSTOMER' } })) {
+        throw AppError.conflict('APPROVAL_PENDING', 'The customer must decide the proposed total before this step.');
+      }
+      if (to === OrderStatus.CANCELLED) await tx.orderAdjustment.updateMany({ where: { orderId, status: 'PENDING_CUSTOMER' }, data: { status: 'EXPIRED', decidedAt: now } });
       await tx.orderEvent.create({
         data: {
           orderId,
@@ -532,70 +584,135 @@ export class OrdersService {
     return order;
   }
 
-  // ───────────── Editing items ─────────────
+  // ───────────── Item changes and customer consent ─────────────
 
-  /** Replaces line items (e.g. after counting clothes at pickup) and reprices the order. */
-  async updateItems(orderId: string, lines: OrderLineInput[], actor: TransitionActor, note?: string): Promise<OrderWithRelations> {
-    const order = await this.prisma.order.findUnique({ where: { id: orderId }, include: { promotion: true } });
+  private async editQuote(orderId: string, lines: OrderLineInput[], expectedRevision?: number) {
+    await this.expireOrderAdjustments(orderId);
+    const order = await this.prisma.order.findUnique({ where: { id: orderId }, include: { ...ORDER_INCLUDE, promotion: true } });
     if (!order) throw AppError.notFound('Order');
-    if (!ITEMS_EDITABLE.includes(order.status)) {
-      throw AppError.conflict('ITEMS_LOCKED', 'Items can no longer be changed for this order');
+    if (!ITEMS_EDITABLE.includes(order.status)) throw AppError.conflict('ITEMS_LOCKED', 'Items can no longer be changed for this order');
+    if (expectedRevision !== undefined && expectedRevision !== order.revision) throw AppError.conflict('ORDER_CHANGED', 'This bill changed. Refresh and compare your draft before saving.');
+    const quantities = new Map<string, number>();
+    for (const line of lines) {
+      const quantity = (quantities.get(line.catalogItemId) ?? 0) + line.quantity;
+      if (quantity > 500) throw AppError.badRequest('QUANTITY_LIMIT', 'Use no more than 500 of one item');
+      quantities.set(line.catalogItemId, quantity);
     }
-
-    // Reprice with today's catalogue prices, the order's original promotion and delivery fee.
-    const priced = computeQuote(
-      await this.pricingLines(lines),
-      { minOrderPaise: 0, deliveryFeePaise: order.deliveryFeePaise, freeDeliveryAbovePaise: null },
-      order.promotion,
-    );
-
-    const updated = await this.prisma.$transaction(async (tx) => {
-      const res = await tx.order.updateMany({
-        where: { id: orderId, status: order.status },
-        data: {
-          subtotalPaise: priced.subtotalPaise,
-          discountPaise: priced.discountPaise,
-          totalPaise: priced.totalPaise,
-          paymentStatus: paymentStatusFor(priced.totalPaise, order.paidPaise, order.refundedPaise),
-        },
-      });
-      if (res.count === 0) throw AppError.conflict('ORDER_CHANGED', 'The order was just updated. Refresh and try again.');
-      await tx.orderItem.deleteMany({ where: { orderId } });
-      await tx.orderItem.createMany({
-        data: priced.lines.map((l) => ({
-          orderId,
-          catalogItemId: l.catalogItemId,
-          name: l.name,
-          unit: l.unit,
-          unitPricePaise: l.unitPricePaise,
-          quantity: l.quantity,
-          lineTotalPaise: l.lineTotalPaise,
-        })),
-      });
-      await tx.orderEvent.create({
-        data: {
-          orderId,
-          fromStatus: order.status,
-          toStatus: order.status,
-          actorId: actor.id,
-          actorRole: actor.role,
-          note: note?.trim() || `Items updated, new total ₹${(priced.totalPaise / 100).toFixed(2)}`,
-        },
-      });
-      return tx.order.findUniqueOrThrow({ where: { id: orderId }, include: ORDER_INCLUDE });
-    });
-
-    this.events.emit(Events.OrderUpdated, {
-      ...orderRef(updated),
-      reason: 'items_changed',
-      previousTotalPaise: order.totalPaise,
-      totalPaise: updated.totalPaise,
-      paidPaise: updated.paidPaise,
-      refundedPaise: updated.refundedPaise,
-      actorRole: actor.role,
-    } satisfies OrderUpdatedEvent);
-    return updated;
+    const existing = new Map(order.items.filter((i) => i.catalogItemId).map((i) => [i.catalogItemId!, i]));
+    const added = await this.pricingLines([...quantities].filter(([id]) => !existing.has(id)).map(([catalogItemId, quantity]) => ({ catalogItemId, quantity })));
+    const current = new Map(added.map((i) => [i.catalogItemId, i]));
+    const priced = computeQuote([...quantities].map(([id, quantity]) => {
+      const item = existing.get(id) ?? current.get(id)!;
+      return { catalogItemId: id, name: item.name, unit: item.unit, unitPricePaise: item.unitPricePaise, quantity };
+    }), { minOrderPaise: 0, deliveryFeePaise: order.deliveryFeePaise, freeDeliveryAbovePaise: null }, order.promotion);
+    return { order, priced };
   }
+
+  async previewItems(orderId: string, lines: OrderLineInput[], expectedRevision?: number) {
+    const { order, priced } = await this.editQuote(orderId, lines, expectedRevision);
+    return { revision: order.revision, oldTotalPaise: order.totalPaise, newTotalPaise: priced.totalPaise,
+      subtotalPaise: priced.subtotalPaise, discountPaise: priced.discountPaise, deliveryFeePaise: priced.deliveryFeePaise,
+      lines: priced.lines, requiresApproval: priced.totalPaise > order.totalPaise };
+  }
+
+  private async writeItemLines(tx: Tx, order: Pick<Order, 'id' | 'status'>, lines: PricingLine[], actor: TransitionActor, note: string) {
+    await tx.orderItem.deleteMany({ where: { orderId: order.id } });
+    await tx.orderItem.createMany({ data: lines.map((l) => ({ orderId: order.id, ...l, lineTotalPaise: l.unitPricePaise * l.quantity })) });
+    await tx.orderEvent.create({ data: { orderId: order.id, fromStatus: order.status, toStatus: order.status, actorId: actor.id, actorRole: actor.role, note } });
+  }
+
+  async updateItems(orderId: string, lines: OrderLineInput[], actor: TransitionActor, note?: string, expectedRevision?: number): Promise<OrderWithRelations> {
+    const { order, priced } = await this.editQuote(orderId, lines, expectedRevision);
+    const increase = priced.totalPaise > order.totalPaise;
+    if (increase && !actor.id) throw AppError.badRequest('ACTOR_REQUIRED', 'A staff member or assigned partner must request the change');
+    const settings = increase ? await this.settings.get() : null;
+    const now = this.clock.now();
+    const result = await this.prisma.$transaction(async (tx) => {
+      // Updating the revision locks the row. A second editor cannot replace the same accepted revision.
+      const changed = await tx.order.updateMany({ where: { id: orderId, revision: order.revision, status: order.status,
+        paidPaise: order.paidPaise, refundedPaise: order.refundedPaise }, data: { revision: { increment: 1 },
+        ...(!increase ? { subtotalPaise: priced.subtotalPaise, discountPaise: priced.discountPaise, totalPaise: priced.totalPaise,
+          paymentStatus: paymentStatusFor(priced.totalPaise, order.paidPaise, order.refundedPaise) } : {}) } });
+      if (changed.count !== 1) throw AppError.conflict('ORDER_CHANGED', 'This order changed. Refresh and compare your draft before saving.');
+      if (await tx.orderAdjustment.findFirst({ where: { orderId, status: 'PENDING_CUSTOMER' } })) {
+        throw AppError.conflict('APPROVAL_PENDING', 'Wait for the customer to decide the existing price request.');
+      }
+      let adjustmentId: string | undefined;
+      if (increase) {
+        const adjustment = await tx.orderAdjustment.create({ data: { orderId, requestedById: actor.id!,
+          reason: note?.trim() || 'Item count updated after collection', oldTotalPaise: order.totalPaise, newTotalPaise: priced.totalPaise,
+          subtotalPaise: priced.subtotalPaise, discountPaise: priced.discountPaise, deliveryFeePaise: priced.deliveryFeePaise,
+          baseRevision: order.revision + 1, itemsBefore: order.items as unknown as Prisma.InputJsonValue,
+          itemsAfter: priced.lines as unknown as Prisma.InputJsonValue,
+          expiresAt: new Date(now.getTime() + (settings?.adjustmentExpiryHours ?? 12) * 3_600_000) } });
+        adjustmentId = adjustment.id;
+        await tx.orderEvent.create({ data: { orderId, fromStatus: order.status, toStatus: order.status,
+          actorId: actor.id, actorRole: actor.role, note: `Customer approval requested: ${adjustment.reason}` } });
+      } else {
+        await this.writeItemLines(tx, order, priced.lines, actor, note?.trim() || 'Item count updated; quoted rates preserved');
+      }
+      return { updated: await tx.order.findUniqueOrThrow({ where: { id: orderId }, include: ORDER_INCLUDE }), adjustmentId };
+    });
+    if (result.adjustmentId) {
+      const adjustment = result.updated.adjustments.find((a) => a.id === result.adjustmentId)!;
+      this.events.emit(Events.AdjustmentChanged, { ...orderRef(result.updated), adjustmentId: adjustment.id, status: 'PENDING_CUSTOMER', newTotalPaise: adjustment.newTotalPaise });
+      await this.jobs?.schedule('adjustments-expire', { adjustmentId: adjustment.id }, { startAfter: adjustment.expiresAt, jobId: adjustment.id }).catch((err) => this.logger.error('Could not schedule adjustment expiry', err));
+    } else {
+      this.events.emit(Events.OrderUpdated, { ...orderRef(result.updated), reason: 'items_changed', previousTotalPaise: order.totalPaise,
+        totalPaise: result.updated.totalPaise, paidPaise: result.updated.paidPaise, refundedPaise: result.updated.refundedPaise, actorRole: actor.role } satisfies OrderUpdatedEvent);
+    }
+    this.events.emit(Events.OrderUpdated, { ...orderRef(result.updated), reason: 'details_changed' } satisfies OrderUpdatedEvent);
+    return result.updated;
+  }
+
+  async decideAdjustment(customer: User, orderId: string, adjustmentId: string, approve: boolean): Promise<OrderWithRelations> {
+    await this.expireOrderAdjustments(orderId);
+    const result = await this.prisma.$transaction(async (tx) => {
+      // All bill mutations lock the order first, then inspect the request.
+      await tx.$queryRaw`SELECT id FROM orders WHERE id = ${orderId}::uuid FOR UPDATE`;
+      const order = await tx.order.findFirst({ where: { id: orderId, customerId: customer.id }, include: ORDER_INCLUDE });
+      if (!order) throw AppError.notFound('Order');
+      const adjustment = await tx.orderAdjustment.findFirst({ where: { id: adjustmentId, orderId } });
+      if (!adjustment) throw AppError.notFound('Price request');
+      const status = approve ? 'APPROVED' : 'DECLINED';
+      if (adjustment.status === status) return { order, changed: false };
+      if (adjustment.status !== 'PENDING_CUSTOMER') throw AppError.conflict('ADJUSTMENT_DECIDED', 'This price request is no longer waiting for a decision.');
+      if (this.clock.now() >= adjustment.expiresAt) throw AppError.conflict('ADJUSTMENT_EXPIRED', 'This price request expired. The original total stands.');
+      if (!ITEMS_EDITABLE.includes(order.status) || order.revision !== adjustment.baseRevision || order.totalPaise !== adjustment.oldTotalPaise) {
+        throw AppError.conflict('ORDER_CHANGED', 'The order changed. Contact support before approving another total.');
+      }
+      const decided = await tx.orderAdjustment.updateMany({ where: { id: adjustmentId, status: 'PENDING_CUSTOMER' }, data: { status, decidedAt: this.clock.now() } });
+      if (decided.count !== 1) throw AppError.conflict('ADJUSTMENT_DECIDED', 'This price request has already been decided.');
+      if (approve) {
+        await tx.order.update({ where: { id: orderId }, data: { subtotalPaise: adjustment.subtotalPaise, discountPaise: adjustment.discountPaise,
+          deliveryFeePaise: adjustment.deliveryFeePaise, totalPaise: adjustment.newTotalPaise, revision: { increment: 1 },
+          paymentStatus: paymentStatusFor(adjustment.newTotalPaise, order.paidPaise, order.refundedPaise) } });
+        await this.writeItemLines(tx, order, adjustment.itemsAfter as unknown as PricingLine[], actorFor(customer, 'CUSTOMER'), `Customer approved the new total: ${adjustment.reason}`);
+      } else {
+        await tx.orderEvent.create({ data: { orderId, fromStatus: order.status, toStatus: order.status, actorId: customer.id, actorRole: customer.role, note: 'Customer declined the proposed total. The original bill stands.' } });
+      }
+      return { order: await tx.order.findUniqueOrThrow({ where: { id: orderId }, include: ORDER_INCLUDE }), changed: true };
+    });
+    if (result.changed) {
+      this.events.emit(Events.AdjustmentChanged, { ...orderRef(result.order), adjustmentId, status: approve ? 'APPROVED' : 'DECLINED', newTotalPaise: result.order.totalPaise });
+      this.events.emit(Events.OrderUpdated, { ...orderRef(result.order), reason: 'details_changed' } satisfies OrderUpdatedEvent);
+    }
+    return result.order;
+  }
+
+  async expireAdjustment(adjustmentId: string): Promise<void> {
+    const changed = await this.prisma.orderAdjustment.updateMany({ where: { id: adjustmentId, status: 'PENDING_CUSTOMER', expiresAt: { lte: this.clock.now() } }, data: { status: 'EXPIRED', decidedAt: this.clock.now() } });
+    if (changed.count !== 1) return;
+    const adjustment = await this.prisma.orderAdjustment.findUniqueOrThrow({ where: { id: adjustmentId }, include: { order: true } });
+    this.events.emit(Events.AdjustmentChanged, { ...orderRef(adjustment.order), adjustmentId, status: 'EXPIRED', newTotalPaise: adjustment.newTotalPaise });
+    this.events.emit(Events.OrderUpdated, { ...orderRef(adjustment.order), reason: 'details_changed' } satisfies OrderUpdatedEvent);
+  }
+
+  private async expireOrderAdjustments(orderId: string): Promise<void> {
+    const due = await this.prisma.orderAdjustment.findMany({ where: { orderId, status: 'PENDING_CUSTOMER', expiresAt: { lte: this.clock.now() } }, select: { id: true } });
+    for (const request of due) await this.expireAdjustment(request.id);
+  }
+
 }
 
 function addressSnapshot(a: Address, customer: User): Prisma.InputJsonObject {
@@ -613,7 +730,7 @@ function addressSnapshot(a: Address, customer: User): Prisma.InputJsonObject {
     latitude: a.latitude,
     longitude: a.longitude,
     contactName: customer.name,
-    contactPhone: customer.phone,
+    contactPhone: customerPhone(customer),
   };
 }
 

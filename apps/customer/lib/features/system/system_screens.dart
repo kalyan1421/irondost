@@ -122,7 +122,7 @@ class UnavailableScreen extends ConsumerWidget {
                 label: 'Call ${IndianPhone.display(Support.fallbackPhone)}',
                 icon: LucideIcons.phone,
                 expand: true,
-                onPressed: () => Support.dial(Support.fallbackPhone),
+                onPressed: () => Support.dial(Support.fallbackPhone, context: context),
               ),
             ),
     );
@@ -177,7 +177,7 @@ class UpdateScreen extends ConsumerWidget {
         secondary: IdButton.outline(
           label: 'Contact support',
           expand: true,
-          onPressed: () => Support.dial(Support.of(ref).phone),
+          onPressed: () => Support.dial(Support.of(ref).phone, context: context),
         ),
       ),
     );
@@ -202,7 +202,7 @@ class PausedScreen extends ConsumerWidget {
           label: 'Call ${IndianPhone.display(support.phone)}',
           icon: LucideIcons.phone,
           expand: true,
-          onPressed: () => Support.dial(support.phone),
+          onPressed: () => Support.dial(support.phone, context: context, fallback: support),
         ),
         secondary: support.email == null
             ? null
@@ -210,7 +210,7 @@ class PausedScreen extends ConsumerWidget {
                 label: 'Email support',
                 icon: LucideIcons.mail,
                 expand: true,
-                onPressed: () => Support.mail(support.email!),
+                onPressed: () => Support.mail(support.email!, context: context, fallback: support),
               ),
         tertiary: IdButton.text(
           label: 'Log out',

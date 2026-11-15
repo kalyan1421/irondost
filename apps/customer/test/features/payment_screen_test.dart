@@ -303,6 +303,6 @@ class _Receipt extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final state = GoRouterState.of(context);
-    return PaymentReceiptScreen(orderId: state.pathParameters['id']!, initial: state.extra as OrderDto?);
+    return PaymentReceiptScreen(orderId: state.pathParameters['id']!);
   }
 }

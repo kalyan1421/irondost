@@ -1,3 +1,4 @@
+import '../../core/quantities.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
@@ -11,6 +12,9 @@ import '../../data/api_client.dart';
 import '../../design/theme.dart';
 import '../../design/widgets/surfaces.dart';
 import 'order_repository.dart';
+import 'refund_list.dart';
+import '../../design/widgets/id_button.dart';
+import '../../design/widgets/state_view.dart';
 
 /// "Items and bill": what was counted, what it costs, what has been paid and what is still due.
 class OrderBillScreen extends ConsumerWidget {
@@ -21,7 +25,8 @@ class OrderBillScreen extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final order = ref.watch(orderProvider(orderId)).value ?? initial;
+    final async = ref.watch(orderProvider(orderId));
+    final order = async.value ?? initial;
     final c = context.colors;
     final t = context.text;
 
@@ -34,7 +39,9 @@ class OrderBillScreen extends ConsumerWidget {
         title: Text('Items and bill', style: t.titleLg),
       ),
       body: order == null
-          ? const Center(child: CircularProgressIndicator())
+          ? async.hasError ? StateView(icon: LucideIcons.circleAlert, title: "Couldn't load this bill",
+              body: 'Check your connection and try again.', primary: IdButton(label: 'Try again', onPressed: () => ref.invalidate(orderProvider(orderId))))
+            : const Center(child: CircularProgressIndicator())
           : ListView(
               padding: const EdgeInsets.fromLTRB(
                 IdSpace.s5,
@@ -43,6 +50,10 @@ class OrderBillScreen extends ConsumerWidget {
                 IdSpace.s6,
               ),
               children: [
+                if (async.hasError) ...[
+                  Text('Showing a saved bill. It may be out of date.', style: t.body),
+                  TextButton(onPressed: () => ref.invalidate(orderProvider(orderId)), child: const Text('Try again')),
+                ],
                 _Head(order),
                 const SizedBox(height: IdSpace.s4),
                 IdCard(
@@ -89,7 +100,7 @@ class OrderBillScreen extends ConsumerWidget {
                                   children: [
                                     Text(item.name, style: t.title),
                                     Text(
-                                      '${item.quantity.toInt()} × ${rupees(item.unitPricePaise)}',
+                                      '${item.quantity.toInt()} × ${rupees(item.unitPricePaise)} ${unitRateLabel(item.unit)}',
                                       style: t.caption.copyWith(
                                         color: c.textMuted,
                                       ),
@@ -114,6 +125,7 @@ class OrderBillScreen extends ConsumerWidget {
                 ),
                 const SizedBox(height: IdSpace.s4),
                 _Bill(order),
+                RefundList(order: order),
               ],
             ),
     );
@@ -165,7 +177,7 @@ class _Head extends StatelessWidget {
                     Text(
                       paid
                           ? 'Paid'
-                          : (order.amountDuePaise > 0
+                          : order.paymentStatus == PaymentStatus.refunded ? 'Refund activity' : (order.amountDuePaise > 0
                                 ? '${rupees(order.amountDuePaise)} due'
                                 : 'Unpaid'),
                       style: t.labelSm.copyWith(
@@ -218,7 +230,8 @@ class _Bill extends StatelessWidget {
     return IdCard(
       child: Column(
         children: [
-          row('Items (${pieceCount(order)})', rupees(order.subtotalPaise)),
+          row(order.items.every((i) => i.unit == ItemUnit.piece) ? 'Items (${pieceCount(order)})' : 'Items', rupees(order.subtotalPaise)),
+          if (order.items.any((i) => i.unit != ItemUnit.piece)) Text(piecesLabel(order), style: t.caption),
           if (order.discountPaise > 0) ...[
             const SizedBox(height: 10),
             row(
@@ -263,13 +276,17 @@ class _Bill extends StatelessWidget {
                     weight: FontWeight.w600,
                   ),
                 ],
-                if (order.refundedPaise > 0) ...[
+                if (completedRefundPaise(order) > 0) ...[
                   const SizedBox(height: 10),
                   row(
                     'Refunded',
-                    rupees(order.refundedPaise),
+                    rupees(completedRefundPaise(order)),
                     color: c.textMuted,
                   ),
+                ],
+                if (pendingRefundPaise(order) > 0) ...[
+                  const SizedBox(height: 10),
+                  row('Refund pending', rupees(pendingRefundPaise(order))),
                 ],
                 const SizedBox(height: 10),
                 row('Due', rupees(order.amountDuePaise)),

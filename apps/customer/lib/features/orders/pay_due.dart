@@ -93,7 +93,7 @@ class _PayDueSheetState extends ConsumerState<_PayDueSheet> {
             ),
             const SizedBox(height: IdSpace.s1),
             Text(
-              '${piecesLabel(o)}${o.pickedUpAt != null ? ', ironed' : ''}. Delivery $delivery.',
+              '${piecesLabel(o)}. Delivery $delivery.',
               style: t.bodyLg.copyWith(color: c.textMuted),
             ),
             const SizedBox(height: IdSpace.s4),

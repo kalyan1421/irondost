@@ -3,6 +3,8 @@ export type JobHandler<T> = (data: T) => Promise<void>;
 export interface ScheduleOptions {
   /** Run no earlier than this instant. Defaults to now. */
   startAfter?: Date;
+  /** A UUID. A second job with the same id in the same queue is ignored, so recovery on boot cannot queue duplicates. */
+  jobId?: string;
 }
 
 /**

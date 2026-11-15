@@ -2,7 +2,7 @@ import { Injectable } from '@nestjs/common';
 import { Clock } from '../common/clock.js';
 import { AppError } from '../common/errors.js';
 import { pageArgs } from '../common/pagination.js';
-import { normalizeIndianPhone } from '../common/phone.js';
+import { customerPhone, normalizeIndianPhone } from '../common/phone.js';
 import { addDays, istDate, istInstant, toDbDate } from '../common/time.js';
 import type { Prisma, User } from '../generated/prisma/client.js';
 import {
@@ -53,12 +53,13 @@ export class AdminService {
       role: Role.CUSTOMER,
       deletedAt: null,
       ...(exactPhone
-        ? { phone: exactPhone }
+        ? { OR: [{ phone: exactPhone }, { contactPhone: exactPhone }] }
         : search
           ? {
               OR: [
                 { name: { contains: search, mode: 'insensitive' } },
                 { phone: { contains: search.replace(/\s/g, '') } },
+                { contactPhone: { contains: search.replace(/\s/g, '') } },
               ],
             }
           : {}),
@@ -126,7 +127,7 @@ export class AdminService {
       data: {
         // Changing the number unlinks the old Firebase login. A Google customer with no number yet keeps theirs:
         // their login is the Google account, not a phone.
-        ...(phone && phone !== current.phone
+        ...(phone && phone !== customerPhone(current)
           ? { phone, ...(current.phone ? { firebaseUid: null } : {}) }
           : {}),
         name: dto.name?.trim(),
@@ -199,6 +200,9 @@ export class AdminService {
 
   async audit(q: AuditQuery): Promise<AuditPageDto> {
     const where: Prisma.AuditLogWhereInput = {
+      ...(q.actorId ? { actorId: q.actorId } : {}),
+      ...(q.action ? { action: { contains: q.action.trim(), mode: 'insensitive' } } : {}),
+      ...(q.from || q.to ? { createdAt: { ...(q.from ? { gte: istInstant(q.from, 0) } : {}), ...(q.to ? { lt: istInstant(addDays(q.to, 1), 0) } : {}) } } : {}),
       ...(q.entity ? { entity: q.entity } : {}),
       ...(q.entityId ? { entityId: q.entityId } : {}),
     };
@@ -297,8 +301,14 @@ export class AdminService {
           GROUP BY 1 ORDER BY 1`,
     ]);
 
+    const [openIssues, overdueIssues, pendingAdjustments] = await Promise.all([
+      this.prisma.orderIssue.count({ where: { status: 'OPEN' } }),
+      this.prisma.orderIssue.count({ where: { status: 'OPEN', acknowledgedAt: null, firstResponseDueAt: { lte: now } } }),
+      this.prisma.orderAdjustment.count({ where: { status: 'PENDING_CUSTOMER', expiresAt: { gt: now } } }),
+    ]);
     const dailyMap = new Map(daily.map((d) => [d.date, d]));
     return {
+      openIssues, overdueIssues, pendingAdjustments,
       byStatus: Object.fromEntries(
         byStatus.map((s) => [s.status, s._count._all]),
       ),

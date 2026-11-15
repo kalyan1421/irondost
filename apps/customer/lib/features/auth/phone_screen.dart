@@ -14,12 +14,9 @@ import 'auth_repository.dart';
 import 'google_sign_in_button.dart';
 import 'login_controller.dart';
 
-/// Sign in with a mobile number, or (with [linking]) add a verified number to a Google customer's account before booking.
-/// When linking, the screen pops `true` once the number is stored.
+/// Sign in with a mobile number: the SMS code is checked on the next screen.
 class PhoneScreen extends ConsumerStatefulWidget {
-  const PhoneScreen({super.key, this.linking = false});
-
-  final bool linking;
+  const PhoneScreen({super.key});
 
   @override
   ConsumerState<PhoneScreen> createState() => _PhoneScreenState();
@@ -31,41 +28,17 @@ class _PhoneScreenState extends ConsumerState<PhoneScreen> {
   );
 
   @override
-  void initState() {
-    super.initState();
-    if (widget.linking) unawaited(Future.microtask(_finishIfAlreadyLinked));
-  }
-
-  @override
   void dispose() {
     _controller.dispose();
     super.dispose();
   }
 
-  /// The account may already carry a verified number the API has not heard about yet: then there is nothing to type.
-  Future<void> _finishIfAlreadyLinked() async {
-    if (await ref.read(loginProvider.notifier).syncLinkedPhone() && mounted) {
-      context.pop(true);
-    }
-  }
-
   Future<void> _submit() async {
-    final linking = widget.linking;
     final phone = IndianPhone.national(_controller.text);
-    final opened = await ref
-        .read(loginProvider.notifier)
-        .sendCode(phone, link: linking);
+    final opened = await ref.read(loginProvider.notifier).sendCode(phone);
     if (!mounted) return;
-    if (linking && ref.read(loginProvider).linked) {
-      // Android read the code itself: the number is stored already.
-      context.pop(true);
-    } else if (opened) {
-      if (linking) {
-        final added = await context.push<bool>(Routes.addPhoneCode);
-        if (added == true && mounted) context.pop(true);
-      } else {
-        unawaited(context.push(Routes.loginCode));
-      }
+    if (opened) {
+      unawaited(context.push(Routes.loginCode));
     } else if (ref.read(loginProvider).error == AuthFailureKind.network) {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
@@ -81,16 +54,15 @@ class _PhoneScreenState extends ConsumerState<PhoneScreen> {
     final c = context.colors;
     final t = context.text;
     final keyboardOpen = MediaQuery.viewInsetsOf(context).bottom > 0;
-    final alternatives = Column(
+    const alternatives = Column(
       children: [
-        if (!widget.linking) const GoogleSignInOption(),
-        const SizedBox(height: IdSpace.s3),
-        const PolicyLinks(),
+        GoogleSignInOption(),
+        SizedBox(height: IdSpace.s3),
+        PolicyLinks(),
       ],
     );
     final error = switch (state.error) {
       AuthFailureKind.invalidNumber => 'Enter a 10-digit mobile number.',
-      AuthFailureKind.phoneInUse => 'This number is already linked to another IronDost account. Use a different number.',
       AuthFailureKind.unknown =>
         "We couldn't send a code. Try again in a minute.",
       _ => null,
@@ -115,18 +87,11 @@ class _PhoneScreenState extends ConsumerState<PhoneScreen> {
                   children: [
                     Semantics(
                       header: true,
-                      child: Text(
-                        widget.linking
-                            ? 'Add your mobile number'
-                            : 'Enter your mobile number',
-                        style: t.headline,
-                      ),
+                      child: Text('Enter your mobile number', style: t.headline),
                     ),
                     const SizedBox(height: IdSpace.s2),
                     Text(
-                      widget.linking
-                          ? "Your pickup partner calls this number if needed. We'll send a 6-digit code to verify it."
-                          : "We'll send a 6-digit code to verify it.",
+                      "We'll send a 6-digit code to verify it.",
                       style: t.bodyLg.copyWith(color: c.textMuted),
                     ),
                     const SizedBox(height: IdSpace.s8),

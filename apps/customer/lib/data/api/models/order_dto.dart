@@ -5,8 +5,10 @@
 import 'package:json_annotation/json_annotation.dart';
 
 import 'order_address_dto.dart';
+import 'order_adjustment_dto.dart';
 import 'order_event_dto.dart';
 import 'order_item_dto.dart';
+import 'order_payment_dto.dart';
 import 'order_source.dart';
 import 'order_status.dart';
 import 'payment_method.dart';
@@ -21,6 +23,8 @@ part 'order_dto.g.dart';
 class OrderDto {
   const OrderDto({
     required this.instructions,
+    required this.updatedAt,
+    required this.id,
     required this.orderNumber,
     required this.status,
     required this.source,
@@ -32,7 +36,7 @@ class OrderDto {
     required this.deliverySlotLabel,
     required this.pickupAddress,
     required this.deliveryAddress,
-    required this.id,
+    required this.createdAt,
     required this.items,
     required this.subtotalPaise,
     required this.discountPaise,
@@ -40,11 +44,11 @@ class OrderDto {
     required this.totalPaise,
     required this.paidPaise,
     required this.refundedPaise,
-    required this.updatedAt,
+    required this.cancelledAt,
     required this.amountDuePaise,
     required this.promoCode,
     required this.paymentMethod,
-    required this.createdAt,
+    required this.deliveredAt,
     required this.customer,
     required this.pickupDriver,
     required this.deliveryDriver,
@@ -52,16 +56,19 @@ class OrderDto {
     required this.dispatchFailedAt,
     required this.cancelReason,
     required this.pickedUpAt,
-    required this.deliveredAt,
-    required this.cancelledAt,
     required this.paymentStatus,
     this.refundablePaise,
+    this.revision,
+    this.adjustments,
     this.events,
     this.refunds,
+    this.payments,
   });
   
   factory OrderDto.fromJson(Map<String, Object?> json) => _$OrderDtoFromJson(json);
   
+  final num? revision;
+  final List<OrderAdjustmentDto>? adjustments;
   final String id;
   final String orderNumber;
   final OrderStatus status;
@@ -108,6 +115,9 @@ class OrderDto {
 
   /// Oldest first. Customer and admin views only.
   final List<RefundDto>? refunds;
+
+  /// Captured transactions only; excludes raw provider payloads and staff identities.
+  final List<OrderPaymentDto>? payments;
 
   Map<String, Object?> toJson() => _$OrderDtoToJson(this);
 }

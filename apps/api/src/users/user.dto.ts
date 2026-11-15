@@ -1,14 +1,17 @@
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import { Transform } from 'class-transformer';
 import { IsEmail, IsEnum, IsOptional, IsString, Length, MaxLength, ValidateIf } from 'class-validator';
+import { customerPhone } from '../common/phone.js';
 import { blankToNull } from '../common/transforms.js';
 import type { DriverProfile, User } from '../generated/prisma/client.js';
 import { ClientApp, DevicePlatform, Role } from '../generated/prisma/enums.js';
 
 export class UserDto {
   @ApiProperty() id!: string;
-  /** Null for a customer who signed in with Google and has not added a verified number yet. */
+  /** The number to call: the sign-in number, or the one typed at checkout. Null until a Google customer adds one. */
   @ApiProperty({ example: '+919876543210', nullable: true, type: String }) phone!: string | null;
+  /** True when the number signs the user in (confirmed by an SMS code); false when a customer typed it at checkout. */
+  @ApiProperty() phoneVerified!: boolean;
   @ApiProperty({ nullable: true, type: String }) name!: string | null;
   @ApiProperty({ nullable: true, type: String }) email!: string | null;
   @ApiProperty({ enum: Role, enumName: 'Role' }) role!: Role;
@@ -21,7 +24,8 @@ export class UserDto {
 export function toUserDto(u: User): UserDto {
   return {
     id: u.id,
-    phone: u.phone,
+    phone: customerPhone(u),
+    phoneVerified: u.phone !== null,
     name: u.name,
     email: u.email,
     role: u.role,
@@ -69,6 +73,16 @@ export class UpdateMeDto {
   @IsEmail()
   @MaxLength(120)
   email?: string | null;
+
+  @ApiPropertyOptional({
+    example: '9876543210',
+    description:
+      'Customers only, and only while they have no sign-in number. Any common Indian format; stored as +91XXXXXXXXXX without an SMS code.',
+  })
+  @IsOptional()
+  @IsString()
+  @MaxLength(20)
+  phone?: string;
 }
 
 export class RegisterDeviceDto {

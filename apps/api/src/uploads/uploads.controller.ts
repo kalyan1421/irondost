@@ -1,3 +1,5 @@
+import { ImageUploadDto } from './image-upload.dto.js';
+import { CustomerUploadsController } from './customer-uploads.controller.js';
 import { randomUUID } from 'node:crypto';
 import { Body, Controller, HttpCode, Module, Post, UploadedFile, UseInterceptors } from '@nestjs/common';
 import { FileInterceptor } from '@nestjs/platform-express';
@@ -21,12 +23,6 @@ export class ImageUploadBodyDto {
   purpose!: ImagePurpose;
 }
 
-export class ImageUploadDto {
-  @ApiProperty({ description: 'Public URL to save in imageUrl fields' }) url!: string;
-  @ApiProperty() width!: number;
-  @ApiProperty() height!: number;
-  @ApiProperty({ description: 'Stored size in bytes' }) bytes!: number;
-}
 
 @ApiTags('admin · uploads')
 @ApiBearerAuth()
@@ -75,7 +71,8 @@ export class UploadsController {
 }
 
 @Module({
-  controllers: [UploadsController],
+  controllers: [UploadsController, CustomerUploadsController],
+  exports: [FileStorage],
   providers: [{ provide: FileStorage, inject: [APP_ENV], useFactory: (env: Env) => createFileStorage(env) }],
 })
 export class UploadsModule {}

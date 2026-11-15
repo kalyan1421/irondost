@@ -5,6 +5,7 @@ import { usePathname, useRouter } from "next/navigation";
 import { useEffect } from "react";
 import { AppSidebar } from "@/components/app-sidebar";
 import { SidebarInset, SidebarProvider } from "@/components/ui/sidebar";
+import { RealtimeBridge } from "@/lib/realtime";
 import { useAuth } from "@/lib/auth/auth-provider";
 
 /** Everything behind sign-in. The API enforces roles; this only decides what to render. */
@@ -28,7 +29,7 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
   return (
     <SidebarProvider>
       <AppSidebar />
-      <SidebarInset className="min-w-0">{children}</SidebarInset>
+      <SidebarInset className="min-w-0"><RealtimeBridge />{children}</SidebarInset>
     </SidebarProvider>
   );
 }

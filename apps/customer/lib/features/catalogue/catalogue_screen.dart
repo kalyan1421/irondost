@@ -82,6 +82,7 @@ class _CatalogueScreenState extends ConsumerState<CatalogueScreen> {
         },
       ),
       bottomNavigationBar: CartBar(
+        quantityLabel: ref.watch(basketQuantityLabelProvider),
         count: count,
         totalPaise: estimate,
         onReview: () => context.push(Routes.basket),

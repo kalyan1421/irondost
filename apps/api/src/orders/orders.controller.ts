@@ -57,6 +57,18 @@ export class OrdersController {
     return toOrderDto(await this.orders.getForCustomer(user.id, id), 'CUSTOMER');
   }
 
+  @Post(':id/adjustments/:adjustmentId/approve')
+  @HttpCode(200)
+  async approve(@CurrentUser() user: User, @Param('id', ParseUUIDPipe) id: string, @Param('adjustmentId', ParseUUIDPipe) adjustmentId: string): Promise<OrderDto> {
+    return toOrderDto(await this.orders.decideAdjustment(user, id, adjustmentId, true), 'CUSTOMER');
+  }
+
+  @Post(':id/adjustments/:adjustmentId/decline')
+  @HttpCode(200)
+  async decline(@CurrentUser() user: User, @Param('id', ParseUUIDPipe) id: string, @Param('adjustmentId', ParseUUIDPipe) adjustmentId: string): Promise<OrderDto> {
+    return toOrderDto(await this.orders.decideAdjustment(user, id, adjustmentId, false), 'CUSTOMER');
+  }
+
   /** For an online order that has not been paid (a failed or abandoned payment): the partner collects the amount at delivery. */
   @Post(':id/pay-on-delivery')
   @HttpCode(200)

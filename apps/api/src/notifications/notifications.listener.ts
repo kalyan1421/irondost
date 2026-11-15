@@ -64,6 +64,27 @@ export class NotificationsListener {
     return admins.map((a) => a.id);
   }
 
+  @OnEvent(Events.AdjustmentChanged, { async: true, suppressErrors: true })
+  async adjustmentChanged(e: { orderId: string; orderNumber: string; customerId: string; adjustmentId: string; status: string; newTotalPaise: number }): Promise<void> {
+    const pending = e.status === 'PENDING_CUSTOMER';
+    const text = pending ? `Review the proposed ${rupees(e.newTotalPaise)} total for order ${e.orderNumber}. Your accepted bill stays unchanged until you approve.`
+      : `Price request for order ${e.orderNumber}: ${e.status.toLowerCase()}. ${e.status === 'APPROVED' ? 'The approved total now applies.' : 'The original bill stands.'}`;
+    const data = { orderId: e.orderId, adjustmentId: e.adjustmentId };
+    await this.inboxAndPush([e.customerId], 'price_approval', pending ? 'Your total needs your OK' : 'Price request updated', text, data, ClientApp.CUSTOMER);
+    if (!pending) await this.inboxAndPush(await this.adminIds(), 'price_approval', 'Price request updated', text, data, ClientApp.ADMIN);
+  }
+
+  @OnEvent(Events.IssueChanged, { async: true, suppressErrors: true })
+  async issueChanged(e: { issueId: string; orderId: string; orderNumber: string; customerId: string; status: string; kind: string; fromStaff: boolean }): Promise<void> {
+    const data = { issueId: e.issueId, orderId: e.orderId };
+    if (e.kind === 'created' || e.kind === 'overdue' || !e.fromStaff) {
+      await this.inboxAndPush(await this.adminIds(), 'issue_update', e.kind === 'overdue' ? 'Report needs a response' : 'Customer report updated',
+        `Report for order ${e.orderNumber}. Open the report to review it.`, data, ClientApp.ADMIN);
+    }
+    if (e.fromStaff) await this.inboxAndPush([e.customerId], 'issue_update', 'Your report has an update',
+      `Our team updated your report for order ${e.orderNumber}. Open it for the reply and status.`, data, ClientApp.CUSTOMER);
+  }
+
   @OnEvent(Events.OrderCreated, { async: true, suppressErrors: true })
   async orderCreated(e: OrderCreatedEvent): Promise<void> {
     try {

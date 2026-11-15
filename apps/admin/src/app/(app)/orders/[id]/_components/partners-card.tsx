@@ -1,4 +1,5 @@
 "use client";
+import { ErrorState } from "@/components/page";
 
 import { useQuery } from "@tanstack/react-query";
 import { AlertTriangle, Phone, UserRoundCheck } from "lucide-react";
@@ -104,7 +105,7 @@ function LegRow({ order, leg, onAssign }: { order: Order; leg: DispatchLeg; onAs
             ? "Assigned once the order is ready for delivery."
             : state === "closed"
               ? "Not assigned."
-              : "Looking for a partner automatically."}
+              : "Assign an active partner here. Staff can manage each task from this order."}
         </p>
       )}
       {failed ? (
@@ -146,24 +147,22 @@ function AssignDialog({ order, leg, onClose }: { order: Order; leg: DispatchLeg;
             {order.orderNumber} · {leg === "PICKUP" ? order.pickupAddress.area ?? order.pickupAddress.city : order.deliveryAddress.area ?? order.deliveryAddress.city}
           </DialogDescription>
         </DialogHeader>
-        {drivers.data ? (
+        {drivers.isError ? <ErrorState error={drivers.error} onRetry={() => void drivers.refetch()} /> : drivers.data ? (
           list.length === 0 ? (
             <p className="py-6 text-center text-sm text-muted-foreground">No other active partners. Add partners on the Delivery partners page.</p>
           ) : (
             <ScrollArea className="min-h-0">
-              <div role="radiogroup" className="grid gap-1.5 pr-3">
+              <fieldset className="grid gap-1.5 pr-3"><legend className="sr-only">Choose a partner</legend>
                 {list.map((d) => (
-                  <button
+                  <label
                     key={d.id}
-                    type="button"
-                    role="radio"
-                    aria-checked={selected === d.id}
-                    onClick={() => setSelected(d.id)}
+                    htmlFor={`assign-${d.id}`}
                     className={cn(
-                      "flex items-center gap-3 rounded-lg border px-3 py-2.5 text-left transition-colors hover:bg-accent/50",
+                      "flex cursor-pointer items-center gap-3 rounded-lg border px-3 py-2.5 text-left transition-colors hover:bg-accent/50 has-focus-visible:ring-2 has-focus-visible:ring-ring",
                       selected === d.id && "border-primary bg-primary/5 ring-1 ring-primary",
                     )}
                   >
+                    <input id={`assign-${d.id}`} name="assignment" type="radio" checked={selected === d.id} onChange={() => setSelected(d.id)} />
                     <span className={cn("size-2 shrink-0 rounded-full", d.isOnline ? "bg-success" : "bg-muted-foreground/40")} />
                     <span className="min-w-0 flex-1">
                       <span className="block truncate text-sm font-medium">{d.name ?? phone(d.phone)}</span>
@@ -173,9 +172,9 @@ function AssignDialog({ order, leg, onClose }: { order: Order; leg: DispatchLeg;
                       </span>
                     </span>
                     <span className="tabular shrink-0 text-xs text-muted-foreground">{d.activeLegs} active</span>
-                  </button>
+                  </label>
                 ))}
-              </div>
+              </fieldset>
             </ScrollArea>
           )
         ) : (

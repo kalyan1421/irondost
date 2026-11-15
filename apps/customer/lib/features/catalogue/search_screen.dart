@@ -138,6 +138,7 @@ class _SearchScreenState extends ConsumerState<SearchScreen> {
               ],
             ),
       bottomNavigationBar: CartBar(
+        quantityLabel: ref.watch(basketQuantityLabelProvider),
         count: count,
         totalPaise: estimate,
         onReview: () => context.push(Routes.basket),
@@ -202,7 +203,7 @@ class _NoResults extends ConsumerWidget {
               IdButton.outline(
                 label: 'Call ${IndianPhone.display(phone)}',
                 icon: LucideIcons.phone,
-                onPressed: () => Support.dial(phone),
+                onPressed: () => Support.dial(phone, context: context),
               ),
             ],
           ),

@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import { useGuardedClose } from "@/hooks/use-unsaved-changes";
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
@@ -142,8 +143,12 @@ export function PromotionDialog({ promotion, onClose }: { promotion?: Promotion;
     if (valid) save.mutate(undefined);
   }
 
+  const fingerprint = JSON.stringify({ code, title, description, type, value, minOrder, maxDiscount, limit, validFrom, validTo, imageUrl, isActive });
+  const [initialFields] = useState(fingerprint);
+  const close = useGuardedClose(fingerprint !== initialFields, save.isPending, onClose);
+
   return (
-    <Dialog open onOpenChange={(o) => !o && onClose()}>
+    <Dialog open onOpenChange={(o) => !o && close()}>
       <DialogContent className="sm:max-w-xl">
         <DialogHeader>
           <DialogTitle>{editing ? `Edit ${promotion?.code}` : "New promotion"}</DialogTitle>
@@ -257,7 +262,7 @@ export function PromotionDialog({ promotion, onClose }: { promotion?: Promotion;
           ) : null}
         </form>
         <DialogFooter>
-          <Button variant="ghost" onClick={onClose}>
+          <Button variant="ghost" onClick={close}>
             Close
           </Button>
           <Button type="submit" form="promotion-form" disabled={save.isPending}>

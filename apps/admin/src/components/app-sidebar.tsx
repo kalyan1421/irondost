@@ -60,6 +60,7 @@ const NAV: { label: string; items: NavItem[] }[] = [
       { href: "/", label: "Dashboard", icon: LayoutDashboard },
       { href: "/orders", label: "Orders", icon: PackageSearch },
       { href: "/customers", label: "Customers", icon: Users },
+      { href: "/issues", label: "Customer reports", icon: ScrollText },
       { href: "/drivers", label: "Delivery partners", icon: Truck },
     ],
   },

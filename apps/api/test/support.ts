@@ -5,6 +5,7 @@ interface QueuedJob {
   queue: string;
   data: object;
   startAfter?: Date;
+  jobId?: string;
 }
 
 /** In-memory jobs: tests decide when queued work runs, ignoring start times. */
@@ -17,7 +18,8 @@ export class MemoryScheduler extends JobScheduler {
   }
 
   async schedule<T extends object>(queue: string, data: T, options: ScheduleOptions = {}): Promise<void> {
-    this.queued.push({ queue, data, startAfter: options.startAfter });
+    if (options.jobId && this.queued.some((j) => j.queue === queue && j.jobId === options.jobId)) return;
+    this.queued.push({ queue, data, startAfter: options.startAfter, jobId: options.jobId });
   }
 
   has(queue: string, match: (data: Record<string, unknown>) => boolean = () => true): boolean {

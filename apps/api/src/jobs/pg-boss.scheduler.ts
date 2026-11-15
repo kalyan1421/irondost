@@ -48,6 +48,7 @@ export class PgBossScheduler extends JobScheduler implements OnApplicationBootst
     }
     await this.boss.send(queue, data, {
       startAfter: options.startAfter,
+      id: options.jobId,
       retryLimit: 3,
       retryDelay: 5,
     });

@@ -11,7 +11,8 @@ import '../../design/widgets/id_button.dart';
 import '../../design/widgets/id_text_field.dart';
 import '../auth/session.dart';
 
-/// Name and email can be changed; the mobile number signs the customer in, so it is shown but locked.
+/// Name and email can be changed. A mobile number that signs the customer in is shown but locked; one they typed at checkout
+/// can be changed.
 class EditProfileScreen extends ConsumerStatefulWidget {
   const EditProfileScreen({super.key});
 
@@ -173,7 +174,7 @@ class _EditProfileScreenState extends ConsumerState<EditProfileScreen> {
                       onSubmitted: (_) => _save(),
                     ),
                     const SizedBox(height: IdSpace.s6),
-                    _LockedPhone(phone: profile?.phone),
+                    _LockedPhone(phone: profile?.phone, verified: profile?.phoneVerified ?? false),
                   ],
                 ),
               ),
@@ -201,15 +202,18 @@ class _EditProfileScreenState extends ConsumerState<EditProfileScreen> {
 
 /// The mobile number, read only, with how to change it.
 class _LockedPhone extends StatelessWidget {
-  const _LockedPhone({required this.phone});
+  const _LockedPhone({required this.phone, required this.verified});
   final String? phone;
+
+  /// The number signs the customer in, so it cannot be changed here.
+  final bool verified;
 
   @override
   Widget build(BuildContext context) {
     final c = context.colors;
     final t = context.text;
-    if (phone == null) {
-      // Signed in with Google: the number is added (and verified by SMS) rather than shown.
+    if (phone == null || !verified) {
+      // Signed in with Google: the number is typed in (no SMS code) rather than locked, and can be corrected later.
       return Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
@@ -218,13 +222,19 @@ class _LockedPhone extends StatelessWidget {
             style: t.label.copyWith(fontWeight: FontWeight.w600),
           ),
           const SizedBox(height: 6),
+          if (phone != null) ...[
+            Text(IndianPhone.display(phone!), style: t.bodyLg),
+            const SizedBox(height: 2),
+          ],
           Text(
-            'Not added yet. Your pickup partner calls this number, so it is needed before you book.',
+            phone == null
+                ? 'Not added yet. Your pickup partner calls this number, so it is needed before you book.'
+                : 'Your pickup partner calls this number.',
             style: t.caption.copyWith(color: c.textMuted),
           ),
           const SizedBox(height: IdSpace.s2),
           IdButton.outline(
-            label: 'Add mobile number',
+            label: phone == null ? 'Add mobile number' : 'Change mobile number',
             onPressed: () => context.push<bool>(Routes.addPhone),
           ),
         ],

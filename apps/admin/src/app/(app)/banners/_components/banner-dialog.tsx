@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import { useGuardedClose } from "@/hooks/use-unsaved-changes";
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
@@ -87,8 +88,12 @@ export function BannerDialog({
     if (valid) save.mutate(undefined);
   }
 
+  const fingerprint = JSON.stringify({ imageUrl, title, linkUrl, sortOrder, isActive });
+  const [initialFields] = useState(fingerprint);
+  const close = useGuardedClose(fingerprint !== initialFields, save.isPending, onClose);
+
   return (
-    <Dialog open onOpenChange={(o) => !o && onClose()}>
+    <Dialog open onOpenChange={(o) => !o && close()}>
       <DialogContent className="sm:max-w-lg">
         <DialogHeader>
           <DialogTitle>{editing ? "Edit banner" : "Add banner"}</DialogTitle>
@@ -131,7 +136,7 @@ export function BannerDialog({
           </div>
         </form>
         <DialogFooter>
-          <Button variant="ghost" onClick={onClose}>
+          <Button variant="ghost" onClick={close}>
             Close
           </Button>
           <Button type="submit" form="banner-form" disabled={save.isPending}>

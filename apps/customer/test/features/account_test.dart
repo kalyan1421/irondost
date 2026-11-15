@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:go_router/go_router.dart';
+import 'package:lucide_icons_flutter/lucide_icons.dart';
 import 'package:irondost_customer/app/routes.dart';
 import 'package:irondost_customer/data/api_client.dart';
 import 'package:irondost_customer/features/account/account_screen.dart';
@@ -42,14 +43,20 @@ class _Session extends SignedInSession {
   final saved = <(String, String?)>[];
 
   @override
-  Future<Session> build() async => SignedIn(Profile(id: 'u1', phone: '+919876543210', name: 'Priya Sharma', email: email, isComplete: true));
+  Future<Session> build() async => SignedIn(Profile(id: 'u1', phone: '+919876543210', phoneVerified: true, name: 'Priya Sharma', email: email, isComplete: true));
 
   @override
   Future<void> saveProfile({required String name, String? email}) async {
     if (saveFailure != null) throw saveFailure!;
     saved.add((name, email));
-    state = AsyncData(SignedIn(Profile(id: 'u1', phone: '+919876543210', name: name, email: email, isComplete: true)));
+    state = AsyncData(SignedIn(Profile(id: 'u1', phone: '+919876543210', phoneVerified: true, name: name, email: email, isComplete: true)));
   }
+}
+
+/// Signed in with Google, with the mobile number typed at checkout (not verified by an SMS code).
+class _TypedNumberSession extends _Session {
+  @override
+  Future<Session> build() async => const SignedIn(Profile(id: 'g1', phone: '+919876543210', name: 'Gina Rossi', email: 'gina@example.com', isComplete: true));
 }
 
 /// Signed in with Google: a name and email, but no verified mobile number yet.
@@ -293,7 +300,12 @@ void main() {
       addTearDown(tester.view.reset);
       session = as ?? _Session(email: 'priya@example.com');
       final router = testRouter(
-        {Routes.account: () => const Scaffold(body: Text('account tab')), Routes.editProfile: () => const EditProfileScreen(), Routes.help: () => const Text('help page')},
+        {
+          Routes.account: () => const Scaffold(body: Text('account tab')),
+          Routes.editProfile: () => const EditProfileScreen(),
+          Routes.help: () => const Text('help page'),
+          Routes.addPhone: () => const Text('page ${Routes.addPhone}'),
+        },
         initial: Routes.account,
       );
       await tester.pumpWidget(themedRouter(router, overrides: [sessionProvider.overrideWith(() => session)]));
@@ -312,6 +324,18 @@ void main() {
       expect(field(tester, 1).controller.text, 'priya@example.com');
       expect(find.text('+91 98765 43210'), findsOneWidget);
       expect(find.byWidgetPredicate((w) => w is Semantics && w.properties.label == 'Mobile number, +91 98765 43210, cannot be changed' && w.properties.readOnly == true), findsOneWidget);
+    });
+
+    testWidgets('a number typed at checkout is not locked: it can be changed', (tester) async {
+      await openEdit(tester, as: _TypedNumberSession());
+      expect(find.text('+91 98765 43210'), findsOneWidget);
+      expect(find.byIcon(LucideIcons.lock), findsNothing);
+      expect(find.text('Contact support'), findsNothing);
+
+      await tester.ensureVisible(find.text('Change mobile number'));
+      await tester.tap(find.text('Change mobile number'));
+      await tester.pumpAndSettle();
+      expect(find.text('page ${Routes.addPhone}'), findsOneWidget);
     });
 
     testWidgets('the avatar follows the name as it is typed', (tester) async {
