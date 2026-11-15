@@ -105,10 +105,11 @@ export default function DashboardPage() {
           </Card>
         ) : null}
 
-        {dashboard.data ? <div className="grid gap-3 sm:grid-cols-3">
+        {dashboard.data ? <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
           <Link className="rounded-lg border bg-card p-4 hover:bg-accent/40" href="/issues?status=OPEN"><span className="block text-sm text-muted-foreground">New customer reports</span><strong className="text-2xl">{dashboard.data.openIssues}</strong></Link>
           <Link className="rounded-lg border bg-card p-4 hover:bg-accent/40" href="/issues?overdue=1"><span className="block text-sm text-muted-foreground">Reports past response target</span><strong className="text-2xl">{dashboard.data.overdueIssues}</strong></Link>
           <Link className="rounded-lg border bg-card p-4 hover:bg-accent/40" href="/orders?approvalPending=1&tab=all"><span className="block text-sm text-muted-foreground">Waiting for price approval</span><strong className="text-2xl">{dashboard.data.pendingAdjustments}</strong></Link>
+          <Link className="rounded-lg border bg-card p-4 hover:bg-accent/40" href="/notification-deliveries"><span className="block text-sm text-muted-foreground">Alerts not delivered, last 14 days</span><strong className={cn("text-2xl", dashboard.data.undeliveredAlerts > 0 && "text-amber-700 dark:text-amber-300")}>{dashboard.data.undeliveredAlerts}</strong></Link>
         </div> : null}
         <div className="grid gap-6 xl:grid-cols-[minmax(0,2fr)_minmax(0,1fr)]">
           <Card>

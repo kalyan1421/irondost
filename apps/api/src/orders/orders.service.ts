@@ -16,8 +16,10 @@ import {
   type OffersClosedEvent,
   type OrderCreatedEvent,
   type OrderRef,
+  type OrderRescheduledEvent,
   type OrderStatusChangedEvent,
   type OrderUpdatedEvent,
+  type OrderWindows,
 } from '../events.js';
 import { Prisma, type Address, type Order, type User } from '../generated/prisma/client.js';
 import { DispatchLeg, OfferStatus, OrderSource, OrderStatus, PaymentMethod, Role } from '../generated/prisma/enums.js';
@@ -25,10 +27,20 @@ import { PrismaService, type Tx } from '../prisma/prisma.service.js';
 import { checkDelivery, checkPickup, SCHEDULE_ERROR_MESSAGES } from '../scheduling/schedule-rules.js';
 import { checkServiceArea } from '../settings/service-area.js';
 import { SettingsService } from '../settings/settings.service.js';
-import type { AdminOrdersQuery, OrderLineInput, OrderScope, OrderWithRelations, PlaceOrderDto, QuoteDto } from './order.dto.js';
+import type { AdminOrdersQuery, OrderLineInput, OrderScope, OrderWithRelations, PlaceOrderDto, QuoteDto, RescheduleOrderDto } from './order.dto.js';
 import { canTransition, FINAL_STATUSES, ITEMS_EDITABLE, type ActorKind } from './order-state.js';
 import { refundDueOrderIds } from './refund-due.js';
 import { computeQuote, paymentStatusFor, type PricingLine, type PricingPromotion, type Quote } from './pricing.js';
+import {
+  deliveryChanged,
+  pickupChanged,
+  RESCHEDULE_ERROR_MESSAGES,
+  rescheduleError,
+  rescheduleNote,
+  rescheduleRequestHash,
+  windowsOf,
+  type RescheduleError,
+} from './reschedule.js';
 
 export const ORDER_INCLUDE = {
   items: true,
@@ -70,6 +82,14 @@ export interface TransitionOptions {
   expectDriverId?: string;
   /** Extra writes that must commit atomically with the status change. */
   inTx?: (tx: Tx, before: Order) => Promise<void>;
+}
+
+export interface RescheduleResult {
+  order: OrderWithRelations;
+  /** A retry of a request that already went through: nothing changed and nothing was counted. */
+  replayed: boolean;
+  previous: OrderWindows;
+  next: OrderWindows;
 }
 
 type PromoError = 'PROMO_NOT_FOUND' | 'PROMO_EXPIRED' | 'PROMO_LIMIT_REACHED' | 'PROMO_MIN_ORDER';
@@ -390,6 +410,114 @@ export class OrdersService implements OnModuleInit {
       });
     });
     return this.getForCustomer(customer.id, orderId);
+  }
+
+  // ───────────── Rescheduling ─────────────
+
+  /**
+   * The customer moves the pickup and/or delivery time of an order that has not been picked up, at most
+   * MAX_RESCHEDULES times. Prices do not change. When the pickup moves and a partner had accepted it, the partner is
+   * released and the order goes back to PENDING so dispatch offers the new window; offers still open for the old
+   * window are cancelled. The new dates, the count, the history line and the release commit together, and dispatch
+   * hears about it only after the commit, so it always reads the new dates. A retry with the same Idempotency-Key
+   * and the same times returns the order as it is now (`replayed: true`) and counts nothing.
+   */
+  async reschedule(customer: User, orderId: string, dto: RescheduleOrderDto, idempotencyKey?: string): Promise<RescheduleResult> {
+    const next: OrderWindows = {
+      pickupDate: dto.pickupDate,
+      pickupSlot: dto.pickupSlot,
+      deliveryDate: dto.deliveryDate,
+      deliverySlot: dto.deliverySlot,
+    };
+    const hash = rescheduleRequestHash(orderId, next);
+    const settings = await this.settings.get();
+    const now = this.clock.now();
+
+    const done = await this.prisma.$transaction(async (tx) => {
+      // Lock the customer's own order: a partner accepting or a pickup being recorded at this moment waits for this
+      // move to commit, then re-checks the status it expected.
+      await tx.$queryRaw`SELECT id FROM orders WHERE id = ${orderId}::uuid AND customer_id = ${customer.id}::uuid FOR UPDATE`;
+      const order = await tx.order.findFirst({
+        where: { id: orderId, customerId: customer.id },
+        include: { ...ORDER_INCLUDE, events: { orderBy: { createdAt: 'asc' } } },
+      });
+      if (!order) throw AppError.notFound('Order');
+
+      const previous = windowsOf(order);
+      if (idempotencyKey && order.rescheduleKey === idempotencyKey) {
+        if (order.rescheduleHash !== hash) {
+          throw AppError.conflict('IDEMPOTENCY_KEY_REUSED', 'This Idempotency-Key was already used for a different change');
+        }
+        return { order, replayed: true as const, previous, next };
+      }
+
+      const failure = rescheduleError(order, previous, next, now, settings);
+      if (failure) throw rescheduleFailure(failure);
+
+      const movesPickup = pickupChanged(previous, next);
+      const releasesPartner = movesPickup && order.status === OrderStatus.PICKUP_ASSIGNED;
+      const to = releasesPartner ? OrderStatus.PENDING : order.status;
+      await tx.order.update({
+        where: { id: orderId },
+        data: {
+          pickupDate: toDbDate(next.pickupDate),
+          pickupSlot: next.pickupSlot,
+          deliveryDate: toDbDate(next.deliveryDate),
+          deliverySlot: next.deliverySlot,
+          rescheduleCount: { increment: 1 },
+          rescheduleKey: idempotencyKey ?? null,
+          rescheduleHash: idempotencyKey ? hash : null,
+          // A new pickup window gets a fresh dispatch attempt, so an earlier "no partner found" no longer applies.
+          ...(movesPickup ? { dispatchFailedAt: null, pickupRescheduledAt: now } : {}),
+          ...(releasesPartner ? { status: OrderStatus.PENDING, pickupDriverId: null } : {}),
+        },
+      });
+      await tx.orderEvent.create({
+        data: {
+          orderId,
+          fromStatus: order.status,
+          toStatus: to,
+          actorId: customer.id,
+          actorRole: customer.role,
+          note: rescheduleNote(previous, next),
+        },
+      });
+
+      // Offers still open were made for the old window: a partner must not accept one and land on the new time.
+      let closed: { driverId: string; leg: DispatchLeg }[] = [];
+      if (movesPickup) {
+        closed = await tx.dispatchOffer.findMany({ where: { orderId, status: OfferStatus.PENDING }, select: { driverId: true, leg: true } });
+        if (closed.length) {
+          await tx.dispatchOffer.updateMany({ where: { orderId, status: OfferStatus.PENDING }, data: { status: OfferStatus.CANCELLED, respondedAt: now } });
+        }
+      }
+      const updated = await tx.order.findUniqueOrThrow({
+        where: { id: orderId },
+        include: { ...ORDER_INCLUDE, events: { orderBy: { createdAt: 'asc' } } },
+      });
+      return { order: updated, replayed: false as const, previous, next, before: order, to, movesPickup, closed };
+    });
+
+    if (done.replayed) return { order: done.order, replayed: true, previous: done.previous, next: done.next };
+
+    this.events.emit(Events.OrderRescheduled, {
+      ...orderRef(done.order),
+      from: done.before.status,
+      to: done.to,
+      previous: done.previous,
+      next: done.next,
+      pickupChanged: done.movesPickup,
+      deliveryChanged: deliveryChanged(done.previous, done.next),
+      removedDriverId: done.to === OrderStatus.PENDING && done.before.status === OrderStatus.PICKUP_ASSIGNED ? done.before.pickupDriverId : null,
+    } satisfies OrderRescheduledEvent);
+    if (done.closed.length) {
+      this.events.emit(Events.OffersClosed, {
+        orderId,
+        leg: done.closed[0].leg,
+        driverIds: done.closed.map((c) => c.driverId),
+      } satisfies OffersClosedEvent);
+    }
+    return { order: done.order, replayed: false, previous: done.previous, next: done.next };
   }
 
   async getById(id: string): Promise<OrderWithRelations> {
@@ -713,6 +841,12 @@ export class OrdersService implements OnModuleInit {
     for (const request of due) await this.expireAdjustment(request.id);
   }
 
+}
+
+/** Rules about the order's state are conflicts (409); a time that is not allowed is a bad request, as when booking. */
+function rescheduleFailure(code: RescheduleError): AppError {
+  const message = RESCHEDULE_ERROR_MESSAGES[code];
+  return code === 'RESCHEDULE_NOT_ALLOWED' || code === 'RESCHEDULE_LIMIT' ? AppError.conflict(code, message) : AppError.badRequest(code, message);
 }
 
 function addressSnapshot(a: Address, customer: User): Prisma.InputJsonObject {

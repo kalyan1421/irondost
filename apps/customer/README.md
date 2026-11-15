@@ -109,6 +109,10 @@ pointing at `/v1/webhooks/razorpay` on a public URL; without it, payments are st
 - **Orders tab:** Active / Past, a page at a time. An order opens to its status, a five-step timeline, the partner (with a call button),
   what is owed and the bill. `order.updated` over Socket.IO (`/v1/realtime`, only while the app is on screen) refreshes the open order,
   the lists and the inbox, so a status change shows up without pulling to refresh.
+- **Change pickup time** is offered until the clothes are picked up, and up to twice per order (the API decides: `canReschedule`, `reschedulesRemaining`
+  on the order). It opens the booking's own time picker on the order's windows, keeps the delivery time while it is still allowed after the new
+  pickup, asks for a confirmation, and sends `POST /v1/orders/{id}/reschedule` with an `Idempotency-Key` (reused when the same change is retried).
+  A partner who had accepted the pickup is released by the API and the order goes back to Finding a partner.
 - **Cancel** is offered until the clothes are picked up. **Pay what's due** opens the same Razorpay flow in "due" mode and ends on a
   receipt. Cancelling a paid order does not refund by itself: staff refund from the admin order page, and are notified (`refund_needed`).
 - **Notifications:** the bell on Home opens the inbox (`GET /v1/me/notifications`). After the first booking the app explains why it wants

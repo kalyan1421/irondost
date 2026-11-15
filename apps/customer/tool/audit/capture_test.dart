@@ -48,6 +48,7 @@ import 'package:irondost_customer/features/offers/promotions.dart';
 import 'package:irondost_customer/features/orders/order_detail_screen.dart';
 import 'package:irondost_customer/features/orders/order_repository.dart';
 import 'package:irondost_customer/features/orders/orders_screen.dart';
+import 'package:irondost_customer/features/orders/reschedule_order.dart';
 import 'package:irondost_customer/features/schedule/schedule.dart';
 import 'package:irondost_customer/features/schedule/schedule_screen.dart';
 import 'package:irondost_customer/features/shell/offline_banner.dart';
@@ -158,6 +159,22 @@ void main() {
       .add(const Duration(hours: 5, minutes: 30))
       .toIso8601String()
       .substring(0, 10);
+
+  /// An order that can still be moved: booked for Sunday 4 Oct morning (the schedule fake's days), delivery on the 6th.
+  /// [driver]: a partner has already accepted the pickup.
+  OrderDto reschedulable({bool used = false, bool driver = false}) => testOrder(
+    id: 'r1',
+    status: driver ? OrderStatus.pickupAssigned : OrderStatus.pending,
+    pickupDriver: driver ? const PersonRefDto(id: 'd1', name: 'Ravi K.', phone: '+919876500001') : null,
+    pickupDate: '2026-10-04',
+    pickupSlot: TimeSlot.morning,
+    pickupLabel: '07:00–11:00',
+    deliveryDate: '2026-10-06',
+    deliverySlot: TimeSlot.morning,
+    deliveryLabel: '07:00–11:00',
+    rescheduleCount: used ? 2 : 0,
+    canReschedule: !used,
+  );
 
   /// Puts [screen] at [path] in a router, with a page behind it to go back to.
   GoRouter at(String path, Widget screen) => GoRouter(
@@ -352,6 +369,60 @@ void main() {
         textScale: s,
       );
     },
+    // Changing an order's time: the booked order, the picker, the confirmation and the two ways it can fail to open.
+    'Order detail (change pickup)': (b, s) async => auditRouter(
+      at(Routes.order('r1'), OrderDetailScreen(orderId: 'r1', initial: reschedulable())),
+      overrides: [
+        orderRepositoryProvider.overrideWithValue(FakeOrderRepository()..orders['r1'] = reschedulable()),
+        ...await basketOverrides(),
+      ],
+      brightness: b,
+      textScale: s,
+    ),
+    'Change pickup time': (b, s) async => auditRouter(
+      at(Routes.reschedule('r1'), RescheduleScreen(orderId: 'r1', initial: reschedulable())),
+      overrides: [
+        orderRepositoryProvider.overrideWithValue(FakeOrderRepository()..orders['r1'] = reschedulable()),
+        scheduleRepositoryProvider.overrideWithValue(FakeScheduleRepository()),
+        startup,
+        ...await basketOverrides(),
+      ],
+      brightness: b,
+      textScale: s,
+    ),
+    'Change pickup time confirm': (b, s) async => auditRouter(
+      at(Routes.reschedule('r1'), RescheduleScreen(orderId: 'r1', initial: reschedulable(driver: true))),
+      overrides: [
+        orderRepositoryProvider.overrideWithValue(FakeOrderRepository()..orders['r1'] = reschedulable(driver: true)),
+        scheduleRepositoryProvider.overrideWithValue(FakeScheduleRepository()),
+        startup,
+        ...await basketOverrides(),
+      ],
+      brightness: b,
+      textScale: s,
+    ),
+    'Change pickup time offline': (b, s) async => auditRouter(
+      at(Routes.reschedule('r1'), RescheduleScreen(orderId: 'r1', initial: reschedulable())),
+      overrides: [
+        orderRepositoryProvider.overrideWithValue(FakeOrderRepository()..orders['r1'] = reschedulable()),
+        scheduleRepositoryProvider.overrideWithValue(FakeScheduleRepository()..pickupFailure = const ApiFailure(ApiFailureKind.offline)),
+        startup,
+        ...await basketOverrides(),
+      ],
+      brightness: b,
+      textScale: s,
+    ),
+    'Change pickup time used up': (b, s) async => auditRouter(
+      at(Routes.reschedule('r1'), RescheduleScreen(orderId: 'r1', initial: reschedulable(used: true))),
+      overrides: [
+        orderRepositoryProvider.overrideWithValue(FakeOrderRepository()..orders['r1'] = reschedulable(used: true)),
+        scheduleRepositoryProvider.overrideWithValue(FakeScheduleRepository()),
+        startup,
+        ...await basketOverrides(),
+      ],
+      brightness: b,
+      textScale: s,
+    ),
     'Offers': (b, s) async => auditThemed(
       const OffersScreen(),
       overrides: [
@@ -847,6 +918,7 @@ void main() {
               await tester.pump(const Duration(milliseconds: 500));
               if (entry.key == 'Price approval review') { await tester.tap(find.text('Review price change')); await tester.pumpAndSettle(); }
               await prepareCheckoutNote(tester, entry.key);
+              await prepareReschedule(tester, entry.key);
               await tester.pumpWidget(const SizedBox());
               await tester.pump();
             } finally {
@@ -890,6 +962,7 @@ void main() {
         await tester.pump(const Duration(milliseconds: 500));
         if (entry.key == 'Price approval review') { await tester.tap(find.text('Review price change')); await tester.pumpAndSettle(); }
         await prepareCheckoutNote(tester, entry.key);
+        await prepareReschedule(tester, entry.key);
         await tester.runAsync(() async {
           await Future<void>.delayed(const Duration(milliseconds: 100));
         });
@@ -1089,6 +1162,16 @@ void main() {
 class _Offline extends Reachability {
   @override
   bool build() => false;
+}
+
+/// "Change pickup time confirm": choose Monday and open the confirmation, as a customer would.
+Future<void> prepareReschedule(WidgetTester tester, String name) async {
+  if (name != 'Change pickup time confirm') return;
+  await tester.scrollUntilVisible(find.text('Mon'), 150, scrollable: find.byType(Scrollable).first);
+  await tester.tap(find.text('Mon'));
+  await tester.pumpAndSettle();
+  await tester.tap(find.widgetWithText(FilledButton, 'Review change'));
+  await tester.pumpAndSettle();
 }
 
 Future<void> prepareCheckoutNote(WidgetTester tester, String name) async {

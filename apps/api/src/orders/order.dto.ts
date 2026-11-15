@@ -36,6 +36,7 @@ import {
 } from '../generated/prisma/enums.js';
 import { slotLabel } from '../scheduling/schedule-rules.js';
 import { nextStatuses, type ActorKind } from './order-state.js';
+import { canReschedule, reschedulesRemaining } from './reschedule.js';
 
 // ───────────── Requests ─────────────
 
@@ -119,6 +120,27 @@ export class CancelOrderDto {
   @IsString()
   @MaxLength(300)
   reason?: string;
+}
+
+export class RescheduleOrderDto {
+  @ApiProperty({ example: '2026-10-05', description: 'New pickup date (IST calendar date)' })
+  @Matches(/^\d{4}-\d{2}-\d{2}$/)
+  pickupDate!: string;
+
+  @ApiProperty({ enum: TimeSlot, enumName: 'TimeSlot' })
+  @IsEnum(TimeSlot)
+  pickupSlot!: TimeSlot;
+
+  @ApiProperty({
+    example: '2026-10-06',
+    description: 'Delivery date. Send the current one to keep it; it is accepted only if it still follows the new pickup by the minimum turnaround.',
+  })
+  @Matches(/^\d{4}-\d{2}-\d{2}$/)
+  deliveryDate!: string;
+
+  @ApiProperty({ enum: TimeSlot, enumName: 'TimeSlot' })
+  @IsEnum(TimeSlot)
+  deliverySlot!: TimeSlot;
 }
 
 export class UpdateItemsDto {
@@ -354,6 +376,12 @@ export class OrderDto {
   @ApiProperty({ nullable: true, type: Date }) pickedUpAt!: Date | null;
   @ApiProperty({ nullable: true, type: Date }) deliveredAt!: Date | null;
   @ApiProperty({ nullable: true, type: Date }) cancelledAt!: Date | null;
+  /** How many times the customer has moved the pickup or delivery time. */
+  @ApiProperty() rescheduleCount!: number;
+  /** Moves the customer has left on this order. */
+  @ApiProperty() reschedulesRemaining!: number;
+  /** Customer view: the pickup time can be changed now (not yet picked up, and moves remain). Always false for staff and partners. */
+  @ApiProperty() canReschedule!: boolean;
   @ApiProperty() createdAt!: Date;
   @ApiProperty() updatedAt!: Date;
   @ApiPropertyOptional({ type: [OrderEventDto] }) events?: OrderEventDto[];
@@ -494,6 +522,9 @@ export function toOrderDto(o: OrderWithRelations, viewer: ActorKind): OrderDto {
     pickedUpAt: o.pickedUpAt,
     deliveredAt: o.deliveredAt,
     cancelledAt: o.cancelledAt,
+    rescheduleCount: o.rescheduleCount,
+    reschedulesRemaining: reschedulesRemaining(o.rescheduleCount),
+    canReschedule: viewer === 'CUSTOMER' && canReschedule(o.status, o.rescheduleCount),
     createdAt: o.createdAt,
     updatedAt: o.updatedAt,
     ...(o.events

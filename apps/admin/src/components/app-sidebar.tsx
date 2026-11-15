@@ -2,8 +2,10 @@
 
 import {
   BadgePercent,
+  BellOff,
   ChevronsUpDown,
   GalleryHorizontalEnd,
+  IndianRupee,
   LayoutDashboard,
   LogOut,
   Moon,
@@ -59,8 +61,10 @@ const NAV: { label: string; items: NavItem[] }[] = [
     items: [
       { href: "/", label: "Dashboard", icon: LayoutDashboard },
       { href: "/orders", label: "Orders", icon: PackageSearch },
+      { href: "/payments", label: "Payments", icon: IndianRupee },
       { href: "/customers", label: "Customers", icon: Users },
       { href: "/issues", label: "Customer reports", icon: ScrollText },
+      { href: "/notification-deliveries", label: "Undelivered alerts", icon: BellOff },
       { href: "/drivers", label: "Delivery partners", icon: Truck },
     ],
   },

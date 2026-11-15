@@ -25,6 +25,7 @@ import 'cancel_order.dart';
 import 'order_repository.dart';
 import 'pay_due.dart';
 import 'refund_list.dart';
+import 'reschedule_order.dart';
 import 'price_approval.dart';
 
 /// One order: where it is, who has it, what is owed, and what to do next. Shows [initial] (from the
@@ -113,6 +114,13 @@ class OrderDetailScreen extends ConsumerWidget {
               ..._activeBody(context, ref, order, delayed: delayed),
             const SizedBox(height: IdSpace.s4),
             IdListGroup(children: [
+              if (order.canReschedule)
+                IdListRow(
+                  icon: LucideIcons.calendarClock,
+                  label: 'Change pickup time',
+                  value: changesLeft(order.reschedulesRemaining),
+                  onTap: () => context.push(Routes.reschedule(order.id), extra: order),
+                ),
               if (order.status != OrderStatus.cancelled) IdListRow(icon: LucideIcons.messageSquare, label: 'Report a problem', onTap: () => context.push(Routes.report(order.id))),
               IdListRow(icon: LucideIcons.messagesSquare, label: 'Reports for this order', onTap: () => context.push('${Routes.issues}?orderId=${order.id}')),
             ]),
@@ -766,6 +774,11 @@ class _DelayedNotice extends ConsumerWidget {
           label: 'Call us',
           onPressed: () => Support.dial(support.phone, context: context, fallback: support),
         ),
+        if (order.canReschedule)
+          IdButton.text(
+            label: 'Change time',
+            onPressed: () => context.push(Routes.reschedule(order.id), extra: order),
+          ),
         IdButton.text(
           label: 'Cancel order',
           onPressed: () => cancelOrder(context, order),

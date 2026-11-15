@@ -32,7 +32,7 @@ class HelpScreen extends ConsumerWidget {
       ),
       (
         'Can I change or cancel a pickup?',
-        'You can cancel in the app until your clothes are picked up: open the order and tap Cancel order. After pickup, call us. To change the time, cancel and book again.',
+        'You can change the time or cancel in the app until your clothes are picked up: open the order and tap Change pickup time (up to two times) or Cancel order. After pickup, call us.',
       ),
       (
         'What if an item is damaged or missing?',

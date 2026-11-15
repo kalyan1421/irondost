@@ -70,6 +70,7 @@ export 'models/payment_provider.dart';
 export 'models/order_payment_dto.dart';
 export 'models/order_dto.dart';
 export 'models/order_page_dto.dart';
+export 'models/reschedule_order_dto.dart';
 export 'models/cancel_order_dto.dart';
 export 'models/checkout_prefill_dto.dart';
 export 'models/checkout_params_dto.dart';

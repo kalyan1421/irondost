@@ -181,6 +181,13 @@ Each phase ends with something runnable on a simulator and a device.
 
 - **Pay on delivery (3 Oct 2026):** `POST /v1/orders/{id}/pay-on-delivery` turns an unpaid online order into cash on delivery after a failed or abandoned payment, so the partner collects it at the door. Refused once anything is paid.
 
+- **Change pickup time (FC04, 16 Nov 2026):** `POST /v1/orders/{id}/reschedule` with the four new pickup and delivery dates and slots, and an
+  `Idempotency-Key`. Only while the order is `PENDING` or `PICKUP_ASSIGNED`, at most 2 times per order (`orders.reschedule_count`; the order
+  carries `rescheduleCount`, `reschedulesRemaining` and `canReschedule`). Same schedule rules as booking, prices unchanged. A pickup that moves
+  releases an assigned partner and puts the order back to `PENDING`; dispatch then queues the new window and the old window's queued jobs and
+  open offers do nothing. The partner and staff are told, and the order history gets "Rescheduled by customer: ...". Errors:
+  `RESCHEDULE_NOT_ALLOWED`, `RESCHEDULE_LIMIT`, `RESCHEDULE_UNCHANGED`, and the booking's schedule errors.
+
 - **Refund needed (3 Oct 2026):** when a paid order is cancelled, staff get a `refund_needed` notification. Nothing is refunded
   automatically; the admin Refund button does it, as decided earlier.
 

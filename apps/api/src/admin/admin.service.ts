@@ -10,6 +10,7 @@ import {
   PaymentRecordStatus,
   Role,
 } from '../generated/prisma/enums.js';
+import { undeliveredWhere } from '../notifications/push-delivery.js';
 import { refundDueOrderIds } from '../orders/refund-due.js';
 import { PrismaService } from '../prisma/prisma.service.js';
 import { toUserDto } from '../users/user.dto.js';
@@ -301,14 +302,15 @@ export class AdminService {
           GROUP BY 1 ORDER BY 1`,
     ]);
 
-    const [openIssues, overdueIssues, pendingAdjustments] = await Promise.all([
+    const [openIssues, overdueIssues, pendingAdjustments, undeliveredAlerts] = await Promise.all([
       this.prisma.orderIssue.count({ where: { status: 'OPEN' } }),
       this.prisma.orderIssue.count({ where: { status: 'OPEN', acknowledgedAt: null, firstResponseDueAt: { lte: now } } }),
       this.prisma.orderAdjustment.count({ where: { status: 'PENDING_CUSTOMER', expiresAt: { gt: now } } }),
+      this.prisma.pushDelivery.count({ where: undeliveredWhere(now) }),
     ]);
     const dailyMap = new Map(daily.map((d) => [d.date, d]));
     return {
-      openIssues, overdueIssues, pendingAdjustments,
+      openIssues, overdueIssues, pendingAdjustments, undeliveredAlerts,
       byStatus: Object.fromEntries(
         byStatus.map((s) => [s.status, s._count._all]),
       ),

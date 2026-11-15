@@ -35,21 +35,15 @@ OrderDto _$OrderDtoFromJson(Map<String, dynamic> json) => OrderDto(
   totalPaise: json['totalPaise'] as num,
   paidPaise: json['paidPaise'] as num,
   refundedPaise: json['refundedPaise'] as num,
-  cancelledAt: json['cancelledAt'] == null
-      ? null
-      : DateTime.parse(json['cancelledAt'] as String),
+  canReschedule: json['canReschedule'] as bool,
   amountDuePaise: json['amountDuePaise'] as num,
   promoCode: json['promoCode'] as String?,
   paymentMethod: PaymentMethod.fromJson(json['paymentMethod'] as String),
-  deliveredAt: json['deliveredAt'] == null
-      ? null
-      : DateTime.parse(json['deliveredAt'] as String),
+  paymentStatus: PaymentStatus.fromJson(json['paymentStatus'] as String),
   customer: json['customer'] == null
       ? null
       : PersonRefDto.fromJson(json['customer'] as Map<String, dynamic>),
-  pickupDriver: json['pickupDriver'] == null
-      ? null
-      : PersonRefDto.fromJson(json['pickupDriver'] as Map<String, dynamic>),
+  reschedulesRemaining: json['reschedulesRemaining'] as num,
   deliveryDriver: json['deliveryDriver'] == null
       ? null
       : PersonRefDto.fromJson(json['deliveryDriver'] as Map<String, dynamic>),
@@ -63,7 +57,16 @@ OrderDto _$OrderDtoFromJson(Map<String, dynamic> json) => OrderDto(
   pickedUpAt: json['pickedUpAt'] == null
       ? null
       : DateTime.parse(json['pickedUpAt'] as String),
-  paymentStatus: PaymentStatus.fromJson(json['paymentStatus'] as String),
+  deliveredAt: json['deliveredAt'] == null
+      ? null
+      : DateTime.parse(json['deliveredAt'] as String),
+  cancelledAt: json['cancelledAt'] == null
+      ? null
+      : DateTime.parse(json['cancelledAt'] as String),
+  rescheduleCount: json['rescheduleCount'] as num,
+  pickupDriver: json['pickupDriver'] == null
+      ? null
+      : PersonRefDto.fromJson(json['pickupDriver'] as Map<String, dynamic>),
   refundablePaise: json['refundablePaise'] as num?,
   revision: json['revision'] as num?,
   adjustments: (json['adjustments'] as List<dynamic>?)
@@ -117,6 +120,9 @@ Map<String, dynamic> _$OrderDtoToJson(OrderDto instance) => <String, dynamic>{
   'pickedUpAt': instance.pickedUpAt?.toIso8601String(),
   'deliveredAt': instance.deliveredAt?.toIso8601String(),
   'cancelledAt': instance.cancelledAt?.toIso8601String(),
+  'rescheduleCount': instance.rescheduleCount,
+  'reschedulesRemaining': instance.reschedulesRemaining,
+  'canReschedule': instance.canReschedule,
   'createdAt': instance.createdAt.toIso8601String(),
   'updatedAt': instance.updatedAt.toIso8601String(),
   'events': instance.events,

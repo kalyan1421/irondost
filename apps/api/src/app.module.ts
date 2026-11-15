@@ -17,6 +17,7 @@ import { DriversModule } from './drivers/drivers.module.js';
 import { HealthController } from './health/health.controller.js';
 import { IssuesModule } from './issues/issues.controller.js';
 import { JobsModule } from './jobs/jobs.module.js';
+import { LedgerModule } from './ledger/ledger.module.js';
 import { KeepAliveModule } from './keep-alive/keep-alive.service.js';
 import { NotificationsModule } from './notifications/notifications.module.js';
 import { OrdersModule } from './orders/orders.module.js';
@@ -64,6 +65,7 @@ import { UsersModule } from './users/users.module.js';
     OrdersModule,
     IssuesModule,
     PaymentsModule,
+    LedgerModule,
     DriversModule,
     NotificationsModule,
     AdminModule,

@@ -49,6 +49,10 @@ abstract final class Routes {
   static const orderDetail = '/order/:id';
   static String order(String orderId) => '/order/$orderId';
 
+  /// Changing an order's pickup (and delivery) time before pickup. `extra` may carry the order.
+  static const orderReschedule = '/order/:id/reschedule';
+  static String reschedule(String orderId) => '/order/$orderId/reschedule';
+
   /// An order's items and bill.
   static const orderBill = '/order/:id/bill';
   static String bill(String orderId) => '/order/$orderId/bill';

@@ -17,7 +17,7 @@ export function configureApp(app: INestApplication): Env {
   }
   app.setGlobalPrefix('v1');
   app.use(helmet());
-  app.enableCors({ origin: env.CORS_ORIGINS, credentials: true, exposedHeaders: ['Idempotent-Replayed'] });
+  app.enableCors({ origin: env.CORS_ORIGINS, credentials: true, exposedHeaders: ['Idempotent-Replayed', 'Content-Disposition', 'X-Export-Truncated'] });
   app.useGlobalPipes(
     new ValidationPipe({ whitelist: true, forbidNonWhitelisted: true, transform: true }),
   );

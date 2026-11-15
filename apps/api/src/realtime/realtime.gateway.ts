@@ -9,6 +9,7 @@ import {
   type OffersCreatedEvent,
   type OrderCreatedEvent,
   type OrderRef,
+  type OrderRescheduledEvent,
   type OrderStatusChangedEvent,
   type OrderUpdatedEvent,
   type PaymentCapturedEvent,
@@ -89,6 +90,14 @@ export class RealtimeGateway implements OnGatewayConnection {
   @OnEvent(Events.OrderUpdated)
   onUpdated(e: OrderUpdatedEvent): void {
     this.toOrderParties(e, { orderId: e.orderId, orderNumber: e.orderNumber, reason: e.reason });
+  }
+
+  /** The customer moved the pickup or delivery time; a partner who held the pickup also needs to drop the task. */
+  @OnEvent(Events.OrderRescheduled)
+  onRescheduled(e: OrderRescheduledEvent): void {
+    const payload = { orderId: e.orderId, orderNumber: e.orderNumber, status: e.to, reason: 'details_changed' };
+    this.toOrderParties(e, payload);
+    if (e.removedDriverId) this.server?.to(userRoom(e.removedDriverId)).emit('order.updated', payload);
   }
 
   @OnEvent(Events.PaymentCaptured)

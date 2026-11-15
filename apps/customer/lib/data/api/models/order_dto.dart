@@ -44,19 +44,22 @@ class OrderDto {
     required this.totalPaise,
     required this.paidPaise,
     required this.refundedPaise,
-    required this.cancelledAt,
+    required this.canReschedule,
     required this.amountDuePaise,
     required this.promoCode,
     required this.paymentMethod,
-    required this.deliveredAt,
+    required this.paymentStatus,
     required this.customer,
-    required this.pickupDriver,
+    required this.reschedulesRemaining,
     required this.deliveryDriver,
     required this.allowedNextStatuses,
     required this.dispatchFailedAt,
     required this.cancelReason,
     required this.pickedUpAt,
-    required this.paymentStatus,
+    required this.deliveredAt,
+    required this.cancelledAt,
+    required this.rescheduleCount,
+    required this.pickupDriver,
     this.refundablePaise,
     this.revision,
     this.adjustments,
@@ -109,6 +112,15 @@ class OrderDto {
   final DateTime? pickedUpAt;
   final DateTime? deliveredAt;
   final DateTime? cancelledAt;
+
+  /// How many times the customer has moved the pickup or delivery time.
+  final num rescheduleCount;
+
+  /// Moves the customer has left on this order.
+  final num reschedulesRemaining;
+
+  /// Customer view: the pickup time can be changed now (not yet picked up, and moves remain). Always false for staff and partners.
+  final bool canReschedule;
   final DateTime createdAt;
   final DateTime updatedAt;
   final List<OrderEventDto>? events;

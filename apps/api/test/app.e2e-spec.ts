@@ -9,11 +9,13 @@ import request from 'supertest';
 import { inject } from 'vitest';
 import { AppModule } from '../src/app.module.js';
 import { configureApp } from '../src/app.setup.js';
-import { addDays, istDate } from '../src/common/time.js';
+import { FirebaseService } from '../src/auth/firebase.service.js';
+import { addDays, istDate, slotStart } from '../src/common/time.js';
+import { TimeSlot } from '../src/generated/prisma/enums.js';
 import { JobScheduler } from '../src/jobs/job-scheduler.js';
 import { RazorpayGateway } from '../src/payments/razorpay.gateway.js';
 import { PrismaService } from '../src/prisma/prisma.service.js';
-import { FakeRazorpay, MemoryScheduler, waitFor } from './support.js';
+import { FakeFirebase, FakeMessaging, FakeRazorpay, MemoryScheduler, waitFor } from './support.js';
 
 const PHONES = {
   superAdmin: '9000000000',
@@ -32,6 +34,8 @@ describe('Laundry API (e2e)', () => {
   let prisma: PrismaService;
   const jobs = new MemoryScheduler();
   const razorpay = new FakeRazorpay();
+  const firebase = new FakeFirebase();
+  const fcm = new FakeMessaging();
   let http: ReturnType<typeof request>;
 
   const uploadDir = mkdtempSync(join(tmpdir(), 'irondost-uploads-'));
@@ -63,6 +67,8 @@ describe('Laundry API (e2e)', () => {
       .useValue(jobs)
       .overrideProvider(RazorpayGateway)
       .useValue(razorpay)
+      .overrideProvider(FirebaseService)
+      .useValue(firebase)
       .compile();
     app = moduleRef.createNestApplication({ rawBody: true, logger: false });
     configureApp(app);
@@ -1049,6 +1055,252 @@ describe('Laundry API (e2e)', () => {
     });
   });
 
+  describe('rescheduling a pickup', () => {
+    // Windows well ahead of today, each delivery at least the turnaround after its pickup.
+    const A = { pickupDate: addDays(tomorrow, 2), pickupSlot: 'NOON', deliveryDate: addDays(tomorrow, 3), deliverySlot: 'MORNING' };
+    const B = { pickupDate: addDays(tomorrow, 3), pickupSlot: 'MORNING', deliveryDate: addDays(tomorrow, 4), deliverySlot: 'EVENING' };
+    const C = { pickupDate: addDays(tomorrow, 4), pickupSlot: 'EVENING', deliveryDate: addDays(tomorrow, 6), deliverySlot: 'NOON' };
+    const windowOf = (w: { pickupDate: string; pickupSlot: string }) => `${w.pickupDate}|${w.pickupSlot}`;
+    const BOOKED = windowOf({ pickupDate: tomorrow, pickupSlot: 'MORNING' });
+    const items = () => [{ catalogItemId: shirtId, quantity: 2 }];
+
+    const book = async () =>
+      (
+        await http
+          .post('/v1/orders')
+          .set(bearer(PHONES.customer))
+          .send({ items: items(), pickupDate: tomorrow, pickupSlot: 'MORNING', deliveryDate: dayAfter, deliverySlot: 'EVENING', pickupAddressId: addressId, paymentMethod: 'COD' })
+          .expect(201)
+      ).body as { id: string; orderNumber: string; totalPaise: number; subtotalPaise: number };
+    const move = (id: string, to: object, key?: string, phone = PHONES.customer) => {
+      const req = http.post(`/v1/orders/${id}/reschedule`).set(bearer(phone));
+      if (key) req.set('Idempotency-Key', key);
+      return req.send(to);
+    };
+    const mine = async (id: string) => (await http.get(`/v1/orders/${id}`).set(bearer(PHONES.customer)).expect(200)).body;
+    const staffView = async (id: string) => (await http.get(`/v1/admin/orders/${id}`).set(bearer(PHONES.admin)).expect(200)).body;
+    const queuedFor = (id: string, window?: string) => jobs.queued.filter((j) => j.queue === 'dispatch-round' && (j.data as { orderId: string; window?: string }).orderId === id && (window === undefined || (j.data as { window?: string }).window === window));
+    const assign = (id: string, driverId: string) =>
+      http.post(`/v1/admin/orders/${id}/assign`).set(bearer(PHONES.admin)).send({ leg: 'PICKUP', driverId }).expect(200);
+    const cleanUp = (...ids: string[]) =>
+      Promise.all(ids.map((id) => http.post(`/v1/admin/orders/${id}/status`).set(bearer(PHONES.admin)).send({ status: 'CANCELLED', note: 'test over' }).expect(200)));
+
+    it('moves the times, keeps the prices, and tells staff', async () => {
+      const placed = await book();
+      await waitFor(() => queuedFor(placed.id, BOOKED).length === 1);
+
+      const res = await move(placed.id, A, 'resched-first-0001').expect(200);
+      expect(res.body).toMatchObject({
+        status: 'PENDING',
+        pickupDate: A.pickupDate,
+        pickupSlot: 'NOON',
+        pickupSlotLabel: '11:00–16:00',
+        deliveryDate: A.deliveryDate,
+        deliverySlot: 'MORNING',
+        rescheduleCount: 1,
+        reschedulesRemaining: 1,
+        canReschedule: true,
+        totalPaise: placed.totalPaise,
+        subtotalPaise: placed.subtotalPaise,
+        paymentStatus: 'UNPAID',
+      });
+      expect(res.headers['idempotent-replayed']).toBeUndefined();
+      // The response is the order as the customer reads it later, history included.
+      expect(await mine(placed.id)).toMatchObject({ pickupDate: A.pickupDate, rescheduleCount: 1 });
+
+      const staff = await staffView(placed.id);
+      const last = staff.events.at(-1);
+      expect(last).toMatchObject({ fromStatus: 'PENDING', toStatus: 'PENDING', actorRole: 'CUSTOMER' });
+      expect(last.note).toMatch(/^Rescheduled by customer: pickup \w{3} \d{1,2} \w{3} 7–11 AM to \w{3} \d{1,2} \w{3} 11 AM–4 PM; delivery /);
+      expect(staff).toMatchObject({ canReschedule: false, rescheduleCount: 1 }); // the customer's control, not staff's
+
+      await waitFor(async () => (await prisma.auditLog.count({ where: { action: 'order.rescheduled', entityId: placed.id } })) === 1);
+      await waitFor(async () => (await prisma.notification.count({ where: { type: 'order_rescheduled', data: { path: ['orderId'], equals: placed.id } } })) >= 1);
+      const alert = await prisma.notification.findFirstOrThrow({ where: { type: 'order_rescheduled', data: { path: ['orderId'], equals: placed.id } }, include: { user: true } });
+      expect(['ADMIN', 'SUPER_ADMIN']).toContain(alert.user.role);
+      expect(alert.title).toBe('Pickup time changed');
+      await cleanUp(placed.id);
+    });
+
+    it('queues dispatch for the new window, and the old window\'s jobs offer nothing', async () => {
+      const placed = await placeAndDispatch(items());
+      const oldOffer = await offerFor(PHONES.driver1, placed.id);
+
+      await move(placed.id, A).expect(200);
+      // Offers made for the old time are void: no partner can accept one and land on the new time.
+      const stale = await http.post(`/v1/driver/offers/${oldOffer}/accept`).set(bearer(PHONES.driver1)).expect(409);
+      expect(stale.body.code).toBe('OFFER_CLOSED');
+      expect((await http.get('/v1/driver/offers').set(bearer(PHONES.driver2)).expect(200)).body.some((o: { orderId: string }) => o.orderId === placed.id)).toBe(false);
+
+      // A fresh job for the new window, due the lead time before it starts (not at once: it is days away).
+      await waitFor(() => queuedFor(placed.id, windowOf(A)).length === 1);
+      const settings = await prisma.businessSettings.findUniqueOrThrow({ where: { id: 1 } });
+      expect(queuedFor(placed.id, windowOf(A))[0].startAfter).toEqual(new Date(slotStart(A.pickupDate, TimeSlot.NOON).getTime() - settings.dispatchLeadMinutes * 60_000));
+
+      // The round-1 expiry job and anything else made for the old window do nothing...
+      await jobs.run('dispatch-expire', (d) => d.orderId === placed.id);
+      expect((await http.get('/v1/driver/offers').set(bearer(PHONES.driver2)).expect(200)).body.some((o: { orderId: string }) => o.orderId === placed.id)).toBe(false);
+      expect(await prisma.dispatchOffer.count({ where: { orderId: placed.id, round: 2 } })).toBe(0);
+
+      // ...and the new window's job offers the order, to the same drivers (what they were offered before does not count).
+      await jobs.run('dispatch-round', (d) => d.orderId === placed.id && d.window === windowOf(A));
+      const offers = await http.get('/v1/driver/offers').set(bearer(PHONES.driver2)).expect(200);
+      expect(offers.body.find((o: { orderId: string }) => o.orderId === placed.id)).toMatchObject({ leg: 'PICKUP', date: A.pickupDate, slot: 'NOON', slotLabel: '11:00–16:00' });
+      expect((await staffView(placed.id)).dispatchFailedAt).toBeNull();
+      await cleanUp(placed.id);
+    });
+
+    it('releases the partner who accepted, puts the order back to PENDING, and offers the new window', async () => {
+      // A partner takes it from an offer, as they do: both partners were offered it a moment ago.
+      const placed = await placeAndDispatch(items());
+      const offer = await offerFor(PHONES.driver1, placed.id);
+      await http.post(`/v1/driver/offers/${offer}/accept`).set(bearer(PHONES.driver1)).expect(200);
+      expect((await http.get('/v1/driver/tasks').set(bearer(PHONES.driver1)).expect(200)).body.map((o: { id: string }) => o.id)).toContain(placed.id);
+      await prisma.order.update({ where: { id: placed.id }, data: { dispatchFailedAt: new Date() } });
+      jobs.clear();
+
+      const res = await move(placed.id, B, 'resched-assigned-001').expect(200);
+      expect(res.body).toMatchObject({ status: 'PENDING', pickupDriver: null, pickupDate: B.pickupDate, pickupSlot: 'MORNING', rescheduleCount: 1, dispatchFailedAt: null });
+      const staff = await staffView(placed.id);
+      expect(staff.events.at(-1)).toMatchObject({ fromStatus: 'PICKUP_ASSIGNED', toStatus: 'PENDING', actorRole: 'CUSTOMER' });
+      expect(staff.pickupDriver).toBeNull();
+
+      // The partner no longer has it, and is told why.
+      expect((await http.get('/v1/driver/tasks').set(bearer(PHONES.driver1)).expect(200)).body.map((o: { id: string }) => o.id)).not.toContain(placed.id);
+      await http.get(`/v1/driver/orders/${placed.id}`).set(bearer(PHONES.driver1)).expect(404);
+      await waitFor(async () => (await prisma.notification.count({ where: { userId: driver1Id, type: 'task_removed', data: { path: ['orderId'], equals: placed.id } } })) === 1);
+      const told = await prisma.notification.findFirstOrThrow({ where: { userId: driver1Id, type: 'task_removed', data: { path: ['orderId'], equals: placed.id } } });
+      expect(told).toMatchObject({ title: 'Pickup time changed' });
+      expect(told.body).toContain(placed.orderNumber);
+      const alert = await prisma.notification.findFirstOrThrow({ where: { type: 'order_rescheduled', data: { path: ['orderId'], equals: placed.id } } });
+      expect(alert.body).toContain('The assigned partner was released');
+
+      // Dispatch reads the new dates: one job for the new window only (the order was not unassigned "now").
+      await waitFor(() => queuedFor(placed.id).length === 1);
+      expect(queuedFor(placed.id)[0].data).toMatchObject({ window: windowOf(B), leg: 'PICKUP' });
+      await jobs.run('dispatch-round', (d) => d.orderId === placed.id);
+      const offered = await http.get('/v1/driver/offers').set(bearer(PHONES.driver2)).expect(200);
+      expect(offered.body.find((o: { orderId: string }) => o.orderId === placed.id)).toMatchObject({ date: B.pickupDate, slot: 'MORNING' });
+      // Being offered it a moment ago for the old time does not rule a partner out for the new one, the released partner included.
+      expect(await prisma.dispatchOffer.count({ where: { orderId: placed.id, round: 2, driverId: { in: [driver1Id, driver2Id] } } })).toBe(2);
+      await cleanUp(placed.id);
+    });
+
+    it('can be assigned again after it moved', async () => {
+      const placed = await book();
+      await assign(placed.id, driver1Id);
+      await move(placed.id, C).expect(200);
+      await assign(placed.id, driver2Id);
+      const taken = await mine(placed.id);
+      expect(taken).toMatchObject({ status: 'PICKUP_ASSIGNED', pickupDriver: { id: driver2Id }, pickupDate: C.pickupDate, rescheduleCount: 1 });
+      await cleanUp(placed.id);
+    });
+
+    it('keeps the partner when only the delivery time moves', async () => {
+      const placed = await book();
+      await assign(placed.id, driver1Id);
+      jobs.clear();
+      const res = await move(placed.id, { pickupDate: tomorrow, pickupSlot: 'MORNING', deliveryDate: addDays(dayAfter, 1), deliverySlot: 'NOON' }).expect(200);
+      expect(res.body).toMatchObject({ status: 'PICKUP_ASSIGNED', pickupDriver: { id: driver1Id }, deliveryDate: addDays(dayAfter, 1), deliverySlot: 'NOON', rescheduleCount: 1 });
+      expect((await staffView(placed.id)).events.at(-1).note).toMatch(/^Rescheduled by customer: delivery /);
+      await new Promise((r) => setTimeout(r, 100));
+      expect(queuedFor(placed.id)).toHaveLength(0);
+      await cleanUp(placed.id);
+    });
+
+    it('allows two changes and then refuses, leaving the order as it was', async () => {
+      const placed = await book();
+      expect((await move(placed.id, A).expect(200)).body).toMatchObject({ rescheduleCount: 1, reschedulesRemaining: 1, canReschedule: true });
+      expect((await move(placed.id, B).expect(200)).body).toMatchObject({ rescheduleCount: 2, reschedulesRemaining: 0, canReschedule: false });
+      const refused = await move(placed.id, C).expect(409);
+      expect(refused.body.code).toBe('RESCHEDULE_LIMIT');
+      expect(await mine(placed.id)).toMatchObject({ pickupDate: B.pickupDate, pickupSlot: 'MORNING', rescheduleCount: 2, canReschedule: false });
+      await cleanUp(placed.id);
+    });
+
+    it('only allows two when two changes arrive at once', async () => {
+      const placed = await book();
+      await move(placed.id, A).expect(200);
+      const results = await Promise.all([move(placed.id, B), move(placed.id, C)]);
+      expect(results.map((r) => r.status).sort()).toEqual([200, 409]);
+      expect(results.find((r) => r.status === 409)!.body.code).toBe('RESCHEDULE_LIMIT');
+      expect((await mine(placed.id)).rescheduleCount).toBe(2);
+      await cleanUp(placed.id);
+    });
+
+    it('is closed once the clothes are picked up, and for finished orders', async () => {
+      const pickedUp = await book();
+      await assign(pickedUp.id, driver1Id);
+      await http.post(`/v1/driver/orders/${pickedUp.id}/picked-up`).set(bearer(PHONES.driver1)).expect(200);
+      const late = await move(pickedUp.id, A).expect(409);
+      expect(late.body.code).toBe('RESCHEDULE_NOT_ALLOWED');
+      expect(await mine(pickedUp.id)).toMatchObject({ status: 'PICKED_UP', pickupDate: tomorrow, rescheduleCount: 0, canReschedule: false });
+
+      const cancelled = await book();
+      await http.post(`/v1/orders/${cancelled.id}/cancel`).set(bearer(PHONES.customer)).send({}).expect(200);
+      expect((await move(cancelled.id, A).expect(409)).body.code).toBe('RESCHEDULE_NOT_ALLOWED');
+      await cleanUp(pickedUp.id);
+    });
+
+    it('applies the booking rules to the new times, and counts nothing when it refuses', async () => {
+      const placed = await book();
+      const past = await move(placed.id, { ...A, pickupDate: addDays(tomorrow, -3) }).expect(400);
+      expect(past.body.code).toBe('PICKUP_SLOT_CLOSED');
+      const far = await move(placed.id, { ...A, pickupDate: addDays(tomorrow, 60), deliveryDate: addDays(tomorrow, 61) }).expect(400);
+      expect(far.body.code).toBe('PICKUP_TOO_FAR_AHEAD');
+      // The delivery must follow the new pickup by the turnaround: it is checked even when the customer keeps it.
+      const rushed = await move(placed.id, { ...A, deliveryDate: A.pickupDate, deliverySlot: 'EVENING' }).expect(400);
+      expect(rushed.body.code).toBe('DELIVERY_TOO_SOON');
+      const same = await move(placed.id, { pickupDate: tomorrow, pickupSlot: 'MORNING', deliveryDate: dayAfter, deliverySlot: 'EVENING' }).expect(400);
+      expect(same.body.code).toBe('RESCHEDULE_UNCHANGED');
+      await move(placed.id, { pickupDate: 'tomorrow', pickupSlot: 'MORNING', deliveryDate: dayAfter, deliverySlot: 'EVENING' }).expect(400);
+      await move(placed.id, { pickupDate: tomorrow, pickupSlot: 'LATE', deliveryDate: dayAfter, deliverySlot: 'EVENING' }).expect(400);
+      expect(await mine(placed.id)).toMatchObject({ pickupDate: tomorrow, deliveryDate: dayAfter, rescheduleCount: 0, canReschedule: true, reschedulesRemaining: 2 });
+      await cleanUp(placed.id);
+    });
+
+    it('counts a retry with the same key once, and refuses the key for a different change', async () => {
+      const placed = await book();
+      const first = await move(placed.id, A, 'resched-retry-key-1').expect(200);
+      const history = (await staffView(placed.id)).events.length;
+
+      const retry = await move(placed.id, A, 'resched-retry-key-1').expect(200);
+      expect(retry.headers['idempotent-replayed']).toBe('true');
+      expect(retry.body).toMatchObject({ id: first.body.id, rescheduleCount: 1, pickupDate: A.pickupDate });
+      expect((await staffView(placed.id)).events).toHaveLength(history);
+      expect(await prisma.auditLog.count({ where: { action: 'order.rescheduled', entityId: placed.id } })).toBe(1);
+
+      const reused = await move(placed.id, B, 'resched-retry-key-1').expect(409);
+      expect(reused.body.code).toBe('IDEMPOTENCY_KEY_REUSED');
+      expect((await move(placed.id, A, 'bad key!').expect(400)).body.code).toBe('INVALID_IDEMPOTENCY_KEY');
+
+      // A new key is a new change.
+      expect((await move(placed.id, B, 'resched-retry-key-2').expect(200)).body).toMatchObject({ rescheduleCount: 2, pickupDate: B.pickupDate });
+      expect((await mine(placed.id)).rescheduleCount).toBe(2);
+      await cleanUp(placed.id);
+    });
+
+    it('keeps the count between 0 and 10, and a key with its fingerprint, in the database itself', async () => {
+      const placed = await book();
+      for (const data of [{ rescheduleCount: 11 }, { rescheduleCount: -1 }, { rescheduleKey: 'a-key-with-no-fingerprint' }, { rescheduleHash: 'a-fingerprint-with-no-key' }]) {
+        await expect(prisma.order.update({ where: { id: placed.id }, data })).rejects.toThrow();
+      }
+      await prisma.order.update({ where: { id: placed.id }, data: { rescheduleCount: 10, rescheduleKey: 'both-or-neither', rescheduleHash: 'both-or-neither' } });
+      await cleanUp(placed.id);
+    });
+
+    it('is a 404 for another customer\'s order, and closed to staff', async () => {
+      const placed = await book();
+      const other = await move(placed.id, A, undefined, PHONES.otherCustomer).expect(404);
+      expect(other.body.code).toBe('NOT_FOUND');
+      await move('00000000-0000-4000-8000-000000000000', A).expect(404);
+      await move(placed.id, A, undefined, PHONES.admin).expect(403);
+      await http.post(`/v1/orders/${placed.id}/reschedule`).send(A).expect(401);
+      expect(await mine(placed.id)).toMatchObject({ pickupDate: tomorrow, rescheduleCount: 0 });
+      await cleanUp(placed.id);
+    });
+  });
+
   describe('image uploads', () => {
     it('stores a cleaned, resized WebP and serves it to other origins', async () => {
       const png = await sharp({ create: { width: 2400, height: 1200, channels: 3, background: '#0f3057' } }).png().toBuffer();
@@ -1130,6 +1382,346 @@ describe('Laundry API (e2e)', () => {
         await http.delete(`/v1/admin/customers/${me.body.id}`).set(bearer(PHONES.customer)).expect(403);
         await http.delete(`/v1/admin/customers/${me.body.id}`).expect(401);
       });
+    });
+  });
+
+  describe('undelivered alerts', () => {
+    type Delivery = Awaited<ReturnType<typeof prisma.pushDelivery.findMany>>[number];
+    const DAY_MS = 24 * 60 * 60 * 1000;
+    const sarees = () => [{ catalogItemId: sareeId, quantity: 1 }];
+    const base = '/v1/admin/notification-deliveries';
+    const list = (phone: string, query: Record<string, string | number> = {}) => http.get(base).set(bearer(phone)).query({ pageSize: 100, ...query });
+    const retry = (id: string, phone = PHONES.admin) => http.post(`${base}/${id}/retry`).set(bearer(phone));
+    const followedUp = (id: string, phone = PHONES.admin) => http.post(`${base}/${id}/handled`).set(bearer(phone));
+    const userIdOf = async (phone: string) => (await prisma.user.findFirstOrThrow({ where: { phone: `+91${phone}` } })).id;
+    const dashboardCount = async () => (await http.get('/v1/admin/dashboard').set(bearer(PHONES.admin)).expect(200)).body.undeliveredAlerts as number;
+    const ids = (res: { body: { items: { id: string }[] } }) => res.body.items.map((i) => i.id);
+    const fresh = async (userId: string, extra: Record<string, unknown> = {}) =>
+      prisma.pushDelivery.create({
+        data: { userId, app: 'CUSTOMER', type: 'order_status', title: 'Out for delivery', status: 'FAILED', deviceCount: 1, failedCount: 1, errorCode: 'unknown', ...extra },
+      });
+
+    let customerId: string;
+    let opsId: string;
+    let ownerId: string;
+    let orderA: { id: string; orderNumber: string };
+    let orderB: { id: string; orderNumber: string };
+    let orderC: { id: string; orderNumber: string };
+    /** Who got which alert, per order: the customer's "order placed" and the two admins' "new order". */
+    const rows: Record<'a' | 'b' | 'c', { customer?: Delivery; ops?: Delivery; owner?: Delivery }> = { a: {}, b: {}, c: {} };
+
+    /** Places an order and waits for its three alerts to be written down (one customer, two admins). */
+    async function placeAndRecord(order: 'a' | 'b' | 'c') {
+      const placed = await placeAndDispatch(sarees());
+      await waitFor(async () => (await prisma.pushDelivery.count({ where: { orderId: placed.id } })) >= 3);
+      const all = await prisma.pushDelivery.findMany({ where: { orderId: placed.id } });
+      rows[order] = {
+        customer: all.find((d) => d.userId === customerId),
+        ops: all.find((d) => d.userId === opsId),
+        owner: all.find((d) => d.userId === ownerId),
+      };
+      return placed as { id: string; orderNumber: string };
+    }
+
+    beforeAll(async () => {
+      [customerId, opsId, ownerId] = await Promise.all([userIdOf(PHONES.customer), userIdOf(PHONES.admin), userIdOf(PHONES.superAdmin)]);
+    });
+
+    afterAll(() => {
+      firebase.messaging = null;
+      fcm.reset();
+    });
+
+    it('records nothing while push is not set up, so local development shows no false failures', async () => {
+      const order = await placeAndDispatch(sarees());
+      await waitFor(async () => (await prisma.notification.count({ where: { type: 'new_order', data: { path: ['orderId'], equals: order.id } } })) === 2);
+      await new Promise((r) => setTimeout(r, 150));
+      expect(await prisma.pushDelivery.count()).toBe(0);
+      expect(fcm.sent).toHaveLength(0);
+      expect(await dashboardCount()).toBe(0);
+    });
+
+    it('records a delivery per person: sent, partly sent and no device', async () => {
+      firebase.messaging = fcm;
+      await prisma.device.create({ data: { userId: customerId, fcmToken: 'tok-customer-1', platform: 'ANDROID', app: 'CUSTOMER' } });
+      await prisma.device.createMany({
+        data: [
+          { userId: opsId, fcmToken: 'tok-ops-good', platform: 'ANDROID', app: 'ADMIN' },
+          { userId: opsId, fcmToken: 'tok-ops-bad', platform: 'IOS', app: 'ADMIN' },
+          // A phone registered for another app does not count as a device for admin alerts.
+          { userId: ownerId, fcmToken: 'tok-owner-customer-app', platform: 'ANDROID', app: 'CUSTOMER' },
+        ],
+      });
+      fcm.refusals.set('tok-ops-bad', 'messaging/internal-error');
+
+      orderA = await placeAndRecord('a');
+      const { customer, ops, owner } = rows.a;
+      expect(customer).toMatchObject({ status: 'SENT', app: 'CUSTOMER', type: 'order_placed', title: 'Order placed', deviceCount: 1, failedCount: 0, errorCode: null, handledAt: null, orderId: orderA.id });
+      expect(ops).toMatchObject({ status: 'PARTIAL', app: 'ADMIN', type: 'new_order', deviceCount: 2, failedCount: 1, errorCode: 'messaging/internal-error' });
+      expect(owner).toMatchObject({ status: 'NO_DEVICE', app: 'ADMIN', deviceCount: 0, failedCount: 0, errorCode: null });
+
+      // Each delivery points at the inbox row it was for.
+      const inbox = await prisma.notification.findUniqueOrThrow({ where: { id: customer!.notificationId! } });
+      expect(inbox).toMatchObject({ userId: customerId, type: 'order_placed', title: 'Order placed' });
+
+      // Sending itself is unchanged: customers get their own alert, admins get theirs on both phones, only on the right app.
+      const toCustomer = fcm.sent.find((s) => s.tokens.includes('tok-customer-1'));
+      expect(toCustomer).toMatchObject({ tokens: ['tok-customer-1'], title: 'Order placed', data: { type: 'order_placed', orderId: orderA.id } });
+      const toAdmins = fcm.sent.find((s) => s.tokens.includes('tok-ops-good'));
+      expect(toAdmins?.tokens.sort()).toEqual(['tok-ops-bad', 'tok-ops-good']);
+      expect(fcm.sent.some((s) => s.tokens.includes('tok-owner-customer-app'))).toBe(false);
+      // A device that refused for a passing reason is kept; offers to partners are never recorded.
+      expect(await prisma.device.count({ where: { fcmToken: 'tok-ops-bad' } })).toBe(1);
+      expect(await prisma.pushDelivery.count({ where: { app: 'PARTNER' } })).toBe(0);
+    });
+
+    it('records a failure when every phone refuses, and still removes phones Firebase says are gone', async () => {
+      fcm.refusals.set('tok-customer-1', 'messaging/registration-token-not-registered');
+      orderB = await placeAndRecord('b');
+      expect(rows.b.customer).toMatchObject({ status: 'FAILED', deviceCount: 1, failedCount: 1, errorCode: 'messaging/registration-token-not-registered' });
+      expect(rows.b.ops?.status).toBe('PARTIAL');
+      expect(rows.b.owner?.status).toBe('NO_DEVICE');
+      expect(await prisma.device.count({ where: { fcmToken: 'tok-customer-1' } })).toBe(0);
+    });
+
+    it('records a failure when the whole send call fails, and keeps the phone', async () => {
+      await prisma.device.create({ data: { userId: customerId, fcmToken: 'tok-customer-2', platform: 'ANDROID', app: 'CUSTOMER' } });
+      fcm.throwNext('messaging/server-unavailable');
+      orderC = await placeAndRecord('c');
+      expect(rows.c.customer).toMatchObject({ status: 'FAILED', deviceCount: 1, failedCount: 1, errorCode: 'messaging/server-unavailable' });
+      expect(await prisma.device.count({ where: { fcmToken: 'tok-customer-2' } })).toBe(1);
+      // The inbox row is there whatever happened to the push.
+      expect(await prisma.notification.count({ where: { id: rows.c.customer!.notificationId! } })).toBe(1);
+    });
+
+    it('lists only alerts that did not fully arrive, with who, what, why and which order', async () => {
+      const res = await list(PHONES.admin).expect(200);
+      const open = ids(res);
+      expect(open).toEqual(expect.arrayContaining([rows.a.ops!.id, rows.a.owner!.id, rows.b.customer!.id, rows.b.ops!.id, rows.b.owner!.id, rows.c.customer!.id]));
+      expect(open).not.toContain(rows.a.customer!.id);
+      expect(res.body.items.every((i: { status: string }) => i.status !== 'SENT')).toBe(true);
+      const times = res.body.items.map((i: { createdAt: string }) => Date.parse(i.createdAt));
+      expect(times).toEqual([...times].sort((x, y) => y - x));
+
+      const failed = res.body.items.find((i: { id: string }) => i.id === rows.b.customer!.id);
+      expect(failed).toMatchObject({
+        status: 'FAILED',
+        app: 'CUSTOMER',
+        type: 'order_placed',
+        title: 'Order placed',
+        deviceCount: 1,
+        failedCount: 1,
+        errorCode: 'messaging/registration-token-not-registered',
+        reason: 'Their phone no longer accepts alerts (app removed or notifications turned off)',
+        recipient: { id: customerId, name: 'Priya', phone: '+919333333333' },
+        orderId: orderB.id,
+        orderNumber: orderB.orderNumber,
+        handledAt: null,
+        handledByName: null,
+        canRetry: true,
+        retryBlockedReason: null,
+      });
+      const none = res.body.items.find((i: { id: string }) => i.id === rows.b.owner!.id);
+      expect(none).toMatchObject({ status: 'NO_DEVICE', reason: 'Has not allowed notifications on the app yet', recipient: { id: ownerId, name: 'Owner' } });
+      const thrown = res.body.items.find((i: { id: string }) => i.id === rows.c.customer!.id);
+      expect(thrown.reason).toMatch(/briefly unavailable/);
+    });
+
+    it('filters by outcome, app, order number and date, and pages', async () => {
+      const noDevice = await list(PHONES.admin, { status: 'NO_DEVICE' }).expect(200);
+      expect(noDevice.body.items.every((i: { status: string }) => i.status === 'NO_DEVICE')).toBe(true);
+      expect(ids(noDevice)).toContain(rows.a.owner!.id);
+      expect(ids(noDevice)).not.toContain(rows.b.customer!.id);
+
+      const sent = await list(PHONES.admin, { status: 'SENT' }).expect(200);
+      expect(ids(sent)).toContain(rows.a.customer!.id);
+      expect(sent.body.items.every((i: { status: string }) => i.status === 'SENT')).toBe(true);
+
+      const customerApp = await list(PHONES.admin, { app: 'CUSTOMER' }).expect(200);
+      expect(customerApp.body.items.every((i: { app: string }) => i.app === 'CUSTOMER')).toBe(true);
+      expect(ids(customerApp)).toEqual(expect.arrayContaining([rows.b.customer!.id, rows.c.customer!.id]));
+      expect(ids(customerApp)).not.toContain(rows.b.ops!.id);
+
+      const byOrder = await list(PHONES.admin, { orderNumber: ` ${orderB.orderNumber.toLowerCase()} ` }).expect(200);
+      expect(ids(byOrder).sort()).toEqual([rows.b.customer!.id, rows.b.ops!.id, rows.b.owner!.id].sort());
+
+      const today = istDate(new Date());
+      expect((await list(PHONES.admin, { from: addDays(today, 1) }).expect(200)).body.total).toBe(0);
+      expect((await list(PHONES.admin, { to: addDays(today, -1) }).expect(200)).body.total).toBe(0);
+      expect(ids(await list(PHONES.admin, { from: today, to: today }).expect(200))).toContain(rows.b.customer!.id);
+
+      const all = await list(PHONES.admin).expect(200);
+      const page2 = await list(PHONES.admin, { pageSize: 2, page: 2 }).expect(200);
+      expect(page2.body).toMatchObject({ page: 2, pageSize: 2, total: all.body.total });
+      expect(ids(page2)).toEqual(ids(all).slice(2, 4));
+
+      await list(PHONES.admin, { status: 'BOGUS' }).expect(400);
+      await list(PHONES.admin, { from: 'yesterday' }).expect(400);
+    });
+
+    it('retries an alert, records it as a new delivery and marks the old one followed up', async () => {
+      const before = fcm.sent.length;
+      const res = await retry(rows.b.customer!.id).expect(200);
+      expect(res.body).toMatchObject({ status: 'SENT', reason: 'Delivered', orderNumber: orderB.orderNumber, recipient: { id: customerId }, canRetry: false, handledAt: null });
+      expect(res.body.id).not.toBe(rows.b.customer!.id);
+      // The same alert goes to the phone they have now.
+      expect(fcm.sent).toHaveLength(before + 1);
+      expect(fcm.sent.at(-1)).toMatchObject({
+        tokens: ['tok-customer-2'],
+        title: 'Order placed',
+        data: { type: 'order_placed', orderId: orderB.id, orderNumber: orderB.orderNumber },
+      });
+      const original = await prisma.pushDelivery.findUniqueOrThrow({ where: { id: rows.b.customer!.id } });
+      expect(original).toMatchObject({ status: 'FAILED', handledById: opsId });
+      expect(original.handledAt).not.toBeNull();
+      const retried = await prisma.pushDelivery.findUniqueOrThrow({ where: { id: res.body.id } });
+      expect(retried.notificationId).toBe(original.notificationId);
+
+      expect(ids(await list(PHONES.admin).expect(200))).not.toContain(rows.b.customer!.id);
+      await waitFor(async () => (await prisma.auditLog.count({ where: { action: 'notification_delivery.retried', entityId: rows.b.customer!.id, actorId: opsId } })) === 1);
+
+      // Already delivered: neither the old attempt nor the new one can be sent again, and nothing more goes out.
+      expect((await retry(rows.b.customer!.id).expect(409)).body.code).toBe('ALREADY_DELIVERED');
+      expect((await retry(res.body.id).expect(409)).body.code).toBe('ALREADY_DELIVERED');
+      expect((await retry(rows.a.customer!.id).expect(409)).body.code).toBe('ALREADY_DELIVERED');
+      expect(fcm.sent).toHaveLength(before + 1);
+    });
+
+    it('keeps one open row per alert when a retry fails again, and stops after a few tries', async () => {
+      let latest = rows.a.ops!.id;
+      for (let i = 0; i < 3; i += 1) {
+        const res = await retry(latest).expect(200);
+        expect(res.body).toMatchObject({ status: 'PARTIAL', failedCount: 1, errorCode: 'messaging/internal-error', canRetry: i < 2 });
+        latest = res.body.id;
+      }
+      const last = await list(PHONES.admin, { orderNumber: orderA.orderNumber }).expect(200);
+      const opsRows = last.body.items.filter((i: { recipient: { id: string } }) => i.recipient.id === opsId);
+      expect(opsRows.map((i: { id: string }) => i.id)).toEqual([latest]);
+      expect(opsRows[0].retryBlockedReason).toMatch(/most times allowed/);
+
+      const everything = await list(PHONES.admin, { orderNumber: orderA.orderNumber, followUp: 'ALL' }).expect(200);
+      expect(everything.body.items.filter((i: { recipient: { id: string } }) => i.recipient.id === opsId)).toHaveLength(4);
+      const done = await list(PHONES.admin, { orderNumber: orderA.orderNumber, followUp: 'DONE' }).expect(200);
+      expect(ids(done)).toContain(rows.a.ops!.id);
+      expect(done.body.items.find((i: { id: string }) => i.id === rows.a.ops!.id)?.handledByName).toBe('Ops');
+
+      expect((await retry(latest).expect(409)).body.code).toBe('RETRY_LIMIT');
+      expect((await retry(rows.a.ops!.id).expect(409)).body.code).toBe('ALREADY_RETRIED');
+    });
+
+    it('sends only once when the button is pressed twice at the same moment', async () => {
+      const sentTo = () => fcm.sent.filter((s) => s.tokens.includes('tok-customer-2') && s.data?.orderId === orderC.id).length;
+      expect(sentTo()).toBe(0);
+      const results = await Promise.all([retry(rows.c.customer!.id), retry(rows.c.customer!.id)]);
+      expect(results.map((r) => r.status).sort()).toEqual([200, 409]);
+      expect(results.find((r) => r.status === 409)!.body.code).toMatch(/^(RETRY_IN_PROGRESS|ALREADY_RETRIED)$/);
+      expect(sentTo()).toBe(1);
+      expect(await prisma.pushDelivery.count({ where: { notificationId: rows.c.customer!.notificationId } })).toBe(2);
+    });
+
+    it('refuses to retry when the notification is gone or push is not set up, and retries a person who has since allowed alerts', async () => {
+      // The notification was deleted: nothing to resend, and the list says so.
+      await prisma.notification.delete({ where: { id: rows.b.owner!.notificationId! } });
+      const gone = await list(PHONES.admin, { orderNumber: orderB.orderNumber, followUp: 'ALL' }).expect(200);
+      expect(gone.body.items.find((i: { id: string }) => i.id === rows.b.owner!.id)).toMatchObject({ canRetry: false, retryBlockedReason: expect.stringMatching(/deleted/) });
+      expect((await retry(rows.b.owner!.id).expect(409)).body.code).toBe('NOTIFICATION_GONE');
+      expect(await prisma.pushDelivery.findUniqueOrThrow({ where: { id: rows.b.owner!.id } })).toMatchObject({ notificationId: null, status: 'NO_DEVICE' });
+
+      firebase.messaging = null;
+      const off = await retry(rows.a.owner!.id).expect(503);
+      expect(off.body.code).toBe('PUSH_NOT_CONFIGURED');
+      firebase.messaging = fcm;
+      expect(await prisma.pushDelivery.count({ where: { notificationId: rows.a.owner!.notificationId } })).toBe(1);
+
+      // Still no phone: it is recorded again as no device.
+      const still = await retry(rows.a.owner!.id).expect(200);
+      expect(still.body).toMatchObject({ status: 'NO_DEVICE', reason: 'Has not allowed notifications on the app yet', canRetry: true });
+
+      // They allow notifications later: the retry gets through.
+      await prisma.device.create({ data: { userId: ownerId, fcmToken: 'tok-owner-admin', platform: 'ANDROID', app: 'ADMIN' } });
+      const ok = await retry(rows.c.owner!.id).expect(200);
+      expect(ok.body).toMatchObject({ status: 'SENT', deviceCount: 1, failedCount: 0 });
+      expect(fcm.sent.at(-1)).toMatchObject({ tokens: ['tok-owner-admin'], title: 'New order', data: { orderId: orderC.id } });
+    });
+
+    it('marks an alert as followed up once, and only for alerts that did not arrive', async () => {
+      const target = rows.b.ops!;
+      const res = await followedUp(target.id).expect(200);
+      expect(res.body).toMatchObject({ id: target.id, status: 'PARTIAL', handledByName: 'Ops' });
+      expect(res.body.handledAt).not.toBeNull();
+
+      // A second person pressing it changes nothing.
+      const again = await followedUp(target.id, PHONES.superAdmin).expect(200);
+      expect(again.body).toMatchObject({ handledAt: res.body.handledAt, handledByName: 'Ops' });
+      await waitFor(async () => (await prisma.auditLog.count({ where: { action: 'notification_delivery.handled', entityId: target.id } })) === 1);
+
+      expect(ids(await list(PHONES.admin).expect(200))).not.toContain(target.id);
+      expect(ids(await list(PHONES.admin, { followUp: 'DONE' }).expect(200))).toContain(target.id);
+      expect(ids(await list(PHONES.admin, { followUp: 'ALL' }).expect(200))).toContain(target.id);
+
+      expect((await followedUp(rows.a.customer!.id).expect(409)).body.code).toBe('ALREADY_DELIVERED');
+      await followedUp('00000000-0000-4000-8000-000000000000').expect(404);
+      await followedUp('not-a-uuid').expect(400);
+    });
+
+    it('is for admins and super admins only', async () => {
+      const target = rows.c.ops!;
+      for (const phone of [PHONES.customer, PHONES.driver1]) {
+        expect((await list(phone).expect(403)).body.code).toBe('FORBIDDEN_ROLE');
+        await followedUp(target.id, phone).expect(403);
+      }
+      await retry(target.id, PHONES.customer).expect(403);
+      await http.get(base).expect(401);
+      await http.post(`${base}/${target.id}/handled`).expect(401);
+      await list(PHONES.superAdmin).expect(200);
+      await list(PHONES.admin).expect(200);
+      // Nothing was changed by the refused calls.
+      expect(await prisma.pushDelivery.findUniqueOrThrow({ where: { id: target.id } })).toMatchObject({ handledAt: null });
+      expect(await prisma.pushDelivery.count({ where: { notificationId: target.notificationId } })).toBe(1);
+    });
+
+    it('counts unhandled alerts from the last 14 days on the dashboard', async () => {
+      const unhandled = await prisma.pushDelivery.count({
+        where: { status: { not: 'SENT' }, handledAt: null, createdAt: { gte: new Date(Date.now() - 14 * DAY_MS) } },
+      });
+      const count = await dashboardCount();
+      expect(count).toBeGreaterThan(0);
+      expect(count).toBe(unhandled);
+
+      // Older than 14 days: still listed for follow-up, but not counted.
+      const old = await fresh(customerId, { createdAt: new Date(Date.now() - 20 * DAY_MS) });
+      expect(await dashboardCount()).toBe(count);
+      expect(ids(await list(PHONES.admin).expect(200))).toContain(old.id);
+      expect(ids(await list(PHONES.admin, { from: addDays(istDate(new Date()), -14) }).expect(200))).not.toContain(old.id);
+
+      const recent = await fresh(customerId);
+      expect(await dashboardCount()).toBe(count + 1);
+      await followedUp(recent.id).expect(200);
+      expect(await dashboardCount()).toBe(count);
+      // A delivered alert is never counted.
+      await prisma.pushDelivery.create({ data: { userId: customerId, app: 'CUSTOMER', type: 'order_status', title: 'Delivered', status: 'SENT', deviceCount: 1, failedCount: 0 } });
+      expect(await dashboardCount()).toBe(count);
+    });
+
+    it('keeps status and counts consistent in the database', async () => {
+      const bad = (status: 'SENT' | 'PARTIAL' | 'FAILED' | 'NO_DEVICE', deviceCount: number, failedCount: number) =>
+        prisma.pushDelivery.create({ data: { userId: customerId, app: 'CUSTOMER', type: 't', title: 't', status, deviceCount, failedCount } });
+      await expect(bad('SENT', 0, 0)).rejects.toThrow();
+      await expect(bad('SENT', 2, 1)).rejects.toThrow();
+      await expect(bad('PARTIAL', 2, 2)).rejects.toThrow();
+      await expect(bad('PARTIAL', 2, 0)).rejects.toThrow();
+      await expect(bad('FAILED', 2, 1)).rejects.toThrow();
+      await expect(bad('NO_DEVICE', 1, 0)).rejects.toThrow();
+      await expect(bad('FAILED', 1, 2)).rejects.toThrow();
+      await expect(bad('NO_DEVICE', 0, 0)).resolves.toBeDefined();
+    });
+
+    it('is erased with the customer\'s account', async () => {
+      const gone = await http.post('/v1/admin/customers').set(bearer(PHONES.admin)).send({ phone: '9888888888', name: 'Short stay' }).expect(201);
+      const note = await prisma.notification.create({ data: { userId: gone.body.id, type: 'order_status', title: 'Delivered', body: 'Thanks' } });
+      await fresh(gone.body.id, { notificationId: note.id, status: 'NO_DEVICE', deviceCount: 0, failedCount: 0, errorCode: null });
+      await http.delete(`/v1/admin/customers/${gone.body.id}`).set(bearer(PHONES.admin)).expect(204);
+      expect(await prisma.pushDelivery.count({ where: { userId: gone.body.id } })).toBe(0);
     });
   });
 
@@ -1293,6 +1885,295 @@ describe('Laundry API (e2e)', () => {
       expect(log.body.items[0]).toMatchObject({ action: 'order.status_changed', entity: 'order', entityId: order.id, actorName: 'Ops', data: { to: 'CANCELLED', note: 'Audit me' } });
       const denied = await http.get('/v1/admin/audit').set(bearer(PHONES.admin)).expect(403);
       expect(denied.body.code).toBe('FORBIDDEN_ROLE');
+    });
+  });
+
+  describe('payments and refunds ledger', () => {
+    const LEAK = 'whsec_must_never_reach_the_admin';
+    const ledger = '/v1/admin/ledger';
+    /** Seeded records are all in March 2020, so no other test's payments fall in this range. */
+    const march = { from: '2020-03-01', to: '2020-03-31' };
+    const at = (iso: string) => new Date(iso);
+    const labelOf = new Map<string, string>();
+    let customerIds: string[] = [];
+
+    const list = (query: Record<string, string | number> = {}, phone = PHONES.admin) =>
+      http.get(ledger).set(bearer(phone)).query(query);
+    /** What a list or export shows, as the labels used below, newest first. */
+    const labels = (res: { body: { items: { id: string }[] } }) => res.body.items.map((i) => labelOf.get(i.id));
+    const inMarch = (query: Record<string, string | number> = {}) => list({ ...march, ...query });
+    const orderRow = (customerId: string, orderNumber: string) => ({
+      orderNumber,
+      customerId,
+      pickupDate: new Date(`${tomorrow}T00:00:00.000Z`),
+      pickupSlot: 'MORNING' as const,
+      deliveryDate: new Date(`${dayAfter}T00:00:00.000Z`),
+      deliverySlot: 'EVENING' as const,
+      pickupAddress: {},
+      deliveryAddress: {},
+      subtotalPaise: 20000,
+      totalPaise: 20000,
+      paymentMethod: 'ONLINE' as const,
+    });
+
+    beforeAll(async () => {
+      const staff = await prisma.user.findFirstOrThrow({ where: { phone: `+91${PHONES.admin}` } });
+      const lata = await prisma.user.create({ data: { phone: '+919700000001', name: 'Ledger Lata', role: 'CUSTOMER' } });
+      // Never verified a number: only the contact number typed at checkout. Their name is built to be a formula and a CSV trap.
+      const contactOnly = await prisma.user.create({
+        data: { phone: null, contactPhone: '+919700000002', name: '@Contact "Only", Esq', role: 'CUSTOMER' },
+      });
+      customerIds = [lata.id, contactOnly.id];
+      const a1 = await prisma.order.create({ data: orderRow(lata.id, 'LGR0001') });
+      const a2 = await prisma.order.create({ data: orderRow(lata.id, 'LGR0002') });
+      const b1 = await prisma.order.create({ data: orderRow(contactOnly.id, 'LGR0003') });
+
+      const payment = async (label: string, data: Parameters<typeof prisma.payment.create>[0]['data']) =>
+        labelOf.set((await prisma.payment.create({ data })).id, label);
+      await payment('p1', { orderId: a1.id, provider: 'RAZORPAY', status: 'CAPTURED', amountPaise: 12000, razorpayOrderId: 'order_ledger_1', razorpayPaymentId: 'pay_ledger_1', raw: { event: 'payment.captured', secret: LEAK }, createdAt: at('2020-03-10T04:25:00Z'), capturedAt: at('2020-03-10T04:30:00Z') });
+      await payment('p2', { orderId: a1.id, provider: 'CASH', status: 'CAPTURED', amountPaise: 5000, collectedById: staff.id, createdAt: at('2020-03-10T10:00:00Z'), capturedAt: at('2020-03-10T10:00:00Z') });
+      await payment('p3', { orderId: a2.id, provider: 'RAZORPAY', status: 'FAILED', amountPaise: 3000, razorpayOrderId: 'order_ledger_3', razorpayPaymentId: 'pay_ledger_3', createdAt: at('2020-03-11T05:00:00Z') });
+      await payment('p4', { orderId: a2.id, provider: 'RAZORPAY', status: 'CREATED', amountPaise: 7000, razorpayOrderId: 'order_ledger_4', createdAt: at('2020-03-12T05:00:00Z') });
+      // 23:59:59.999 IST on the 14th, and the first instant of the 15th.
+      await payment('p5', { orderId: b1.id, provider: 'CASH', status: 'CAPTURED', amountPaise: 9000, createdAt: at('2020-03-14T18:29:59.999Z'), capturedAt: at('2020-03-14T18:29:59.999Z') });
+      await payment('p6', { orderId: b1.id, provider: 'CASH', status: 'CAPTURED', amountPaise: 800, createdAt: at('2020-03-14T18:30:00.000Z'), capturedAt: at('2020-03-14T18:30:00.000Z') });
+      const p1 = await prisma.payment.findFirstOrThrow({ where: { razorpayPaymentId: 'pay_ledger_1' } });
+
+      const refund = async (label: string, data: Parameters<typeof prisma.refund.create>[0]['data']) =>
+        labelOf.set((await prisma.refund.create({ data })).id, label);
+      await refund('r1', { orderId: a1.id, paymentId: p1.id, method: 'RAZORPAY', status: 'PROCESSED', amountPaise: 4000, razorpayRefundId: 'rfnd_ledger_1', note: 'Shirt damaged', createdAt: at('2020-03-12T05:00:00Z'), processedAt: at('2020-03-12T06:00:00Z') });
+      await refund('r2', { orderId: a1.id, paymentId: p1.id, method: 'RAZORPAY', status: 'PENDING', amountPaise: 2500, razorpayRefundId: 'rfnd_ledger_2', note: 'Waiting on the bank', createdAt: at('2020-03-13T05:00:00Z') });
+      await refund('r3', { orderId: b1.id, method: 'BANK_TRANSFER', status: 'FAILED', amountPaise: 1500, failureReason: 'Account closed', note: 'Refund to bank', createdAt: at('2020-03-14T05:00:00Z') });
+      await refund('r4', { orderId: b1.id, method: 'CASH', status: 'PROCESSED', amountPaise: 1000, note: '=1+1 returned at the door', createdAt: at('2020-03-14T08:00:00Z'), processedAt: at('2020-03-14T09:00:00Z') });
+    });
+
+    afterAll(async () => {
+      const ofLedgerOrders = { order: { orderNumber: { startsWith: 'LGR' } } };
+      await prisma.refund.deleteMany({ where: ofLedgerOrders });
+      await prisma.payment.deleteMany({ where: ofLedgerOrders });
+      await prisma.order.deleteMany({ where: { orderNumber: { startsWith: 'LGR' } } });
+      await prisma.user.deleteMany({ where: { id: { in: customerIds } } });
+    });
+
+    it('is for staff only', async () => {
+      for (const path of [ledger, `${ledger}/export`]) {
+        const res = await http.get(path).set(bearer(PHONES.customer)).expect(403);
+        expect(res.body.code).toBe('FORBIDDEN_ROLE');
+        await http.get(path).expect(401);
+        await http.get(path).set(bearer(PHONES.admin)).expect(200);
+        await http.get(path).set(bearer(PHONES.superAdmin)).expect(200);
+      }
+    });
+
+    it('lists payments and refunds together, newest first, with their order and customer', async () => {
+      const res = await inMarch().expect(200);
+      expect(labels(res)).toEqual(['p6', 'p5', 'r4', 'r3', 'r2', 'r1', 'p4', 'p3', 'p2', 'p1']);
+      expect(res.body).toMatchObject({ page: 1, pageSize: 20, total: 10 });
+      const byLabel = (label: string) => res.body.items.find((i: { id: string }) => labelOf.get(i.id) === label);
+
+      expect(byLabel('p1')).toMatchObject({
+        kind: 'PAYMENT', status: 'CAPTURED', method: 'RAZORPAY', amountPaise: 12000, orderNumber: 'LGR0001',
+        customerName: 'Ledger Lata', customerPhone: '+919700000001', reference: 'pay_ledger_1', note: null,
+        failureReason: null, occurredAt: '2020-03-10T04:30:00.000Z',
+      });
+      expect(byLabel('p1').orderId).toBe((await prisma.order.findUniqueOrThrow({ where: { orderNumber: 'LGR0001' } })).id);
+      expect(byLabel('p2')).toMatchObject({ method: 'CASH', reference: null, note: 'Collected by Ops' });
+      // A checkout that was started and never finished has its order id and the time it was started.
+      expect(byLabel('p4')).toMatchObject({ status: 'CREATED', reference: 'order_ledger_4', occurredAt: '2020-03-12T05:00:00.000Z' });
+      // A refund shows when it went through, not when it was asked for.
+      expect(byLabel('r1')).toMatchObject({
+        kind: 'REFUND', status: 'PROCESSED', method: 'RAZORPAY', amountPaise: 4000, reference: 'rfnd_ledger_1',
+        note: 'Shirt damaged', occurredAt: '2020-03-12T06:00:00.000Z',
+      });
+      expect(byLabel('r3')).toMatchObject({ status: 'FAILED', method: 'BANK_TRANSFER', failureReason: 'Account closed', reference: null });
+      // No sign-in number: the contact number is shown.
+      expect(byLabel('r4')).toMatchObject({ customerName: '@Contact "Only", Esq', customerPhone: '+919700000002' });
+    });
+
+    it('never shows what the gateway sent', async () => {
+      const res = await inMarch({ pageSize: 100 }).expect(200);
+      expect(JSON.stringify(res.body)).not.toContain(LEAK);
+      for (const entry of res.body.items) {
+        expect(Object.keys(entry).sort()).toEqual([
+          'amountPaise', 'customerId', 'customerName', 'customerPhone', 'failureReason', 'id', 'kind', 'method', 'note',
+          'occurredAt', 'orderId', 'orderNumber', 'reference', 'status',
+        ]);
+      }
+    });
+
+    it('totals the whole filtered set, not the page', async () => {
+      const all = await inMarch().expect(200);
+      expect(all.body.totals).toEqual({
+        captured: { count: 4, amountPaise: 26800 },
+        refunded: { count: 2, amountPaise: 5000 },
+        refundPending: { count: 1, amountPaise: 2500 },
+        failed: { count: 2, amountPaise: 4500 },
+      });
+      const second = await inMarch({ pageSize: 4, page: 2 }).expect(200);
+      expect(labels(second)).toEqual(['r2', 'r1', 'p4', 'p3']);
+      expect(second.body).toMatchObject({ page: 2, pageSize: 4, total: 10 });
+      expect(second.body.totals).toEqual(all.body.totals);
+      expect(labels(await inMarch({ pageSize: 4, page: 3 }))).toEqual(['p2', 'p1']);
+      expect(labels(await inMarch({ pageSize: 4, page: 4 }))).toEqual([]);
+
+      const refunds = await inMarch({ kind: 'REFUND' }).expect(200);
+      expect(refunds.body.total).toBe(4);
+      expect(refunds.body.totals).toEqual({
+        captured: { count: 0, amountPaise: 0 },
+        refunded: { count: 2, amountPaise: 5000 },
+        refundPending: { count: 1, amountPaise: 2500 },
+        failed: { count: 1, amountPaise: 1500 },
+      });
+    });
+
+    it('asks for sensible pages and values', async () => {
+      await inMarch({ pageSize: 101 }).expect(400);
+      await inMarch({ page: 0 }).expect(400);
+      await inMarch({ kind: 'TRANSFER' }).expect(400);
+      await inMarch({ status: 'bogus' }).expect(400);
+      await inMarch({ method: 'UPI' }).expect(400);
+      await list({ from: '2020-3-1' }).expect(400);
+    });
+
+    it('filters by kind, status and method', async () => {
+      expect(labels(await inMarch({ kind: 'PAYMENT' }))).toEqual(['p6', 'p5', 'p4', 'p3', 'p2', 'p1']);
+      expect(labels(await inMarch({ kind: 'REFUND' }))).toEqual(['r4', 'r3', 'r2', 'r1']);
+      expect(labels(await inMarch({ status: 'CAPTURED' }))).toEqual(['p6', 'p5', 'p2', 'p1']);
+      expect(labels(await inMarch({ status: 'PROCESSED' }))).toEqual(['r4', 'r1']);
+      expect(labels(await inMarch({ status: 'PENDING' }))).toEqual(['r2']);
+      expect(labels(await inMarch({ status: 'FAILED' }))).toEqual(['r3', 'p3']);
+      expect(labels(await inMarch({ status: 'CREATED' }))).toEqual(['p4']);
+      expect(labels(await inMarch({ method: 'CASH' }))).toEqual(['p6', 'p5', 'r4', 'p2']);
+      expect(labels(await inMarch({ method: 'RAZORPAY' }))).toEqual(['r2', 'r1', 'p4', 'p3', 'p1']);
+      expect(labels(await inMarch({ method: 'BANK_TRANSFER' }))).toEqual(['r3']);
+      expect(labels(await inMarch({ kind: 'REFUND', method: 'CASH', status: 'PROCESSED' }))).toEqual(['r4']);
+      // A payment is never pending and a refund is never captured.
+      const none = await inMarch({ kind: 'PAYMENT', status: 'PENDING' }).expect(200);
+      expect(none.body).toMatchObject({ items: [], total: 0 });
+      expect(none.body.totals.refundPending).toEqual({ count: 0, amountPaise: 0 });
+    });
+
+    it('finds what needs attention with status=problem: pending and failed, not an unfinished checkout', async () => {
+      const res = await inMarch({ status: 'problem' }).expect(200);
+      expect(labels(res)).toEqual(['r3', 'r2', 'p3']);
+      expect(res.body.total).toBe(3);
+      expect(res.body.totals).toEqual({
+        captured: { count: 0, amountPaise: 0 },
+        refunded: { count: 0, amountPaise: 0 },
+        refundPending: { count: 1, amountPaise: 2500 },
+        failed: { count: 2, amountPaise: 4500 },
+      });
+      expect(labels(await inMarch({ status: 'problem', kind: 'REFUND' }))).toEqual(['r3', 'r2']);
+      expect(labels(await inMarch({ status: 'problem', method: 'RAZORPAY' }))).toEqual(['r2', 'p3']);
+    });
+
+    it('filters by IST date, whole days, both ends included', async () => {
+      // 23:59:59.999 IST on the 14th is in; the first instant of the 15th is not.
+      expect(labels(await list({ from: '2020-03-14', to: '2020-03-14' }))).toEqual(['p5', 'r4', 'r3']);
+      expect(labels(await list({ from: '2020-03-15', to: '2020-03-15' }))).toEqual(['p6']);
+      expect(labels(await list({ from: '2020-03-10', to: '2020-03-10' }))).toEqual(['p2', 'p1']);
+      expect(labels(await list({ from: '2020-03-13', to: '2020-03-14' }))).toEqual(['p5', 'r4', 'r3', 'r2']);
+      expect(labels(await list({ from: '2020-03-15', to: '2020-03-31' }))).toEqual(['p6']);
+      expect(labels(await list({ to: '2020-03-10', from: '2020-01-01' }))).toEqual(['p2', 'p1']);
+      expect((await list({ from: '2020-04-01', to: '2020-04-30' }).expect(200)).body.total).toBe(0);
+      const backwards = await list({ from: '2020-03-15', to: '2020-03-14' }).expect(400);
+      expect(backwards.body.code).toBe('INVALID_DATE_RANGE');
+      const unreal = await list({ from: '2020-02-30' }).expect(400);
+      expect(unreal.body.code).toBe('INVALID_DATE');
+    });
+
+    it('searches by order number, or by the customer\'s phone or contact phone', async () => {
+      expect(labels(await inMarch({ search: 'LGR0002' }))).toEqual(['p4', 'p3']);
+      expect(labels(await inMarch({ search: ' lgr0001 ' }))).toEqual(['r2', 'r1', 'p2', 'p1']);
+      // Sign-in number, in any way a person writes it.
+      for (const typed of ['9700000001', '+91 97000 00001', '09700000001']) {
+        expect(labels(await inMarch({ search: typed }))).toEqual(['r2', 'r1', 'p4', 'p3', 'p2', 'p1']);
+      }
+      // The number typed at checkout, when there is no sign-in number.
+      expect(labels(await inMarch({ search: '9700000002' }))).toEqual(['p6', 'p5', 'r4', 'r3']);
+      // Part of a number, as typed so far.
+      expect((await inMarch({ search: '970000' }).expect(200)).body.total).toBe(10);
+      expect((await inMarch({ search: '0000002' }).expect(200)).body.total).toBe(4);
+      // Letters, % and _ are only ever literal text.
+      expect((await inMarch({ search: '%' }).expect(200)).body.total).toBe(0);
+      expect((await inMarch({ search: 'LGR000_' }).expect(200)).body.total).toBe(0);
+      expect((await inMarch({ search: "x'; DROP TABLE payments; --" }).expect(200)).body.total).toBe(0);
+      // Search, filters and totals work together.
+      const combined = await inMarch({ search: '9700000001', status: 'problem' }).expect(200);
+      expect(labels(combined)).toEqual(['r2', 'p3']);
+      expect(combined.body.totals.failed).toEqual({ count: 1, amountPaise: 3000 });
+    });
+
+    describe('CSV export', () => {
+      const rows = (text: string) => text.replace('﻿', '').split('\r\n').slice(0, -1);
+      const HEADER = 'Time (IST),Type,Status,Method,Amount (INR),Order,Customer,Phone,Reference,Note';
+      const exportOf = (query: Record<string, string | number> = {}, phone = PHONES.admin) =>
+        http.get(`${ledger}/export`).set(bearer(phone)).query(query);
+
+      it('downloads the filtered list as a spreadsheet-safe file', async () => {
+        const res = await exportOf(march).expect(200);
+        expect(res.headers['content-type']).toBe('text/csv; charset=utf-8');
+        expect(res.headers['content-disposition']).toMatch(/^attachment; filename="payments-ledger-\d{4}-\d{2}-\d{2}\.csv"$/);
+        expect(res.headers['cache-control']).toBe('no-store');
+        expect(res.headers['x-export-rows']).toBe('10');
+        expect(res.headers['x-export-truncated']).toBe('false');
+        expect(res.text.charCodeAt(0)).toBe(0xfeff);
+
+        const lines = rows(res.text);
+        expect(lines).toHaveLength(11);
+        expect(lines[0]).toBe(HEADER);
+        // Newest first; IST wall-clock time; rupees; a customer's name that is a formula is defused and quoted.
+        expect(lines[1]).toBe('2020-03-15 00:00:00,PAYMENT,CAPTURED,CASH,8.00,LGR0003,"\'@Contact ""Only"", Esq",97000 00002,,');
+        expect(lines[3]).toBe('2020-03-14 14:30:00,REFUND,PROCESSED,CASH,10.00,LGR0003,"\'@Contact ""Only"", Esq",97000 00002,,\'=1+1 returned at the door');
+        expect(lines[4]).toBe('2020-03-14 10:30:00,REFUND,FAILED,BANK_TRANSFER,15.00,LGR0003,"\'@Contact ""Only"", Esq",97000 00002,,Refund to bank | Failed: Account closed');
+        expect(lines[10]).toBe('2020-03-10 10:00:00,PAYMENT,CAPTURED,RAZORPAY,120.00,LGR0001,Ledger Lata,97000 00001,pay_ledger_1,');
+        expect(res.text).not.toContain(LEAK);
+        // No cell in the file starts with a character a spreadsheet would run.
+        for (const line of lines.slice(1)) expect(line).not.toMatch(/(^|,)[=+\-@]/);
+      });
+
+      it('applies the list\'s filters', async () => {
+        const problems = await exportOf({ ...march, status: 'problem' }).expect(200);
+        expect(rows(problems.text).slice(1).map((l) => l.split(',')[2])).toEqual(['FAILED', 'PENDING', 'FAILED']);
+        const mine = await exportOf({ ...march, search: '9700000001', kind: 'REFUND' }).expect(200);
+        expect(rows(mine.text)).toHaveLength(3);
+        const empty = await exportOf({ from: '2020-04-01', to: '2020-04-02' }).expect(200);
+        expect(rows(empty.text)).toEqual([HEADER]);
+        await exportOf({ from: '2020-03-15', to: '2020-03-14' }).expect(400);
+        await exportOf({ status: 'bogus' }).expect(400);
+      });
+
+      it('holds at most 10,000 entries and says when it left some out', async () => {
+        const customer = await prisma.user.findFirstOrThrow({ where: { phone: '+919700000001' } });
+        const capOrder = await prisma.order.create({ data: orderRow(customer.id, 'LGRCAP1') });
+        // One entry a minute from 2019-01-01 00:00 UTC (05:30 IST).
+        const seed = (count: number, from: string) => prisma.$executeRaw`
+          INSERT INTO payments (id, order_id, provider, status, amount_paise, captured_at, created_at, updated_at)
+          SELECT gen_random_uuid(), ${capOrder.id}::uuid, 'CASH'::"PaymentProvider", 'CAPTURED'::"PaymentRecordStatus", 100, ts, ts, ts
+          FROM generate_series(${from}::timestamp, ${from}::timestamp + (${count}::int - 1) * interval '1 minute', interval '1 minute') AS ts`;
+
+        await seed(10_000, '2019-01-01 00:00:00');
+        const exact = await exportOf({ search: 'LGRCAP1' }).expect(200);
+        expect(exact.headers['x-export-rows']).toBe('10000');
+        expect(exact.headers['x-export-truncated']).toBe('false');
+        expect(rows(exact.text)).toHaveLength(10_001);
+
+        await seed(1, '2019-02-01 00:00:00');
+        const over = await exportOf({ search: 'LGRCAP1' }).expect(200);
+        expect(over.headers['x-export-rows']).toBe('10000');
+        expect(over.headers['x-export-truncated']).toBe('true');
+        const lines = rows(over.text);
+        expect(lines).toHaveLength(10_001);
+        // The newest entries are kept; the single oldest one is what was left out.
+        expect(lines[1]).toMatch(/^2019-02-01 05:30:00,/);
+        expect(over.text).toContain('2019-01-01 05:31:00,');
+        expect(over.text).not.toContain('2019-01-01 05:30:00,');
+
+        // The list still counts all of them, so the admin can warn before downloading.
+        const page = await list({ search: 'LGRCAP1', pageSize: 1 }).expect(200);
+        expect(page.body.total).toBe(10_001);
+        expect(page.body.totals.captured).toEqual({ count: 10_001, amountPaise: 1_000_100 });
+      }, 60_000);
     });
   });
 });

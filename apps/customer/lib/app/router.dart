@@ -36,6 +36,7 @@ import '../features/home/home_screen.dart';
 import '../features/notifications/notifications_screen.dart';
 import '../features/offers/offers_screen.dart';
 import '../features/orders/orders_screen.dart';
+import '../features/orders/reschedule_order.dart';
 import '../features/shell/app_shell.dart';
 import '../features/startup/startup.dart';
 import '../features/system/system_screens.dart';
@@ -118,6 +119,10 @@ final routerProvider = Provider<GoRouter>((ref) {
       GoRoute(
         path: Routes.orderDetail,
         builder: (_, state) => OrderDetailScreen(orderId: state.pathParameters['id']!, initial: state.extra as OrderDto?),
+      ),
+      GoRoute(
+        path: Routes.orderReschedule,
+        builder: (_, state) => RescheduleScreen(orderId: state.pathParameters['id']!, initial: state.extra as OrderDto?),
       ),
       GoRoute(
         path: Routes.orderBill,

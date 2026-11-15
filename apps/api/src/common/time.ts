@@ -27,6 +27,11 @@ export function istDate(now: Date): string {
   return new Date(now.getTime() + IST_OFFSET_MS).toISOString().slice(0, 10);
 }
 
+/** An instant as IST wall-clock time, "2026-10-02 14:45:09", for exports people open in a spreadsheet. */
+export function istTimestamp(instant: Date): string {
+  return new Date(instant.getTime() + IST_OFFSET_MS).toISOString().slice(0, 19).replace('T', ' ');
+}
+
 /** Adds whole days to a YYYY-MM-DD date. */
 export function addDays(date: string, days: number): string {
   return new Date(Date.parse(`${date}T00:00:00.000Z`) + days * DAY_MS).toISOString().slice(0, 10);

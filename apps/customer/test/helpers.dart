@@ -371,12 +371,16 @@ const testDays = ['2026-10-03', '2026-10-04', '2026-10-05', '2026-10-06', '2026-
 
 /// Pickup windows for [testDays]; the API's rules for delivery (20 hours after the pickup ends).
 class FakeScheduleRepository implements ScheduleRepository {
-  FakeScheduleRepository({Set<SlotKey>? closed, bool todayOver = true})
-      : closed = closed ??
+  /// [days] replaces [testDays] (a test that must not depend on the date it runs on gives days from the real today).
+  FakeScheduleRepository({Set<SlotKey>? closed, bool todayOver = true, List<String>? days})
+      : days = days ?? testDays,
+        closed = closed ??
             {
               if (todayOver) (date: testToday, slot: TimeSlot.morning),
               if (todayOver) (date: testToday, slot: TimeSlot.noon),
             };
+
+  final List<String> days;
 
   /// Pickup windows that are not open.
   final Set<SlotKey> closed;
@@ -392,7 +396,7 @@ class FakeScheduleRepository implements ScheduleRepository {
     pickupAsked++;
     if (pickupFailure != null) throw pickupFailure!;
     return [
-      for (final d in testDays)
+      for (final d in days)
         for (final s in _order) testSlot(d, s, available: !closed.contains((date: d, slot: s))),
     ];
   }
@@ -403,7 +407,7 @@ class FakeScheduleRepository implements ScheduleRepository {
     if (deliveryFailure != null) throw deliveryFailure!;
     final earliest = testSlot(pickupDate, pickupSlot).endsAt.add(const Duration(hours: 20));
     return [
-      for (final d in testDays.where((d) => d.compareTo(pickupDate) >= 0))
+      for (final d in days.where((d) => d.compareTo(pickupDate) >= 0))
         for (final s in _order) testSlot(d, s, available: !testSlot(d, s).startsAt.isBefore(earliest)),
     ];
   }
@@ -435,6 +439,12 @@ OrderDto testOrder({
   String deliveryDate = '2026-10-04',
   String deliveryLabel = '16:00–20:00',
   int pieces = 17,
+  TimeSlot pickupSlot = TimeSlot.evening,
+  TimeSlot deliverySlot = TimeSlot.evening,
+  int rescheduleCount = 0,
+
+  /// Off unless a test asks: most screens do not care, and the "Change pickup time" row would change their layout.
+  bool canReschedule = false,
 }) =>
     OrderDto(
       id: id,
@@ -445,10 +455,10 @@ OrderDto testOrder({
       source: OrderSource.customerApp,
       instructions: null,
       pickupDate: pickupDate,
-      pickupSlot: TimeSlot.evening,
+      pickupSlot: pickupSlot,
       pickupSlotLabel: pickupLabel,
       deliveryDate: deliveryDate,
-      deliverySlot: TimeSlot.evening,
+      deliverySlot: deliverySlot,
       deliverySlotLabel: deliveryLabel,
       pickupAddress: _orderAddress,
       deliveryAddress: _orderAddress,
@@ -481,6 +491,9 @@ OrderDto testOrder({
       pickedUpAt: pickedUpAt,
       deliveredAt: deliveredAt,
       cancelledAt: cancelledAt,
+      rescheduleCount: rescheduleCount,
+      reschedulesRemaining: (2 - rescheduleCount).clamp(0, 2),
+      canReschedule: canReschedule,
       events: events,
       createdAt: DateTime.utc(2026, 10, 3, 12),
       updatedAt: DateTime.utc(2026, 10, 3, 12),
@@ -573,6 +586,47 @@ class FakeOrderRepository implements OrderRepository {
       paymentStatus: before.paymentStatus,
       paidPaise: before.paidPaise.toInt(),
       cancelledAt: DateTime.utc(2026, 10, 3, 9),
+    );
+    orders[id] = order;
+    return order;
+  }
+
+  /// Every time change asked for: the order, what was sent and the Idempotency-Key.
+  final rescheduled = <(String, RescheduleOrderDto, String)>[];
+
+  /// Thrown one per call, before anything changes.
+  final rescheduleFailures = <ApiFailure>[];
+  Completer<void>? holdReschedule;
+
+  @override
+  Future<OrderDto> reschedule(String id, RescheduleOrderDto dto, {required String idempotencyKey}) async {
+    rescheduled.add((id, dto, idempotencyKey));
+    if (holdReschedule != null) await holdReschedule!.future;
+    if (rescheduleFailures.isNotEmpty) throw rescheduleFailures.removeAt(0);
+    final before = orders[id] ?? testOrder(id: id);
+    // A partner who had accepted is released when the pickup moves, as the API does.
+    final pickupMoved = dto.pickupDate != before.pickupDate || dto.pickupSlot != before.pickupSlot;
+    final released = pickupMoved && before.status == OrderStatus.pickupAssigned;
+    final count = before.rescheduleCount.toInt() + 1;
+    const labels = {TimeSlot.morning: '07:00–11:00', TimeSlot.noon: '11:00–16:00', TimeSlot.evening: '16:00–20:00'};
+    final order = testOrder(
+      id: id,
+      number: before.orderNumber,
+      status: released ? OrderStatus.pending : before.status,
+      pickupDriver: released ? null : before.pickupDriver,
+      method: before.paymentMethod,
+      paymentStatus: before.paymentStatus,
+      totalPaise: before.totalPaise.toInt(),
+      paidPaise: before.paidPaise.toInt(),
+      pieces: before.items.fold(0, (a, i) => a + i.quantity.toInt()),
+      pickupDate: dto.pickupDate,
+      pickupSlot: dto.pickupSlot,
+      pickupLabel: labels[dto.pickupSlot]!,
+      deliveryDate: dto.deliveryDate,
+      deliverySlot: dto.deliverySlot,
+      deliveryLabel: labels[dto.deliverySlot]!,
+      rescheduleCount: count,
+      canReschedule: count < 2,
     );
     orders[id] = order;
     return order;

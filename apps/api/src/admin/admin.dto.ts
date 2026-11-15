@@ -209,6 +209,8 @@ export class DashboardDto {
   @ApiProperty() openIssues!: number;
   @ApiProperty() overdueIssues!: number;
   @ApiProperty() pendingAdjustments!: number;
+  @ApiProperty({ description: 'Alerts from the last 14 days that did not reach the person and nobody has followed up' })
+  undeliveredAlerts!: number;
   @ApiProperty({ description: 'Count of orders per status' }) byStatus!: Record<string, number>;
   @ApiProperty() pickupsToday!: number;
   @ApiProperty() deliveriesToday!: number;

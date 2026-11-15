@@ -101,6 +101,7 @@ export class UsersService {
         data: { deletedAt: now, isPrimary: false },
       }),
       this.prisma.device.deleteMany({ where: { userId: user.id } }),
+      this.prisma.pushDelivery.deleteMany({ where: { userId: user.id } }),
       this.prisma.notification.deleteMany({ where: { userId: user.id } }),
       this.prisma.user.update({
         where: { id: user.id },

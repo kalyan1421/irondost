@@ -513,6 +513,26 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/v1/orders/{id}/reschedule": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Moves the pickup and delivery time. Allowed until the clothes are picked up, twice per order. Prices do not change.
+         *     When a partner had accepted the pickup, they are released and the order is offered again for the new time.
+         */
+        post: operations["OrdersController_reschedule"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/v1/orders/{id}/cancel": {
         parameters: {
             query?: never;
@@ -858,6 +878,46 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/v1/admin/ledger": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Payments and refunds as one list, newest first, with totals for everything the filters match
+         * @description Each entry is one payment or one refund, with its order and customer. `status=problem` finds what needs attention: PENDING and FAILED entries. Dates are IST. Never includes gateway payloads.
+         */
+        get: operations["LedgerController_list"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/v1/admin/ledger/export": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * The same list as a CSV download
+         * @description Takes the list's filters. At most 10,000 newest entries; when more matched, the X-Export-Truncated header is "true". Cells that start with =, +, - or @ are prefixed with an apostrophe.
+         */
+        get: operations["LedgerController_download"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/v1/driver/online": {
         parameters: {
             query?: never;
@@ -1144,6 +1204,57 @@ export interface paths {
         get?: never;
         put?: never;
         post: operations["NotificationsController_readAll"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/v1/admin/notification-deliveries": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** By default only alerts that did not fully arrive and nobody has followed up on, newest first. */
+        get: operations["NotificationDeliveriesController_list"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/v1/admin/notification-deliveries/{id}/retry": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Sends the same alert once more. Recorded as a new delivery; refused if it already arrived. */
+        post: operations["NotificationDeliveriesController_retry"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/v1/admin/notification-deliveries/{id}/handled": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Marks the alert as followed up, so it leaves the open list and the dashboard count. */
+        post: operations["NotificationDeliveriesController_handled"];
         delete?: never;
         options?: never;
         head?: never;
@@ -1923,6 +2034,12 @@ export interface components {
             deliveredAt: string | null;
             /** Format: date-time */
             cancelledAt: string | null;
+            /** @description How many times the customer has moved the pickup or delivery time. */
+            rescheduleCount: number;
+            /** @description Moves the customer has left on this order. */
+            reschedulesRemaining: number;
+            /** @description Customer view: the pickup time can be changed now (not yet picked up, and moves remain). Always false for staff and partners. */
+            canReschedule: boolean;
             /** Format: date-time */
             createdAt: string;
             /** Format: date-time */
@@ -1938,6 +2055,20 @@ export interface components {
             page: number;
             pageSize: number;
             total: number;
+        };
+        RescheduleOrderDto: {
+            /**
+             * @description New pickup date (IST calendar date)
+             * @example 2026-10-05
+             */
+            pickupDate: string;
+            pickupSlot: components["schemas"]["TimeSlot"];
+            /**
+             * @description Delivery date. Send the current one to keep it; it is accepted only if it still follows the new pickup by the minimum turnaround.
+             * @example 2026-10-06
+             */
+            deliveryDate: string;
+            deliverySlot: components["schemas"]["TimeSlot"];
         };
         CancelOrderDto: {
             /** @example Changed my plans */
@@ -2100,6 +2231,65 @@ export interface components {
             /** @description Stored size in bytes */
             bytes: number;
         };
+        /** @enum {string} */
+        LedgerKind: "PAYMENT" | "REFUND";
+        /** @enum {string} */
+        LedgerStatusFilter: "CREATED" | "CAPTURED" | "FAILED" | "REFUNDED" | "PENDING" | "PROCESSED" | "problem";
+        /** @enum {string} */
+        LedgerMethod: "RAZORPAY" | "CASH" | "BANK_TRANSFER";
+        /** @enum {string} */
+        LedgerStatus: "CREATED" | "CAPTURED" | "FAILED" | "REFUNDED" | "PENDING" | "PROCESSED";
+        LedgerEntryDto: {
+            /** @description Id of the payment or refund record */
+            id: string;
+            kind: components["schemas"]["LedgerKind"];
+            status: components["schemas"]["LedgerStatus"];
+            /** @description Payment provider or refund method */
+            method: components["schemas"]["LedgerMethod"];
+            /** @description Always positive, in paise. `kind` says which way the money moved. */
+            amountPaise: number;
+            orderId: string;
+            orderNumber: string;
+            customerId: string;
+            /** @description Null once the customer has deleted their account */
+            customerName: string | null;
+            /** @description Sign-in number, else the contact number typed at checkout */
+            customerPhone: string | null;
+            /** @description Razorpay payment, order or refund id. Empty for cash and bank transfers. */
+            reference: string | null;
+            /** @description The note shown to the customer on a refund; who collected the cash on a cash payment */
+            note: string | null;
+            /** @description Why a refund failed, when known */
+            failureReason: string | null;
+            /**
+             * Format: date-time
+             * @description When the money moved: confirmed for a captured payment, processed for a refund that went through, otherwise when the record was created
+             */
+            occurredAt: string;
+        };
+        LedgerAmountDto: {
+            count: number;
+            /** @description Sum in paise */
+            amountPaise: number;
+        };
+        LedgerTotalsDto: {
+            /** @description Payments with status CAPTURED */
+            captured: components["schemas"]["LedgerAmountDto"];
+            /** @description Refunds with status PROCESSED */
+            refunded: components["schemas"]["LedgerAmountDto"];
+            /** @description Refunds with status PENDING */
+            refundPending: components["schemas"]["LedgerAmountDto"];
+            /** @description Payments and refunds with status FAILED */
+            failed: components["schemas"]["LedgerAmountDto"];
+        };
+        LedgerPageDto: {
+            items: components["schemas"]["LedgerEntryDto"][];
+            page: number;
+            pageSize: number;
+            /** @description Entries the filters match */
+            total: number;
+            totals: components["schemas"]["LedgerTotalsDto"];
+        };
         SetOnlineDto: {
             isOnline: boolean;
         };
@@ -2193,10 +2383,57 @@ export interface components {
             pageSize: number;
             total: number;
         };
+        /** @enum {string} */
+        PushDeliveryStatus: "SENT" | "PARTIAL" | "FAILED" | "NO_DEVICE";
+        /** @enum {string} */
+        DeliveryFollowUp: "OPEN" | "DONE" | "ALL";
+        DeliveryRecipientDto: {
+            id: string;
+            name: string | null;
+            /** @description E.164, e.g. +919876543210 */
+            phone: string | null;
+        };
+        DeliveryDto: {
+            id: string;
+            status: components["schemas"]["PushDeliveryStatus"];
+            app: components["schemas"]["ClientApp"];
+            /** @description Kind of alert, e.g. order_status, payment_received */
+            type: string;
+            /** @description Heading of the alert that was sent */
+            title: string;
+            /** @description Phones the person has registered for this app */
+            deviceCount: number;
+            /** @description How many of those phones refused it */
+            failedCount: number;
+            /** @description Firebase error code of the first failure */
+            errorCode: string | null;
+            /** @description Why it did not arrive, in plain words */
+            reason: string;
+            recipient: components["schemas"]["DeliveryRecipientDto"];
+            orderId: string | null;
+            orderNumber: string | null;
+            /** Format: date-time */
+            createdAt: string;
+            /** Format: date-time */
+            handledAt: string | null;
+            handledByName: string | null;
+            /** @description False once it arrived, was already retried, or the notification is gone */
+            canRetry: boolean;
+            /** @description Why Retry is not offered, in plain words */
+            retryBlockedReason: string | null;
+        };
+        DeliveryPageDto: {
+            items: components["schemas"]["DeliveryDto"][];
+            page: number;
+            pageSize: number;
+            total: number;
+        };
         DashboardDto: {
             openIssues: number;
             overdueIssues: number;
             pendingAdjustments: number;
+            /** @description Alerts from the last 14 days that did not reach the person and nobody has followed up */
+            undeliveredAlerts: number;
             /** @description Count of orders per status */
             byStatus: {
                 [key: string]: number;
@@ -3283,6 +3520,34 @@ export interface operations {
             };
         };
     };
+    OrdersController_reschedule: {
+        parameters: {
+            query?: never;
+            header?: {
+                /** @description One value per change (a UUID). Retrying the same change with the same key returns the order as it is now, with the Idempotent-Replayed: true header, and does not use up another reschedule. */
+                "Idempotency-Key"?: string;
+            };
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["RescheduleOrderDto"];
+            };
+        };
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["OrderDto"];
+                };
+            };
+        };
+    };
     OrdersController_cancel: {
         parameters: {
             query?: never;
@@ -3864,6 +4129,71 @@ export interface operations {
             };
         };
     };
+    LedgerController_list: {
+        parameters: {
+            query?: {
+                kind?: components["schemas"]["LedgerKind"];
+                /** @description One status, or `problem` for PENDING or FAILED entries. CREATED (an online checkout that was started and not finished) is not a problem on its own. */
+                status?: components["schemas"]["LedgerStatusFilter"];
+                /** @description Payment provider or refund method */
+                method?: components["schemas"]["LedgerMethod"];
+                /** @description First day to include (IST) */
+                from?: string;
+                /** @description Last day to include (IST, inclusive) */
+                to?: string;
+                /** @description Order number, or the customer's phone (sign-in or contact number) */
+                search?: string;
+                page?: number;
+                pageSize?: number;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["LedgerPageDto"];
+                };
+            };
+        };
+    };
+    LedgerController_download: {
+        parameters: {
+            query?: {
+                kind?: components["schemas"]["LedgerKind"];
+                /** @description One status, or `problem` for PENDING or FAILED entries. CREATED (an online checkout that was started and not finished) is not a problem on its own. */
+                status?: components["schemas"]["LedgerStatusFilter"];
+                /** @description Payment provider or refund method */
+                method?: components["schemas"]["LedgerMethod"];
+                /** @description First day to include (IST) */
+                from?: string;
+                /** @description Last day to include (IST, inclusive) */
+                to?: string;
+                /** @description Order number, or the customer's phone (sign-in or contact number) */
+                search?: string;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description CSV file */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "text/csv": string;
+                };
+            };
+        };
+    };
     DriverController_setOnline: {
         parameters: {
             query?: never;
@@ -4271,6 +4601,82 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content?: never;
+            };
+        };
+    };
+    NotificationDeliveriesController_list: {
+        parameters: {
+            query?: {
+                page?: number;
+                pageSize?: number;
+                /** @description Only this outcome. Without it the list shows every alert that did not fully arrive (everything but SENT). */
+                status?: components["schemas"]["PushDeliveryStatus"];
+                /** @description Which app the alert was for */
+                app?: components["schemas"]["ClientApp"];
+                /** @description First day, YYYY-MM-DD (IST) */
+                from?: string;
+                /** @description Last day, YYYY-MM-DD (IST) */
+                to?: string;
+                /** @description Order number, or part of it */
+                orderNumber?: string;
+                /** @description OPEN: nobody has followed up yet (the default). DONE: followed up or retried. ALL: both. */
+                followUp?: components["schemas"]["DeliveryFollowUp"];
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["DeliveryPageDto"];
+                };
+            };
+        };
+    };
+    NotificationDeliveriesController_retry: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["DeliveryDto"];
+                };
+            };
+        };
+    };
+    NotificationDeliveriesController_handled: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["DeliveryDto"];
+                };
             };
         };
     };

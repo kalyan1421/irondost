@@ -860,6 +860,9 @@ extension on OrderDto {
     pickedUpAt: pickedUpAt,
     deliveredAt: deliveredAt,
     cancelledAt: cancelledAt,
+    rescheduleCount: rescheduleCount,
+    reschedulesRemaining: reschedulesRemaining,
+    canReschedule: canReschedule,
     paymentStatus: paymentStatus,
     events: events,
   );

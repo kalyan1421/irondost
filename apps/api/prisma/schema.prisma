@@ -145,6 +145,14 @@ enum ClientApp {
   ADMIN
 }
 
+/// How one push attempt to one person went. NO_DEVICE: the person has no registered device for that app.
+enum PushDeliveryStatus {
+  SENT
+  PARTIAL
+  FAILED
+  NO_DEVICE
+}
+
 // ───────────────────────────── Identity ─────────────────────────────
 
 model User {
@@ -186,6 +194,8 @@ model User {
   issuesHandled        OrderIssue[]        @relation("IssueHandler")
   issueMessages        OrderIssueMessage[]
   issuePhotos          IssuePhoto[]
+  pushDeliveries       PushDelivery[]      @relation("PushDeliveryUser")
+  pushFollowUps        PushDelivery[]      @relation("PushDeliveryHandler")
 
   @@index([role, isActive])
   @@map("users")
@@ -379,6 +389,14 @@ model Order {
   /// SHA-256 of the request the key was first used with, to refuse a reused key with a different basket.
   idempotencyHash String? @map("idempotency_hash")
 
+  /// How many times the customer moved the booked pickup or delivery time (the limit is in code; CHECK 0..10 in migration).
+  rescheduleCount Int     @default(0) @map("reschedule_count")
+  /// Key and request fingerprint of the latest reschedule, so a retry after a lost response is not counted twice.
+  rescheduleKey   String? @map("reschedule_key")
+  rescheduleHash  String? @map("reschedule_hash")
+  /// When the customer last moved the pickup. Dispatch ignores offers made before it: they were for another time.
+  pickupRescheduledAt DateTime? @map("pickup_rescheduled_at")
+
   cancelReason String?   @map("cancel_reason")
   pickedUpAt   DateTime? @map("picked_up_at")
   deliveredAt  DateTime? @map("delivered_at")
@@ -402,6 +420,7 @@ model Order {
   adjustments OrderAdjustment[]
   issues      OrderIssue[]
   revision    Int               @default(0)
+  pushDeliveries PushDelivery[]
 
   @@unique([customerId, idempotencyKey])
   @@index([customerId, createdAt(sort: Desc)])
@@ -536,10 +555,45 @@ model Notification {
   readAt    DateTime? @map("read_at")
   createdAt DateTime  @default(now()) @map("created_at")
 
-  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+  user       User           @relation(fields: [userId], references: [id], onDelete: Cascade)
+  deliveries PushDelivery[]
 
   @@index([userId, createdAt(sort: Desc)])
   @@map("notifications")
+}
+
+/// One push attempt to one person for one inbox notification: how many of their devices it went to and how many
+/// refused it. Written by the push service; staff follow up on the ones that did not arrive. A retry is a new row.
+/// CHECK in migration keeps status and counts consistent; a partial index there serves the open-problems list.
+model PushDelivery {
+  id             String             @id @default(uuid()) @db.Uuid
+  /// The inbox row pushed. Null once it is deleted (the customer deleted their account).
+  notificationId String?            @map("notification_id") @db.Uuid
+  userId         String             @map("user_id") @db.Uuid
+  app            ClientApp
+  type           String
+  title          String
+  status         PushDeliveryStatus
+  deviceCount    Int                @default(0) @map("device_count")
+  failedCount    Int                @default(0) @map("failed_count")
+  /// First FCM error code among the failures, e.g. messaging/registration-token-not-registered. Null otherwise.
+  errorCode      String?            @map("error_code")
+  orderId        String?            @map("order_id") @db.Uuid
+  createdAt      DateTime           @default(now()) @map("created_at")
+  /// Staff followed up (or retried) and no longer need to see this one.
+  handledAt      DateTime?          @map("handled_at")
+  handledById    String?            @map("handled_by_id") @db.Uuid
+
+  notification Notification? @relation(fields: [notificationId], references: [id], onDelete: SetNull)
+  user         User          @relation("PushDeliveryUser", fields: [userId], references: [id], onDelete: Cascade)
+  order        Order?        @relation(fields: [orderId], references: [id], onDelete: SetNull)
+  handledBy    User?         @relation("PushDeliveryHandler", fields: [handledById], references: [id], onDelete: SetNull)
+
+  @@index([createdAt(sort: Desc)])
+  @@index([notificationId])
+  @@index([userId])
+  @@index([orderId])
+  @@map("push_deliveries")
 }
 
 /// Single-row table (id = 1) of business rules editable from the admin.

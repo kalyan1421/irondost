@@ -1,4 +1,4 @@
-import type { DispatchLeg, OrderStatus, RefundMethod, RefundStatus, Role } from './generated/prisma/enums.js';
+import type { DispatchLeg, OrderStatus, RefundMethod, RefundStatus, Role, TimeSlot } from './generated/prisma/enums.js';
 
 /**
  * In-process domain events (via @nestjs/event-emitter). Emitted after the
@@ -10,6 +10,7 @@ export const Events = {
   OrderCreated: 'order.created',
   OrderStatusChanged: 'order.status_changed',
   OrderUpdated: 'order.updated',
+  OrderRescheduled: 'order.rescheduled',
   OffersCreated: 'dispatch.offers_created',
   OffersClosed: 'dispatch.offers_closed',
   DispatchFailed: 'dispatch.failed',
@@ -51,6 +52,27 @@ export interface OrderUpdatedEvent extends OrderRef {
   paidPaise?: number;
   refundedPaise?: number;
   actorRole?: Role | null;
+}
+
+/** The booked pickup and delivery times of an order: IST calendar dates (YYYY-MM-DD) and slots. */
+export interface OrderWindows {
+  pickupDate: string;
+  pickupSlot: TimeSlot;
+  deliveryDate: string;
+  deliverySlot: TimeSlot;
+}
+
+/** The customer moved the pickup and/or delivery time. Emitted once the new times are committed. */
+export interface OrderRescheduledEvent extends OrderRef {
+  /** PICKUP_ASSIGNED to PENDING when the pickup moved and a partner had accepted. */
+  from: OrderStatus;
+  to: OrderStatus;
+  previous: OrderWindows;
+  next: OrderWindows;
+  pickupChanged: boolean;
+  deliveryChanged: boolean;
+  /** The pickup partner who held the order and no longer does, if any. */
+  removedDriverId: string | null;
 }
 
 export interface OffersCreatedEvent {

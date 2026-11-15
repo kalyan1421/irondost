@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:flutter_riverpod/misc.dart' show ProviderListenable;
 import 'package:go_router/go_router.dart';
 import 'package:lucide_icons_flutter/lucide_icons.dart';
 
@@ -35,27 +36,48 @@ class ScheduleScreen extends ConsumerWidget {
         title: Text('Pickup and delivery', style: context.text.titleLg),
       ),
       body: schedule.when(
-        loading: () => const _Loading(),
-        error: (e, _) => _LoadFailure(
+        loading: () => const ScheduleLoading(),
+        error: (e, _) => ScheduleLoadFailure(
           offline: ApiFailure.from(e).isConnectivity,
           onRetry: () => ref.invalidate(pickupSlotsProvider),
         ),
-        data: (s) => s.isEmpty ? const _NothingOpen() : _Body(schedule: s),
+        data: (s) => s.isEmpty
+            ? const ScheduleNothingOpen()
+            : SchedulePicker(
+                schedule: s,
+                picks: ref.read(scheduleChoiceProvider.notifier),
+                onChangeDelivery: () => showDeliverySheet(context),
+              ),
       ),
       bottomNavigationBar: _Footer(enabled: s?.isComplete ?? false),
     );
   }
 }
 
-class _Body extends ConsumerWidget {
-  const _Body({required this.schedule});
+/// The day and window for collection, and the delivery after it. Used for booking and for changing an order's time:
+/// [picks] says where the customer's taps go, [onChangeDelivery] opens the delivery sheet for the same state.
+/// [before] and [afterDelivery] add notes above the pickup question and under the delivery card.
+class SchedulePicker extends ConsumerWidget {
+  const SchedulePicker({
+    super.key,
+    required this.schedule,
+    required this.picks,
+    required this.onChangeDelivery,
+    this.before = const [],
+    this.afterDelivery = const [],
+  });
+
   final Schedule schedule;
+  final SchedulePicks picks;
+  final VoidCallback onChangeDelivery;
+  final List<Widget> before;
+  final List<Widget> afterDelivery;
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final t = context.text;
     final c = context.colors;
-    final choice = ref.read(scheduleChoiceProvider.notifier);
+    final choice = picks;
     final today = schedule.today!;
     final earliest = schedule.earliestPickup;
     final open = schedule.pickupWindows.where((s) => s.available).toList();
@@ -70,6 +92,7 @@ class _Body extends ConsumerWidget {
         IdSpace.s6,
       ),
       children: [
+        ...before,
         Semantics(
           header: true,
           child: Text('When should we collect?', style: t.titleLg),
@@ -124,7 +147,8 @@ class _Body extends ConsumerWidget {
           const SizedBox(height: IdSpace.s6),
           Semantics(header: true, child: Text('Delivery', style: t.titleLg)),
           const SizedBox(height: IdSpace.s3),
-          _DeliveryCard(schedule: schedule),
+          _DeliveryCard(schedule: schedule, onChange: onChangeDelivery),
+          ...afterDelivery,
         ],
       ],
     );
@@ -253,8 +277,9 @@ class _NoneOpenNotice extends StatelessWidget {
 }
 
 class _DeliveryCard extends ConsumerWidget {
-  const _DeliveryCard({required this.schedule});
+  const _DeliveryCard({required this.schedule, required this.onChange});
   final Schedule schedule;
+  final VoidCallback onChange;
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
@@ -323,22 +348,29 @@ class _DeliveryCard extends ConsumerWidget {
     return ReviewRow(
       label: schedule.deliveryIsEarliest ? 'Earliest available delivery' : 'Your delivery choice',
       value: Text(slotSummary(delivery, today: schedule.today), style: t.title),
-      action: IdButton.text(label: 'Change', onPressed: () => showDeliverySheet(context)),
+      action: IdButton.text(label: 'Change', onPressed: onChange),
     );
   }
 }
 
-/// "Delivery time": any open window after the earliest the ironing allows.
-Future<void> showDeliverySheet(BuildContext context) =>
+/// "Delivery time": any open window after the earliest the ironing allows. For a booking by default; to change an
+/// order's time, pass that order's [source] and [picks].
+Future<void> showDeliverySheet(
+  BuildContext context, {
+  ProviderListenable<AsyncValue<Schedule>>? source,
+  SchedulePicks? picks,
+}) =>
     showModalBottomSheet<void>(
       context: context,
       isScrollControlled: true,
       useSafeArea: true,
-      builder: (_) => const _DeliverySheet(),
+      builder: (_) => _DeliverySheet(source: source, picks: picks),
     );
 
 class _DeliverySheet extends ConsumerStatefulWidget {
-  const _DeliverySheet();
+  const _DeliverySheet({this.source, this.picks});
+  final ProviderListenable<AsyncValue<Schedule>>? source;
+  final SchedulePicks? picks;
 
   @override
   ConsumerState<_DeliverySheet> createState() => _DeliverySheetState();
@@ -351,7 +383,8 @@ class _DeliverySheetState extends ConsumerState<_DeliverySheet> {
   Widget build(BuildContext context) {
     final t = context.text;
     final c = context.colors;
-    final schedule = ref.watch(scheduleProvider).value;
+    final schedule = ref.watch(widget.source ?? scheduleProvider).value;
+    final SchedulePicks picks = widget.picks ?? ref.read(scheduleChoiceProvider.notifier);
     final slots = schedule?.deliverySlots?.value ?? const <SlotOptionDto>[];
     final dates = schedule?.deliveryDates ?? const <String>[];
     final date = dates.contains(_date)
@@ -398,9 +431,7 @@ class _DeliverySheetState extends ConsumerState<_DeliverySheet> {
                     slotKey(slot) == slotKey(schedule!.delivery!),
                 enabled: slot.available,
                 closedNote: 'Too soon',
-                onTap: () => ref
-                    .read(scheduleChoiceProvider.notifier)
-                    .pickDelivery(slot),
+                onTap: () => picks.pickDelivery(slot),
               ),
               const SizedBox(height: IdSpace.s2),
             ],
@@ -449,8 +480,8 @@ class _Footer extends StatelessWidget {
   }
 }
 
-class _Loading extends StatelessWidget {
-  const _Loading();
+class ScheduleLoading extends StatelessWidget {
+  const ScheduleLoading({super.key});
 
   @override
   Widget build(BuildContext context) {
@@ -498,8 +529,8 @@ class _Loading extends StatelessWidget {
   }
 }
 
-class _LoadFailure extends StatelessWidget {
-  const _LoadFailure({required this.offline, required this.onRetry});
+class ScheduleLoadFailure extends StatelessWidget {
+  const ScheduleLoadFailure({super.key, required this.offline, required this.onRetry});
   final bool offline;
   final VoidCallback onRetry;
 
@@ -558,8 +589,8 @@ class _LoadFailure extends StatelessWidget {
 }
 
 /// The API listed no windows at all (every day closed).
-class _NothingOpen extends ConsumerWidget {
-  const _NothingOpen();
+class ScheduleNothingOpen extends ConsumerWidget {
+  const ScheduleNothingOpen({super.key});
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {

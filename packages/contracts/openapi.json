@@ -1494,6 +1494,61 @@
         ]
       }
     },
+    "/v1/orders/{id}/reschedule": {
+      "post": {
+        "operationId": "OrdersController_reschedule",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "Idempotency-Key",
+            "in": "header",
+            "description": "One value per change (a UUID). Retrying the same change with the same key returns the order as it is now, with the Idempotent-Replayed: true header, and does not use up another reschedule.",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/RescheduleOrderDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/OrderDto"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Moves the pickup and delivery time. Allowed until the clothes are picked up, twice per order. Prices do not change.\nWhen a partner had accepted the pickup, they are released and the order is offered again for the new time.",
+        "tags": [
+          "orders"
+        ]
+      }
+    },
     "/v1/orders/{id}/cancel": {
       "post": {
         "operationId": "OrdersController_cancel",
@@ -2719,6 +2774,196 @@
         ]
       }
     },
+    "/v1/admin/ledger": {
+      "get": {
+        "description": "Each entry is one payment or one refund, with its order and customer. `status=problem` finds what needs attention: PENDING and FAILED entries. Dates are IST. Never includes gateway payloads.",
+        "operationId": "LedgerController_list",
+        "parameters": [
+          {
+            "name": "kind",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "$ref": "#/components/schemas/LedgerKind"
+            }
+          },
+          {
+            "name": "status",
+            "required": false,
+            "in": "query",
+            "description": "One status, or `problem` for PENDING or FAILED entries. CREATED (an online checkout that was started and not finished) is not a problem on its own.",
+            "schema": {
+              "$ref": "#/components/schemas/LedgerStatusFilter"
+            }
+          },
+          {
+            "name": "method",
+            "required": false,
+            "in": "query",
+            "description": "Payment provider or refund method",
+            "schema": {
+              "$ref": "#/components/schemas/LedgerMethod"
+            }
+          },
+          {
+            "name": "from",
+            "required": false,
+            "in": "query",
+            "description": "First day to include (IST)",
+            "schema": {
+              "example": "2026-10-01",
+              "type": "string"
+            }
+          },
+          {
+            "name": "to",
+            "required": false,
+            "in": "query",
+            "description": "Last day to include (IST, inclusive)",
+            "schema": {
+              "example": "2026-10-31",
+              "type": "string"
+            }
+          },
+          {
+            "name": "search",
+            "required": false,
+            "in": "query",
+            "description": "Order number, or the customer's phone (sign-in or contact number)",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "page",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "minimum": 1,
+              "default": 1,
+              "type": "number"
+            }
+          },
+          {
+            "name": "pageSize",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "minimum": 1,
+              "maximum": 100,
+              "default": 20,
+              "type": "number"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/LedgerPageDto"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Payments and refunds as one list, newest first, with totals for everything the filters match",
+        "tags": [
+          "admin · payments"
+        ]
+      }
+    },
+    "/v1/admin/ledger/export": {
+      "get": {
+        "description": "Takes the list's filters. At most 10,000 newest entries; when more matched, the X-Export-Truncated header is \"true\". Cells that start with =, +, - or @ are prefixed with an apostrophe.",
+        "operationId": "LedgerController_download",
+        "parameters": [
+          {
+            "name": "kind",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "$ref": "#/components/schemas/LedgerKind"
+            }
+          },
+          {
+            "name": "status",
+            "required": false,
+            "in": "query",
+            "description": "One status, or `problem` for PENDING or FAILED entries. CREATED (an online checkout that was started and not finished) is not a problem on its own.",
+            "schema": {
+              "$ref": "#/components/schemas/LedgerStatusFilter"
+            }
+          },
+          {
+            "name": "method",
+            "required": false,
+            "in": "query",
+            "description": "Payment provider or refund method",
+            "schema": {
+              "$ref": "#/components/schemas/LedgerMethod"
+            }
+          },
+          {
+            "name": "from",
+            "required": false,
+            "in": "query",
+            "description": "First day to include (IST)",
+            "schema": {
+              "example": "2026-10-01",
+              "type": "string"
+            }
+          },
+          {
+            "name": "to",
+            "required": false,
+            "in": "query",
+            "description": "Last day to include (IST, inclusive)",
+            "schema": {
+              "example": "2026-10-31",
+              "type": "string"
+            }
+          },
+          {
+            "name": "search",
+            "required": false,
+            "in": "query",
+            "description": "Order number, or the customer's phone (sign-in or contact number)",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "CSV file",
+            "content": {
+              "text/csv": {
+                "schema": {
+                  "type": "string",
+                  "format": "binary"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "The same list as a CSV download",
+        "tags": [
+          "admin · payments"
+        ]
+      }
+    },
     "/v1/driver/online": {
       "put": {
         "operationId": "DriverController_setOnline",
@@ -3401,6 +3646,181 @@
         ],
         "tags": [
           "me"
+        ]
+      }
+    },
+    "/v1/admin/notification-deliveries": {
+      "get": {
+        "operationId": "NotificationDeliveriesController_list",
+        "parameters": [
+          {
+            "name": "page",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "minimum": 1,
+              "default": 1,
+              "type": "number"
+            }
+          },
+          {
+            "name": "pageSize",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "minimum": 1,
+              "maximum": 100,
+              "default": 20,
+              "type": "number"
+            }
+          },
+          {
+            "name": "status",
+            "required": false,
+            "in": "query",
+            "description": "Only this outcome. Without it the list shows every alert that did not fully arrive (everything but SENT).",
+            "schema": {
+              "$ref": "#/components/schemas/PushDeliveryStatus"
+            }
+          },
+          {
+            "name": "app",
+            "required": false,
+            "in": "query",
+            "description": "Which app the alert was for",
+            "schema": {
+              "$ref": "#/components/schemas/ClientApp"
+            }
+          },
+          {
+            "name": "from",
+            "required": false,
+            "in": "query",
+            "description": "First day, YYYY-MM-DD (IST)",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "to",
+            "required": false,
+            "in": "query",
+            "description": "Last day, YYYY-MM-DD (IST)",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "orderNumber",
+            "required": false,
+            "in": "query",
+            "description": "Order number, or part of it",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "followUp",
+            "required": false,
+            "in": "query",
+            "description": "OPEN: nobody has followed up yet (the default). DONE: followed up or retried. ALL: both.",
+            "schema": {
+              "$ref": "#/components/schemas/DeliveryFollowUp"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/DeliveryPageDto"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "By default only alerts that did not fully arrive and nobody has followed up on, newest first.",
+        "tags": [
+          "admin · notifications"
+        ]
+      }
+    },
+    "/v1/admin/notification-deliveries/{id}/retry": {
+      "post": {
+        "operationId": "NotificationDeliveriesController_retry",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/DeliveryDto"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Sends the same alert once more. Recorded as a new delivery; refused if it already arrived.",
+        "tags": [
+          "admin · notifications"
+        ]
+      }
+    },
+    "/v1/admin/notification-deliveries/{id}/handled": {
+      "post": {
+        "operationId": "NotificationDeliveriesController_handled",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/DeliveryDto"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Marks the alert as followed up, so it leaves the open list and the dashboard count.",
+        "tags": [
+          "admin · notifications"
         ]
       }
     },
@@ -6192,6 +6612,18 @@
             "type": "string",
             "nullable": true
           },
+          "rescheduleCount": {
+            "type": "number",
+            "description": "How many times the customer has moved the pickup or delivery time."
+          },
+          "reschedulesRemaining": {
+            "type": "number",
+            "description": "Moves the customer has left on this order."
+          },
+          "canReschedule": {
+            "type": "boolean",
+            "description": "Customer view: the pickup time can be changed now (not yet picked up, and moves remain). Always false for staff and partners."
+          },
           "createdAt": {
             "format": "date-time",
             "type": "string"
@@ -6255,6 +6687,9 @@
           "pickedUpAt",
           "deliveredAt",
           "cancelledAt",
+          "rescheduleCount",
+          "reschedulesRemaining",
+          "canReschedule",
           "createdAt",
           "updatedAt"
         ]
@@ -6283,6 +6718,41 @@
           "page",
           "pageSize",
           "total"
+        ]
+      },
+      "RescheduleOrderDto": {
+        "type": "object",
+        "properties": {
+          "pickupDate": {
+            "type": "string",
+            "example": "2026-10-05",
+            "description": "New pickup date (IST calendar date)"
+          },
+          "pickupSlot": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/TimeSlot"
+              }
+            ]
+          },
+          "deliveryDate": {
+            "type": "string",
+            "example": "2026-10-06",
+            "description": "Delivery date. Send the current one to keep it; it is accepted only if it still follows the new pickup by the minimum turnaround."
+          },
+          "deliverySlot": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/TimeSlot"
+              }
+            ]
+          }
+        },
+        "required": [
+          "pickupDate",
+          "pickupSlot",
+          "deliveryDate",
+          "deliverySlot"
         ]
       },
       "CancelOrderDto": {
@@ -6889,6 +7359,224 @@
           "bytes"
         ]
       },
+      "LedgerKind": {
+        "type": "string",
+        "enum": [
+          "PAYMENT",
+          "REFUND"
+        ]
+      },
+      "LedgerStatusFilter": {
+        "type": "string",
+        "enum": [
+          "CREATED",
+          "CAPTURED",
+          "FAILED",
+          "REFUNDED",
+          "PENDING",
+          "PROCESSED",
+          "problem"
+        ]
+      },
+      "LedgerMethod": {
+        "type": "string",
+        "enum": [
+          "RAZORPAY",
+          "CASH",
+          "BANK_TRANSFER"
+        ]
+      },
+      "LedgerStatus": {
+        "type": "string",
+        "enum": [
+          "CREATED",
+          "CAPTURED",
+          "FAILED",
+          "REFUNDED",
+          "PENDING",
+          "PROCESSED"
+        ]
+      },
+      "LedgerEntryDto": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "description": "Id of the payment or refund record"
+          },
+          "kind": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/LedgerKind"
+              }
+            ]
+          },
+          "status": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/LedgerStatus"
+              }
+            ]
+          },
+          "method": {
+            "description": "Payment provider or refund method",
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/LedgerMethod"
+              }
+            ]
+          },
+          "amountPaise": {
+            "type": "number",
+            "description": "Always positive, in paise. `kind` says which way the money moved."
+          },
+          "orderId": {
+            "type": "string"
+          },
+          "orderNumber": {
+            "type": "string"
+          },
+          "customerId": {
+            "type": "string"
+          },
+          "customerName": {
+            "type": "string",
+            "nullable": true,
+            "description": "Null once the customer has deleted their account"
+          },
+          "customerPhone": {
+            "type": "string",
+            "nullable": true,
+            "description": "Sign-in number, else the contact number typed at checkout"
+          },
+          "reference": {
+            "type": "string",
+            "nullable": true,
+            "description": "Razorpay payment, order or refund id. Empty for cash and bank transfers."
+          },
+          "note": {
+            "type": "string",
+            "nullable": true,
+            "description": "The note shown to the customer on a refund; who collected the cash on a cash payment"
+          },
+          "failureReason": {
+            "type": "string",
+            "nullable": true,
+            "description": "Why a refund failed, when known"
+          },
+          "occurredAt": {
+            "format": "date-time",
+            "type": "string",
+            "description": "When the money moved: confirmed for a captured payment, processed for a refund that went through, otherwise when the record was created"
+          }
+        },
+        "required": [
+          "id",
+          "kind",
+          "status",
+          "method",
+          "amountPaise",
+          "orderId",
+          "orderNumber",
+          "customerId",
+          "customerName",
+          "customerPhone",
+          "reference",
+          "note",
+          "failureReason",
+          "occurredAt"
+        ]
+      },
+      "LedgerAmountDto": {
+        "type": "object",
+        "properties": {
+          "count": {
+            "type": "number"
+          },
+          "amountPaise": {
+            "type": "number",
+            "description": "Sum in paise"
+          }
+        },
+        "required": [
+          "count",
+          "amountPaise"
+        ]
+      },
+      "LedgerTotalsDto": {
+        "type": "object",
+        "properties": {
+          "captured": {
+            "description": "Payments with status CAPTURED",
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/LedgerAmountDto"
+              }
+            ]
+          },
+          "refunded": {
+            "description": "Refunds with status PROCESSED",
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/LedgerAmountDto"
+              }
+            ]
+          },
+          "refundPending": {
+            "description": "Refunds with status PENDING",
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/LedgerAmountDto"
+              }
+            ]
+          },
+          "failed": {
+            "description": "Payments and refunds with status FAILED",
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/LedgerAmountDto"
+              }
+            ]
+          }
+        },
+        "required": [
+          "captured",
+          "refunded",
+          "refundPending",
+          "failed"
+        ]
+      },
+      "LedgerPageDto": {
+        "type": "object",
+        "properties": {
+          "items": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/LedgerEntryDto"
+            }
+          },
+          "page": {
+            "type": "number"
+          },
+          "pageSize": {
+            "type": "number"
+          },
+          "total": {
+            "type": "number",
+            "description": "Entries the filters match"
+          },
+          "totals": {
+            "$ref": "#/components/schemas/LedgerTotalsDto"
+          }
+        },
+        "required": [
+          "items",
+          "page",
+          "pageSize",
+          "total",
+          "totals"
+        ]
+      },
       "SetOnlineDto": {
         "type": "object",
         "properties": {
@@ -7231,6 +7919,170 @@
           "total"
         ]
       },
+      "PushDeliveryStatus": {
+        "type": "string",
+        "enum": [
+          "SENT",
+          "PARTIAL",
+          "FAILED",
+          "NO_DEVICE"
+        ]
+      },
+      "DeliveryFollowUp": {
+        "type": "string",
+        "enum": [
+          "OPEN",
+          "DONE",
+          "ALL"
+        ]
+      },
+      "DeliveryRecipientDto": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "name": {
+            "type": "string",
+            "nullable": true
+          },
+          "phone": {
+            "type": "string",
+            "nullable": true,
+            "description": "E.164, e.g. +919876543210"
+          }
+        },
+        "required": [
+          "id",
+          "name",
+          "phone"
+        ]
+      },
+      "DeliveryDto": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "status": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/PushDeliveryStatus"
+              }
+            ]
+          },
+          "app": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/ClientApp"
+              }
+            ]
+          },
+          "type": {
+            "type": "string",
+            "description": "Kind of alert, e.g. order_status, payment_received"
+          },
+          "title": {
+            "type": "string",
+            "description": "Heading of the alert that was sent"
+          },
+          "deviceCount": {
+            "type": "number",
+            "description": "Phones the person has registered for this app"
+          },
+          "failedCount": {
+            "type": "number",
+            "description": "How many of those phones refused it"
+          },
+          "errorCode": {
+            "type": "string",
+            "nullable": true,
+            "description": "Firebase error code of the first failure"
+          },
+          "reason": {
+            "type": "string",
+            "description": "Why it did not arrive, in plain words"
+          },
+          "recipient": {
+            "$ref": "#/components/schemas/DeliveryRecipientDto"
+          },
+          "orderId": {
+            "type": "string",
+            "nullable": true
+          },
+          "orderNumber": {
+            "type": "string",
+            "nullable": true
+          },
+          "createdAt": {
+            "format": "date-time",
+            "type": "string"
+          },
+          "handledAt": {
+            "format": "date-time",
+            "type": "string",
+            "nullable": true
+          },
+          "handledByName": {
+            "type": "string",
+            "nullable": true
+          },
+          "canRetry": {
+            "type": "boolean",
+            "description": "False once it arrived, was already retried, or the notification is gone"
+          },
+          "retryBlockedReason": {
+            "type": "string",
+            "nullable": true,
+            "description": "Why Retry is not offered, in plain words"
+          }
+        },
+        "required": [
+          "id",
+          "status",
+          "app",
+          "type",
+          "title",
+          "deviceCount",
+          "failedCount",
+          "errorCode",
+          "reason",
+          "recipient",
+          "orderId",
+          "orderNumber",
+          "createdAt",
+          "handledAt",
+          "handledByName",
+          "canRetry",
+          "retryBlockedReason"
+        ]
+      },
+      "DeliveryPageDto": {
+        "type": "object",
+        "properties": {
+          "items": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/DeliveryDto"
+            }
+          },
+          "page": {
+            "type": "number"
+          },
+          "pageSize": {
+            "type": "number"
+          },
+          "total": {
+            "type": "number"
+          }
+        },
+        "required": [
+          "items",
+          "page",
+          "pageSize",
+          "total"
+        ]
+      },
       "DashboardDto": {
         "type": "object",
         "properties": {
@@ -7242,6 +8094,10 @@
           },
           "pendingAdjustments": {
             "type": "number"
+          },
+          "undeliveredAlerts": {
+            "type": "number",
+            "description": "Alerts from the last 14 days that did not reach the person and nobody has followed up"
           },
           "byStatus": {
             "type": "object",
@@ -7305,6 +8161,7 @@
           "openIssues",
           "overdueIssues",
           "pendingAdjustments",
+          "undeliveredAlerts",
           "byStatus",
           "pickupsToday",
           "deliveriesToday",
