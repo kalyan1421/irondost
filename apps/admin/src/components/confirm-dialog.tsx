@@ -16,9 +16,12 @@ import {
 /**
  * Confirmation step for irreversible actions. `onConfirm` may be async; the
  * dialog shows progress until it settles, closes on success, and stays open if it fails.
+ * Pass `trigger` for the usual uncontrolled use, or `open`/`onOpenChange` (with no trigger) to open it from code.
  */
 export function ConfirmDialog({
   trigger,
+  open: openProp,
+  onOpenChange,
   title,
   description,
   confirmLabel = "Confirm",
@@ -28,7 +31,9 @@ export function ConfirmDialog({
   confirmDisabled = false,
   onOpen,
 }: {
-  trigger: React.ReactNode;
+  trigger?: React.ReactNode;
+  open?: boolean;
+  onOpenChange?: (open: boolean) => void;
   title: string;
   description?: React.ReactNode;
   confirmLabel?: string;
@@ -38,12 +43,18 @@ export function ConfirmDialog({
   confirmDisabled?: boolean;
   onOpen?: () => void;
 }) {
-  const [open, setOpen] = useState(false);
+  const [innerOpen, setInnerOpen] = useState(false);
   const [busy, setBusy] = useState(false);
+  const controlled = openProp !== undefined;
+  const open = controlled ? openProp : innerOpen;
+  const setOpen = (o: boolean) => {
+    if (!controlled) setInnerOpen(o);
+    onOpenChange?.(o);
+  };
 
   return (
     <AlertDialog open={open} onOpenChange={(o) => { if (!busy) { if (o) onOpen?.(); setOpen(o); } }}>
-      <AlertDialogTrigger asChild>{trigger}</AlertDialogTrigger>
+      {trigger ? <AlertDialogTrigger asChild>{trigger}</AlertDialogTrigger> : null}
       <AlertDialogContent>
         <AlertDialogHeader>
           <AlertDialogTitle>{title}</AlertDialogTitle>

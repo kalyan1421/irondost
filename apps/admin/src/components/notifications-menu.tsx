@@ -4,6 +4,7 @@ import { useQuery } from "@tanstack/react-query";
 import { Bell } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
+import { ConfirmDialog } from "@/components/confirm-dialog";
 import { ErrorState, Pager, TableSkeleton } from "@/components/page";
 import { Button } from "@/components/ui/button";
 import { Sheet, SheetContent, SheetDescription, SheetHeader, SheetTitle, SheetTrigger } from "@/components/ui/sheet";
@@ -58,9 +59,18 @@ export function NotificationsMenu() {
           </SheetHeader>
           <div className="flex items-center justify-between px-4 pb-2 text-sm text-muted-foreground">
             <span role="status">{inbox.isError ? "Alerts could not refresh" : !inbox.data ? "Loading alerts…" : unread > 0 ? `${unread} unread` : "All caught up"}</span>
-            <Button variant="ghost" size="sm" disabled={!inbox.data || inbox.isError || unread === 0 || readAll.isPending} onClick={() => { if (window.confirm(`Mark all ${unread} unread alerts as read, including alerts on other pages?`)) readAll.mutate(undefined); }}>
-              Mark all read
-            </Button>
+            <ConfirmDialog
+              title={`Mark all ${unread} unread alerts as read?`}
+              description="This includes alerts on other pages."
+              confirmLabel="Mark all read"
+              cancelLabel="Go back"
+              trigger={
+                <Button variant="ghost" size="sm" disabled={!inbox.data || inbox.isError || unread === 0 || readAll.isPending}>
+                  Mark all read
+                </Button>
+              }
+              onConfirm={() => readAll.mutateAsync(undefined)}
+            />
           </div>
           <ul className="flex-1 divide-y overflow-y-auto border-t">
             {inbox.isError ? <li><ErrorState error={inbox.error} onRetry={() => void inbox.refetch()} /></li> : !inbox.data ? <li><TableSkeleton rows={3} /></li> : null}

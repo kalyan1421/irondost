@@ -5,6 +5,7 @@ import { useState } from "react";
 import { ConfirmDialog } from "@/components/confirm-dialog";
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
+import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { Textarea } from "@/components/ui/textarea";
 import { api, unwrap } from "@/lib/api/client";
 import { useApiMutation } from "@/lib/api/mutation";
@@ -82,10 +83,18 @@ export function OrderActions({ order }: { order: Order }) {
               due > 0 ? (
                 <span className="grid gap-3">
                   <span>{rupees(due)} is still unpaid.</span>
-                  <span role="radiogroup" aria-label="Was the balance collected?" className="grid gap-3 text-foreground">
-                    <Label className="font-normal"><input type="radio" name="cash-confirmation" checked={collected === true} onChange={() => setCollected(true)} /> Cash collected: record {rupees(due)} as paid.</Label>
-                    <Label className="font-normal"><input type="radio" name="cash-confirmation" checked={collected === false} onChange={() => setCollected(false)} /> Not collected: keep {rupees(due)} unpaid.</Label>
-                  </span>
+                  {/* asChild: the dialog description is a <p>, so the group must be a span, not Radix's default div. */}
+                  <RadioGroup
+                    asChild
+                    aria-label="Was the balance collected?"
+                    value={collected === null ? "" : collected ? "collected" : "not-collected"}
+                    onValueChange={(v) => setCollected(v === "collected")}
+                  >
+                    <span className="grid gap-3 text-foreground">
+                      <Label htmlFor="cash-collected" className="font-normal"><RadioGroupItem id="cash-collected" value="collected" /> Cash collected: record {rupees(due)} as paid.</Label>
+                      <Label htmlFor="cash-not-collected" className="font-normal"><RadioGroupItem id="cash-not-collected" value="not-collected" /> Not collected: keep {rupees(due)} unpaid.</Label>
+                    </span>
+                  </RadioGroup>
                   <span>Choose what happened at the door. Record any later payment in the Payments panel.</span>
                 </span>
               ) : (

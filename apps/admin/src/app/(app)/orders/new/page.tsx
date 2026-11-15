@@ -5,6 +5,7 @@ import { ArrowLeft, X } from "lucide-react";
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
 import { Suspense, useEffect, useMemo, useState } from "react";
+import { ConfirmDialog } from "@/components/confirm-dialog";
 import { PageBody, PageHeader } from "@/components/page";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -50,6 +51,8 @@ function NewOrderForm() {
   const [restored, setRestored] = useState(false);
   const [submitted, setSubmitted] = useState<PlaceOrderBody | null>(null);
   const [draftNotice, setDraftNotice] = useState("");
+  // A customer switch waiting for the admin to confirm discarding the current draft.
+  const [pendingCustomer, setPendingCustomer] = useState<{ id: string | null } | null>(null);
 
   const [addressChoice, setAddressChoice] = useState<string | null>(null);
   const [qty, setQty] = useState<Record<string, number>>({});
@@ -98,7 +101,10 @@ function NewOrderForm() {
   function selectCustomer(id: string | null) {
     if (id === customerId) return;
     if (submitted || place.isPending) return;
-    if ((Object.values(qty).some((n) => n > 0) || instructions || promo || pickup) && !window.confirm('Start a new order for a different customer? This clears the current items, instructions and times.')) return;
+    if (Object.values(qty).some((n) => n > 0) || instructions || promo || pickup) { setPendingCustomer({ id }); return; }
+    switchCustomer(id);
+  }
+  function switchCustomer(id: string | null) {
     setAddressChoice(null);
     setQty({}); setPromo(''); setPickup(null); setDelivery(null); setInstructions(''); setPaymentMethod('COD');
     setAttemptKey(crypto.randomUUID());
@@ -330,6 +336,15 @@ function NewOrderForm() {
           </div>
         </div>
       </PageBody>
+      <ConfirmDialog
+        open={pendingCustomer !== null}
+        onOpenChange={(o) => { if (!o) setPendingCustomer(null); }}
+        title="Start a new order for a different customer?"
+        description="This clears the current items, instructions and times."
+        confirmLabel="Start new order"
+        cancelLabel="Keep this order"
+        onConfirm={() => { if (pendingCustomer) switchCustomer(pendingCustomer.id); }}
+      />
     </>
   );
 }

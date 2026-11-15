@@ -21,6 +21,13 @@ import { quantitySummary, rupees } from "@/lib/format";
 
 const EDITABLE = ["PENDING", "PICKUP_ASSIGNED", "PICKED_UP", "PROCESSING"];
 
+const PRICE_REQUEST_STATUS: Record<NonNullable<Order["adjustments"]>[number]["status"], string> = {
+  APPROVED: "Approved",
+  DECLINED: "Declined",
+  EXPIRED: "Expired",
+  PENDING_CUSTOMER: "Waiting for the customer",
+};
+
 export function ItemsCard({ order }: { order: Order }) {
   const [editing, setEditing] = useState(false);
   const count = quantitySummary(order.items);
@@ -44,7 +51,7 @@ export function ItemsCard({ order }: { order: Order }) {
       </CardHeader>
       <CardContent className="px-0">
         {latest ? <div role="status" className="mx-6 mb-4 grid gap-1 rounded-md border p-3 text-sm">
-          <p className="font-medium">{pending ? 'Waiting for customer approval' : `Price request: ${latest.status.toLowerCase()}`}</p>
+          <p className="font-medium">{pending ? 'Waiting for customer approval' : `Price request: ${PRICE_REQUEST_STATUS[latest.status]}`}</p>
           <p>{rupees(latest.oldTotalPaise)} → {rupees(latest.newTotalPaise)} · {latest.reason}</p>
           <p>{pending ? 'The accepted bill is unchanged. Collection and delivery steps wait for the decision.' : latest.status === 'APPROVED' ? 'The customer approved this bill.' : 'The original bill stands. Continue with the agreed items, contact the customer, or cancel the order.'}</p>
         </div> : null}
