@@ -2,6 +2,11 @@ import { mkdir, writeFile } from 'node:fs/promises';
 import { dirname, resolve } from 'node:path';
 import type { Env } from '../config/env.js';
 
+/** The public URL of a stored file, from the storage's public base URL (STORAGE_PUBLIC_BASE_URL) and the file's key. */
+export function storageUrl(publicBaseUrl: string, key: string): string {
+  return `${publicBaseUrl.replace(/\/$/, '')}/${key}`;
+}
+
 /** Where uploaded files live. Keys look like `banner/2026/10/<uuid>.webp`. */
 export abstract class FileStorage {
   abstract put(key: string, body: Buffer, contentType: string): Promise<void>;
@@ -9,7 +14,7 @@ export abstract class FileStorage {
   constructor(protected readonly publicBaseUrl: string) {}
 
   publicUrl(key: string): string {
-    return `${this.publicBaseUrl.replace(/\/$/, '')}/${key}`;
+    return storageUrl(this.publicBaseUrl, key);
   }
 }
 

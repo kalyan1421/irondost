@@ -6,6 +6,7 @@ import { LoggerModule } from 'nestjs-pino';
 import { AddressesModule } from './addresses/addresses.module.js';
 import { AdminModule } from './admin/admin.module.js';
 import { AppVersionsModule } from './app-versions/app-versions.controller.js';
+import { AreaInterestModule } from './area-interest/area-interest.module.js';
 import { AuditModule } from './audit/audit.service.js';
 import { AuthGuard } from './auth/auth.guard.js';
 import { AuthModule } from './auth/auth.module.js';
@@ -58,6 +59,7 @@ import { UsersModule } from './users/users.module.js';
     SettingsModule,
     UsersModule,
     AddressesModule,
+    AreaInterestModule,
     CatalogModule,
     PromotionsModule,
     BannersModule,

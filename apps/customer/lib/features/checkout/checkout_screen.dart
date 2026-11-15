@@ -25,6 +25,8 @@ import '../basket/quote.dart';
 import '../basket/quote_bill.dart';
 import '../payment/payment_flow.dart';
 import '../schedule/schedule.dart';
+import 'care_note.dart';
+import 'care_note_section.dart';
 import 'checkout.dart';
 
 /// Checkout: where from, when, how to pay, and the bill. One tap places the order; online payment
@@ -78,11 +80,22 @@ class CheckoutScreen extends ConsumerWidget {
           secondaryLabel: 'Close',
         );
         if (change == true && context.mounted) context.pop();
+      case CheckoutProblem.slotFull:
+        final change = await showIdAlert(
+          context,
+          icon: LucideIcons.calendarX,
+          title: 'That pickup time just filled up',
+          body: "Someone else booked the last place. Pick another time. Your basket and code are kept, and you haven't been charged.",
+          primaryLabel: 'Pick another time',
+          secondaryLabel: 'Close',
+        );
+        if (change == true && context.mounted) context.pop();
       case CheckoutProblem.notServiceable:
+        final address = ref.read(selectedAddressProvider);
         final change = await showIdAlert(
           context,
           icon: LucideIcons.mapPinOff,
-          title: "We don't pick up from here yet",
+          title: "We're not in ${address?.area ?? address?.city ?? 'this area'} yet",
           body: 'Choose another address to book. You have not been charged.',
           primaryLabel: 'Choose another address',
           secondaryLabel: 'Close',
@@ -124,6 +137,14 @@ class CheckoutScreen extends ConsumerWidget {
       case CheckoutProblem.phoneRequired:
         // The app thought a number was on file but the server has none: ask for it, then the customer taps Place order again.
         await context.push<bool>(Routes.addPhone);
+      case CheckoutProblem.photosRefused:
+        await showIdAlert(
+          context,
+          icon: LucideIcons.imageOff,
+          title: "We couldn't use your photos",
+          body: 'We took them off your booking. Add them again, or book without them. You have not been charged.',
+          primaryLabel: 'OK',
+        );
       case CheckoutProblem.offline || CheckoutProblem.failed:
         // Shown inline above the button; nothing to ask.
         break;
@@ -189,7 +210,9 @@ class CheckoutScreen extends ConsumerWidget {
         q != null &&
         q.canPlaceOrder &&
         !quoting &&
-        !checkout.placing;
+        !checkout.placing &&
+        // A care photo still on its way, or waiting for a retry, would be left off the order.
+        !ref.watch(careNoteProvider.select((s) => s.busy));
     final online = checkout.method == PaymentMethod.online;
 
     return Scaffold(
@@ -224,6 +247,8 @@ class CheckoutScreen extends ConsumerWidget {
             const SizedBox(height: IdSpace.s3),
             _NotServed(address: address),
           ],
+          const SizedBox(height: IdSpace.s6),
+          const CareNoteSection(),
           const SizedBox(height: IdSpace.s6),
           const _Note(),
         ],
@@ -510,7 +535,7 @@ class _NotServed extends StatelessWidget {
             const SizedBox(width: 10),
             Expanded(
               child: Text(
-                "We don't pick up from ${address.area ?? address.city} yet. Choose another address to book.",
+                "We're not in ${address.area ?? address.city} yet. Choose another address to book.",
                 style: t.body,
               ),
             ),

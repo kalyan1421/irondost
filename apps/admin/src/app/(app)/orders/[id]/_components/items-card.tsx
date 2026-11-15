@@ -17,7 +17,7 @@ import { useApiMutation } from "@/lib/api/mutation";
 import type { Order } from "@/lib/api/types";
 import { ErrorState } from "@/components/page";
 import { useDebounced } from "@/hooks/use-debounced";
-import { quantitySummary, rupees } from "@/lib/format";
+import { quantitySummary, rupees, travelCharge } from "@/lib/format";
 
 const EDITABLE = ["PENDING", "PICKUP_ASSIGNED", "PICKED_UP", "PROCESSING"];
 
@@ -79,7 +79,10 @@ export function ItemsCard({ order }: { order: Order }) {
             {order.discountPaise > 0 ? (
               <SummaryRow label={`Discount${order.promoCode ? ` (${order.promoCode})` : ""}`} value={`− ${rupees(order.discountPaise)}`} />
             ) : null}
-            {order.deliveryFeePaise > 0 ? <SummaryRow label="Delivery fee" value={rupees(order.deliveryFeePaise)} /> : null}
+            <SummaryRow
+              label={order.travelChargeKept && order.deliveryFeePaise > 0 ? "Travel charge (kept: partner had already travelled)" : "Travel charge"}
+              value={travelCharge(order.deliveryFeePaise)}
+            />
             <SummaryRow label="Total" value={rupees(order.totalPaise)} strong />
           </TableFooter>
         </Table>
@@ -190,7 +193,12 @@ function EditItemsDialog({ order, onClose }: { order: Order; onClose: () => void
         {preview.isError && !conflict ? <ErrorState error={preview.error} onRetry={() => void preview.refetch()} /> : null}
         {preview.data ? <div role="status" className="grid gap-1 border-t pt-3 text-sm">
           <p>Accepted total: {rupees(preview.data.oldTotalPaise)}</p>
-          <p>Items {rupees(preview.data.subtotalPaise)} · Discount {rupees(preview.data.discountPaise)} · Delivery {rupees(preview.data.deliveryFeePaise)}</p>
+          <p>
+            Items {rupees(preview.data.subtotalPaise)} · Discount {rupees(preview.data.discountPaise)} · Travel charge{" "}
+            {preview.data.deliveryFeePaise === preview.data.oldDeliveryFeePaise
+              ? travelCharge(preview.data.deliveryFeePaise)
+              : `${travelCharge(preview.data.oldDeliveryFeePaise)} → ${travelCharge(preview.data.deliveryFeePaise)}`}
+          </p>
           <p className="font-medium">Proposed total: {rupees(preview.data.newTotalPaise)} ({preview.data.newTotalPaise >= preview.data.oldTotalPaise ? '+' : '−'}{rupees(Math.abs(preview.data.newTotalPaise - preview.data.oldTotalPaise))})</p>
           {requiresApproval ? <p>The accepted total stays unchanged until the customer approves.</p> : null}
         </div> : null}

@@ -8,3 +8,6 @@ String rupees(num paise) {
   final amount = paise / 100;
   return paise % 100 == 0 ? _whole.format(amount) : _paise.format(amount);
 }
+
+/// The travel charge as a bill line shows it: the amount, or "Free" when there is none.
+String travelChargeLabel(num paise) => paise == 0 ? 'Free' : rupees(paise);

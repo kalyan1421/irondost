@@ -4,6 +4,7 @@ import { Ban } from "lucide-react";
 import { useState } from "react";
 import { ConfirmDialog } from "@/components/confirm-dialog";
 import { Button } from "@/components/ui/button";
+import { Checkbox } from "@/components/ui/checkbox";
 import { Label } from "@/components/ui/label";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { Textarea } from "@/components/ui/textarea";
@@ -18,7 +19,7 @@ const FORWARD: OrderStatus[] = ["PICKED_UP", "PROCESSING", "READY_FOR_DELIVERY",
 
 export function useChangeStatus(order: Order) {
   return useApiMutation(
-    (vars: { status: OrderStatus; note?: string; collectedCash?: boolean }) =>
+    (vars: { status: OrderStatus; note?: string; collectedCash?: boolean; keepTravelCharge?: boolean }) =>
       unwrap(api.POST("/v1/admin/orders/{id}/status", { params: { path: { id: order.id } }, body: vars })),
     {
       invalidate: [["order", order.id], ["orders"], ["dashboard"]],
@@ -30,6 +31,8 @@ export function useChangeStatus(order: Order) {
 export function OrderActions({ order }: { order: Order }) {
   const change = useChangeStatus(order);
   const [reason, setReason] = useState("");
+  // Only when the partner had already travelled: the travel charge stays with us instead of going back with the refund.
+  const [keepTravel, setKeepTravel] = useState(false);
   // Cash on delivery is normally collected at the door; an online order with a balance is not.
   const [collected, setCollected] = useState<boolean | null>(null);
 
@@ -39,6 +42,7 @@ export function OrderActions({ order }: { order: Order }) {
   );
   const canCancel = order.allowedNextStatuses.includes("CANCELLED");
   const due = order.amountDuePaise;
+  const travelCharge = order.deliveryFeePaise;
 
   return (
     <>
@@ -48,6 +52,7 @@ export function OrderActions({ order }: { order: Order }) {
           title={`Cancel order ${order.orderNumber}?`}
           confirmLabel="Cancel order"
           cancelLabel="Keep order"
+          onOpen={() => setKeepTravel(false)}
           description={
             <span className="grid gap-3">
               <span>The customer and any assigned partner are notified. This cannot be undone.</span>
@@ -60,6 +65,19 @@ export function OrderActions({ order }: { order: Order }) {
                   onChange={(e) => setReason(e.target.value)}
                 />
               </span>
+              {travelCharge > 0 ? (
+                <span className="grid gap-1 text-foreground">
+                  <span className="flex items-center gap-2">
+                    <Checkbox id="cancel-keep-travel" checked={keepTravel} onCheckedChange={(v) => setKeepTravel(v === true)} />
+                    <Label htmlFor="cancel-keep-travel" className="font-normal">Partner already travelled: keep the travel charge</Label>
+                  </span>
+                  <span className="pl-6 text-xs text-muted-foreground">
+                    {keepTravel
+                      ? `${rupees(travelCharge)} stays with us and is left out of the refund. The customer is told why.`
+                      : `Leave this off to refund everything paid, the ${rupees(travelCharge)} travel charge included.`}
+                  </span>
+                </span>
+              ) : null}
             </span>
           }
           trigger={
@@ -67,7 +85,13 @@ export function OrderActions({ order }: { order: Order }) {
               <Ban /> Cancel
             </Button>
           }
-          onConfirm={() => change.mutateAsync({ status: "CANCELLED", note: reason.trim() || undefined })}
+          onConfirm={() =>
+            change.mutateAsync({
+              status: "CANCELLED",
+              note: reason.trim() || undefined,
+              ...(travelCharge > 0 && keepTravel ? { keepTravelCharge: true } : {}),
+            })
+          }
         />
       ) : null}
       {forward.map((s) =>

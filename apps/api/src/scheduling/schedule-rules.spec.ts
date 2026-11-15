@@ -65,3 +65,28 @@ describe('slot listings', () => {
     ]);
   });
 });
+
+describe('pickup windows that are full', () => {
+  const now = at('2026-10-05T06:00:00Z'); // 11:30 IST: MORNING has closed
+  const key = (date: string, slot: TimeSlot) => `${date}|${slot}`;
+
+  it('shows an open window with no place left as unavailable, with the reason FULL', () => {
+    const slots = pickupOptions(now, settings, 2, new Set([key('2026-10-05', TimeSlot.NOON), key('2026-10-06', TimeSlot.MORNING)]));
+    const noon = slots.find((s) => s.date === '2026-10-05' && s.slot === TimeSlot.NOON)!;
+    expect(noon).toMatchObject({ available: false, reason: 'FULL' });
+    const tomorrowMorning = slots.find((s) => s.date === '2026-10-06' && s.slot === TimeSlot.MORNING)!;
+    expect(tomorrowMorning).toMatchObject({ available: false, reason: 'FULL' });
+    // Windows with room stay open, with no reason.
+    expect(slots.find((s) => s.date === '2026-10-05' && s.slot === TimeSlot.EVENING)).toMatchObject({ available: true, reason: null });
+  });
+
+  it('calls a closed window closed, not full', () => {
+    const slots = pickupOptions(now, settings, 1, new Set([key('2026-10-05', TimeSlot.MORNING)]));
+    expect(slots[0]).toMatchObject({ slot: TimeSlot.MORNING, available: false, reason: null });
+  });
+
+  it('has no reason on any window when nothing is full, and on delivery windows', () => {
+    expect(pickupOptions(now, settings, 3).every((s) => s.reason === null)).toBe(true);
+    expect(deliveryOptions('2026-10-05', TimeSlot.MORNING, settings, 3).every((s) => s.reason === null)).toBe(true);
+  });
+});

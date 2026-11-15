@@ -1,4 +1,4 @@
-import { checkServiceArea, distanceKm, type ServiceAreaSettings } from './service-area.js';
+import { checkServiceArea, checkStaffArea, distanceBand, distanceFromCentre, distanceKm, type ServiceAreaSettings } from './service-area.js';
 
 // Hub at Banjara Hills, Hyderabad.
 const HUB = { serviceCenterLatitude: 17.4126, serviceCenterLongitude: 78.4482 };
@@ -46,5 +46,60 @@ describe('checkServiceArea', () => {
     expect(checkServiceArea({ latitude: jubileeHills.latitude, longitude: jubileeHills.longitude }, pincodes).serviceable).toBe(true);
     // Staff-typed address without coordinates.
     expect(checkServiceArea({ pincode: '500032' }, radius8).serviceable).toBe(true);
+  });
+});
+
+describe('checkStaffArea', () => {
+  const both = { ...radius8, servicePincodes: ['500034', '500033'] };
+
+  it('is verified by a map pin, whatever the PIN list says', () => {
+    expect(checkStaffArea({ latitude: jubileeHills.latitude, longitude: jubileeHills.longitude }, open)).toMatchObject({ serviceable: true, verified: true });
+    expect(checkStaffArea(jubileeHills, radius8)).toMatchObject({ serviceable: true, verified: true, distanceKm: expect.any(Number) });
+  });
+
+  it('is verified by a PIN code on the served list when there is no pin', () => {
+    expect(checkStaffArea({ pincode: '500033' }, pincodes)).toMatchObject({ serviceable: true, reason: null, verified: true });
+    expect(checkStaffArea({ pincode: '500033' }, both)).toMatchObject({ serviceable: true, verified: true });
+  });
+
+  it('is not verified when nothing could be checked: no pin, and no PIN list to match', () => {
+    expect(checkStaffArea({ pincode: '500033' }, open)).toMatchObject({ serviceable: true, verified: false });
+    expect(checkStaffArea({ pincode: '500033' }, radius8)).toMatchObject({ serviceable: true, verified: false });
+    expect(checkStaffArea({}, pincodes)).toMatchObject({ serviceable: true, verified: false });
+  });
+
+  it('says outside for a PIN code off the list or a pin beyond the radius', () => {
+    expect(checkStaffArea({ pincode: '500003' }, pincodes)).toMatchObject({ serviceable: false, reason: 'PINCODE_NOT_SERVED', verified: false });
+    expect(checkStaffArea(gachibowli, radius8)).toMatchObject({ serviceable: false, reason: 'OUTSIDE_RADIUS', verified: true });
+  });
+});
+
+describe('distanceFromCentre', () => {
+  it('measures a map pin whatever else decides the answer', () => {
+    const both = { ...radius8, servicePincodes: ['500034'] };
+    // Refused for its PIN code, but still 4.9 km from the centre.
+    expect(checkServiceArea(jubileeHills, both).distanceKm).toBeNull();
+    expect(distanceFromCentre(jubileeHills, both)).toBeCloseTo(4.9, 0);
+  });
+
+  it('is null without a centre or without a pin', () => {
+    expect(distanceFromCentre(jubileeHills, open)).toBeNull();
+    expect(distanceFromCentre({ pincode: '500033' }, radius8)).toBeNull();
+  });
+});
+
+describe('distanceBand', () => {
+  it.each([
+    [null, 'UNKNOWN'],
+    [0, 'UNDER_6'],
+    [5.9, 'UNDER_6'],
+    [6, 'KM_6_8'],
+    [7.9, 'KM_6_8'],
+    [8, 'KM_8_10'],
+    [9.9, 'KM_8_10'],
+    [10, 'KM_10_PLUS'],
+    [42.5, 'KM_10_PLUS'],
+  ] as const)('puts %s km in %s', (km, band) => {
+    expect(distanceBand(km)).toBe(band);
   });
 });

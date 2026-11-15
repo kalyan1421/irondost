@@ -1,6 +1,7 @@
 import 'package:dio/dio.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../../core/slots.dart';
 import '../../data/api_client.dart';
 
 /// Pickup and delivery windows from the API. Which are open (not past, far enough ahead, at least
@@ -157,17 +158,25 @@ final scheduleProvider = Provider.autoDispose<AsyncValue<Schedule>>((ref) => bui
 
 /// The same for one order's time change.
 final rescheduleScheduleProvider = Provider.autoDispose.family<AsyncValue<Schedule>, RescheduleStart>(
-  (ref, start) => buildSchedule(ref, ref.watch(rescheduleChoiceProvider(start))),
+  (ref, start) => buildSchedule(ref, ref.watch(rescheduleChoiceProvider(start)), own: start.pickup),
 );
 
 /// [choice] laid over the API's windows: a window that is closed (or no longer allowed after the pickup) is not kept,
-/// and whatever was not chosen falls back to the earliest open one.
-AsyncValue<Schedule> buildSchedule(Ref ref, ScheduleChoice choice) {
+/// and whatever was not chosen falls back to the earliest open one. [own] is the pickup window an order being moved already
+/// holds: the API counts that order in the window, so it may say "full" for the very window the customer has. It is theirs, so
+/// it stays open to choose again (the API does not count a move that keeps the same pickup window).
+AsyncValue<Schedule> buildSchedule(Ref ref, ScheduleChoice choice, {SlotKey? own}) {
   final slots = ref.watch(pickupSlotsProvider);
   if (!slots.hasValue) {
     return slots.hasError ? AsyncError(slots.error!, slots.stackTrace ?? StackTrace.empty) : const AsyncLoading();
   }
-  final all = slots.requireValue;
+  final all = [
+    for (final s in slots.requireValue)
+      if (own != null && s.isFull && slotKey(s) == own)
+        SlotOptionDto(date: s.date, slot: s.slot, label: s.label, startsAt: s.startsAt, endsAt: s.endsAt, available: true, reason: null)
+      else
+        s,
+  ];
   if (all.isEmpty) return const AsyncData(Schedule(pickupSlots: [], pickupDate: ''));
 
   final date = all.any((s) => s.date == choice.pickupDate) ? choice.pickupDate! : all.first.date;

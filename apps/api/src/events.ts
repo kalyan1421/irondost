@@ -42,6 +42,8 @@ export interface OrderStatusChangedEvent extends OrderRef {
   /** Money in hand once the status changed: what was paid and how much of it has gone back. */
   paidPaise: number;
   refundedPaise: number;
+  /** Part of what was paid that staff kept (the travel charge on an order cancelled after the partner travelled); not owed back. */
+  keptPaise?: number;
 }
 
 export interface OrderUpdatedEvent extends OrderRef {
@@ -52,6 +54,9 @@ export interface OrderUpdatedEvent extends OrderRef {
   paidPaise?: number;
   refundedPaise?: number;
   actorRole?: Role | null;
+  /** For items_changed: the travel charge before and after, since a new count can add or remove it. */
+  previousTravelChargePaise?: number;
+  travelChargePaise?: number;
 }
 
 /** The booked pickup and delivery times of an order: IST calendar dates (YYYY-MM-DD) and slots. */

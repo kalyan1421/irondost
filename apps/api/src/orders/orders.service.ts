@@ -21,16 +21,19 @@ import {
   type OrderUpdatedEvent,
   type OrderWindows,
 } from '../events.js';
-import { Prisma, type Address, type Order, type User } from '../generated/prisma/client.js';
+import { Prisma, type Address, type BusinessSettings, type Order, type User } from '../generated/prisma/client.js';
 import { DispatchLeg, OfferStatus, OrderSource, OrderStatus, PaymentMethod, Role } from '../generated/prisma/enums.js';
 import { PrismaService, type Tx } from '../prisma/prisma.service.js';
+import { reservePickupWindow } from '../scheduling/pickup-capacity.js';
 import { checkDelivery, checkPickup, SCHEDULE_ERROR_MESSAGES } from '../scheduling/schedule-rules.js';
 import { checkServiceArea } from '../settings/service-area.js';
+import { staffAreaOverrideReason } from './staff-area.js';
 import { SettingsService } from '../settings/settings.service.js';
 import type { AdminOrdersQuery, OrderLineInput, OrderScope, OrderWithRelations, PlaceOrderDto, QuoteDto, RescheduleOrderDto } from './order.dto.js';
+import { careNoteOf, carePhotoKey, CARE_PHOTOS_PER_ORDER, setCarePhotoBaseUrl } from './care-note.js';
 import { canTransition, FINAL_STATUSES, ITEMS_EDITABLE, type ActorKind } from './order-state.js';
-import { refundDueOrderIds } from './refund-due.js';
-import { computeQuote, paymentStatusFor, type PricingLine, type PricingPromotion, type Quote } from './pricing.js';
+import { keptTravelPaise, refundDueOrderIds } from './refund-due.js';
+import { computeQuote, orderTravelRule, paymentStatusFor, type PricingLine, type PricingPromotion, type Quote } from './pricing.js';
 import {
   deliveryChanged,
   pickupChanged,
@@ -50,6 +53,7 @@ export const ORDER_INCLUDE = {
   adjustments: { orderBy: { createdAt: 'desc' } },
   payments: { where: { status: 'CAPTURED' }, orderBy: { createdAt: 'asc' } },
   refunds: { orderBy: { createdAt: 'asc' }, include: { createdBy: { select: { id: true, name: true } } } },
+  carePhotos: { orderBy: [{ createdAt: 'asc' }, { id: 'asc' }] },
 } as const satisfies Prisma.OrderInclude;
 
 /**
@@ -69,6 +73,9 @@ export interface TransitionActor {
 
 export const SYSTEM_ACTOR: TransitionActor = { id: null, role: null, kind: 'SYSTEM' };
 
+/** Added to the history line of a cancellation that keeps the travel charge. */
+export const TRAVEL_KEPT_NOTE = 'Travel charge kept: partner had already travelled';
+
 export function actorFor(user: User, kind: ActorKind): TransitionActor {
   return { id: user.id, role: user.role, kind };
 }
@@ -82,6 +89,14 @@ export interface TransitionOptions {
   expectDriverId?: string;
   /** Extra writes that must commit atomically with the status change. */
   inTx?: (tx: Tx, before: Order) => Promise<void>;
+  /** With CANCELLED, by staff: the partner had already travelled, so the travel charge is kept rather than refunded. */
+  keepTravelCharge?: boolean;
+}
+
+/** What only staff can add to a phone order: a typed reason to go past the service area, or into a full pickup window. */
+export interface PlaceOverrides {
+  outsideAreaReason?: string;
+  capacityOverrideReason?: string;
 }
 
 export interface RescheduleResult {
@@ -91,6 +106,8 @@ export interface RescheduleResult {
   previous: OrderWindows;
   next: OrderWindows;
 }
+
+const CARE_PHOTO_REFUSED = 'Use only photos uploaded from your own account that are not on an order yet.';
 
 type PromoError = 'PROMO_NOT_FOUND' | 'PROMO_EXPIRED' | 'PROMO_LIMIT_REACHED' | 'PROMO_MIN_ORDER';
 
@@ -124,6 +141,7 @@ export class OrdersService implements OnModuleInit {
   ) {}
 
   async onModuleInit(): Promise<void> {
+    setCarePhotoBaseUrl(this.env.STORAGE_PUBLIC_BASE_URL);
     if (!this.jobs) return;
     this.jobs.register<{ adjustmentId: string }>('adjustments-expire', (data) => this.expireAdjustment(data.adjustmentId));
     const pending = await this.prisma.orderAdjustment.findMany({ where: { status: 'PENDING_CUSTOMER' }, select: { id: true, expiresAt: true } });
@@ -140,6 +158,7 @@ export class OrdersService implements OnModuleInit {
       subtotalPaise: quote.subtotalPaise,
       discountPaise: quote.discountPaise,
       deliveryFeePaise: quote.deliveryFeePaise,
+      freeTravelShortfallPaise: quote.freeTravelShortfallPaise,
       totalPaise: quote.totalPaise,
       promoCode: quote.appliedPromotion?.code ?? null,
       promoError,
@@ -176,8 +195,10 @@ export class OrdersService implements OnModuleInit {
     customerId: string,
     items: OrderLineInput[],
     promoCode?: string,
+    /** The settings the caller already read, so a booking's quote and its frozen travel rule come from the same read. */
+    known?: BusinessSettings,
   ): Promise<{ quote: Quote; promoError: PromoError | null }> {
-    const [lines, settings] = await Promise.all([this.pricingLines(items), this.settings.get()]);
+    const [lines, settings] = await Promise.all([this.pricingLines(items), known ?? this.settings.get()]);
 
     let promotion: PricingPromotion | null = null;
     let promoError: PromoError | null = null;
@@ -219,6 +240,7 @@ export class OrdersService implements OnModuleInit {
     source: OrderSource,
     createdBy: User,
     idempotencyKey?: string,
+    overrides: PlaceOverrides = {},
   ): Promise<{ order: OrderWithRelations; replayed: boolean }> {
     const idempotency = idempotencyKey ? { key: idempotencyKey, hash: placeRequestHash(dto) } : null;
     if (idempotency) {
@@ -231,6 +253,8 @@ export class OrdersService implements OnModuleInit {
     if (!customerPhone(customer)) {
       throw AppError.badRequest('PHONE_REQUIRED', 'Add your mobile number to place an order');
     }
+    const careNote = careNoteOf(dto);
+    const carePhotoIds = await this.ownCarePhotos(customerId, source, dto.carePhotoUrls ?? []);
 
     const settings = await this.settings.get();
     const scheduleError =
@@ -240,7 +264,9 @@ export class OrdersService implements OnModuleInit {
 
     const pickup = await this.addresses.get(customerId, dto.pickupAddressId);
     const delivery = dto.deliveryAddressId ? await this.addresses.get(customerId, dto.deliveryAddressId) : pickup;
-    // Staff placing a phone order may knowingly serve an address outside the area.
+    // A customer's address must be inside the area. Staff placing a phone order need a map pin or a served PIN code, and may
+    // serve an address outside the area only with a typed reason, which stays on the order.
+    let areaOverrideReason: string | null = null;
     if (source === OrderSource.CUSTOMER_APP) {
       for (const address of new Set([pickup, delivery])) {
         const area = checkServiceArea(address, settings);
@@ -251,9 +277,13 @@ export class OrdersService implements OnModuleInit {
           });
         }
       }
+    } else {
+      areaOverrideReason = staffAreaOverrideReason([pickup, delivery], settings, overrides.outsideAreaReason);
     }
+    // Only staff can book into a full window, and only with a reason.
+    const capacityOverrideReason = source === OrderSource.ADMIN ? overrides.capacityOverrideReason?.trim() || null : null;
 
-    const { quote, promoError } = await this.buildQuote(customerId, dto.items, dto.promoCode);
+    const { quote, promoError } = await this.buildQuote(customerId, dto.items, dto.promoCode, settings);
     if (dto.promoCode && promoError) {
       throw AppError.badRequest('PROMO_INVALID', 'This promo code cannot be applied', { promoError });
     }
@@ -265,9 +295,14 @@ export class OrdersService implements OnModuleInit {
     }
 
     const create = () => this.prisma.$transaction(async (tx) => {
+      // The place in the pickup window is taken first, under the window's lock, so two bookings cannot share the last one
+      // (and a refused booking does not use up an order number).
+      const place = await reservePickupWindow(tx, dto.pickupDate, dto.pickupSlot, settings.pickupCapacityPerSlot, {
+        allowFull: capacityOverrideReason !== null,
+      });
       const [{ nextval }] = await tx.$queryRaw<{ nextval: bigint }[]>`SELECT nextval('order_number_seq')`;
       const orderNumber = `${this.env.ORDER_NUMBER_PREFIX}${String(nextval).padStart(6, '0')}`;
-      return tx.order.create({
+      const created = await tx.order.create({
         data: {
           orderNumber,
           customerId,
@@ -287,14 +322,20 @@ export class OrdersService implements OnModuleInit {
           deliveryLatitude: delivery.latitude,
           deliveryLongitude: delivery.longitude,
           instructions: dto.instructions?.trim() || null,
+          careNote,
           subtotalPaise: quote.subtotalPaise,
           discountPaise: quote.discountPaise,
           deliveryFeePaise: quote.deliveryFeePaise,
+          // The rule this order was booked under: later settings changes never alter it, and item edits re-check against it.
+          travelChargePaiseRule: settings.deliveryFeePaise,
+          travelFreeFromPaiseRule: settings.freeDeliveryAbovePaise,
           totalPaise: quote.totalPaise,
           paymentStatus: paymentStatusFor(quote.totalPaise, 0),
           promotionId: quote.appliedPromotion?.id ?? null,
           promoCode: quote.appliedPromotion?.code ?? null,
           paymentMethod: dto.paymentMethod,
+          areaOverrideReason,
+          capacityOverrideReason: place.overrode ? capacityOverrideReason : null,
           idempotencyKey: idempotency?.key ?? null,
           idempotencyHash: idempotency?.hash ?? null,
           items: {
@@ -318,14 +359,25 @@ export class OrdersService implements OnModuleInit {
         },
         include: ORDER_INCLUDE,
       });
+      if (!carePhotoIds.length) return created;
+      // Each photo goes to one order: the guard fails when another order of this customer took it after it was checked above.
+      const { count } = await tx.orderCarePhoto.updateMany({
+        where: { id: { in: carePhotoIds }, userId: customerId, orderId: null },
+        data: { orderId: created.id },
+      });
+      if (count !== carePhotoIds.length) throw AppError.badRequest('INVALID_PHOTO', CARE_PHOTO_REFUSED);
+      return { ...created, carePhotos: await tx.orderCarePhoto.findMany({ where: { orderId: created.id }, orderBy: [{ createdAt: 'asc' }, { id: 'asc' }] }) };
     });
 
     let order: OrderWithRelations;
     try {
       order = await create();
     } catch (err) {
-      // Two attempts with the same key raced; the other one created the order.
-      if (idempotency && err instanceof Prisma.PrismaClientKnownRequestError && err.code === 'P2002') {
+      // Two attempts with the same key raced; the other one created the order. (When it took the last place in the window,
+      // this one finds the window full, but it is a retry, not a second booking.)
+      const raced =
+        (err instanceof Prisma.PrismaClientKnownRequestError && err.code === 'P2002') || (err instanceof AppError && err.code === 'SLOT_FULL');
+      if (idempotency && raced) {
         const prior = await this.priorAttempt(customerId, idempotency);
         if (prior) return { order: prior, replayed: true };
       }
@@ -345,6 +397,29 @@ export class OrdersService implements OnModuleInit {
       throw AppError.conflict('IDEMPOTENCY_KEY_REUSED', 'This Idempotency-Key was already used for a different order');
     }
     return prior;
+  }
+
+  /**
+   * The ids of the customer's own care photos behind these URLs, each used once and not yet on an order. Staff placing a
+   * phone order cannot add photos, so they cannot arrive with one.
+   */
+  private async ownCarePhotos(customerId: string, source: OrderSource, urls: string[]): Promise<string[]> {
+    if (!urls.length) return [];
+    if (source !== OrderSource.CUSTOMER_APP) throw AppError.badRequest('INVALID_PHOTO', 'Photos can only be added from the customer app');
+    if (urls.length > CARE_PHOTOS_PER_ORDER) {
+      throw AppError.badRequest('TOO_MANY_PHOTOS', `Add up to ${CARE_PHOTOS_PER_ORDER} photos`);
+    }
+    if (new Set(urls).size !== urls.length) throw AppError.badRequest('INVALID_PHOTO', 'Use each photo once.');
+    const keys: string[] = [];
+    for (const url of urls) {
+      const key = carePhotoKey(customerId, url);
+      if (!key) throw AppError.badRequest('INVALID_PHOTO', CARE_PHOTO_REFUSED);
+      keys.push(key);
+    }
+    const rows = await this.prisma.orderCarePhoto.findMany({ where: { userId: customerId, key: { in: keys }, orderId: null } });
+    // The URLs are distinct, so the keys are too: every one must be a photo of this customer that is still free.
+    if (rows.length !== keys.length) throw AppError.badRequest('INVALID_PHOTO', CARE_PHOTO_REFUSED);
+    return keys.map((key) => rows.find((row) => row.key === key)!.id);
   }
 
   // ───────────── Reading ─────────────
@@ -455,6 +530,11 @@ export class OrdersService implements OnModuleInit {
       if (failure) throw rescheduleFailure(failure);
 
       const movesPickup = pickupChanged(previous, next);
+      // A new pickup window needs a place in it, taken under the window's lock. Keeping the same pickup window (only the
+      // delivery moves) needs nothing, and the order's own place in its old window is never counted against the new one.
+      if (movesPickup) {
+        await reservePickupWindow(tx, next.pickupDate, next.pickupSlot, settings.pickupCapacityPerSlot, { excludeOrderId: orderId });
+      }
       const releasesPartner = movesPickup && order.status === OrderStatus.PICKUP_ASSIGNED;
       const to = releasesPartner ? OrderStatus.PENDING : order.status;
       await tx.order.update({
@@ -644,6 +724,10 @@ export class OrdersService implements OnModuleInit {
       case OrderStatus.CANCELLED:
         data.cancelledAt = now;
         data.cancelReason = opts.cancelReason?.trim() || null;
+        if (opts.keepTravelCharge) {
+          if (before.deliveryFeePaise <= 0) throw AppError.badRequest('NO_TRAVEL_CHARGE', 'This order has no travel charge to keep');
+          data.travelChargeKept = true;
+        }
         break;
     }
 
@@ -664,7 +748,7 @@ export class OrdersService implements OnModuleInit {
           toStatus: to,
           actorId: actor.id,
           actorRole: actor.role,
-          note: opts.note?.trim() || opts.cancelReason?.trim() || null,
+          note: [opts.note?.trim() || opts.cancelReason?.trim(), data.travelChargeKept ? TRAVEL_KEPT_NOTE : null].filter(Boolean).join('. ') || null,
         },
       });
       if (opts.inTx) await opts.inTx(tx, before);
@@ -701,6 +785,7 @@ export class OrdersService implements OnModuleInit {
             : null,
       paidPaise: order.paidPaise,
       refundedPaise: order.refundedPaise,
+      keptPaise: keptTravelPaise(order),
     } satisfies OrderStatusChangedEvent);
     if (closed.length) {
       this.events.emit(Events.OffersClosed, {
@@ -729,10 +814,13 @@ export class OrdersService implements OnModuleInit {
     const existing = new Map(order.items.filter((i) => i.catalogItemId).map((i) => [i.catalogItemId!, i]));
     const added = await this.pricingLines([...quantities].filter(([id]) => !existing.has(id)).map(([catalogItemId, quantity]) => ({ catalogItemId, quantity })));
     const current = new Map(added.map((i) => [i.catalogItemId, i]));
+    // The travel charge is re-checked on the new items total under the rule the order was booked with, in both directions:
+    // reaching the free-from amount removes it, falling under adds it. Orders booked before the rule keep their stored fee.
+    const rule = orderTravelRule(order);
     const priced = computeQuote([...quantities].map(([id, quantity]) => {
       const item = existing.get(id) ?? current.get(id)!;
       return { catalogItemId: id, name: item.name, unit: item.unit, unitPricePaise: item.unitPricePaise, quantity };
-    }), { minOrderPaise: 0, deliveryFeePaise: order.deliveryFeePaise, freeDeliveryAbovePaise: null }, order.promotion);
+    }), { minOrderPaise: 0, deliveryFeePaise: rule.chargePaise, freeDeliveryAbovePaise: rule.freeFromPaise }, order.promotion);
     return { order, priced };
   }
 
@@ -740,6 +828,7 @@ export class OrdersService implements OnModuleInit {
     const { order, priced } = await this.editQuote(orderId, lines, expectedRevision);
     return { revision: order.revision, oldTotalPaise: order.totalPaise, newTotalPaise: priced.totalPaise,
       subtotalPaise: priced.subtotalPaise, discountPaise: priced.discountPaise, deliveryFeePaise: priced.deliveryFeePaise,
+      oldDeliveryFeePaise: order.deliveryFeePaise,
       lines: priced.lines, requiresApproval: priced.totalPaise > order.totalPaise };
   }
 
@@ -759,7 +848,7 @@ export class OrdersService implements OnModuleInit {
       // Updating the revision locks the row. A second editor cannot replace the same accepted revision.
       const changed = await tx.order.updateMany({ where: { id: orderId, revision: order.revision, status: order.status,
         paidPaise: order.paidPaise, refundedPaise: order.refundedPaise }, data: { revision: { increment: 1 },
-        ...(!increase ? { subtotalPaise: priced.subtotalPaise, discountPaise: priced.discountPaise, totalPaise: priced.totalPaise,
+        ...(!increase ? { subtotalPaise: priced.subtotalPaise, discountPaise: priced.discountPaise, deliveryFeePaise: priced.deliveryFeePaise, totalPaise: priced.totalPaise,
           paymentStatus: paymentStatusFor(priced.totalPaise, order.paidPaise, order.refundedPaise) } : {}) } });
       if (changed.count !== 1) throw AppError.conflict('ORDER_CHANGED', 'This order changed. Refresh and compare your draft before saving.');
       if (await tx.orderAdjustment.findFirst({ where: { orderId, status: 'PENDING_CUSTOMER' } })) {
@@ -787,7 +876,8 @@ export class OrdersService implements OnModuleInit {
       await this.jobs?.schedule('adjustments-expire', { adjustmentId: adjustment.id }, { startAfter: adjustment.expiresAt, jobId: adjustment.id }).catch((err) => this.logger.error('Could not schedule adjustment expiry', err));
     } else {
       this.events.emit(Events.OrderUpdated, { ...orderRef(result.updated), reason: 'items_changed', previousTotalPaise: order.totalPaise,
-        totalPaise: result.updated.totalPaise, paidPaise: result.updated.paidPaise, refundedPaise: result.updated.refundedPaise, actorRole: actor.role } satisfies OrderUpdatedEvent);
+        totalPaise: result.updated.totalPaise, paidPaise: result.updated.paidPaise, refundedPaise: result.updated.refundedPaise, actorRole: actor.role,
+        previousTravelChargePaise: order.deliveryFeePaise, travelChargePaise: result.updated.deliveryFeePaise } satisfies OrderUpdatedEvent);
     }
     this.events.emit(Events.OrderUpdated, { ...orderRef(result.updated), reason: 'details_changed' } satisfies OrderUpdatedEvent);
     return result.updated;
@@ -877,6 +967,9 @@ export function placeRequestHash(dto: PlaceOrderDto): string {
     delivery: [dto.deliveryDate, dto.deliverySlot, dto.deliveryAddressId ?? null],
     paymentMethod: dto.paymentMethod,
     instructions: dto.instructions?.trim() || null,
+    // Only present when used, so the fingerprint of a request without a care note is the same as before care notes existed.
+    ...(careNoteOf(dto) ? { careNote: careNoteOf(dto) } : {}),
+    ...(dto.carePhotoUrls?.length ? { carePhotoUrls: dto.carePhotoUrls } : {}),
   };
   return createHash('sha256').update(JSON.stringify(canonical)).digest('hex');
 }

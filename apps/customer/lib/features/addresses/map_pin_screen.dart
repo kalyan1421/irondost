@@ -7,8 +7,10 @@ import 'package:lucide_icons_flutter/lucide_icons.dart';
 
 import '../../app/env.dart';
 import '../../app/routes.dart';
+import '../../core/phone.dart';
 import '../../design/theme.dart';
 import '../../design/widgets/id_button.dart';
+import '../area_interest/area_interest.dart';
 import '../auth/session.dart';
 import 'address_args.dart';
 import 'location_service.dart';
@@ -68,7 +70,7 @@ class _MapPinScreenState extends ConsumerState<MapPinScreen> {
   VoidCallback? get _signOut =>
       _onboarding ? () => ref.read(sessionProvider.notifier).signOut() : null;
 
-  void _confirm(Place place) {
+  void _confirm(Place place, {bool tellMe = false}) {
     if (widget.args.mode == PinMode.changeLocation) {
       context.pop(place);
       return;
@@ -77,6 +79,7 @@ class _MapPinScreenState extends ConsumerState<MapPinScreen> {
       draft: AddressDraft.fromPlace(place),
       onboarding: _onboarding,
       returnTo: widget.args.returnTo,
+      tellMe: tellMe,
     );
     unawaited(
       context.push(
@@ -91,6 +94,8 @@ class _MapPinScreenState extends ConsumerState<MapPinScreen> {
     final state = ref.watch(mapPinProvider);
     final c = context.colors;
     final initial = widget.args.initial;
+    final session = ref.watch(sessionProvider).value;
+    final phone = session is SignedIn && session.profile.phone != null ? IndianPhone.display(session.profile.phone!) : null;
 
     if (!AppEnv.mapsEnabled) {
       return Scaffold(
@@ -108,6 +113,7 @@ class _MapPinScreenState extends ConsumerState<MapPinScreen> {
               onUseLocation: _useMyLocation,
               onSearch: _search,
               onConfirm: _confirm,
+              signedInPhone: phone,
               onSignOut: _signOut,
               onOpenSettings: () =>
                   ref.read(locationServiceProvider).openSettings(state.access),
@@ -198,6 +204,7 @@ class _MapPinScreenState extends ConsumerState<MapPinScreen> {
                 onUseLocation: _useMyLocation,
                 onSearch: _search,
                 onConfirm: _confirm,
+                signedInPhone: phone,
                 onSignOut: _signOut,
                 onOpenSettings: () => ref
                     .read(locationServiceProvider)
@@ -267,6 +274,7 @@ class _Sheet extends StatelessWidget {
     required this.onSearch,
     required this.onConfirm,
     required this.onOpenSettings,
+    this.signedInPhone,
     this.onSignOut,
   });
 
@@ -274,8 +282,11 @@ class _Sheet extends StatelessWidget {
   final bool onboarding;
   final VoidCallback onUseLocation;
   final VoidCallback onSearch;
-  final void Function(Place) onConfirm;
+  final void Function(Place, {bool tellMe}) onConfirm;
   final VoidCallback onOpenSettings;
+
+  /// "+91 98765 43210": the number the customer signed in with, named in the "Tell me when you're here" consent line.
+  final String? signedInPhone;
   final VoidCallback? onSignOut;
 
   @override
@@ -438,6 +449,18 @@ class _Sheet extends StatelessWidget {
           ),
           const SizedBox(height: IdSpace.s4),
           IdButton(label: 'Change location', expand: true, onPressed: onSearch),
+          const SizedBox(height: IdSpace.s2),
+          IdButton.outline(
+            label: "Tell me when you're here",
+            icon: LucideIcons.bellRing,
+            expand: true,
+            onPressed: () => onConfirm(place, tellMe: true),
+          ),
+          const SizedBox(height: IdSpace.s2),
+          Text(
+            tellMeConsent(place: where, phone: signedInPhone),
+            style: t.caption.copyWith(color: c.textMuted),
+          ),
           const SizedBox(height: IdSpace.s1),
           IdButton.text(
             label: 'Save for later',

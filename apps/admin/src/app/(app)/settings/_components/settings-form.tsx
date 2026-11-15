@@ -66,6 +66,7 @@ const schema = z.object({
   bookingCutoffMinutes: whole(0),
   maxAdvanceDays: whole(1),
   minTurnaroundHours: whole(1),
+  pickupCapacityPerSlot: optionalNumber(/^\d+$/, 1, 1000, "Enter 1 to 1000, or leave empty for no limit."),
   dispatchLeadMinutes: whole(0),
   dispatchBatchSize: whole(1),
   offerTimeoutSeconds: whole(5),
@@ -121,6 +122,7 @@ function toValues(s: BusinessSettings): Values {
     minOrderPaise: paiseToInput(s.minOrderPaise),
     deliveryFeePaise: paiseToInput(s.deliveryFeePaise),
     freeDeliveryAbovePaise: paiseToInput(s.freeDeliveryAbovePaise),
+    pickupCapacityPerSlot: s.pickupCapacityPerSlot?.toString() ?? "",
     bookingCutoffMinutes: "",
     maxAdvanceDays: "",
     minTurnaroundHours: "",
@@ -156,6 +158,8 @@ function toPatch(v: Values, s: BusinessSettings): SettingsPatch {
     const n = Number(v[key]);
     if (n !== s[key]) patch[key] = n;
   }
+  const capacity = v.pickupCapacityPerSlot.trim() === "" ? null : Number(v.pickupCapacityPerSlot);
+  if (capacity !== s.pickupCapacityPerSlot) patch.pickupCapacityPerSlot = capacity;
   if (v.supportPhone !== (s.supportPhone ?? "")) patch.supportPhone = v.supportPhone;
   if (v.supportEmail !== (s.supportEmail ?? "")) patch.supportEmail = v.supportEmail;
   for (const key of RADIUS_KEYS) {
@@ -195,18 +199,18 @@ const SECTIONS: { title: string; description: string; fields: FieldDef[] }[] = [
       },
       {
         name: "deliveryFeePaise",
-        label: "Delivery fee",
+        label: "Travel charge",
         prefix: "₹",
         inputMode: "decimal",
-        hint: "Added to every order that does not get free delivery. Use 0 to never charge it.",
+        hint: "A flat charge added to orders under the free-travel amount. Use 0 to never charge it. Existing orders keep the charge they were booked with.",
       },
       {
         name: "freeDeliveryAbovePaise",
-        label: "Free delivery above",
+        label: "Free travel from (items total before coupons)",
         prefix: "₹",
         inputMode: "decimal",
         placeholder: "Never free",
-        hint: "Orders of this amount or more, after discounts, get free delivery. Leave empty to always charge the fee.",
+        hint: "Orders whose items add up to this much or more, counted before any coupon, pay no travel charge. A coupon never brings a free order back under it. Leave empty to always charge it.",
       },
     ],
   },
@@ -235,12 +239,20 @@ const SECTIONS: { title: string; description: string; fields: FieldDef[] }[] = [
         inputMode: "numeric",
         hint: "The earliest delivery slot starts at least this many hours after the pickup slot starts.",
       },
+      {
+        name: "pickupCapacityPerSlot",
+        label: "Pickups per time window",
+        suffix: "pickups",
+        inputMode: "numeric",
+        placeholder: "No limit",
+        hint: "How many orders still waiting for pickup (new, or with a partner assigned) one window can hold. A full window shows as Full to customers. Staff phone orders can still book into it with a reason. Leave empty for no limit.",
+      },
     ],
   },
   {
     title: "Service area",
     description:
-      "Where customers can book pickups. Customers outside it are told IronDost isn't in their area yet. Staff can still place phone orders anywhere.",
+      "Where customers can book pickups. Customers outside it are told IronDost isn't in their area yet, and can ask to be told when we arrive (see Outside the area). Staff phone orders need a map pin or a served PIN code, and an address outside the area needs a typed reason. Test the edge with Check an address below.",
     fields: [
       {
         name: "serviceCenterLatitude",

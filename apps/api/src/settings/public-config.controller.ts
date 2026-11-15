@@ -19,8 +19,8 @@ export class PublicConfigDto {
   @ApiProperty({ nullable: true, type: String }) supportPhone!: string | null;
   @ApiProperty({ nullable: true, type: String }) supportEmail!: string | null;
   @ApiProperty() minOrderPaise!: number;
-  @ApiProperty() deliveryFeePaise!: number;
-  @ApiProperty({ nullable: true, type: Number }) freeDeliveryAbovePaise!: number | null;
+  @ApiProperty({ description: 'The flat travel charge for a small order, in paise.' }) deliveryFeePaise!: number;
+  @ApiProperty({ nullable: true, type: Number, description: 'Travel is free from this items total (before any coupon), in paise. Null = never free.' }) freeDeliveryAbovePaise!: number | null;
   @ApiProperty() minTurnaroundHours!: number;
   @ApiProperty() maxAdvanceDays!: number;
   @ApiProperty({ type: [SlotDefinitionDto] }) slots!: SlotDefinitionDto[];

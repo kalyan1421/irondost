@@ -40,8 +40,11 @@ bool rescheduleTimeRefused(ApiFailure e) => switch (e.code) {
   _ => false,
 };
 
+/// The pickup window the customer chose filled up while they were deciding: the windows on screen are out of date.
+bool rescheduleSlotFull(ApiFailure e) => e.code == 'SLOT_FULL';
+
 /// How a confirmation ended.
-enum _Outcome { done, timesRefused, failed }
+enum _Outcome { done, timesRefused, slotFull, failed }
 
 /// "Change pickup time": the booking's own picker, starting on this order's windows. Nothing changes until the
 /// customer has reviewed the change and confirmed it. Shows [initial] (from the order screen) at once.
@@ -98,6 +101,10 @@ class _RescheduleScreenState extends ConsumerState<RescheduleScreen> {
         messenger
           ..hideCurrentSnackBar()
           ..showSnackBar(const SnackBar(content: Text("That time isn't available any more. Please pick another.")));
+      case _Outcome.slotFull:
+        messenger
+          ..hideCurrentSnackBar()
+          ..showSnackBar(const SnackBar(content: Text('That pickup time just filled up. Please pick another. Your current time is unchanged.')));
       case _Outcome.failed:
         // The key was refused for another change: start a new attempt.
         _signature = null;
@@ -355,6 +362,12 @@ class _ConfirmSheetState extends ConsumerState<_ConfirmSheet> {
       if (rescheduleTimeRefused(e)) {
         ref.invalidate(pickupSlotsProvider);
         if (mounted) Navigator.pop(context, _Outcome.timesRefused);
+        return;
+      }
+      if (rescheduleSlotFull(e)) {
+        // Back to the picker with fresh windows: the full one now shows as Full. Nothing was changed or used up.
+        ref.invalidate(pickupSlotsProvider);
+        if (mounted) Navigator.pop(context, _Outcome.slotFull);
         return;
       }
       if (e.code == 'IDEMPOTENCY_KEY_REUSED' && mounted) {

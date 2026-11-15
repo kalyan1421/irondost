@@ -8,6 +8,7 @@ import {
   IndianRupee,
   LayoutDashboard,
   LogOut,
+  MapPinOff,
   Moon,
   PackageSearch,
   ScrollText,
@@ -66,6 +67,7 @@ const NAV: { label: string; items: NavItem[] }[] = [
       { href: "/issues", label: "Customer reports", icon: ScrollText },
       { href: "/notification-deliveries", label: "Undelivered alerts", icon: BellOff },
       { href: "/drivers", label: "Delivery partners", icon: Truck },
+      { href: "/outside-area", label: "Outside the area", icon: MapPinOff },
     ],
   },
   {

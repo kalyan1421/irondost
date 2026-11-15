@@ -6,7 +6,7 @@ import '../../data/api_client.dart';
 import '../../design/theme.dart';
 import '../../design/widgets/surfaces.dart';
 
-/// The server's bill for a basket: items, discount, delivery and what to pay. Dimmed while a new
+/// The server's bill for a basket: items, discount, travel charge and what to pay. Dimmed while a new
 /// quote loads, a skeleton before the first one.
 class QuoteBill extends StatelessWidget {
   const QuoteBill({
@@ -105,8 +105,8 @@ class QuoteBill extends StatelessWidget {
               ],
               const SizedBox(height: 10),
               row(
-                'Pickup & delivery',
-                q.deliveryFeePaise == 0 ? 'Free' : rupees(q.deliveryFeePaise),
+                'Travel charge',
+                travelChargeLabel(q.deliveryFeePaise),
                 color: c.textMuted,
               ),
               const SizedBox(height: IdSpace.s3),

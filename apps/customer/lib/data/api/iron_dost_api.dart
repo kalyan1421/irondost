@@ -9,6 +9,7 @@ import 'clients/schedule_client.dart';
 import 'clients/config_client.dart';
 import 'clients/me_client.dart';
 import 'clients/addresses_client.dart';
+import 'clients/area_interest_client.dart';
 import 'clients/catalog_client.dart';
 import 'clients/promotions_client.dart';
 import 'clients/banners_client.dart';
@@ -38,6 +39,7 @@ class IronDostApi {
   ConfigClient? _config;
   MeClient? _me;
   AddressesClient? _addresses;
+  AreaInterestClient? _areaInterest;
   CatalogClient? _catalog;
   PromotionsClient? _promotions;
   BannersClient? _banners;
@@ -56,6 +58,8 @@ class IronDostApi {
   MeClient get me => _me ??= MeClient(_dio, baseUrl: _baseUrl);
 
   AddressesClient get addresses => _addresses ??= AddressesClient(_dio, baseUrl: _baseUrl);
+
+  AreaInterestClient get areaInterest => _areaInterest ??= AreaInterestClient(_dio, baseUrl: _baseUrl);
 
   CatalogClient get catalog => _catalog ??= CatalogClient(_dio, baseUrl: _baseUrl);
 

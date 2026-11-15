@@ -4,9 +4,12 @@ import { Type } from 'class-transformer';
 import { IsEnum, IsInt, IsOptional, Matches, Max, Min } from 'class-validator';
 import { Public } from '../auth/decorators.js';
 import { Clock } from '../common/clock.js';
+import { addDays, istDate } from '../common/time.js';
 import { TimeSlot } from '../generated/prisma/enums.js';
+import { PrismaService } from '../prisma/prisma.service.js';
 import { SettingsService } from '../settings/settings.service.js';
-import { deliveryOptions, pickupOptions } from './schedule-rules.js';
+import { fullPickupWindows } from './pickup-capacity.js';
+import { deliveryOptions, pickupOptions, SLOT_UNAVAILABLE_REASONS, type SlotUnavailableReason } from './schedule-rules.js';
 
 export class SlotOptionDto {
   @ApiProperty({ example: '2026-10-05' }) date!: string;
@@ -15,6 +18,13 @@ export class SlotOptionDto {
   @ApiProperty() startsAt!: Date;
   @ApiProperty() endsAt!: Date;
   @ApiProperty() available!: boolean;
+  @ApiProperty({
+    enum: SLOT_UNAVAILABLE_REASONS,
+    enumName: 'SlotUnavailableReason',
+    nullable: true,
+    description: '`FULL` when the pickup window is open but has no place left; `available` is false then. Null otherwise.',
+  })
+  reason!: SlotUnavailableReason | null;
 }
 
 class PickupSlotsQuery {
@@ -44,11 +54,16 @@ export class SchedulingController {
   constructor(
     private readonly settings: SettingsService,
     private readonly clock: Clock,
+    private readonly prisma: PrismaService,
   ) {}
 
   @Get('pickup-slots')
   async pickupSlots(@Query() q: PickupSlotsQuery): Promise<SlotOptionDto[]> {
-    return pickupOptions(this.clock.now(), await this.settings.get(), q.days);
+    const now = this.clock.now();
+    const settings = await this.settings.get();
+    const today = istDate(now);
+    const full = await fullPickupWindows(this.prisma, today, addDays(today, q.days - 1), settings.pickupCapacityPerSlot);
+    return pickupOptions(now, settings, q.days, full);
   }
 
   @Get('delivery-slots')

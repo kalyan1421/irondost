@@ -17,6 +17,7 @@ class QuoteDto {
     required this.discountPaise,
     required this.deliveryFeePaise,
     required this.totalPaise,
+    required this.freeTravelShortfallPaise,
     required this.promoCode,
     required this.promoError,
     required this.promoShortfallPaise,
@@ -29,8 +30,13 @@ class QuoteDto {
   final List<QuoteLineDto> lines;
   final num subtotalPaise;
   final num discountPaise;
+
+  /// The flat travel charge: 0 once the items total (before any coupon) reaches the free-from amount.
   final num deliveryFeePaise;
   final num totalPaise;
+
+  /// How much more of clothes (items total before any coupon) makes travel free. Null when travel is already free or there is no threshold.
+  final num? freeTravelShortfallPaise;
   final String? promoCode;
 
   /// Why the promo code was not applied, if it was not.

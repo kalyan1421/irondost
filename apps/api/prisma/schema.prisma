@@ -194,8 +194,10 @@ model User {
   issuesHandled        OrderIssue[]        @relation("IssueHandler")
   issueMessages        OrderIssueMessage[]
   issuePhotos          IssuePhoto[]
+  orderCarePhotos      OrderCarePhoto[]
   pushDeliveries       PushDelivery[]      @relation("PushDeliveryUser")
   pushFollowUps        PushDelivery[]      @relation("PushDeliveryHandler")
+  areaInterests        AreaInterest[]
 
   @@index([role, isActive])
   @@map("users")
@@ -259,6 +261,7 @@ model Address {
   user           User    @relation(fields: [userId], references: [id], onDelete: Cascade)
   pickupOrders   Order[] @relation("PickupAddress")
   deliveryOrders Order[] @relation("DeliveryAddress")
+  areaInterests  AreaInterest[]
 
   @@index([userId])
   @@map("addresses")
@@ -366,10 +369,18 @@ model Order {
   deliveryLatitude  Float?  @map("delivery_latitude")
   deliveryLongitude Float?  @map("delivery_longitude")
   instructions      String?
+  /// What the customer wants the workshop to know about their clothes (stains, delicate fabric). Separate from instructions, which are for the rider.
+  careNote          String? @map("care_note")
 
   subtotalPaise    Int           @map("subtotal_paise")
   discountPaise    Int           @default(0) @map("discount_paise")
   deliveryFeePaise Int           @default(0) @map("delivery_fee_paise")
+  /// The travel charge rule the order was booked under (settings can change later). Both null on orders booked before the
+  /// rule existed: those keep their stored deliveryFeePaise and have no free-from threshold.
+  travelChargePaiseRule   Int? @map("travel_charge_paise_rule")
+  travelFreeFromPaiseRule Int? @map("travel_free_from_paise_rule")
+  /// Set when staff cancelled after the partner had already travelled: the travel charge (deliveryFeePaise) is kept, not refunded.
+  travelChargeKept        Boolean @default(false) @map("travel_charge_kept")
   totalPaise       Int           @map("total_paise")
   paidPaise        Int           @default(0) @map("paid_paise")
   /// Sum of PENDING and PROCESSED refunds (never more than paidPaise; CHECK in migration).
@@ -397,6 +408,11 @@ model Order {
   /// When the customer last moved the pickup. Dispatch ignores offers made before it: they were for another time.
   pickupRescheduledAt DateTime? @map("pickup_rescheduled_at")
 
+  /// Why staff placed this order for an address outside the service area. Null when the address was inside.
+  areaOverrideReason     String? @map("area_override_reason")
+  /// Why staff booked this order into a pickup window that was already full. Null when there was room.
+  capacityOverrideReason String? @map("capacity_override_reason")
+
   cancelReason String?   @map("cancel_reason")
   pickedUpAt   DateTime? @map("picked_up_at")
   deliveredAt  DateTime? @map("delivered_at")
@@ -419,6 +435,7 @@ model Order {
   refunds     Refund[]
   adjustments OrderAdjustment[]
   issues      OrderIssue[]
+  carePhotos  OrderCarePhoto[]
   revision    Int               @default(0)
   pushDeliveries PushDelivery[]
 
@@ -626,6 +643,8 @@ model BusinessSettings {
   serviceRadiusKm             Float?   @map("service_radius_km")
   /// When not empty, only these 6-digit PIN codes are served.
   servicePincodes             String[] @default([]) @map("service_pincodes")
+  /// Pickups one window (a pickup date and slot) can hold: orders in PENDING or PICKUP_ASSIGNED count. Null = no cap. CHECK > 0 in migration.
+  pickupCapacityPerSlot       Int?     @default(8) @map("pickup_capacity_per_slot")
   updatedAt                   DateTime @updatedAt @map("updated_at")
 
   @@map("business_settings")
@@ -757,4 +776,45 @@ model IssuePhoto {
 
   @@index([userId, createdAt])
   @@map("issue_photos")
+}
+
+/// A photo of the clothes added with a care note. Uploaded before the order exists (order is empty until the order is placed).
+model OrderCarePhoto {
+  id        String   @id @default(uuid()) @db.Uuid
+  orderId   String?  @map("order_id") @db.Uuid
+  userId    String   @map("user_id") @db.Uuid
+  key       String   @unique
+  createdAt DateTime @default(now()) @map("created_at")
+  order     Order?   @relation(fields: [orderId], references: [id], onDelete: Cascade)
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([orderId])
+  @@index([userId, createdAt])
+  @@map("order_care_photos")
+}
+
+/// A customer asked to be told when IronDost starts serving an address outside the service area. One open row per user and
+/// PIN code (partial unique index in migration: notified_at IS NULL). The place data is copied from the address when they ask,
+/// never taken from the client.
+model AreaInterest {
+  id         String    @id @default(uuid()) @db.Uuid
+  userId     String    @map("user_id") @db.Uuid
+  addressId  String?   @map("address_id") @db.Uuid
+  latitude   Float?
+  longitude  Float?
+  pincode    String
+  /// The address's area name, else its city.
+  locality   String
+  /// Straight-line distance from the service centre when they asked; null when no centre was set or the address had no map pin.
+  distanceKm Float?    @map("distance_km")
+  createdAt  DateTime  @default(now()) @map("created_at")
+  /// Set when staff told the customer we now serve them.
+  notifiedAt DateTime? @map("notified_at")
+
+  user    User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  address Address? @relation(fields: [addressId], references: [id], onDelete: SetNull)
+
+  @@index([pincode])
+  @@index([createdAt(sort: Desc)])
+  @@map("area_interest")
 }

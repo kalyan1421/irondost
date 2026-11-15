@@ -14,6 +14,9 @@ SlotOptionDto _$SlotOptionDtoFromJson(Map<String, dynamic> json) =>
       startsAt: DateTime.parse(json['startsAt'] as String),
       endsAt: DateTime.parse(json['endsAt'] as String),
       available: json['available'] as bool,
+      reason: json['reason'] == null
+          ? null
+          : SlotUnavailableReason.fromJson(json['reason'] as String),
     );
 
 Map<String, dynamic> _$SlotOptionDtoToJson(SlotOptionDto instance) =>
@@ -24,4 +27,5 @@ Map<String, dynamic> _$SlotOptionDtoToJson(SlotOptionDto instance) =>
       'startsAt': instance.startsAt.toIso8601String(),
       'endsAt': instance.endsAt.toIso8601String(),
       'available': instance.available,
+      'reason': instance.reason,
     };

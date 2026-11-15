@@ -46,6 +46,7 @@ void main() {
     FakeOrderRepository? orders,
     FakeScheduleRepository? schedule,
     SessionController Function()? session,
+    QuoteRepository? quotes,
   }) async {
     tester.view
       ..physicalSize = const Size(390 * 3, 1300 * 3)
@@ -74,7 +75,7 @@ void main() {
       themedRouter(
         router,
         overrides: [
-          ...await basketOverrides(saved: saved, session: session),
+          ...await basketOverrides(saved: saved, session: session, quotes: quotes),
           scheduleRepositoryProvider.overrideWithValue(schedule ?? FakeScheduleRepository()),
           orderRepositoryProvider.overrideWithValue(fake),
           addressRepositoryProvider.overrideWithValue(FakeAddressRepository([address ?? testAddress()])),
@@ -114,6 +115,34 @@ void main() {
     expect(find.text('Secure payment by Razorpay'), findsOneWidget);
   });
 
+  testWidgets('shows the travel charge as its own line, with the total, but leaves the add-more nudge to the basket', (tester) async {
+    final quotes = FakeQuoteRepository()
+      ..deliveryFeePaise = 3000
+      ..freeTravelFromPaise = 20000;
+    await pump(tester, quotes: quotes);
+
+    await tester.scrollUntilVisible(find.text('To pay'), 200, scrollable: find.byType(Scrollable).first);
+    await tester.pumpAndSettle();
+    expect(find.text('Travel charge'), findsOneWidget);
+    expect(find.text('Pickup & delivery'), findsNothing);
+    expect(find.text('₹30'), findsOneWidget);
+    expect(find.text('Pay ₹110'), findsOneWidget, reason: '₹80 of clothes and the ₹30 charge');
+    expect(find.textContaining('and travel is free'), findsNothing);
+  });
+
+  testWidgets('says Free for travel when the clothes reach the free amount', (tester) async {
+    final quotes = FakeQuoteRepository()
+      ..deliveryFeePaise = 3000
+      ..freeTravelFromPaise = 8000;
+    await pump(tester, quotes: quotes);
+
+    await tester.scrollUntilVisible(find.text('To pay'), 200, scrollable: find.byType(Scrollable).first);
+    await tester.pumpAndSettle();
+    expect(find.text('Travel charge'), findsOneWidget);
+    expect(find.text('Free'), findsOneWidget);
+    expect(find.text('Pay ₹80'), findsOneWidget);
+  });
+
   testWidgets('the way to pay is always on screen beside the button, and steps aside for the keyboard', (tester) async {
     tester.view.physicalSize = const Size(390 * 3, 844 * 3);
     tester.view.devicePixelRatio = 3;
@@ -145,12 +174,15 @@ void main() {
     expect(find.text('Secure payment by Razorpay'), findsNothing);
   });
 
+  // The care note above it has a field too: these tests are about the pickup note.
+  final pickupNoteField = find.descendant(of: find.byKey(const PageStorageKey('pickup-note-input')), matching: find.byType(TextField));
+
   Future<void> openNote(WidgetTester tester) async {
     final note = find.text('Note for your pickup (optional)');
     await tester.scrollUntilVisible(note.hitTestable(), 180, scrollable: find.byType(Scrollable).first);
     await tester.tap(note.hitTestable());
     await tester.pumpAndSettle();
-    await tester.ensureVisible(find.byType(TextField));
+    await tester.ensureVisible(pickupNoteField);
     await tester.pumpAndSettle();
   }
 
@@ -171,7 +203,7 @@ void main() {
       final (_, orders, _) = await pump(tester);
 
       await openNote(tester);
-      await tester.enterText(find.byType(TextField), 'Gate code 4321');
+      await tester.enterText(pickupNoteField, 'Gate code 4321');
       await tester.ensureVisible(find.text('Call before arriving'));
       await tester.pumpAndSettle();
       await tester.tap(find.text('Call before arriving'));
@@ -199,7 +231,7 @@ void main() {
       final (_, orders, _) = await pump(tester);
 
       await openNote(tester);
-      await tester.enterText(find.byType(TextField), 'a' * 600);
+      await tester.enterText(pickupNoteField, 'a' * 600);
       await tester.pump();
       await tester.tap(find.text('Pay ₹80'));
       await settle(tester);
@@ -349,10 +381,30 @@ void main() {
     expect(container.read(basketProvider).isEmpty, isFalse, reason: 'basket kept');
   });
 
+  testWidgets('a pickup time that filled up explains, keeps the basket, and "Pick another time" goes back to the schedule', (tester) async {
+    final orders = FakeOrderRepository()..failures.add(const ApiFailure(ApiFailureKind.rejected, statusCode: 409, code: 'SLOT_FULL'));
+    final (router, _, container) = await pump(tester, orders: orders);
+    await tester.tap(find.text('Cash on delivery'));
+    await tester.pump();
+
+    await tester.tap(find.text('Place order ₹80'));
+    await settle(tester);
+    expect(find.text('That pickup time just filled up'), findsOneWidget);
+    expect(find.textContaining('Someone else booked the last place'), findsOneWidget);
+    expect(find.textContaining("you haven't been charged"), findsOneWidget);
+    expect(find.text('That time just closed'), findsNothing);
+
+    await tester.tap(find.text('Pick another time'));
+    await settle(tester);
+    expect(find.text('SCHEDULE PAGE'), findsOneWidget);
+    expect(router.state.matchedLocation, '/schedule');
+    expect(container.read(basketProvider).isEmpty, isFalse, reason: 'basket kept');
+  });
+
   testWidgets('an address we do not serve is flagged and blocks placing', (tester) async {
     await pump(tester, address: testAddress(serviceable: false));
 
-    expect(find.textContaining("We don't pick up from Banjara Hills yet"), findsOneWidget);
+    expect(find.textContaining("We're not in Banjara Hills yet"), findsOneWidget);
     expect(tester.widget<FilledButton>(find.widgetWithText(FilledButton, 'Pay ₹80')).onPressed, isNull);
   });
 

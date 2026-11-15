@@ -106,7 +106,7 @@ class _ApprovalSheetState extends ConsumerState<_ApprovalSheet> {
         _ChangeRow(changes[i]),
       ],
       const SizedBox(height: IdSpace.s4),
-      _TotalsPanel(request),
+      _TotalsPanel(request, currentTravelPaise: widget.order.deliveryFeePaise),
       const SizedBox(height: IdSpace.s4),
       Text(pending ? 'Decide by ${istDateTimeLabel(request.expiresAt)}. If you decline or do not respond, the original bill stands. Our team will contact you about the item count.'
         : 'This request ${switch (request.status) {
@@ -222,11 +222,15 @@ class _ChangeRow extends StatelessWidget {
   }
 }
 
-/// The new bill's arithmetic, amounts on the right: items, discount and delivery, then accepted total, the increase,
-/// and the new total as the one large figure.
+/// The new bill's arithmetic, amounts on the right: items, discount and travel charge, then accepted total, the increase,
+/// and the new total as the one large figure. The travel charge row shows the old and the new charge when a new count
+/// moved it (reaching the free-travel amount removes it, falling under adds it).
 class _TotalsPanel extends StatelessWidget {
-  const _TotalsPanel(this.request);
+  const _TotalsPanel(this.request, {required this.currentTravelPaise});
   final OrderAdjustmentDto request;
+
+  /// The travel charge on the bill the customer has accepted.
+  final num currentTravelPaise;
 
   @override
   Widget build(BuildContext context) {
@@ -242,7 +246,14 @@ class _TotalsPanel extends StatelessWidget {
           children: [
             _AmountRow('Items', rupees(request.subtotalPaise)),
             if (request.discountPaise > 0) _AmountRow('Discount', '−${rupees(request.discountPaise)}'),
-            _AmountRow('Delivery', request.deliveryFeePaise == 0 ? 'Free' : rupees(request.deliveryFeePaise)),
+            if (request.deliveryFeePaise != currentTravelPaise)
+              _AmountRow(
+                'Travel charge',
+                travelChargeLabel(request.deliveryFeePaise),
+                was: travelChargeLabel(currentTravelPaise),
+              )
+            else
+              _AmountRow('Travel charge', travelChargeLabel(request.deliveryFeePaise)),
             Padding(padding: const EdgeInsets.symmetric(vertical: IdSpace.s3), child: Divider(height: 1, color: c.border)),
             _AmountRow('Accepted total', rupees(request.oldTotalPaise), muted: true),
             _AmountRow(delta >= 0 ? 'Increase' : 'Decrease', '${delta >= 0 ? '+' : '−'}${rupees(delta.abs())}', emphasis: true),
@@ -264,11 +275,14 @@ class _TotalsPanel extends StatelessWidget {
 }
 
 class _AmountRow extends StatelessWidget {
-  const _AmountRow(this.label, this.value, {this.muted = false, this.emphasis = false});
+  const _AmountRow(this.label, this.value, {this.muted = false, this.emphasis = false, this.was});
   final String label;
   final String value;
   final bool muted;
   final bool emphasis;
+
+  /// The amount this row had on the accepted bill, shown struck through before the new one when it changed.
+  final String? was;
 
   @override
   Widget build(BuildContext context) {
@@ -282,7 +296,19 @@ class _AmountRow extends StatelessWidget {
         children: [
           Expanded(child: Text(label, style: style)),
           const SizedBox(width: IdSpace.s3),
-          Text(value, style: style, textAlign: TextAlign.end),
+          if (was == null)
+            Text(value, style: style, textAlign: TextAlign.end)
+          else
+            Text.rich(
+              TextSpan(children: [
+                TextSpan(text: was, style: style.copyWith(color: c.textMuted, decoration: TextDecoration.lineThrough)),
+                const TextSpan(text: ' '),
+                TextSpan(text: value),
+              ]),
+              style: style,
+              textAlign: TextAlign.end,
+              semanticsLabel: '$value, was $was',
+            ),
         ],
       ),
     );

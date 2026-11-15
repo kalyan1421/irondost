@@ -6,6 +6,7 @@ import 'package:lucide_icons_flutter/lucide_icons.dart';
 
 import '../../app/routes.dart';
 import '../../core/money.dart';
+import '../../core/text_wrap.dart';
 import '../../data/api_client.dart';
 import '../../design/theme.dart';
 import '../../design/widgets/id_button.dart';
@@ -64,6 +65,10 @@ class BasketScreen extends ConsumerWidget {
                   _QuoteFailure(onRetry: () => ref.invalidate(quoteProvider))
                 else ...[
                   QuoteBill(quote: q, loading: loading, pieces: basket.count),
+                  if (q?.freeTravelShortfallPaise case final more?) ...[
+                    const SizedBox(height: IdSpace.s3),
+                    _FreeTravelHint(shortfallPaise: more, loading: loading),
+                  ],
                   const SizedBox(height: IdSpace.s3),
                   Text(
                     'The final amount changes only if the count differs at pickup.',
@@ -77,6 +82,30 @@ class BasketScreen extends ConsumerWidget {
       bottomNavigationBar: basket.isEmpty
           ? null
           : _Footer(quote: q, loading: loading),
+    );
+  }
+}
+
+/// One calm line while the basket is under the free-travel amount. Basket only: checkout shows the charge, not the nudge.
+class _FreeTravelHint extends StatelessWidget {
+  const _FreeTravelHint({required this.shortfallPaise, required this.loading});
+
+  final num shortfallPaise;
+  final bool loading;
+
+  @override
+  Widget build(BuildContext context) {
+    return AnimatedOpacity(
+      duration: MediaQuery.disableAnimationsOf(context)
+          ? Duration.zero
+          : const Duration(milliseconds: 150),
+      opacity: loading ? 0.5 : 1,
+      child: Text(
+        keepLastWordsTogether(
+          'Add ${rupees(shortfallPaise)} more of clothes and travel is free.',
+        ),
+        style: context.text.body,
+      ),
     );
   }
 }

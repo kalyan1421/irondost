@@ -14,6 +14,7 @@ import '../../design/widgets/id_button.dart';
 import '../../design/widgets/service_visual.dart';
 import '../addresses/addresses_controller.dart';
 import '../addresses/addresses_screen.dart';
+import '../area_interest/tell_me_card.dart';
 import '../auth/session.dart';
 import '../catalogue/catalogue.dart';
 import '../catalogue/booking_entry.dart';
@@ -189,6 +190,8 @@ class _OutOfArea extends StatelessWidget {
         label: 'Change address',
         onPressed: () => showAddressPicker(context),
       ),
+      const SizedBox(height: IdSpace.s2),
+      TellMeWhenHere(addressId: address.id, place: address.area ?? address.city),
     ],
   );
 }

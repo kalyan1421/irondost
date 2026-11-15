@@ -261,7 +261,10 @@ Future<List<Override>> basketOverrides({
 class FakeQuoteRepository implements QuoteRepository {
   final calls = <(List<OrderLineInput>, String?)>[];
   int minOrderPaise = 0;
+
+  /// The flat travel charge, and the items total (before any coupon) from which it is free; null = always charged.
   int deliveryFeePaise = 0;
+  int? freeTravelFromPaise;
   ApiFailure? failure;
 
   @override
@@ -307,12 +310,15 @@ class FakeQuoteRepository implements QuoteRepository {
       }
     }
     final shortfall = subtotal < minOrderPaise ? minOrderPaise - subtotal : null;
+    final free = freeTravelFromPaise != null && subtotal >= freeTravelFromPaise!;
+    final travel = free ? 0 : deliveryFeePaise;
     return QuoteDto(
       lines: lines,
       subtotalPaise: subtotal,
       discountPaise: discount,
-      deliveryFeePaise: deliveryFeePaise,
-      totalPaise: subtotal - discount + deliveryFeePaise,
+      deliveryFeePaise: travel,
+      freeTravelShortfallPaise: freeTravelFromPaise != null && travel > 0 ? freeTravelFromPaise! - subtotal : null,
+      totalPaise: subtotal - discount + travel,
       promoCode: applied,
       promoError: error,
       promoShortfallPaise: promoShortfall,
@@ -351,7 +357,7 @@ PromotionDto testPromo(
 // ── Schedule ───────────────────────────────────────────────────────────────
 
 /// One window, with its IST hours turned into the UTC instants the API sends.
-SlotOptionDto testSlot(String date, TimeSlot slot, {bool available = true}) {
+SlotOptionDto testSlot(String date, TimeSlot slot, {bool available = true, SlotUnavailableReason? reason}) {
   final (startHour, endHour, label) = switch (slot) {
     TimeSlot.morning => (7, 11, '07:00–11:00'),
     TimeSlot.noon => (11, 16, '11:00–16:00'),
@@ -362,7 +368,7 @@ SlotOptionDto testSlot(String date, TimeSlot slot, {bool available = true}) {
     return DateTime.utc(d.year, d.month, d.day, hour).subtract(const Duration(hours: 5, minutes: 30));
   }
 
-  return SlotOptionDto(date: date, slot: slot, label: label, startsAt: at(startHour), endsAt: at(endHour), available: available);
+  return SlotOptionDto(date: date, slot: slot, label: label, startsAt: at(startHour), endsAt: at(endHour), available: available, reason: reason);
 }
 
 /// Saturday 3 Oct 2026, 6:30 pm in India: this morning's and noon's windows are over.
@@ -372,8 +378,9 @@ const testDays = ['2026-10-03', '2026-10-04', '2026-10-05', '2026-10-06', '2026-
 /// Pickup windows for [testDays]; the API's rules for delivery (20 hours after the pickup ends).
 class FakeScheduleRepository implements ScheduleRepository {
   /// [days] replaces [testDays] (a test that must not depend on the date it runs on gives days from the real today).
-  FakeScheduleRepository({Set<SlotKey>? closed, bool todayOver = true, List<String>? days})
+  FakeScheduleRepository({Set<SlotKey>? closed, Set<SlotKey>? full, bool todayOver = true, List<String>? days})
       : days = days ?? testDays,
+        full = full ?? {},
         closed = closed ??
             {
               if (todayOver) (date: testToday, slot: TimeSlot.morning),
@@ -384,6 +391,9 @@ class FakeScheduleRepository implements ScheduleRepository {
 
   /// Pickup windows that are not open.
   final Set<SlotKey> closed;
+
+  /// Open windows with no place left: the API says `available: false` with the reason `FULL`.
+  final Set<SlotKey> full;
   ApiFailure? pickupFailure;
   ApiFailure? deliveryFailure;
   final deliveryAsked = <SlotKey>[];
@@ -397,7 +407,13 @@ class FakeScheduleRepository implements ScheduleRepository {
     if (pickupFailure != null) throw pickupFailure!;
     return [
       for (final d in days)
-        for (final s in _order) testSlot(d, s, available: !closed.contains((date: d, slot: s))),
+        for (final s in _order)
+          testSlot(
+            d,
+            s,
+            available: !closed.contains((date: d, slot: s)) && !full.contains((date: d, slot: s)),
+            reason: full.contains((date: d, slot: s)) && !closed.contains((date: d, slot: s)) ? SlotUnavailableReason.full : null,
+          ),
     ];
   }
 
@@ -442,6 +458,10 @@ OrderDto testOrder({
   TimeSlot pickupSlot = TimeSlot.evening,
   TimeSlot deliverySlot = TimeSlot.evening,
   int rescheduleCount = 0,
+  int deliveryFeePaise = 0,
+  bool travelChargeKept = false,
+  String? careNote,
+  List<String> carePhotoUrls = const [],
 
   /// Off unless a test asks: most screens do not care, and the "Change pickup time" row would change their layout.
   bool canReschedule = false,
@@ -454,6 +474,8 @@ OrderDto testOrder({
       status: status,
       source: OrderSource.customerApp,
       instructions: null,
+      careNote: careNote,
+      carePhotoUrls: carePhotoUrls,
       pickupDate: pickupDate,
       pickupSlot: pickupSlot,
       pickupSlotLabel: pickupLabel,
@@ -465,9 +487,10 @@ OrderDto testOrder({
       items: [
         OrderItemDto(id: 'i1', catalogItemId: 'shirt', name: 'Shirt / T-shirt', unit: ItemUnit.piece, unitPricePaise: 1500, quantity: pieces, lineTotalPaise: 1500 * pieces),
       ],
-      subtotalPaise: totalPaise,
+      subtotalPaise: totalPaise - deliveryFeePaise,
       discountPaise: 0,
-      deliveryFeePaise: 0,
+      deliveryFeePaise: deliveryFeePaise,
+      travelChargeKept: travelChargeKept,
       totalPaise: totalPaise,
       paidPaise: paidPaise,
       refundedPaise: refundedPaise,
@@ -537,6 +560,8 @@ class FakeOrderRepository implements OrderRepository {
       pickupDate: dto.pickupDate,
       deliveryDate: dto.deliveryDate,
       pieces: dto.items.fold(0, (a, i) => a + i.quantity.toInt()),
+      careNote: dto.careNote,
+      carePhotoUrls: dto.carePhotoUrls ?? const [],
     );
     orders[order.id] = order;
     return order;

@@ -1,8 +1,9 @@
-import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
+import { ApiProperty, ApiPropertyOptional, OmitType } from '@nestjs/swagger';
 import { Transform, Type } from 'class-transformer';
 import {
   ArrayMaxSize,
   ArrayMinSize,
+  ArrayUnique,
   IsArray,
   IsBoolean,
   IsEnum,
@@ -15,12 +16,13 @@ import {
   Max,
   MaxLength,
   Min,
+  MinLength,
   ValidateNested,
 } from 'class-validator';
 import { PageQueryDto } from '../common/pagination.js';
 import { customerPhone } from '../common/phone.js';
 import { fromDbDate } from '../common/time.js';
-import type { Order, OrderAdjustment, OrderEvent, OrderItem, Payment, Refund, User } from '../generated/prisma/client.js';
+import type { Order, OrderAdjustment, OrderCarePhoto, OrderEvent, OrderItem, Payment, Refund, User } from '../generated/prisma/client.js';
 import {
   ItemUnit,
   AdjustmentStatus,
@@ -35,7 +37,9 @@ import {
   TimeSlot,
 } from '../generated/prisma/enums.js';
 import { slotLabel } from '../scheduling/schedule-rules.js';
+import { CARE_NOTE_MAX, CARE_PHOTOS_PER_ORDER, carePhotoUrl } from './care-note.js';
 import { nextStatuses, type ActorKind } from './order-state.js';
+import { refundablePaise } from './refund-due.js';
 import { canReschedule, reschedulesRemaining } from './reschedule.js';
 
 // ───────────── Requests ─────────────
@@ -106,12 +110,64 @@ export class PlaceOrderDto extends QuoteRequestDto {
   @IsString()
   @MaxLength(500)
   instructions?: string;
+
+  @ApiPropertyOptional({
+    example: 'Red silk saree: stain on the pallu',
+    maxLength: CARE_NOTE_MAX,
+    description: 'What the workshop should know about the clothes (stains, delicate fabric). Separate from instructions, which are for the pickup partner.',
+  })
+  @IsOptional()
+  @Transform(({ value }: { value: unknown }) => (typeof value === 'string' ? value.trim() : value))
+  @IsString()
+  @MaxLength(CARE_NOTE_MAX)
+  careNote?: string;
+
+  @ApiPropertyOptional({
+    type: [String],
+    maxItems: CARE_PHOTOS_PER_ORDER,
+    description: 'Photos of the clothes: URLs returned by POST /v1/me/uploads/care-photos for this customer, each used once and not yet on an order.',
+  })
+  @IsOptional()
+  @IsArray()
+  @ArrayMaxSize(CARE_PHOTOS_PER_ORDER)
+  @ArrayUnique()
+  @IsString({ each: true })
+  @MaxLength(500, { each: true })
+  carePhotoUrls?: string[];
 }
 
-export class AdminPlaceOrderDto extends PlaceOrderDto {
+/** The shortest typed reason staff must give to go past the service area or a full pickup window. */
+export const OVERRIDE_REASON_MIN = 5;
+
+/** A phone order takes a care note but no photos (staff cannot upload on the customer's behalf). */
+export class AdminPlaceOrderDto extends OmitType(PlaceOrderDto, ['carePhotoUrls'] as const) {
   @ApiProperty()
   @IsUUID()
   customerId!: string;
+
+  @ApiPropertyOptional({
+    example: 'Regular customer, our partner passes that way daily',
+    description:
+      'Needed when the pickup or delivery address is outside the service area (ADDRESS_NOT_SERVICEABLE). Stored on the order and in the audit log. Ignored when the address is inside.',
+  })
+  @IsOptional()
+  @Transform(({ value }: { value: unknown }) => (typeof value === 'string' ? value.trim() : value))
+  @IsString()
+  @MinLength(OVERRIDE_REASON_MIN)
+  @MaxLength(300)
+  outsideAreaReason?: string;
+
+  @ApiPropertyOptional({
+    example: 'Customer is away on other days',
+    description:
+      'Needed when the pickup window is already full (SLOT_FULL). Stored on the order and in the audit log. Ignored when the window has room.',
+  })
+  @IsOptional()
+  @Transform(({ value }: { value: unknown }) => (typeof value === 'string' ? value.trim() : value))
+  @IsString()
+  @MinLength(OVERRIDE_REASON_MIN)
+  @MaxLength(300)
+  capacityOverrideReason?: string;
 }
 
 export class CancelOrderDto {
@@ -179,6 +235,15 @@ export class ChangeStatusDto {
   @IsOptional()
   @IsBoolean()
   collectedCash?: boolean;
+
+  @ApiPropertyOptional({
+    description:
+      'With status CANCELLED: the partner had already travelled, so keep the travel charge. It is not refunded and the ' +
+      'refund due is reduced by it. Without it, everything paid is refunded, the charge included.',
+  })
+  @IsOptional()
+  @IsBoolean()
+  keepTravelCharge?: boolean;
 }
 
 export const ORDER_SCOPES = ['active', 'past'] as const;
@@ -259,8 +324,11 @@ export class QuoteDto {
   @ApiProperty({ type: [QuoteLineDto] }) lines!: QuoteLineDto[];
   @ApiProperty() subtotalPaise!: number;
   @ApiProperty() discountPaise!: number;
+  /** The flat travel charge: 0 once the items total (before any coupon) reaches the free-from amount. */
   @ApiProperty() deliveryFeePaise!: number;
   @ApiProperty() totalPaise!: number;
+  /** How much more of clothes (items total before any coupon) makes travel free. Null when travel is already free or there is no threshold. */
+  @ApiProperty({ nullable: true, type: Number }) freeTravelShortfallPaise!: number | null;
   @ApiProperty({ nullable: true, type: String }) promoCode!: string | null;
   /** Why the promo code was not applied, if it was not. */
   @ApiProperty({
@@ -352,6 +420,10 @@ export class OrderDto {
   @ApiProperty({ type: OrderAddressDto }) pickupAddress!: OrderAddressDto;
   @ApiProperty({ type: OrderAddressDto }) deliveryAddress!: OrderAddressDto;
   @ApiProperty({ nullable: true, type: String }) instructions!: string | null;
+  /** What the customer told the workshop about their clothes. Separate from instructions, which are for the pickup partner. */
+  @ApiProperty({ nullable: true, type: String }) careNote!: string | null;
+  /** Photos that came with the care note, oldest first. Full-size URLs. */
+  @ApiProperty({ type: [String] }) carePhotoUrls!: string[];
   @ApiProperty({ type: [OrderItemDto] }) items!: OrderItemDto[];
   @ApiProperty() subtotalPaise!: number;
   @ApiProperty() discountPaise!: number;
@@ -360,8 +432,10 @@ export class OrderDto {
   @ApiProperty() paidPaise!: number;
   /** Sum of PENDING and PROCESSED refunds. */
   @ApiProperty() refundedPaise!: number;
-  /** What can still be refunded (paidPaise - refundedPaise). Admin view only. */
+  /** What can still be refunded (paidPaise - refundedPaise, less the travel charge when it was kept). Admin view only. */
   @ApiPropertyOptional() refundablePaise?: number;
+  /** Staff cancelled after the partner had already travelled, so the travel charge (deliveryFeePaise) was kept, not refunded. */
+  @ApiProperty() travelChargeKept!: boolean;
   @ApiProperty() amountDuePaise!: number;
   @ApiProperty({ nullable: true, type: String }) promoCode!: string | null;
   @ApiProperty({ enum: PaymentMethod, enumName: 'PaymentMethod' }) paymentMethod!: PaymentMethod;
@@ -389,6 +463,10 @@ export class OrderDto {
   @ApiPropertyOptional({ type: [RefundDto] }) refunds?: RefundDto[];
   /** Captured transactions only; excludes raw provider payloads and staff identities. */
   @ApiPropertyOptional({ type: () => [OrderPaymentDto] }) payments?: OrderPaymentDto[];
+  /** Staff view only: why a phone order was placed for an address outside the service area. Null when it was inside. */
+  @ApiPropertyOptional({ nullable: true, type: String }) areaOverrideReason?: string | null;
+  /** Staff view only: why a phone order was booked into a pickup window that was already full. Null when there was room. */
+  @ApiPropertyOptional({ nullable: true, type: String }) capacityOverrideReason?: string | null;
 }
 
 export class OrderPaymentDto {
@@ -431,6 +509,8 @@ export class ItemEditPreviewDto {
   @ApiProperty() subtotalPaise!: number;
   @ApiProperty() discountPaise!: number;
   @ApiProperty() deliveryFeePaise!: number;
+  /** The travel charge the order has now, so a screen can show it changing. */
+  @ApiProperty() oldDeliveryFeePaise!: number;
   @ApiProperty() requiresApproval!: boolean;
   @ApiProperty({ type: [QuoteLineDto] }) lines!: QuoteLineDto[];
 }
@@ -450,6 +530,7 @@ export type OrderWithRelations = Order & {
   events?: OrderEvent[];
   payments?: Payment[];
   adjustments?: OrderAdjustment[];
+  carePhotos?: OrderCarePhoto[];
   refunds?: (Refund & { createdBy?: { id: string; name: string | null } | null })[];
 };
 
@@ -493,6 +574,8 @@ export function toOrderDto(o: OrderWithRelations, viewer: ActorKind): OrderDto {
     pickupAddress: o.pickupAddress as unknown as OrderAddressDto,
     deliveryAddress: o.deliveryAddress as unknown as OrderAddressDto,
     instructions: o.instructions,
+    careNote: o.careNote,
+    carePhotoUrls: (o.carePhotos ?? []).map((p) => carePhotoUrl(p.key)),
     items: o.items.map((i) => ({
       id: i.id,
       catalogItemId: i.catalogItemId,
@@ -508,7 +591,8 @@ export function toOrderDto(o: OrderWithRelations, viewer: ActorKind): OrderDto {
     totalPaise: o.totalPaise,
     paidPaise: o.paidPaise,
     refundedPaise: o.refundedPaise,
-    ...(viewer === 'ADMIN' ? { refundablePaise: Math.max(0, o.paidPaise - o.refundedPaise) } : {}),
+    ...(viewer === 'ADMIN' ? { refundablePaise: refundablePaise(o) } : {}),
+    travelChargeKept: o.travelChargeKept,
     amountDuePaise: Math.max(0, o.totalPaise - o.paidPaise),
     promoCode: o.promoCode,
     paymentMethod: o.paymentMethod,
@@ -538,6 +622,7 @@ export function toOrderDto(o: OrderWithRelations, viewer: ActorKind): OrderDto {
           })),
         }
       : {}),
+    ...(viewer === 'ADMIN' ? { areaOverrideReason: o.areaOverrideReason, capacityOverrideReason: o.capacityOverrideReason } : {}),
     ...(showRefunds && o.refunds ? { refunds: o.refunds.map((r) => toRefundDto(r, viewer)) } : {}),
     ...(showRefunds && o.payments ? { payments: o.payments.filter((p) => p.status === 'CAPTURED').map((p) => ({
       id: p.id, provider: p.provider, amountPaise: p.amountPaise,

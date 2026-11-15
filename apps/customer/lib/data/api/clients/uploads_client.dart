@@ -21,4 +21,12 @@ abstract class UploadsClient {
   Future<ImageUploadDto> customerUploadsControllerUpload({
     @Part(name: 'file') required File file,
   });
+
+  /// A photo of the clothes for a care note, added before the order exists. Same image limits as report photos. It stays free.
+  /// until an order is placed with its URL; one photo goes to one order, up to 3 on each order.
+  @MultiPart()
+  @POST('/v1/me/uploads/care-photos')
+  Future<ImageUploadDto> customerUploadsControllerUploadCarePhoto({
+    @Part(name: 'file') required File file,
+  });
 }

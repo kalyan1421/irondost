@@ -8,6 +8,7 @@ import { Events, type RefundCreatedEvent, type RefundFailedEvent, type RefundPro
 import type { Order, Prisma, User } from '../generated/prisma/client.js';
 import { PaymentProvider, PaymentRecordStatus, RefundMethod, RefundStatus } from '../generated/prisma/enums.js';
 import type { OrderWithRelations } from '../orders/order.dto.js';
+import { keptTravelPaise, refundablePaise } from '../orders/refund-due.js';
 import { ORDER_INCLUDE, orderRef } from '../orders/orders.service.js';
 import { paymentStatusFor } from '../orders/pricing.js';
 import { PrismaService, type Tx } from '../prisma/prisma.service.js';
@@ -83,18 +84,28 @@ export class RefundsService {
       result = await this.prisma.$transaction(
         async (tx) => {
           const order = await lockOrder(tx, orderId);
-          const refundable = order.paidPaise - order.refundedPaise;
+          // The travel charge stays with us when staff cancelled after the partner had already travelled.
+          const kept = keptTravelPaise(order);
+          const refundable = refundablePaise(order);
           if (refundable <= 0) {
             throw AppError.conflict(
               'NOTHING_TO_REFUND',
-              order.paidPaise > 0 ? 'Everything paid on this order has already been refunded' : 'Nothing has been paid on this order',
+              order.paidPaise <= 0
+                ? 'Nothing has been paid on this order'
+                : kept > 0
+                  ? `Nothing more can be refunded: the ${rupees(kept)} travel charge was kept`
+                  : 'Everything paid on this order has already been refunded',
               { refundablePaise: 0 },
             );
           }
           if (req.amountPaise > refundable) {
-            throw AppError.conflict('REFUND_EXCEEDS_PAID', `Only ${rupees(refundable)} can be refunded on this order`, {
-              refundablePaise: refundable,
-            });
+            throw AppError.conflict(
+              'REFUND_EXCEEDS_PAID',
+              kept > 0
+                ? `Only ${rupees(refundable)} can be refunded on this order (the ${rupees(kept)} travel charge was kept)`
+                : `Only ${rupees(refundable)} can be refunded on this order`,
+              { refundablePaise: refundable },
+            );
           }
 
           const now = this.clock.now();
@@ -123,7 +134,7 @@ export class RefundsService {
           const refundedPaise = order.refundedPaise + rows.reduce((sum, r) => sum + r.amountPaise, 0);
           const updated = await tx.order.update({
             where: { id: orderId },
-            data: { refundedPaise, paymentStatus: paymentStatusFor(order.totalPaise, order.paidPaise, refundedPaise) },
+            data: { refundedPaise, paymentStatus: paymentStatusFor(order.totalPaise, order.paidPaise, refundedPaise, kept) },
             include: { ...ORDER_INCLUDE, events: { orderBy: { createdAt: 'asc' } } },
           });
           return { order: updated, rows, gatewayError };
@@ -276,7 +287,7 @@ export class RefundsService {
       const refundedPaise = locked.refundedPaise - refund.amountPaise;
       return tx.order.update({
         where: { id: locked.id },
-        data: { refundedPaise, paymentStatus: paymentStatusFor(locked.totalPaise, locked.paidPaise, refundedPaise) },
+        data: { refundedPaise, paymentStatus: paymentStatusFor(locked.totalPaise, locked.paidPaise, refundedPaise, keptTravelPaise(locked)) },
       });
     });
     if (!order) return;

@@ -60,9 +60,19 @@ export class AdminOrdersController {
     if (key !== undefined && !/^[A-Za-z0-9_-]{8,100}$/.test(key)) {
       throw AppError.badRequest('INVALID_IDEMPOTENCY_KEY', 'Idempotency-Key must be 8–100 letters, digits, "-" or "_"');
     }
-    const { order, replayed } = await this.orders.place(dto.customerId, dto, OrderSource.ADMIN, actor, key ? `admin_${actor.id}_${key}` : undefined);
+    const { order, replayed } = await this.orders.place(dto.customerId, dto, OrderSource.ADMIN, actor, key ? `admin_${actor.id}_${key}` : undefined, {
+      outsideAreaReason: dto.outsideAreaReason,
+      capacityOverrideReason: dto.capacityOverrideReason,
+    });
     if (replayed) res.setHeader('Idempotent-Replayed', 'true');
-    else this.audit.log(actor.id, 'order.placed_for_customer', 'order', order.id, { orderNumber: order.orderNumber });
+    // The reasons are on the order only when they were needed, so the log shows exactly which rules staff went past.
+    else {
+      this.audit.log(actor.id, 'order.placed_for_customer', 'order', order.id, {
+        orderNumber: order.orderNumber,
+        ...(order.areaOverrideReason ? { outsideAreaReason: order.areaOverrideReason } : {}),
+        ...(order.capacityOverrideReason ? { capacityOverrideReason: order.capacityOverrideReason } : {}),
+      });
+    }
     return toOrderDto(order, 'ADMIN');
   }
 
@@ -80,11 +90,15 @@ export class AdminOrdersController {
     if (dto.collectedCash && dto.status !== OrderStatus.DELIVERED) {
       throw AppError.badRequest('CASH_ONLY_WITH_DELIVERY', 'collectedCash only applies when marking an order delivered');
     }
+    if (dto.keepTravelCharge && dto.status !== OrderStatus.CANCELLED) {
+      throw AppError.badRequest('KEEP_ONLY_WITH_CANCEL', 'keepTravelCharge only applies when cancelling an order');
+    }
     // Cash taken at the door is recorded in the same transaction as the delivery, as the partner app does.
     let cashPaise = 0;
     const order = await this.orders.transition(id, dto.status, actorFor(actor, 'ADMIN'), {
       note: dto.note,
       cancelReason: dto.status === OrderStatus.CANCELLED ? (dto.note ?? 'Cancelled by admin') : undefined,
+      keepTravelCharge: dto.keepTravelCharge,
       inTx: dto.collectedCash
         ? async (tx) => {
             cashPaise = await this.payments.recordCashInTx(tx, id, actor.id);
@@ -102,6 +116,7 @@ export class AdminOrdersController {
       to: dto.status,
       note: dto.note,
       ...(cashPaise > 0 ? { cashCollectedPaise: cashPaise } : {}),
+      ...(order.travelChargeKept ? { travelChargeKeptPaise: order.deliveryFeePaise } : {}),
     });
     return toOrderDto(order, 'ADMIN');
   }

@@ -7,6 +7,7 @@ import { Events, type PaymentCapturedEvent } from '../events.js';
 import type { Payment, Prisma, User } from '../generated/prisma/client.js';
 import { OrderStatus, PaymentProvider, PaymentRecordStatus } from '../generated/prisma/enums.js';
 import { orderRef } from '../orders/orders.service.js';
+import { keptTravelPaise } from '../orders/refund-due.js';
 import { paymentStatusFor } from '../orders/pricing.js';
 import { PrismaService, type Tx } from '../prisma/prisma.service.js';
 import { RazorpayGateway } from './razorpay.gateway.js';
@@ -220,7 +221,7 @@ export class PaymentsService {
     });
     return tx.order.update({
       where: { id: orderId },
-      data: { paymentStatus: paymentStatusFor(updated.totalPaise, updated.paidPaise, updated.refundedPaise) },
+      data: { paymentStatus: paymentStatusFor(updated.totalPaise, updated.paidPaise, updated.refundedPaise, keptTravelPaise(updated)) },
     });
   }
 }

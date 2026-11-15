@@ -80,9 +80,11 @@ class SchedulePicker extends ConsumerWidget {
     final choice = picks;
     final today = schedule.today!;
     final earliest = schedule.earliestPickup;
-    final open = schedule.pickupWindows.where((s) => s.available).toList();
-    final closed = schedule.pickupWindows.where((s) => !s.available).toList();
-    final fold = open.isNotEmpty && closed.isNotEmpty;
+    // A full window stays listed, disabled and marked Full: it is not "closed", and it may open up again.
+    final open = schedule.pickupWindows.where((s) => s.available || s.isFull).toList();
+    final closed = schedule.pickupWindows.where((s) => !s.available && !s.isFull).toList();
+    final anyFull = schedule.pickupWindows.any((s) => s.isFull);
+    final fold = open.any((s) => s.available) && closed.isNotEmpty;
 
     return ListView(
       padding: const EdgeInsets.fromLTRB(
@@ -128,6 +130,7 @@ class SchedulePicker extends ConsumerWidget {
                 schedule.pickup != null &&
                 slotKey(slot) == slotKey(schedule.pickup!),
             enabled: slot.available,
+            closedNote: slot.isFull ? 'Full' : 'Closed',
             onTap: () => choice.pickPickup(slot),
           ),
           const SizedBox(height: IdSpace.s2),
@@ -137,6 +140,7 @@ class SchedulePicker extends ConsumerWidget {
           _NoneOpenNotice(
             day: schedule.pickupDate,
             today: today,
+            anyFull: anyFull,
             earliest: earliest,
             onPickEarliest: earliest == null
                 ? null
@@ -207,12 +211,16 @@ class _NoneOpenNotice extends StatelessWidget {
   const _NoneOpenNotice({
     required this.day,
     required this.today,
+    required this.anyFull,
     required this.earliest,
     required this.onPickEarliest,
   });
 
   final String day;
   final String today;
+
+  /// Some of the day's windows are full (the rest are closed): say so, because "closed" would be wrong.
+  final bool anyFull;
   final SlotOptionDto? earliest;
   final VoidCallback? onPickEarliest;
 
@@ -220,7 +228,9 @@ class _NoneOpenNotice extends StatelessWidget {
   Widget build(BuildContext context) {
     final c = context.colors;
     final t = context.text;
-    final what = day == today
+    final what = anyFull
+        ? (day == today ? "Today's pickups are full or closed." : 'Every pickup time on ${dayLong(day)} is full.')
+        : day == today
         ? "Today's pickups have closed."
         : 'No pickups are open on ${dayLong(day)}.';
     return Semantics(

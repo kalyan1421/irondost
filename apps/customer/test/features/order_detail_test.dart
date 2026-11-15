@@ -402,6 +402,40 @@ void main() {
       expect(find.text('The refund did not complete. Contact support.'), findsOneWidget);
     });
 
+    group('with the travel charge kept', () {
+      // Paid ₹248, of which ₹30 is the travel charge staff kept because the partner had already travelled.
+      OrderDto keptCharge({int refundedPaise = 21800, int paidPaise = 24800, bool kept = true}) => testOrder(status: OrderStatus.cancelled,
+        method: PaymentMethod.online, paymentStatus: PaymentStatus.paid, paidPaise: paidPaise, refundedPaise: refundedPaise,
+        deliveryFeePaise: 3000, travelChargeKept: kept, refunds: [if (refundedPaise > 0) refund(RefundStatus.processed, amount: refundedPaise)]);
+
+      testWidgets('says why and how much, and does not call the kept charge a missing refund', (tester) async {
+        await pump(tester, keptCharge());
+        expect(find.text(keepLastWordsTogether('Travel charge kept: partner had already travelled')), findsOneWidget);
+        expect(find.text('Kept for travel'), findsOneWidget);
+        expect(find.text('₹30'), findsOneWidget);
+        expect(find.text('₹218'), findsOneWidget, reason: 'the refund row: everything paid except the charge');
+        expect(find.textContaining('has no confirmed refund'), findsNothing);
+      });
+
+      testWidgets('while the rest is still on its way it calls out only what is owed back', (tester) async {
+        await pump(tester, keptCharge(refundedPaise: 0));
+        expect(find.textContaining('₹218 has no confirmed refund'), findsOneWidget, reason: '₹248 paid less the ₹30 kept');
+        expect(find.text(keepLastWordsTogether('Travel charge kept: partner had already travelled')), findsOneWidget);
+      });
+
+      testWidgets('is silent when the charge was refunded with everything else', (tester) async {
+        await pump(tester, keptCharge(kept: false, refundedPaise: 24800));
+        expect(find.textContaining('Travel charge kept'), findsNothing);
+        expect(find.text('Kept for travel'), findsNothing);
+      });
+
+      testWidgets('is silent when nothing was paid: an unpaid order was not charged', (tester) async {
+        await pump(tester, testOrder(status: OrderStatus.cancelled, deliveryFeePaise: 3000, travelChargeKept: true));
+        expect(find.textContaining('Travel charge kept'), findsNothing);
+        expect(find.textContaining('nothing charged'), findsOneWidget);
+      });
+    });
+
     testWidgets('money that no refund accounts for is still called out beside the rows', (tester) async {
       await pump(tester, cancelled([refund(RefundStatus.processed, amount: 10000)]));
       expect(find.text('Completed'), findsOneWidget);
@@ -765,6 +799,8 @@ void main() {
         expect(find.text('8 × ₹15 per piece'), findsOneWidget);
         expect(find.text('₹120'), findsOneWidget);
         expect(find.text('Items (8)'), findsOneWidget);
+        expect(find.text('Travel charge'), findsOneWidget);
+        expect(find.text('Pickup & delivery'), findsNothing);
         expect(find.text('Free'), findsOneWidget);
         expect(find.text('Total'), findsOneWidget);
         expect(find.text('Paid in cash'), findsOneWidget);
@@ -775,6 +811,47 @@ void main() {
         );
       },
     );
+
+    testWidgets('a small order shows the charge as an amount in the bill', (tester) async {
+      final order = testOrder(
+        status: OrderStatus.delivered,
+        paymentStatus: PaymentStatus.paid,
+        paidPaise: 15000,
+        pieces: 8,
+        totalPaise: 15000,
+        deliveryFeePaise: 3000,
+        pickedUpAt: pickedUp,
+        deliveredAt: DateTime.utc(2026, 10, 3, 12, 2),
+      );
+      final (router, _, _) = await pump(tester, order);
+      unawaited(router.push(Routes.bill(order.id), extra: order));
+      await tester.pumpAndSettle();
+
+      expect(find.text('Travel charge'), findsOneWidget);
+      expect(find.text('₹30'), findsOneWidget);
+      expect(find.text('Free'), findsNothing);
+      expect(find.text('₹120'), findsNWidgets(2), reason: 'the item line and the Items row: the total less the travel charge');
+    });
+
+    testWidgets('a cancelled order says the kept charge was kept because the partner had already travelled', (tester) async {
+      final order = testOrder(
+        status: OrderStatus.cancelled,
+        method: PaymentMethod.online,
+        paymentStatus: PaymentStatus.paid,
+        paidPaise: 15000,
+        refundedPaise: 12000,
+        pieces: 8,
+        totalPaise: 15000,
+        deliveryFeePaise: 3000,
+        travelChargeKept: true,
+      );
+      final (router, _, _) = await pump(tester, order);
+      unawaited(router.push(Routes.bill(order.id), extra: order));
+      await tester.pumpAndSettle();
+
+      expect(find.text('Travel charge'), findsOneWidget);
+      expect(find.text(keepLastWordsTogether('Kept: partner had already travelled')), findsOneWidget);
+    });
   });
 }
 
@@ -827,6 +904,8 @@ extension on OrderDto {
 
   OrderDto withCancelReason(String reason) => OrderDto(
     instructions: instructions,
+    careNote: careNote,
+    carePhotoUrls: carePhotoUrls,
     orderNumber: orderNumber,
     status: status,
     source: source,
@@ -843,6 +922,7 @@ extension on OrderDto {
     subtotalPaise: subtotalPaise,
     discountPaise: discountPaise,
     deliveryFeePaise: deliveryFeePaise,
+    travelChargeKept: travelChargeKept,
     totalPaise: totalPaise,
     paidPaise: paidPaise,
     refundedPaise: refundedPaise,

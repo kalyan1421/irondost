@@ -65,6 +65,11 @@ export function PaymentsCard({ order }: { order: Order }) {
             <span className="text-xs text-amber-700 dark:text-amber-300">Overpaid by {rupees(overpaidBy)}: refund due</span>
           ) : null}
         </div>
+        {order.travelChargeKept && order.deliveryFeePaise > 0 ? (
+          <p className="tabular text-xs text-muted-foreground">
+            Travel charge kept: {rupees(Math.min(order.deliveryFeePaise, order.paidPaise))} stays with us because the partner had already travelled.
+          </p>
+        ) : null}
         {captured.length > 0 ? (
           <ul className="grid gap-2 border-t pt-3">
             {captured.map((p) => (

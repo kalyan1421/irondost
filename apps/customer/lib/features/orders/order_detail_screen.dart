@@ -22,6 +22,7 @@ import '../../design/widgets/surfaces.dart';
 import '../basket/basket.dart';
 import '../support/support.dart';
 import 'cancel_order.dart';
+import 'care_note_view.dart';
 import 'order_repository.dart';
 import 'pay_due.dart';
 import 'refund_list.dart';
@@ -112,6 +113,10 @@ class OrderDetailScreen extends ConsumerWidget {
               ..._deliveredBody(context, ref, order)
             else
               ..._activeBody(context, ref, order, delayed: delayed),
+            if (hasCareNote(order)) ...[
+              const SizedBox(height: IdSpace.s4),
+              OrderCareNote(order: order),
+            ],
             const SizedBox(height: IdSpace.s4),
             IdListGroup(children: [
               if (order.canReschedule)
@@ -329,6 +334,15 @@ class OrderDetailScreen extends ConsumerWidget {
         RefundList(order: order),
         const SizedBox(height: IdSpace.s4),
       ],
+      // Only when money was actually kept: an unpaid order was not charged, whatever staff recorded.
+      if (keptTravelPaise(order) > 0) ...[
+        _Notice(
+          icon: LucideIcons.info,
+          tone: _NoticeTone.info,
+          text: keepLastWordsTogether('Travel charge kept: partner had already travelled'),
+        ),
+        const SizedBox(height: IdSpace.s4),
+      ],
       IdCard(
         child: Column(
           children: [
@@ -342,6 +356,10 @@ class OrderDetailScreen extends ConsumerWidget {
             paid
                 ? _Line('Paid', rupees(order.paidPaise))
                 : _Line('Amount', '${rupees(order.totalPaise)} · nothing charged'),
+            if (keptTravelPaise(order) > 0) ...[
+              const SizedBox(height: 10),
+              _Line('Kept for travel', rupees(keptTravelPaise(order))),
+            ],
           ],
         ),
       ),

@@ -102,6 +102,8 @@ export class UsersService {
       }),
       this.prisma.device.deleteMany({ where: { userId: user.id } }),
       this.prisma.pushDelivery.deleteMany({ where: { userId: user.id } }),
+      // Where they live and how to reach them: nothing to keep once the account is gone.
+      this.prisma.areaInterest.deleteMany({ where: { userId: user.id } }),
       this.prisma.notification.deleteMany({ where: { userId: user.id } }),
       this.prisma.user.update({
         where: { id: user.id },

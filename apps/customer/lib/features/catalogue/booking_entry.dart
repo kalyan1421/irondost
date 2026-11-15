@@ -24,7 +24,7 @@ void startBooking(
       ..showSnackBar(
         SnackBar(
           content: Text(
-            'We don’t pick up from ${address.area ?? address.city} yet. Choose another address.',
+            'We’re not in ${address.area ?? address.city} yet. Choose another address to book.',
           ),
         ),
       );

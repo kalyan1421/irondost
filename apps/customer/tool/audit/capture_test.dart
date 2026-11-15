@@ -314,6 +314,55 @@ void main() {
       brightness: b,
       textScale: s,
     ),
+    // A small basket: the ₹30 travel charge as its own line, and the one calm line on how to make it free.
+    'Basket travel charge': (b, s) async => auditThemed(
+      const BasketScreen(),
+      overrides: await basketOverrides(
+        saved: {'basket.v1': '{"lines":{"shirt":6,"trousers":2},"promoCode":null}'},
+        quotes: FakeQuoteRepository()
+          ..deliveryFeePaise = 3000
+          ..freeTravelFromPaise = 20000,
+      ),
+      brightness: b,
+      textScale: s,
+    ),
+    // Cancelled after the partner had already travelled: the ₹30 charge kept, the rest refunded.
+    'Order bill travel kept': (b, s) async => auditThemed(
+      OrderBillScreen(
+        orderId: 'o-1',
+        initial: testOrder(
+          status: OrderStatus.cancelled,
+          method: PaymentMethod.online,
+          paymentStatus: PaymentStatus.paid,
+          totalPaise: 15000,
+          paidPaise: 15000,
+          refundedPaise: 12000,
+          deliveryFeePaise: 3000,
+          pieces: 8,
+          travelChargeKept: true,
+          cancelledAt: now,
+        ),
+      ),
+      overrides: [
+        orderRepositoryProvider.overrideWithValue(
+          FakeOrderRepository()
+            ..orders['o-1'] = testOrder(
+              status: OrderStatus.cancelled,
+              method: PaymentMethod.online,
+              paymentStatus: PaymentStatus.paid,
+              totalPaise: 15000,
+              paidPaise: 15000,
+              refundedPaise: 12000,
+              deliveryFeePaise: 3000,
+              pieces: 8,
+              travelChargeKept: true,
+              cancelledAt: now,
+            ),
+        ),
+      ],
+      brightness: b,
+      textScale: s,
+    ),
     'Orders': (b, s) async => auditRouter(
       testRouter({
         Routes.orders: () => const OrdersScreen(),
@@ -517,6 +566,91 @@ void main() {
       brightness: b,
       textScale: s,
     ),
+    // Pickup windows with no place left: disabled, with the word Full, beside the ones that are open.
+    'Schedule full windows': (b, s) async => auditThemed(
+      const ScheduleScreen(),
+      overrides: [
+        scheduleRepositoryProvider.overrideWithValue(
+          FakeScheduleRepository(
+            todayOver: false,
+            full: {(date: testToday, slot: TimeSlot.morning), (date: testToday, slot: TimeSlot.noon)},
+          ),
+        ),
+        startup,
+        ...await basketOverrides(),
+      ],
+      brightness: b,
+      textScale: s,
+    ),
+    // Nothing left today: the last window is full and the others closed.
+    'Schedule nothing left today': (b, s) async => auditThemed(
+      const ScheduleScreen(),
+      overrides: [
+        scheduleRepositoryProvider.overrideWithValue(
+          FakeScheduleRepository(full: {(date: testToday, slot: TimeSlot.evening)}),
+        ),
+        startup,
+        ...await basketOverrides(),
+      ],
+      brightness: b,
+      textScale: s,
+    ),
+    // The order's own window stays selected even when the API counts it as full; another full window shows as Full.
+    'Change pickup time full windows': (b, s) async => auditRouter(
+      at(Routes.reschedule('r1'), RescheduleScreen(orderId: 'r1', initial: reschedulable())),
+      overrides: [
+        orderRepositoryProvider.overrideWithValue(FakeOrderRepository()..orders['r1'] = reschedulable()),
+        scheduleRepositoryProvider.overrideWithValue(
+          FakeScheduleRepository(
+            full: {(date: '2026-10-04', slot: TimeSlot.morning), (date: '2026-10-04', slot: TimeSlot.noon)},
+          ),
+        ),
+        startup,
+        ...await basketOverrides(),
+      ],
+      brightness: b,
+      textScale: s,
+    ),
+    // The saved address is outside the area: Home says so and offers "Tell me when you're here" with the consent line.
+    'Home outside the area': (b, s) async => auditThemed(
+      const HomeScreen(),
+      overrides: [
+        ...await basketOverrides(),
+        addressRepositoryProvider.overrideWithValue(
+          FakeAddressRepository([testAddress(serviceable: false, area: 'Gachibowli')]),
+        ),
+        orderRepositoryProvider.overrideWithValue(FakeOrderRepository()),
+      ],
+      brightness: b,
+      textScale: s,
+    ),
+    // After "Tell me when you're here" on the map screen: the details form says what saving will also do.
+    'Address form tell me': (b, s) async => auditRouter(
+      at(
+        '/address',
+        const AddressFormScreen(
+          args: FormArgs(
+            draft: AddressDraft(
+              latitude: 17.4401,
+              longitude: 78.3489,
+              street: 'ISB Road',
+              area: 'Gachibowli',
+              city: 'Hyderabad',
+              state: 'Telangana',
+              pincode: '500032',
+            ),
+            onboarding: true,
+            tellMe: true,
+          ),
+        ),
+      ),
+      overrides: [
+        addressRepositoryProvider.overrideWithValue(FakeAddressRepository()),
+        sessionProvider.overrideWith(SignedInSession.new),
+      ],
+      brightness: b,
+      textScale: s,
+    ),
     'Account': (b, s) async => auditRouter(
       testRouter({
         Routes.account: () => const AccountScreen(),
@@ -672,6 +806,53 @@ void main() {
       brightness: b,
       textScale: s,
     ),
+    'Checkout care note': (b, s) async => auditRouter(
+      at('/checkout', const CheckoutScreen()),
+      overrides: [
+        ...await basketOverrides(
+          saved: {
+            'basket.v1': '{"lines":{"shirt":10,"wash-shirt":2},"promoCode":null}',
+            'care.draft.v1':
+                '{"note":"Red silk saree, stain on the pallu. Colours may run.","photos":["https://files.test/care/u1/a.webp","https://files.test/care/u1/b.webp","https://files.test/care/u1/c.webp"],"pending":[]}',
+          },
+        ),
+        scheduleRepositoryProvider.overrideWithValue(FakeScheduleRepository()),
+        orderRepositoryProvider.overrideWithValue(FakeOrderRepository()),
+        addressRepositoryProvider.overrideWithValue(
+          FakeAddressRepository([testAddress()]),
+        ),
+      ],
+      brightness: b,
+      textScale: s,
+    ),
+    'Order detail care note': (b, s) async {
+      // Delivered keeps the page short, so the care note is in the first screen of the capture.
+      final order = testOrder(
+        id: 'o-1',
+        status: OrderStatus.delivered,
+        method: PaymentMethod.online,
+        paymentStatus: PaymentStatus.paid,
+        paidPaise: 24800,
+        pickedUpAt: DateTime.utc(2026, 10, 3, 12, 10),
+        deliveredAt: DateTime.utc(2026, 10, 4, 12, 10),
+        careNote: 'Red silk saree, stain on the pallu. Colours may run.',
+        carePhotoUrls: const [
+          'https://files.test/care/u1/a.webp',
+          'https://files.test/care/u1/b.webp',
+        ],
+      );
+      return auditRouter(
+        at('/order', OrderDetailScreen(orderId: 'o-1', initial: order)),
+        overrides: [
+          orderRepositoryProvider.overrideWithValue(
+            FakeOrderRepository()..orders['o-1'] = order,
+          ),
+          ...await basketOverrides(),
+        ],
+        brightness: b,
+        textScale: s,
+      );
+    },
     'Confirmed': (b, s) async => auditRouter(
       at(
         '/confirmed',
@@ -751,8 +932,19 @@ void main() {
     final pendingRefund = testOrder(status: OrderStatus.cancelled, paymentStatus: PaymentStatus.refunded, method: PaymentMethod.online, totalPaise: 25500, paidPaise: 25500,
       refundedPaise: 25500, cancelledAt: now, refunds: [RefundDto(id: 'refund-1', amountPaise: 25500, method: RefundMethod.razorpay, status: RefundStatus.pending,
         note: 'Order cancelled before collection.', createdAt: now, processedAt: null, failureReason: null)]);
+    // Booked as one shirt-load under ₹200 (₹30 charge); counted at pickup it reaches ₹200, so the charge goes.
+    final travelAdjustment = OrderAdjustmentDto(id: 'price-2', status: AdjustmentStatus.pendingCustomer, reason: 'Four more shirts counted at collection.',
+      oldTotalPaise: 15000, newTotalPaise: 21000, subtotalPaise: 21000, discountPaise: 0, deliveryFeePaise: 0, itemsBefore: [line],
+      itemsAfter: [const AdjustmentLineDto(catalogItemId: 'shirt', name: 'Shirt / T-shirt', unit: ItemUnit.piece, unitPricePaise: 1500, quantity: 14, lineTotalPaise: 21000)],
+      expiresAt: now.add(const Duration(hours: 12)), decidedAt: null, createdAt: now);
+    final keptTravel = testOrder(status: OrderStatus.cancelled, paymentStatus: PaymentStatus.refunded, method: PaymentMethod.online, totalPaise: 15000, paidPaise: 15000,
+      refundedPaise: 12000, deliveryFeePaise: 3000, pieces: 8, travelChargeKept: true, cancelledAt: now);
     scenarios.clear();
     scenarios.addAll({
+      'Price approval travel charge': (b, s) async => auditThemed(Scaffold(appBar: AppBar(title: const Text('Price change')), body: ListView(padding: const EdgeInsets.all(20), children: [PriceApprovalCard(order: testOrder(totalPaise: 15000, deliveryFeePaise: 3000, adjustments: [travelAdjustment]))])),
+        brightness: b, textScale: s, overrides: [adjustmentRepositoryProvider.overrideWithValue(Decisions())]),
+      'Cancelled travel kept': (b, s) async => auditRouter(at('/order', const OrderDetailScreen(orderId: 'o-1')), brightness: b, textScale: s,
+        overrides: [startup, orderRepositoryProvider.overrideWithValue(FakeOrderRepository()..orders['o-1'] = keptTravel)]),
       'Price approval review': (b, s) async => auditThemed(Scaffold(appBar: AppBar(title: const Text('Price change')), body: ListView(padding: const EdgeInsets.all(20), children: [PriceApprovalCard(order: testOrder(totalPaise: 6000, adjustments: [adjustment]))])),
         brightness: b, textScale: s, overrides: [adjustmentRepositoryProvider.overrideWithValue(Decisions())]),
       'Refund pending tracking': (b, s) async => auditRouter(at('/order', const OrderDetailScreen(orderId: 'o-1')), brightness: b, textScale: s,
@@ -773,8 +965,10 @@ void main() {
   if (const bool.fromEnvironment('AUDIT_CHECKOUT') ||
       const bool.fromEnvironment('AUDIT_KEYBOARD')) {
     final checkout = scenarios['Checkout']!;
+    final careNote = scenarios['Checkout care note']!;
     if (const bool.fromEnvironment('AUDIT_CHECKOUT')) scenarios.clear();
     scenarios['Checkout note'] = checkout;
+    scenarios['Checkout care note'] = careNote;
     scenarios['Checkout without phone'] = (b, s) async => auditRouter(
       at('/checkout', const CheckoutScreen()),
       overrides: [
@@ -873,6 +1067,7 @@ void main() {
       'Catalogue search',
       'Place search',
       'Checkout note',
+      'Checkout care note',
     };
     scenarios.removeWhere((name, _) => !forms.contains(name));
   }
@@ -893,7 +1088,7 @@ void main() {
               ..devicePixelRatio = 2;
             addTearDown(tester.view.reset);
             if (const bool.fromEnvironment('AUDIT_KEYBOARD') &&
-                entry.key != 'Checkout note') {
+                !isCheckoutForm(entry.key)) {
               tester.view.viewInsets = const FakeViewPadding(bottom: 600);
             }
             final errors = <String>[];
@@ -916,7 +1111,7 @@ void main() {
               );
               await tester.pump(const Duration(milliseconds: 500));
               await tester.pump(const Duration(milliseconds: 500));
-              if (entry.key == 'Price approval review') { await tester.tap(find.text('Review price change')); await tester.pumpAndSettle(); }
+              if (entry.key.startsWith('Price approval')) { await tester.tap(find.text('Review price change')); await tester.pumpAndSettle(); }
               await prepareCheckoutNote(tester, entry.key);
               await prepareReschedule(tester, entry.key);
               await tester.pumpWidget(const SizedBox());
@@ -942,7 +1137,7 @@ void main() {
           ..devicePixelRatio = 2;
         addTearDown(tester.view.reset);
         if (const bool.fromEnvironment('AUDIT_KEYBOARD') &&
-            entry.key != 'Checkout note') {
+            !isCheckoutForm(entry.key)) {
           tester.view.viewInsets = const FakeViewPadding(bottom: 600);
         }
         final key = GlobalKey();
@@ -960,7 +1155,7 @@ void main() {
         await tester.pump(quoteDebounce + const Duration(milliseconds: 10));
         await tester.pump(const Duration(milliseconds: 500));
         await tester.pump(const Duration(milliseconds: 500));
-        if (entry.key == 'Price approval review') { await tester.tap(find.text('Review price change')); await tester.pumpAndSettle(); }
+        if (entry.key.startsWith('Price approval')) { await tester.tap(find.text('Review price change')); await tester.pumpAndSettle(); }
         await prepareCheckoutNote(tester, entry.key);
         await prepareReschedule(tester, entry.key);
         await tester.runAsync(() async {
@@ -1174,30 +1369,46 @@ Future<void> prepareReschedule(WidgetTester tester, String name) async {
   await tester.pumpAndSettle();
 }
 
+/// The checkout scenarios that open a text field (the keyboard is reserved by [prepareCheckoutNote], not for the whole screen).
+bool isCheckoutForm(String name) => name == 'Checkout note' || name == 'Checkout care note';
+
 Future<void> prepareCheckoutNote(WidgetTester tester, String name) async {
-  if (name != 'Checkout note') return;
-  final note = find.text('Note for your pickup (optional)');
-  await tester.scrollUntilVisible(
-    note.hitTestable(),
-    150,
-    scrollable: find.byType(Scrollable).first,
-  );
-  await tester.tap(note.hitTestable());
-  await tester.pumpAndSettle();
+  if (!isCheckoutForm(name)) return;
+  // The care note and the pickup note each have a field; this is the one the scenario is about.
+  final Finder field;
+  if (name == 'Checkout care note') {
+    field = find.descendant(
+      of: find.byKey(const ValueKey('care-note-input')),
+      matching: find.byType(TextField),
+    );
+  } else {
+    final note = find.text('Note for your pickup (optional)');
+    await tester.scrollUntilVisible(
+      note.hitTestable(),
+      150,
+      scrollable: find.byType(Scrollable).first,
+    );
+    await tester.tap(note.hitTestable());
+    await tester.pumpAndSettle();
+    field = find.descendant(
+      of: find.byKey(const PageStorageKey('pickup-note-input')),
+      matching: find.byType(TextField),
+    );
+  }
   // Focus the input before reserving the keyboard inset, as on a device.
   // This also keeps the editing field alive when the list viewport shrinks.
   await tester.scrollUntilVisible(
-    find.byType(TextField),
+    field,
     120,
     scrollable: find.byType(Scrollable).first,
   );
-  await tester.showKeyboard(find.byType(TextField));
+  await tester.showKeyboard(field);
   await tester.pumpAndSettle();
   if (const bool.fromEnvironment('AUDIT_KEYBOARD')) {
     tester.view.viewInsets = const FakeViewPadding(bottom: 600);
     await tester.pumpAndSettle();
   }
-  await tester.ensureVisible(find.byType(TextField));
+  await tester.ensureVisible(field);
   await tester.pumpAndSettle();
 }
 

@@ -250,6 +250,43 @@
         ]
       }
     },
+    "/v1/admin/settings/check-address": {
+      "post": {
+        "operationId": "CheckAddressController_check",
+        "parameters": [],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CheckAddressDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CheckAddressResultDto"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Tests an address against the saved service area before customers meet the edge: type a map position, a PIN code, or both.",
+        "tags": [
+          "admin · settings"
+        ]
+      }
+    },
     "/v1/me": {
       "get": {
         "operationId": "UsersController_me",
@@ -518,6 +555,137 @@
         ],
         "tags": [
           "addresses"
+        ]
+      }
+    },
+    "/v1/me/area-interest": {
+      "post": {
+        "operationId": "AreaInterestController_register",
+        "parameters": [],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/RegisterAreaInterestDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AreaInterestDto"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "\"Tell me when you're here\": for a saved address outside the service area. Uses the signed-in customer's own number.\nIdempotent: asking again for the same PIN code returns the open request.",
+        "tags": [
+          "area-interest"
+        ]
+      }
+    },
+    "/v1/admin/area-interest": {
+      "get": {
+        "operationId": "AdminAreaInterestController_overview",
+        "parameters": [
+          {
+            "name": "page",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "minimum": 1,
+              "default": 1,
+              "type": "number"
+            }
+          },
+          {
+            "name": "pageSize",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "minimum": 1,
+              "maximum": 100,
+              "default": 20,
+              "type": "number"
+            }
+          },
+          {
+            "name": "status",
+            "required": false,
+            "in": "query",
+            "description": "OPEN: not told yet. TOLD: staff told the customer. ALL: both.",
+            "schema": {
+              "$ref": "#/components/schemas/AreaInterestStatus"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AreaInterestOverviewDto"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Who asked to be told when we reach them: counts by PIN code, locality and distance band, and the requests newest first.",
+        "tags": [
+          "admin · area interest"
+        ]
+      }
+    },
+    "/v1/admin/area-interest/{id}/told": {
+      "post": {
+        "operationId": "AdminAreaInterestController_told",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AreaInterestItemDto"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Staff have told this customer we now serve them.",
+        "tags": [
+          "admin · area interest"
         ]
       }
     },
@@ -2774,6 +2942,52 @@
         ]
       }
     },
+    "/v1/me/uploads/care-photos": {
+      "post": {
+        "operationId": "CustomerUploadsController_uploadCarePhoto",
+        "parameters": [],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "multipart/form-data": {
+              "schema": {
+                "type": "object",
+                "required": [
+                  "file"
+                ],
+                "properties": {
+                  "file": {
+                    "type": "string",
+                    "format": "binary"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ImageUploadDto"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "A photo of the clothes for a care note, added before the order exists. Same image limits as report photos. It stays free\nuntil an order is placed with its URL; one photo goes to one order, up to 3 on each order.",
+        "tags": [
+          "uploads"
+        ]
+      }
+    },
     "/v1/admin/ledger": {
       "get": {
         "description": "Each entry is one payment or one refund, with its order and customer. `status=problem` finds what needs attention: PENDING and FAILED entries. Dates are IST. Never includes gateway payloads.",
@@ -4621,6 +4835,13 @@
           "EVENING"
         ]
       },
+      "SlotUnavailableReason": {
+        "type": "string",
+        "enum": [
+          "FULL"
+        ],
+        "description": "`FULL` when the pickup window is open but has no place left; `available` is false then. Null otherwise."
+      },
       "SlotOptionDto": {
         "type": "object",
         "properties": {
@@ -4649,6 +4870,15 @@
           },
           "available": {
             "type": "boolean"
+          },
+          "reason": {
+            "nullable": true,
+            "description": "`FULL` when the pickup window is open but has no place left; `available` is false then. Null otherwise.",
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/SlotUnavailableReason"
+              }
+            ]
           }
         },
         "required": [
@@ -4657,7 +4887,8 @@
           "label",
           "startsAt",
           "endsAt",
-          "available"
+          "available",
+          "reason"
         ]
       },
       "SlotDefinitionDto": {
@@ -4699,11 +4930,13 @@
             "type": "number"
           },
           "deliveryFeePaise": {
-            "type": "number"
+            "type": "number",
+            "description": "The flat travel charge for a small order, in paise."
           },
           "freeDeliveryAbovePaise": {
             "type": "number",
-            "nullable": true
+            "nullable": true,
+            "description": "Travel is free from this items total (before any coupon), in paise. Null = never free."
           },
           "minTurnaroundHours": {
             "type": "number"
@@ -4761,6 +4994,57 @@
           "serviceable",
           "reason",
           "distanceKm"
+        ]
+      },
+      "CheckAddressDto": {
+        "type": "object",
+        "properties": {
+          "latitude": {
+            "type": "number",
+            "example": 17.4126,
+            "description": "Send with longitude"
+          },
+          "longitude": {
+            "type": "number",
+            "example": 78.4482,
+            "description": "Send with latitude"
+          },
+          "pincode": {
+            "type": "string",
+            "example": "500034"
+          }
+        }
+      },
+      "CheckAddressResultDto": {
+        "type": "object",
+        "properties": {
+          "served": {
+            "type": "boolean",
+            "description": "Whether a pickup can be booked here under the saved settings"
+          },
+          "reason": {
+            "nullable": true,
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/NotServiceableReason"
+              }
+            ]
+          },
+          "distanceKm": {
+            "type": "number",
+            "nullable": true,
+            "description": "Straight-line km from the centre; null without a centre or a map position"
+          },
+          "verified": {
+            "type": "boolean",
+            "description": "Whether the answer rests on a map position or a PIN code on the served list. False means \"served\" only because there was nothing to check: a phone order needs a map pin or a served PIN code."
+          }
+        },
+        "required": [
+          "served",
+          "reason",
+          "distanceKm",
+          "verified"
         ]
       },
       "DriverProfileDto": {
@@ -5136,6 +5420,225 @@
             "default": false
           }
         }
+      },
+      "RegisterAreaInterestDto": {
+        "type": "object",
+        "properties": {
+          "addressId": {
+            "type": "string",
+            "description": "One of the signed-in customer's saved addresses. The place is read from the saved address, never from the request."
+          }
+        },
+        "required": [
+          "addressId"
+        ]
+      },
+      "AreaInterestDto": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "pincode": {
+            "type": "string"
+          },
+          "locality": {
+            "type": "string",
+            "example": "Gachibowli"
+          },
+          "createdAt": {
+            "format": "date-time",
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "pincode",
+          "locality",
+          "createdAt"
+        ]
+      },
+      "AreaInterestStatus": {
+        "type": "string",
+        "enum": [
+          "OPEN",
+          "TOLD",
+          "ALL"
+        ]
+      },
+      "DistanceBand": {
+        "type": "string",
+        "enum": [
+          "UNDER_6",
+          "KM_6_8",
+          "KM_8_10",
+          "KM_10_PLUS",
+          "UNKNOWN"
+        ]
+      },
+      "AreaInterestBandTotalDto": {
+        "type": "object",
+        "properties": {
+          "band": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/DistanceBand"
+              }
+            ]
+          },
+          "count": {
+            "type": "number"
+          }
+        },
+        "required": [
+          "band",
+          "count"
+        ]
+      },
+      "AreaInterestGroupDto": {
+        "type": "object",
+        "properties": {
+          "pincode": {
+            "type": "string"
+          },
+          "locality": {
+            "type": "string"
+          },
+          "band": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/DistanceBand"
+              }
+            ]
+          },
+          "count": {
+            "type": "number"
+          },
+          "nearestKm": {
+            "type": "number",
+            "nullable": true,
+            "description": "Nearest request to the centre, in km"
+          },
+          "newestAt": {
+            "format": "date-time",
+            "type": "string"
+          }
+        },
+        "required": [
+          "pincode",
+          "locality",
+          "band",
+          "count",
+          "nearestKm",
+          "newestAt"
+        ]
+      },
+      "AreaInterestItemDto": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "customerId": {
+            "type": "string"
+          },
+          "customerName": {
+            "type": "string",
+            "nullable": true
+          },
+          "customerPhone": {
+            "type": "string",
+            "nullable": true,
+            "description": "The number the customer signed in with (or typed at checkout)"
+          },
+          "pincode": {
+            "type": "string"
+          },
+          "locality": {
+            "type": "string"
+          },
+          "distanceKm": {
+            "type": "number",
+            "nullable": true
+          },
+          "band": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/DistanceBand"
+              }
+            ]
+          },
+          "createdAt": {
+            "format": "date-time",
+            "type": "string"
+          },
+          "notifiedAt": {
+            "format": "date-time",
+            "type": "string",
+            "nullable": true
+          }
+        },
+        "required": [
+          "id",
+          "customerId",
+          "customerName",
+          "customerPhone",
+          "pincode",
+          "locality",
+          "distanceKm",
+          "band",
+          "createdAt",
+          "notifiedAt"
+        ]
+      },
+      "AreaInterestOverviewDto": {
+        "type": "object",
+        "properties": {
+          "openTotal": {
+            "type": "number",
+            "description": "Requests staff have not told yet"
+          },
+          "bands": {
+            "description": "Open requests per distance band, nearest first. Bands with none are left out.",
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/AreaInterestBandTotalDto"
+            }
+          },
+          "areas": {
+            "description": "Open requests per PIN code, locality and band, most first",
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/AreaInterestGroupDto"
+            }
+          },
+          "items": {
+            "description": "The requests matching `status`, newest first",
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/AreaInterestItemDto"
+            }
+          },
+          "page": {
+            "type": "number"
+          },
+          "pageSize": {
+            "type": "number"
+          },
+          "total": {
+            "type": "number",
+            "description": "Requests matching `status`"
+          }
+        },
+        "required": [
+          "openTotal",
+          "bands",
+          "areas",
+          "items",
+          "page",
+          "pageSize",
+          "total"
+        ]
       },
       "ItemUnit": {
         "type": "string",
@@ -5861,10 +6364,16 @@
             "type": "number"
           },
           "deliveryFeePaise": {
-            "type": "number"
+            "type": "number",
+            "description": "The flat travel charge: 0 once the items total (before any coupon) reaches the free-from amount."
           },
           "totalPaise": {
             "type": "number"
+          },
+          "freeTravelShortfallPaise": {
+            "type": "number",
+            "nullable": true,
+            "description": "How much more of clothes (items total before any coupon) makes travel free. Null when travel is already free or there is no threshold."
           },
           "promoCode": {
             "type": "string",
@@ -5899,6 +6408,7 @@
           "discountPaise",
           "deliveryFeePaise",
           "totalPaise",
+          "freeTravelShortfallPaise",
           "promoCode",
           "promoError",
           "promoShortfallPaise",
@@ -5966,6 +6476,20 @@
           "instructions": {
             "type": "string",
             "example": "Please call before arriving"
+          },
+          "careNote": {
+            "type": "string",
+            "example": "Red silk saree: stain on the pallu",
+            "maxLength": 500,
+            "description": "What the workshop should know about the clothes (stains, delicate fabric). Separate from instructions, which are for the pickup partner."
+          },
+          "carePhotoUrls": {
+            "maxItems": 3,
+            "description": "Photos of the clothes: URLs returned by POST /v1/me/uploads/care-photos for this customer, each used once and not yet on an order.",
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
           }
         },
         "required": [
@@ -6504,6 +7028,18 @@
             "type": "string",
             "nullable": true
           },
+          "careNote": {
+            "type": "string",
+            "nullable": true,
+            "description": "What the customer told the workshop about their clothes. Separate from instructions, which are for the pickup partner."
+          },
+          "carePhotoUrls": {
+            "description": "Photos that came with the care note, oldest first. Full-size URLs.",
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
           "items": {
             "type": "array",
             "items": {
@@ -6531,7 +7067,11 @@
           },
           "refundablePaise": {
             "type": "number",
-            "description": "What can still be refunded (paidPaise - refundedPaise). Admin view only."
+            "description": "What can still be refunded (paidPaise - refundedPaise, less the travel charge when it was kept). Admin view only."
+          },
+          "travelChargeKept": {
+            "type": "boolean",
+            "description": "Staff cancelled after the partner had already travelled, so the travel charge (deliveryFeePaise) was kept, not refunded."
           },
           "amountDuePaise": {
             "type": "number"
@@ -6651,6 +7191,16 @@
             "items": {
               "$ref": "#/components/schemas/OrderPaymentDto"
             }
+          },
+          "areaOverrideReason": {
+            "type": "string",
+            "nullable": true,
+            "description": "Staff view only: why a phone order was placed for an address outside the service area. Null when it was inside."
+          },
+          "capacityOverrideReason": {
+            "type": "string",
+            "nullable": true,
+            "description": "Staff view only: why a phone order was booked into a pickup window that was already full. Null when there was room."
           }
         },
         "required": [
@@ -6667,6 +7217,8 @@
           "pickupAddress",
           "deliveryAddress",
           "instructions",
+          "careNote",
+          "carePhotoUrls",
           "items",
           "subtotalPaise",
           "discountPaise",
@@ -6674,6 +7226,7 @@
           "totalPaise",
           "paidPaise",
           "refundedPaise",
+          "travelChargeKept",
           "amountDuePaise",
           "promoCode",
           "paymentMethod",
@@ -6818,8 +7371,24 @@
             "type": "string",
             "example": "Please call before arriving"
           },
+          "careNote": {
+            "type": "string",
+            "example": "Red silk saree: stain on the pallu",
+            "maxLength": 500,
+            "description": "What the workshop should know about the clothes (stains, delicate fabric). Separate from instructions, which are for the pickup partner."
+          },
           "customerId": {
             "type": "string"
+          },
+          "outsideAreaReason": {
+            "type": "string",
+            "example": "Regular customer, our partner passes that way daily",
+            "description": "Needed when the pickup or delivery address is outside the service area (ADDRESS_NOT_SERVICEABLE). Stored on the order and in the audit log. Ignored when the address is inside."
+          },
+          "capacityOverrideReason": {
+            "type": "string",
+            "example": "Customer is away on other days",
+            "description": "Needed when the pickup window is already full (SLOT_FULL). Stored on the order and in the audit log. Ignored when the window has room."
           }
         },
         "required": [
@@ -6849,6 +7418,10 @@
           "collectedCash": {
             "type": "boolean",
             "description": "With status DELIVERED: the partner or staff collected the balance in cash, so record it with the delivery."
+          },
+          "keepTravelCharge": {
+            "type": "boolean",
+            "description": "With status CANCELLED: the partner had already travelled, so keep the travel charge. It is not refunded and the refund due is reduced by it. Without it, everything paid is refunded, the charge included."
           }
         },
         "required": [
@@ -6898,6 +7471,10 @@
           "deliveryFeePaise": {
             "type": "number"
           },
+          "oldDeliveryFeePaise": {
+            "type": "number",
+            "description": "The travel charge the order has now, so a screen can show it changing."
+          },
           "requiresApproval": {
             "type": "boolean"
           },
@@ -6915,6 +7492,7 @@
           "subtotalPaise",
           "discountPaise",
           "deliveryFeePaise",
+          "oldDeliveryFeePaise",
           "requiresApproval",
           "lines"
         ]
@@ -8391,11 +8969,13 @@
             "type": "number"
           },
           "deliveryFeePaise": {
-            "type": "number"
+            "type": "number",
+            "description": "The flat travel charge for a small order, in paise."
           },
           "freeDeliveryAbovePaise": {
             "type": "number",
-            "nullable": true
+            "nullable": true,
+            "description": "Travel is free from this items total (before any coupon), in paise. Null = never free."
           },
           "minTurnaroundHours": {
             "type": "number"
@@ -8450,6 +9030,11 @@
               "type": "string"
             }
           },
+          "pickupCapacityPerSlot": {
+            "type": "number",
+            "nullable": true,
+            "description": "Pickups one window can hold; null means no limit."
+          },
           "updatedAt": {
             "format": "date-time",
             "type": "string"
@@ -8476,6 +9061,7 @@
           "serviceCenterLongitude",
           "serviceRadiusKm",
           "servicePincodes",
+          "pickupCapacityPerSlot",
           "updatedAt"
         ]
       },
@@ -8495,11 +9081,13 @@
             "type": "number"
           },
           "deliveryFeePaise": {
-            "type": "number"
+            "type": "number",
+            "description": "The flat travel charge for a small order, in paise (0 = no charge)."
           },
           "freeDeliveryAbovePaise": {
             "type": "number",
-            "nullable": true
+            "nullable": true,
+            "description": "Travel is free when the items total, before any coupon, reaches this many paise. Null = the charge always applies."
           },
           "minTurnaroundHours": {
             "type": "number"
@@ -8562,6 +9150,12 @@
             "items": {
               "type": "string"
             }
+          },
+          "pickupCapacityPerSlot": {
+            "type": "number",
+            "nullable": true,
+            "description": "Pickups one window (a pickup date and slot) can hold. Null means no limit.",
+            "example": 8
           }
         }
       },

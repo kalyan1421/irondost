@@ -8,9 +8,11 @@ import '../../app/routes.dart';
 import '../../core/money.dart';
 import '../../core/order_text.dart';
 import '../../core/slots.dart';
+import '../../core/text_wrap.dart';
 import '../../data/api_client.dart';
 import '../../design/theme.dart';
 import '../../design/widgets/surfaces.dart';
+import 'care_note_view.dart';
 import 'order_repository.dart';
 import 'refund_list.dart';
 import '../../design/widgets/id_button.dart';
@@ -121,6 +123,10 @@ class OrderBillScreen extends ConsumerWidget {
                 ),
                 const SizedBox(height: IdSpace.s4),
                 _Bill(order),
+                if (hasCareNote(order)) ...[
+                  const SizedBox(height: IdSpace.s4),
+                  OrderCareNote(order: order),
+                ],
                 if (order.refunds?.isNotEmpty ?? false) ...[
                   const SizedBox(height: IdSpace.s5),
                   RefundList(order: order),
@@ -242,12 +248,18 @@ class _Bill extends StatelessWidget {
           ],
           const SizedBox(height: 10),
           row(
-            'Pickup & delivery',
-            order.deliveryFeePaise == 0
-                ? 'Free'
-                : rupees(order.deliveryFeePaise),
+            'Travel charge',
+            travelChargeLabel(order.deliveryFeePaise),
             color: c.textMuted,
           ),
+          if (keptTravelPaise(order) > 0)
+            Align(
+              alignment: Alignment.centerLeft,
+              child: Text(
+                keepLastWordsTogether('Kept: partner had already travelled'),
+                style: t.caption.copyWith(color: c.textMuted),
+              ),
+            ),
           const SizedBox(height: IdSpace.s3),
           Container(
             padding: const EdgeInsets.only(top: IdSpace.s3),

@@ -20,6 +20,7 @@ import 'package:irondost_customer/features/auth/session.dart';
 import 'package:irondost_customer/features/auth/welcome_screen.dart';
 import 'package:irondost_customer/features/basket/basket_screen.dart';
 import 'package:irondost_customer/features/catalogue/catalogue_screen.dart';
+import 'package:irondost_customer/features/checkout/care_note_section.dart';
 import 'package:irondost_customer/features/basket/quote.dart';
 import 'package:irondost_customer/features/home/home_screen.dart';
 import 'package:irondost_customer/features/notifications/notifications.dart';
@@ -143,6 +144,30 @@ void main() {
         textScale: s,
       );
     },
+    'Order detail (care note)': (b, s) async {
+      final order = testOrder(
+        id: 'c1',
+        status: OrderStatus.processing,
+        pickedUpAt: DateTime.utc(2026, 10, 1, 12, 10),
+        careNote: 'Red silk saree: stain on the pallu. Colours may run.',
+        carePhotoUrls: const ['https://files.test/care/u1/a.webp', 'https://files.test/care/u1/b.webp'],
+      );
+      return themedRouter(
+        at(Routes.order('c1'), OrderDetailScreen(orderId: 'c1', initial: order)),
+        overrides: [orderRepositoryProvider.overrideWithValue(FakeOrderRepository()..orders['c1'] = order), ...await basketOverrides()],
+        brightness: b,
+        textScale: s,
+      );
+    },
+    'Checkout care note': (b, s) async => themed(
+          Scaffold(body: ListView(padding: const EdgeInsets.all(20), children: const [CareNoteSection()])),
+          overrides: await basketOverrides(saved: {
+            'basket.v1': '{"lines":{"shirt":2,"wash-shirt":1},"promoCode":null}',
+            'care.draft.v1': '{"note":"Red silk saree: stain on the pallu","photos":["https://files.test/care/u1/a.webp","https://files.test/care/u1/b.webp"],"pending":[]}',
+          }),
+          brightness: b,
+          textScale: s,
+        ),
     'Order detail (change pickup time)': (b, s) async => themedRouter(
           at(Routes.order('r1'), OrderDetailScreen(orderId: 'r1', initial: reschedulable())),
           overrides: [orderRepositoryProvider.overrideWithValue(FakeOrderRepository()..orders['r1'] = reschedulable()), ...await basketOverrides()],
@@ -205,6 +230,32 @@ void main() {
                 ]),
             ),
             sessionProvider.overrideWith(SignedInSession.new),
+          ],
+          brightness: b,
+          textScale: s,
+        ),
+    'Schedule full windows': (b, s) async => themed(
+          const ScheduleScreen(),
+          overrides: [
+            scheduleRepositoryProvider.overrideWithValue(FakeScheduleRepository(todayOver: false, full: {(date: testToday, slot: TimeSlot.morning), (date: testToday, slot: TimeSlot.noon)})),
+            startup,
+            ...await basketOverrides(),
+          ],
+          brightness: b,
+          textScale: s,
+        ),
+    'Schedule nothing left today': (b, s) async => themed(
+          const ScheduleScreen(),
+          overrides: [scheduleRepositoryProvider.overrideWithValue(FakeScheduleRepository(full: {(date: testToday, slot: TimeSlot.evening)})), startup, ...await basketOverrides()],
+          brightness: b,
+          textScale: s,
+        ),
+    'Home outside the area': (b, s) async => themed(
+          const HomeScreen(),
+          overrides: [
+            ...await basketOverrides(),
+            addressRepositoryProvider.overrideWithValue(FakeAddressRepository([testAddress(serviceable: false, area: 'Gachibowli')])),
+            orderRepositoryProvider.overrideWithValue(FakeOrderRepository()),
           ],
           brightness: b,
           textScale: s,

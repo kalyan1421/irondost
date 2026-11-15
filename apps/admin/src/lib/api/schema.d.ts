@@ -120,6 +120,23 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/v1/admin/settings/check-address": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Tests an address against the saved service area before customers meet the edge: type a map position, a PIN code, or both. */
+        post: operations["CheckAddressController_check"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/v1/me": {
         parameters: {
             query?: never;
@@ -200,6 +217,60 @@ export interface paths {
         options?: never;
         head?: never;
         patch: operations["AddressesController_update"];
+        trace?: never;
+    };
+    "/v1/me/area-interest": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * "Tell me when you're here": for a saved address outside the service area. Uses the signed-in customer's own number.
+         *     Idempotent: asking again for the same PIN code returns the open request.
+         */
+        post: operations["AreaInterestController_register"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/v1/admin/area-interest": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Who asked to be told when we reach them: counts by PIN code, locality and distance band, and the requests newest first. */
+        get: operations["AdminAreaInterestController_overview"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/v1/admin/area-interest/{id}/told": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Staff have told this customer we now serve them. */
+        post: operations["AdminAreaInterestController_told"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
         trace?: never;
     };
     "/v1/catalog": {
@@ -878,6 +949,26 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/v1/me/uploads/care-photos": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * A photo of the clothes for a care note, added before the order exists. Same image limits as report photos. It stays free
+         *     until an order is placed with its URL; one photo goes to one order, up to 3 on each order.
+         */
+        post: operations["CustomerUploadsController_uploadCarePhoto"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/v1/admin/ledger": {
         parameters: {
             query?: never;
@@ -1449,6 +1540,11 @@ export interface components {
         };
         /** @enum {string} */
         TimeSlot: "MORNING" | "NOON" | "EVENING";
+        /**
+         * @description `FULL` when the pickup window is open but has no place left; `available` is false then. Null otherwise.
+         * @enum {string}
+         */
+        SlotUnavailableReason: "FULL";
         SlotOptionDto: {
             /** @example 2026-10-05 */
             date: string;
@@ -1460,6 +1556,8 @@ export interface components {
             /** Format: date-time */
             endsAt: string;
             available: boolean;
+            /** @description `FULL` when the pickup window is open but has no place left; `available` is false then. Null otherwise. */
+            reason: components["schemas"]["SlotUnavailableReason"] | null;
         };
         SlotDefinitionDto: {
             slot: components["schemas"]["TimeSlot"];
@@ -1472,7 +1570,9 @@ export interface components {
             supportPhone: string | null;
             supportEmail: string | null;
             minOrderPaise: number;
+            /** @description The flat travel charge for a small order, in paise. */
             deliveryFeePaise: number;
+            /** @description Travel is free from this items total (before any coupon), in paise. Null = never free. */
             freeDeliveryAbovePaise: number | null;
             minTurnaroundHours: number;
             maxAdvanceDays: number;
@@ -1485,6 +1585,29 @@ export interface components {
             reason: components["schemas"]["NotServiceableReason"] | null;
             /** @description Distance from the hub when a radius applies */
             distanceKm: number | null;
+        };
+        CheckAddressDto: {
+            /**
+             * @description Send with longitude
+             * @example 17.4126
+             */
+            latitude?: number;
+            /**
+             * @description Send with latitude
+             * @example 78.4482
+             */
+            longitude?: number;
+            /** @example 500034 */
+            pincode?: string;
+        };
+        CheckAddressResultDto: {
+            /** @description Whether a pickup can be booked here under the saved settings */
+            served: boolean;
+            reason: components["schemas"]["NotServiceableReason"] | null;
+            /** @description Straight-line km from the centre; null without a centre or a map position */
+            distanceKm: number | null;
+            /** @description Whether the answer rests on a map position or a PIN code on the served list. False means "served" only because there was nothing to check: a phone order needs a map pin or a served PIN code. */
+            verified: boolean;
         };
         DriverProfileDto: {
             vehicleNumber: string | null;
@@ -1612,6 +1735,65 @@ export interface components {
             longitude?: number | null;
             /** @default false */
             isPrimary?: boolean;
+        };
+        RegisterAreaInterestDto: {
+            /** @description One of the signed-in customer's saved addresses. The place is read from the saved address, never from the request. */
+            addressId: string;
+        };
+        AreaInterestDto: {
+            id: string;
+            pincode: string;
+            /** @example Gachibowli */
+            locality: string;
+            /** Format: date-time */
+            createdAt: string;
+        };
+        /** @enum {string} */
+        AreaInterestStatus: "OPEN" | "TOLD" | "ALL";
+        /** @enum {string} */
+        DistanceBand: "UNDER_6" | "KM_6_8" | "KM_8_10" | "KM_10_PLUS" | "UNKNOWN";
+        AreaInterestBandTotalDto: {
+            band: components["schemas"]["DistanceBand"];
+            count: number;
+        };
+        AreaInterestGroupDto: {
+            pincode: string;
+            locality: string;
+            band: components["schemas"]["DistanceBand"];
+            count: number;
+            /** @description Nearest request to the centre, in km */
+            nearestKm: number | null;
+            /** Format: date-time */
+            newestAt: string;
+        };
+        AreaInterestItemDto: {
+            id: string;
+            customerId: string;
+            customerName: string | null;
+            /** @description The number the customer signed in with (or typed at checkout) */
+            customerPhone: string | null;
+            pincode: string;
+            locality: string;
+            distanceKm: number | null;
+            band: components["schemas"]["DistanceBand"];
+            /** Format: date-time */
+            createdAt: string;
+            /** Format: date-time */
+            notifiedAt: string | null;
+        };
+        AreaInterestOverviewDto: {
+            /** @description Requests staff have not told yet */
+            openTotal: number;
+            /** @description Open requests per distance band, nearest first. Bands with none are left out. */
+            bands: components["schemas"]["AreaInterestBandTotalDto"][];
+            /** @description Open requests per PIN code, locality and band, most first */
+            areas: components["schemas"]["AreaInterestGroupDto"][];
+            /** @description The requests matching `status`, newest first */
+            items: components["schemas"]["AreaInterestItemDto"][];
+            page: number;
+            pageSize: number;
+            /** @description Requests matching `status` */
+            total: number;
         };
         /** @enum {string} */
         ItemUnit: "PIECE" | "PAIR" | "SET" | "KG";
@@ -1846,8 +2028,11 @@ export interface components {
             lines: components["schemas"]["QuoteLineDto"][];
             subtotalPaise: number;
             discountPaise: number;
+            /** @description The flat travel charge: 0 once the items total (before any coupon) reaches the free-from amount. */
             deliveryFeePaise: number;
             totalPaise: number;
+            /** @description How much more of clothes (items total before any coupon) makes travel free. Null when travel is already free or there is no threshold. */
+            freeTravelShortfallPaise: number | null;
             promoCode: string | null;
             /**
              * @description Why the promo code was not applied, if it was not.
@@ -1879,6 +2064,13 @@ export interface components {
             paymentMethod: components["schemas"]["PaymentMethod"];
             /** @example Please call before arriving */
             instructions?: string;
+            /**
+             * @description What the workshop should know about the clothes (stains, delicate fabric). Separate from instructions, which are for the pickup partner.
+             * @example Red silk saree: stain on the pallu
+             */
+            careNote?: string;
+            /** @description Photos of the clothes: URLs returned by POST /v1/me/uploads/care-photos for this customer, each used once and not yet on an order. */
+            carePhotoUrls?: string[];
         };
         /** @enum {string} */
         AdjustmentStatus: "PENDING_CUSTOMER" | "APPROVED" | "DECLINED" | "EXPIRED";
@@ -2006,6 +2198,10 @@ export interface components {
             pickupAddress: components["schemas"]["OrderAddressDto"];
             deliveryAddress: components["schemas"]["OrderAddressDto"];
             instructions: string | null;
+            /** @description What the customer told the workshop about their clothes. Separate from instructions, which are for the pickup partner. */
+            careNote: string | null;
+            /** @description Photos that came with the care note, oldest first. Full-size URLs. */
+            carePhotoUrls: string[];
             items: components["schemas"]["OrderItemDto"][];
             subtotalPaise: number;
             discountPaise: number;
@@ -2014,8 +2210,10 @@ export interface components {
             paidPaise: number;
             /** @description Sum of PENDING and PROCESSED refunds. */
             refundedPaise: number;
-            /** @description What can still be refunded (paidPaise - refundedPaise). Admin view only. */
+            /** @description What can still be refunded (paidPaise - refundedPaise, less the travel charge when it was kept). Admin view only. */
             refundablePaise?: number;
+            /** @description Staff cancelled after the partner had already travelled, so the travel charge (deliveryFeePaise) was kept, not refunded. */
+            travelChargeKept: boolean;
             amountDuePaise: number;
             promoCode: string | null;
             paymentMethod: components["schemas"]["PaymentMethod"];
@@ -2049,6 +2247,10 @@ export interface components {
             refunds?: components["schemas"]["RefundDto"][];
             /** @description Captured transactions only; excludes raw provider payloads and staff identities. */
             payments?: components["schemas"]["OrderPaymentDto"][];
+            /** @description Staff view only: why a phone order was placed for an address outside the service area. Null when it was inside. */
+            areaOverrideReason?: string | null;
+            /** @description Staff view only: why a phone order was booked into a pickup window that was already full. Null when there was room. */
+            capacityOverrideReason?: string | null;
         };
         OrderPageDto: {
             items: components["schemas"]["OrderDto"][];
@@ -2093,13 +2295,30 @@ export interface components {
             paymentMethod: components["schemas"]["PaymentMethod"];
             /** @example Please call before arriving */
             instructions?: string;
+            /**
+             * @description What the workshop should know about the clothes (stains, delicate fabric). Separate from instructions, which are for the pickup partner.
+             * @example Red silk saree: stain on the pallu
+             */
+            careNote?: string;
             customerId: string;
+            /**
+             * @description Needed when the pickup or delivery address is outside the service area (ADDRESS_NOT_SERVICEABLE). Stored on the order and in the audit log. Ignored when the address is inside.
+             * @example Regular customer, our partner passes that way daily
+             */
+            outsideAreaReason?: string;
+            /**
+             * @description Needed when the pickup window is already full (SLOT_FULL). Stored on the order and in the audit log. Ignored when the window has room.
+             * @example Customer is away on other days
+             */
+            capacityOverrideReason?: string;
         };
         ChangeStatusDto: {
             status: components["schemas"]["OrderStatus"];
             note?: string;
             /** @description With status DELIVERED: the partner or staff collected the balance in cash, so record it with the delivery. */
             collectedCash?: boolean;
+            /** @description With status CANCELLED: the partner had already travelled, so keep the travel charge. It is not refunded and the refund due is reduced by it. Without it, everything paid is refunded, the charge included. */
+            keepTravelCharge?: boolean;
         };
         UpdateItemsDto: {
             /** @description Revision displayed when this edit was started. A stale edit returns ORDER_CHANGED. */
@@ -2115,6 +2334,8 @@ export interface components {
             subtotalPaise: number;
             discountPaise: number;
             deliveryFeePaise: number;
+            /** @description The travel charge the order has now, so a screen can show it changing. */
+            oldDeliveryFeePaise: number;
             requiresApproval: boolean;
             lines: components["schemas"]["QuoteLineDto"][];
         };
@@ -2517,7 +2738,9 @@ export interface components {
             adjustmentExpiryHours: number;
             issueFirstResponseHours: number | null;
             minOrderPaise: number;
+            /** @description The flat travel charge for a small order, in paise. */
             deliveryFeePaise: number;
+            /** @description Travel is free from this items total (before any coupon), in paise. Null = never free. */
             freeDeliveryAbovePaise: number | null;
             minTurnaroundHours: number;
             bookingCutoffMinutes: number;
@@ -2534,6 +2757,8 @@ export interface components {
             serviceCenterLongitude: number | null;
             serviceRadiusKm: number | null;
             servicePincodes: string[];
+            /** @description Pickups one window can hold; null means no limit. */
+            pickupCapacityPerSlot: number | null;
             /** Format: date-time */
             updatedAt: string;
         };
@@ -2543,7 +2768,9 @@ export interface components {
             /** @description Public first-response target; null keeps the promise off. */
             issueFirstResponseHours?: number | null;
             minOrderPaise?: number;
+            /** @description The flat travel charge for a small order, in paise (0 = no charge). */
             deliveryFeePaise?: number;
+            /** @description Travel is free when the items total, before any coupon, reaches this many paise. Null = the charge always applies. */
             freeDeliveryAbovePaise?: number | null;
             minTurnaroundHours?: number;
             bookingCutoffMinutes?: number;
@@ -2571,6 +2798,11 @@ export interface components {
              *     ]
              */
             servicePincodes?: string[];
+            /**
+             * @description Pickups one window (a pickup date and slot) can hold. Null means no limit.
+             * @example 8
+             */
+            pickupCapacityPerSlot?: number | null;
         };
         CreateStaffDto: {
             /** @example 9876543210 */
@@ -2739,6 +2971,29 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["ServiceAreaCheckDto"];
+                };
+            };
+        };
+    };
+    CheckAddressController_check: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["CheckAddressDto"];
+            };
+        };
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["CheckAddressResultDto"];
                 };
             };
         };
@@ -2926,6 +3181,74 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["AddressDto"];
+                };
+            };
+        };
+    };
+    AreaInterestController_register: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["RegisterAreaInterestDto"];
+            };
+        };
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["AreaInterestDto"];
+                };
+            };
+        };
+    };
+    AdminAreaInterestController_overview: {
+        parameters: {
+            query?: {
+                page?: number;
+                pageSize?: number;
+                /** @description OPEN: not told yet. TOLD: staff told the customer. ALL: both. */
+                status?: components["schemas"]["AreaInterestStatus"];
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["AreaInterestOverviewDto"];
+                };
+            };
+        };
+    };
+    AdminAreaInterestController_told: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["AreaInterestItemDto"];
                 };
             };
         };
@@ -4104,6 +4427,32 @@ export interface operations {
         };
     };
     CustomerUploadsController_upload: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "multipart/form-data": {
+                    /** Format: binary */
+                    file: string;
+                };
+            };
+        };
+        responses: {
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ImageUploadDto"];
+                };
+            };
+        };
+    };
+    CustomerUploadsController_uploadCarePhoto: {
         parameters: {
             query?: never;
             header?: never;

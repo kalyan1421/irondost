@@ -13,6 +13,18 @@ import { cn } from "@/lib/utils";
 
 const PINCODE_RE = /^[1-9]\d{5}$/;
 const LABELS = ["Home", "Work", "Other"];
+/** "17.4126, 78.4482": the pair Google Maps copies when you right-click a place. */
+const LOCATION_RE = /^\s*(-?\d+(?:\.\d+)?)\s*[,\s]\s*(-?\d+(?:\.\d+)?)\s*$/;
+
+/** The map position typed in the dialog: empty (none), a valid pair, or null when it cannot be read. */
+function parseLocation(text: string): { latitude: number; longitude: number } | "none" | null {
+  if (text.trim() === "") return "none";
+  const m = LOCATION_RE.exec(text);
+  if (!m) return null;
+  const latitude = Number(m[1]);
+  const longitude = Number(m[2]);
+  return Math.abs(latitude) <= 90 && Math.abs(longitude) <= 180 ? { latitude, longitude } : null;
+}
 
 type Form = {
   label: string;
@@ -24,6 +36,8 @@ type Form = {
   city: string;
   state: string;
   pincode: string;
+  /** "latitude, longitude", or empty for no map pin. */
+  location: string;
   isPrimary: boolean;
 };
 
@@ -38,6 +52,7 @@ function initialForm(a: Address | undefined, firstAddress: boolean): Form {
     city: a?.city ?? "Hyderabad",
     state: a?.state ?? "Telangana",
     pincode: a?.pincode ?? "",
+    location: a?.latitude != null && a?.longitude != null ? `${a.latitude}, ${a.longitude}` : "",
     isPrimary: a?.isPrimary ?? firstAddress,
   };
 }
@@ -74,8 +89,9 @@ export function AddressDialog({
     pincode: f.pincode.trim(),
   };
   const pincodeOk = PINCODE_RE.test(t.pincode);
+  const position = parseLocation(f.location);
   const valid =
-    t.label.length >= 1 && t.houseNo.length >= 1 && t.street.length >= 2 && t.city.length >= 2 && t.state.length >= 2 && pincodeOk;
+    t.label.length >= 1 && t.houseNo.length >= 1 && t.street.length >= 2 && t.city.length >= 2 && t.state.length >= 2 && pincodeOk && position !== null;
   // The API never un-sets a primary address directly; another address has to be made primary instead.
   const primaryLocked = firstAddress || Boolean(address?.isPrimary);
 
@@ -86,7 +102,13 @@ export function AddressDialog({
         return unwrap(
           api.PATCH("/v1/admin/customers/{id}/addresses/{addressId}", {
             params: { path: { id: customerId, addressId: address.id } },
-            body: { ...t, isPrimary: f.isPrimary },
+            // A blank map position clears the pin.
+            body: {
+              ...t,
+              latitude: position && position !== "none" ? position.latitude : null,
+              longitude: position && position !== "none" ? position.longitude : null,
+              isPrimary: f.isPrimary,
+            },
           }),
         );
       }
@@ -104,6 +126,7 @@ export function AddressDialog({
             ...(t.building ? { building: t.building } : {}),
             ...(t.area ? { area: t.area } : {}),
             ...(t.landmark ? { landmark: t.landmark } : {}),
+            ...(position && position !== "none" ? { latitude: position.latitude, longitude: position.longitude } : {}),
           },
         }),
       );
@@ -195,6 +218,27 @@ export function AddressDialog({
                   <option key={l} value={l} />
                 ))}
               </datalist>
+            </div>
+            <div className="grid gap-1.5 sm:col-span-2">
+              <Label htmlFor="addr-location">
+                Map pin <span className="font-normal text-muted-foreground">(optional)</span>
+              </Label>
+              <Input
+                id="addr-location"
+                inputMode="decimal"
+                autoComplete="off"
+                placeholder="e.g. 17.4126, 78.4482"
+                className="tabular"
+                maxLength={40}
+                value={f.location}
+                aria-invalid={position === null || undefined}
+                aria-describedby="addr-location-hint"
+                onChange={(e) => set("location", e.target.value)}
+              />
+              {position === null ? <p className="text-xs text-destructive">Enter the latitude and longitude, like 17.4126, 78.4482.</p> : null}
+              <p id="addr-location-hint" className="text-xs text-muted-foreground">
+                Right-click the place in Google Maps and copy the two numbers. A phone order needs a map pin or a PIN code we serve.
+              </p>
             </div>
             <div className="grid gap-1 sm:col-span-2">
               <div className="flex items-center gap-2">

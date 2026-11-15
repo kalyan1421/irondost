@@ -56,9 +56,13 @@ String refundState(RefundStatus status) => switch (status) {
   RefundStatus.$unknown => 'Confirm with support',
 };
 
-/// Money paid that no refund, pending or completed, accounts for.
+/// The travel charge staff kept because the partner had already travelled: not refunded, so no refund accounts for it.
+/// Never more than was paid.
+num keptTravelPaise(OrderDto o) => o.travelChargeKept ? (o.deliveryFeePaise < o.paidPaise ? o.deliveryFeePaise : o.paidPaise) : 0;
+
+/// Money paid that no refund, pending or completed, accounts for (the kept travel charge is not owed back).
 num unaccountedRefundPaise(OrderDto o) =>
-    (o.paidPaise - completedRefundPaise(o) - pendingRefundPaise(o)).clamp(0, o.paidPaise);
+    (o.paidPaise - completedRefundPaise(o) - pendingRefundPaise(o) - keptTravelPaise(o)).clamp(0, o.paidPaise);
 
 /// The one thing refund rows cannot say: paid money with no refund behind it. Null when every rupee is accounted for.
 String? refundGapNote(OrderDto o) {
@@ -80,7 +84,9 @@ String refundSummary(OrderDto o) {
 String settledNote(OrderDto o) {
   if (o.status == OrderStatus.cancelled) {
     if (o.paidPaise <= 0) return 'Nothing charged';
-    return completedRefundPaise(o) >= o.paidPaise
+    final owed = o.paidPaise - keptTravelPaise(o);
+    if (owed <= 0) return 'Travel charge kept';
+    return completedRefundPaise(o) >= owed
         ? '${rupees(completedRefundPaise(o))} refunded'
         : 'Refund pending';
   }

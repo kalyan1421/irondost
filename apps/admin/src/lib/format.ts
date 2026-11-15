@@ -8,6 +8,11 @@ export function rupees(paise: number): string {
   return paise % 100 === 0 ? rupeeWholeFmt.format(paise / 100) : rupeeFmt.format(paise / 100);
 }
 
+/** A travel charge as a bill line shows it: the amount, or "Free" when there is none. */
+export function travelCharge(paise: number): string {
+  return paise > 0 ? rupees(paise) : "Free";
+}
+
 /** Converts a rupee amount typed by a person ("15", "15.5") to paise. Returns null if invalid. */
 export function toPaise(input: string): number | null {
   const v = input.trim();

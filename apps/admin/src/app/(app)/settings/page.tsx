@@ -8,6 +8,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { api, unwrap } from "@/lib/api/client";
 import { useAuth } from "@/lib/auth/auth-provider";
 import { dateTime } from "@/lib/format";
+import { CheckAddressCard } from "./_components/check-address-card";
 import { SettingsForm } from "./_components/settings-form";
 
 export default function SettingsPage() {
@@ -40,7 +41,10 @@ export default function SettingsPage() {
             ))}
           </div>
         ) : (
-          <SettingsForm settings={settings.data} canEdit={isSuperAdmin} />
+          <>
+            <SettingsForm settings={settings.data} canEdit={isSuperAdmin} />
+            <CheckAddressCard settings={settings.data} />
+          </>
         )}
       </PageBody>
     </>

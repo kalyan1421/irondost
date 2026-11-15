@@ -141,7 +141,7 @@ export class NotificationsListener {
         await this.inboxAndPush(drivers, 'order_cancelled', 'Order cancelled', `Order ${e.orderNumber} was cancelled.`, { orderId: e.orderId }, ClientApp.PARTNER);
       }
       // Cancelling does not move money by itself: staff refund from the order page, so tell them it is owed.
-      const owed = e.paidPaise - e.refundedPaise;
+      const owed = e.paidPaise - e.refundedPaise - (e.keptPaise ?? 0);
       if (e.to === OrderStatus.CANCELLED && owed > 0) {
         await this.inboxAndPush(
           await this.adminIds(),
@@ -185,6 +185,8 @@ export class NotificationsListener {
         totalPaise: e.totalPaise,
         paidPaise: e.paidPaise,
         refundedPaise: e.refundedPaise ?? 0,
+        previousTravelChargePaise: e.previousTravelChargePaise,
+        travelChargePaise: e.travelChargePaise,
       });
       if (!copy) return;
       const data = { orderId: e.orderId, orderNumber: e.orderNumber };

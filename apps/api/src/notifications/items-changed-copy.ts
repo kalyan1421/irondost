@@ -6,6 +6,9 @@ export interface ItemsChanged {
   totalPaise: number;
   paidPaise: number;
   refundedPaise: number;
+  /** The travel charge before and after the change, when it moved with the new count. */
+  previousTravelChargePaise?: number;
+  travelChargePaise?: number;
 }
 
 export interface ItemsChangedCopy {
@@ -26,6 +29,10 @@ export function itemsChangedCopy(e: ItemsChanged): ItemsChangedCopy | null {
   const refundOwedPaise = Math.max(0, inHand - e.totalPaise);
 
   let body = `Order ${e.orderNumber} was updated after we counted your clothes. The new total is ${rupees(e.totalPaise)} (it was ${rupees(e.previousTotalPaise)}).`;
+  const before = e.previousTravelChargePaise ?? 0;
+  const now = e.travelChargePaise ?? 0;
+  if (now > before) body += ` It includes a ${rupees(now)} travel charge, which applies to smaller orders.`;
+  else if (now < before) body += ' Travel is now free, so the travel charge is gone.';
   if (due > 0) body += ` ${rupees(due)} is still due: pay in the app or in cash at delivery.`;
   else if (refundOwedPaise > 0) body += ` You paid ${rupees(inHand)}, so we will return the extra ${rupees(refundOwedPaise)}.`;
   return { title: 'Your order total changed', body, refundOwedPaise };

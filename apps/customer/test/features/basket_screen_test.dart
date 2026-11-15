@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:irondost_customer/core/text_wrap.dart';
 import 'package:irondost_customer/data/api_client.dart';
 import 'package:irondost_customer/features/basket/basket.dart';
 import 'package:irondost_customer/features/basket/basket_screen.dart';
@@ -54,6 +55,58 @@ void main() {
     expect(quotes.calls, hasLength(1));
     expect(quotes.calls.single.$2, isNull);
     expect(tester.widget<FilledButton>(find.widgetWithText(FilledButton, 'Choose pickup time')).onPressed, isNotNull);
+  });
+
+  group('travel charge', () {
+    FakeQuoteRepository rule() => FakeQuoteRepository()
+      ..deliveryFeePaise = 3000
+      ..freeTravelFromPaise = 20000;
+    const fourShirts = {'basket.v1': '{"lines":{"shirt":4},"promoCode":null}'};
+
+    testWidgets('a small basket shows the charge as its own line and one calm line on how to make it free', (tester) async {
+      await pump(tester, saved: fourShirts, quotes: rule());
+      await tester.scrollUntilVisible(find.text('To pay'), 200, scrollable: find.byType(Scrollable).first);
+      await tester.pumpAndSettle();
+      expect(find.text('Travel charge'), findsOneWidget);
+      expect(find.text('Pickup & delivery'), findsNothing);
+      expect(find.text('₹30'), findsOneWidget);
+      expect(find.text('Free'), findsNothing);
+      expect(find.text('₹90'), findsNWidgets(2), reason: 'to pay, and the total in the footer: ₹60 of clothes and the ₹30 charge');
+      expect(find.text(keepLastWordsTogether('Add ₹140 more of clothes and travel is free.')), findsOneWidget);
+    });
+
+    testWidgets('reaching the free amount drops the charge and the line, and falling under brings both back', (tester) async {
+      await pump(tester, saved: {'basket.v1': '{"lines":{"shirt":13},"promoCode":null}'}, quotes: rule());
+      await tester.scrollUntilVisible(find.text('To pay'), 200, scrollable: find.byType(Scrollable).first);
+      await tester.pumpAndSettle();
+      expect(find.text(keepLastWordsTogether('Add ₹5 more of clothes and travel is free.')), findsOneWidget);
+
+      await tester.ensureVisible(find.bySemanticsLabel('Add one Shirt / T-shirt'));
+      await tester.pump();
+      await tester.tap(find.bySemanticsLabel('Add one Shirt / T-shirt'));
+      await settle(tester);
+      await tester.scrollUntilVisible(find.text('To pay'), 200, scrollable: find.byType(Scrollable).first);
+      await tester.pumpAndSettle();
+      expect(find.text('Free'), findsOneWidget);
+      expect(find.textContaining('and travel is free'), findsNothing);
+      expect(find.bySemanticsLabel('Total ₹210'), findsOneWidget, reason: 'the footer total is the clothes alone: nothing added for travel');
+
+      await tester.ensureVisible(find.bySemanticsLabel('Remove one Shirt / T-shirt'));
+      await tester.pump();
+      await tester.tap(find.bySemanticsLabel('Remove one Shirt / T-shirt'));
+      await settle(tester);
+      await tester.scrollUntilVisible(find.text('To pay'), 200, scrollable: find.byType(Scrollable).first);
+      await tester.pumpAndSettle();
+      expect(find.text(keepLastWordsTogether('Add ₹5 more of clothes and travel is free.')), findsOneWidget);
+    });
+
+    testWidgets('with no free-from amount the charge always shows and there is nothing to add', (tester) async {
+      await pump(tester, saved: fourShirts, quotes: FakeQuoteRepository()..deliveryFeePaise = 3000);
+      await tester.scrollUntilVisible(find.text('To pay'), 200, scrollable: find.byType(Scrollable).first);
+      await tester.pumpAndSettle();
+      expect(find.text('₹30'), findsOneWidget);
+      expect(find.textContaining('and travel is free'), findsNothing);
+    });
   });
 
   testWidgets('each line price sits at the right edge of its row, not mid-screen', (tester) async {

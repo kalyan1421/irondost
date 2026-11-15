@@ -146,8 +146,8 @@ export class UpdateSettingsDto {
   @ApiPropertyOptional({ nullable: true, type: Number, description: 'Public first-response target; null keeps the promise off.' })
   @IsOptional() @ValidateIf((_, v) => v !== null) @IsInt() @Min(1) @Max(168) issueFirstResponseHours?: number | null;
   @ApiPropertyOptional() @IsOptional() @IsInt() @Min(0) minOrderPaise?: number;
-  @ApiPropertyOptional() @IsOptional() @IsInt() @Min(0) deliveryFeePaise?: number;
-  @ApiPropertyOptional({ nullable: true, type: Number })
+  @ApiPropertyOptional({ description: 'The flat travel charge for a small order, in paise (0 = no charge).' }) @IsOptional() @IsInt() @Min(0) deliveryFeePaise?: number;
+  @ApiPropertyOptional({ nullable: true, type: Number, description: 'Travel is free when the items total, before any coupon, reaches this many paise. Null = the charge always applies.' })
   @IsOptional()
   @ValidateIf((_, v) => v !== null)
   @IsInt()
@@ -203,6 +203,19 @@ export class UpdateSettingsDto {
   @ArrayMaxSize(1000)
   @Matches(/^[1-9]\d{5}$/, { each: true, message: 'each PIN code must have 6 digits' })
   servicePincodes?: string[];
+
+  @ApiPropertyOptional({
+    nullable: true,
+    type: Number,
+    description: 'Pickups one window (a pickup date and slot) can hold. Null means no limit.',
+    example: 8,
+  })
+  @IsOptional()
+  @ValidateIf((_, v) => v !== null)
+  @IsInt()
+  @Min(1)
+  @Max(1000)
+  pickupCapacityPerSlot?: number | null;
 }
 
 export class DashboardDto {
@@ -230,8 +243,8 @@ export class BusinessSettingsDto {
   @ApiProperty() adjustmentExpiryHours!: number;
   @ApiProperty({ nullable: true, type: Number }) issueFirstResponseHours!: number | null;
   @ApiProperty() minOrderPaise!: number;
-  @ApiProperty() deliveryFeePaise!: number;
-  @ApiProperty({ nullable: true, type: Number }) freeDeliveryAbovePaise!: number | null;
+  @ApiProperty({ description: 'The flat travel charge for a small order, in paise.' }) deliveryFeePaise!: number;
+  @ApiProperty({ nullable: true, type: Number, description: 'Travel is free from this items total (before any coupon), in paise. Null = never free.' }) freeDeliveryAbovePaise!: number | null;
   @ApiProperty() minTurnaroundHours!: number;
   @ApiProperty() bookingCutoffMinutes!: number;
   @ApiProperty() maxAdvanceDays!: number;
@@ -247,6 +260,7 @@ export class BusinessSettingsDto {
   @ApiProperty({ nullable: true, type: Number }) serviceCenterLongitude!: number | null;
   @ApiProperty({ nullable: true, type: Number }) serviceRadiusKm!: number | null;
   @ApiProperty({ type: [String] }) servicePincodes!: string[];
+  @ApiProperty({ nullable: true, type: Number, description: 'Pickups one window can hold; null means no limit.' }) pickupCapacityPerSlot!: number | null;
   @ApiProperty() updatedAt!: Date;
 }
 

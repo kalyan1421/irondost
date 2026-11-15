@@ -1,4 +1,4 @@
-import { createHmac } from 'node:crypto';
+import { createHmac, randomUUID } from 'node:crypto';
 import { mkdtempSync, rmSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
@@ -77,7 +77,8 @@ describe('Laundry API (e2e)', () => {
     http = request(app.getHttpServer());
 
     await prisma.user.create({ data: { phone: `+91${PHONES.superAdmin}`, name: 'Owner', role: 'SUPER_ADMIN' } });
-    await prisma.businessSettings.update({ where: { id: 1 }, data: { dispatchBatchSize: 3 } });
+    // The suite books many orders into the same windows; the capacity rules have their own section below, which sets a cap.
+    await prisma.businessSettings.update({ where: { id: 1 }, data: { dispatchBatchSize: 3, pickupCapacityPerSlot: null } });
   });
 
   afterAll(async () => {
@@ -609,9 +610,11 @@ describe('Laundry API (e2e)', () => {
       const refused = await http.post('/v1/orders').set(customer).send(order(farAddressId)).expect(400);
       expect(refused.body).toMatchObject({ code: 'ADDRESS_NOT_SERVICEABLE', details: { addressId: farAddressId, reason: 'OUTSIDE_RADIUS' } });
 
-      // Staff can still take a phone order there.
+      // Staff can still take a phone order there, once they type why (the full rules are in "staff phone orders and capacity" below).
       const me = await http.get('/v1/me').set(customer).expect(200);
-      await http.post('/v1/admin/orders').set(bearer(PHONES.admin)).send({ ...order(farAddressId), customerId: me.body.id }).expect(201);
+      const noReason = await http.post('/v1/admin/orders').set(bearer(PHONES.admin)).send({ ...order(farAddressId), customerId: me.body.id }).expect(400);
+      expect(noReason.body.code).toBe('ADDRESS_NOT_SERVICEABLE');
+      await http.post('/v1/admin/orders').set(bearer(PHONES.admin)).send({ ...order(farAddressId), customerId: me.body.id, outsideAreaReason: 'Regular customer, partner passes there' }).expect(201);
 
       const near = await http.post('/v1/me/addresses').set(customer).send({ ...address, street: 'Road No. 36', pincode: '500033', ...jubileeHills }).expect(201);
       expect(near.body.serviceable).toBe(true);
@@ -737,6 +740,199 @@ describe('Laundry API (e2e)', () => {
       const responses = await Promise.all([edit(placed.body.id, placed.body.revision), edit(placed.body.id, placed.body.revision, 4)]);
       expect(responses.map((r) => r.status).sort()).toEqual([200, 409]);
       expect(await prisma.orderAdjustment.count({ where: { orderId: placed.body.id, status: 'PENDING_CUSTOMER' } })).toBe(1);
+    });
+  });
+
+  describe('travel charge and the Rs 200 rule', () => {
+    // Travel costs Rs 30 under Rs 200 of clothes (counted before any coupon) and is free from Rs 200. Prices: saree Rs 40, shirt Rs 15.
+    const setRule = (body: { deliveryFeePaise: number; freeDeliveryAbovePaise: number | null }) =>
+      http.patch('/v1/admin/settings').set(bearer(PHONES.superAdmin)).send(body).expect(200);
+    const items = (sarees: number, shirts = 0) => [
+      ...(sarees ? [{ catalogItemId: sareeId, quantity: sarees }] : []),
+      ...(shirts ? [{ catalogItemId: shirtId, quantity: shirts }] : []),
+    ];
+    const quote = async (lines: ReturnType<typeof items>, promoCode?: string) =>
+      (await http.post('/v1/orders/quote').set(bearer(PHONES.customer)).send({ items: lines, promoCode }).expect(200)).body;
+    // A window of their own, so these orders never fill the pickup window other sections book into (each window holds a few pickups).
+    const placed: string[] = [];
+    const place = async (lines: ReturnType<typeof items>) => {
+      const order = (await http.post('/v1/orders').set(bearer(PHONES.customer)).send({ items: lines, pickupDate: addDays(tomorrow, 11), pickupSlot: 'NOON',
+        deliveryDate: addDays(tomorrow, 12), deliverySlot: 'EVENING', pickupAddressId: addressId, paymentMethod: 'COD' }).expect(201)).body;
+      placed.push(order.id);
+      return order;
+    };
+    const orderPath = (id: string) => `/v1/admin/orders/${id}`;
+    const editItems = (id: string, lines: ReturnType<typeof items>, revision: number) =>
+      http.put(`${orderPath(id)}/items`).set(bearer(PHONES.admin)).send({ items: lines, expectedRevision: revision, note: 'Recounted at pickup' });
+    const payCash = (id: string, amountPaise: number) => http.post(`${orderPath(id)}/payments/cash`).set(bearer(PHONES.admin)).send({ amountPaise }).expect(204);
+    const cancel = (id: string, body: Record<string, unknown> = {}) => http.post(`${orderPath(id)}/status`).set(bearer(PHONES.admin)).send({ status: 'CANCELLED', ...body });
+    const refundDueIds = async () => (await http.get('/v1/admin/orders').set(bearer(PHONES.admin)).query({ refundDue: 'true', pageSize: 100 }).expect(200)).body.items.map((o: { id: string }) => o.id);
+
+    beforeAll(async () => {
+      await setRule({ deliveryFeePaise: 3000, freeDeliveryAbovePaise: 20_000 });
+      await http.post('/v1/admin/promotions').set(bearer(PHONES.admin)).send({ code: 'TRAVEL10', title: '10% off', discountType: 'PERCENT', discountValue: 10,
+        minOrderPaise: 0, validFrom: new Date(Date.now() - 60_000).toISOString(), validTo: new Date(Date.now() + 86_400_000).toISOString() }).expect(201);
+    });
+    afterAll(async () => {
+      await setRule({ deliveryFeePaise: 0, freeDeliveryAbovePaise: null });
+      await prisma.order.updateMany({ where: { id: { in: placed }, status: { in: ['PENDING', 'PICKUP_ASSIGNED'] } }, data: { status: 'CANCELLED' } });
+    });
+
+    it('quotes the charge and how much more of clothes makes travel free', async () => {
+      expect(await quote(items(1))).toMatchObject({ subtotalPaise: 4000, deliveryFeePaise: 3000, totalPaise: 7000, freeTravelShortfallPaise: 16_000, canPlaceOrder: true });
+      expect(await quote(items(5))).toMatchObject({ subtotalPaise: 20_000, deliveryFeePaise: 0, totalPaise: 20_000, freeTravelShortfallPaise: null });
+      expect(await quote(items(4, 1))).toMatchObject({ subtotalPaise: 17_500, deliveryFeePaise: 3000, freeTravelShortfallPaise: 2500 }); // Rs 175
+    });
+
+    it('counts the items total before the coupon', async () => {
+      // Rs 210 of clothes less 10% is Rs 189 after the coupon, yet travel stays free.
+      const bigger = await quote(items(3, 6), 'TRAVEL10');
+      expect(bigger).toMatchObject({ subtotalPaise: 21_000, discountPaise: 2100, deliveryFeePaise: 0, totalPaise: 18_900, freeTravelShortfallPaise: null, promoError: null });
+      // Rs 190 of clothes is charged, with or without the coupon.
+      expect(await quote(items(1, 10))).toMatchObject({ subtotalPaise: 19_000, deliveryFeePaise: 3000, totalPaise: 22_000, freeTravelShortfallPaise: 1000 });
+      expect(await quote(items(1, 10), 'TRAVEL10')).toMatchObject({ discountPaise: 1900, deliveryFeePaise: 3000, totalPaise: 20_100, freeTravelShortfallPaise: 1000 });
+    });
+
+    it('does not block a small order, and leaves the hard minimum to its own setting', async () => {
+      expect(await quote(items(0, 1))).toMatchObject({ minOrderShortfallPaise: null, canPlaceOrder: true });
+      await http.patch('/v1/admin/settings').set(bearer(PHONES.superAdmin)).send({ minOrderPaise: 5000 }).expect(200);
+      try {
+        expect(await quote(items(0, 1))).toMatchObject({ minOrderShortfallPaise: 3500, canPlaceOrder: false });
+      } finally {
+        await http.patch('/v1/admin/settings').set(bearer(PHONES.superAdmin)).send({ minOrderPaise: 0 }).expect(200);
+      }
+    });
+
+    it('freezes the rule on the order, so later settings changes never alter it', async () => {
+      const placed = await place(items(1));
+      expect(placed).toMatchObject({ subtotalPaise: 4000, deliveryFeePaise: 3000, totalPaise: 7000, travelChargeKept: false });
+      const row = await prisma.order.findUniqueOrThrow({ where: { id: placed.id } });
+      expect(row).toMatchObject({ travelChargePaiseRule: 3000, travelFreeFromPaiseRule: 20_000 });
+
+      await setRule({ deliveryFeePaise: 5000, freeDeliveryAbovePaise: 10_000 });
+      try {
+        const same = await http.get(`/v1/orders/${placed.id}`).set(bearer(PHONES.customer)).expect(200);
+        expect(same.body).toMatchObject({ deliveryFeePaise: 3000, totalPaise: 7000 });
+        // Rs 120 of clothes would be free under today's settings (free from Rs 100); the order keeps its booked rule (free from Rs 200).
+        const preview = await http.post(`${orderPath(placed.id)}/items/quote`).set(bearer(PHONES.admin)).send({ items: items(3) }).expect(200);
+        expect(preview.body).toMatchObject({ subtotalPaise: 12_000, deliveryFeePaise: 3000, oldDeliveryFeePaise: 3000, newTotalPaise: 15_000 });
+      } finally {
+        await setRule({ deliveryFeePaise: 3000, freeDeliveryAbovePaise: 20_000 });
+      }
+    });
+
+    it('re-checks the charge on the counted items, both ways, and asks the customer only for a net increase', async () => {
+      const placed = await place(items(5)); // Rs 200, free
+      expect(placed).toMatchObject({ deliveryFeePaise: 0, totalPaise: 20_000 });
+
+      // Counted as 4 at pickup: Rs 160 plus the Rs 30 charge is Rs 190, less than Rs 200, so it applies at once.
+      const preview = await http.post(`${orderPath(placed.id)}/items/quote`).set(bearer(PHONES.admin)).send({ items: items(4), expectedRevision: placed.revision }).expect(200);
+      expect(preview.body).toMatchObject({ oldDeliveryFeePaise: 0, deliveryFeePaise: 3000, oldTotalPaise: 20_000, newTotalPaise: 19_000, requiresApproval: false });
+      const fewer = await editItems(placed.id, items(4), placed.revision).expect(200);
+      expect(fewer.body).toMatchObject({ subtotalPaise: 16_000, deliveryFeePaise: 3000, totalPaise: 19_000 });
+      expect(fewer.body.adjustments).toHaveLength(0);
+      await waitFor(async () => (await prisma.notification.count({ where: { type: 'order_updated', data: { path: ['orderId'], equals: placed.id } } })) === 1);
+      const notice = await prisma.notification.findFirstOrThrow({ where: { type: 'order_updated', data: { path: ['orderId'], equals: placed.id } } });
+      expect(notice.body).toContain('includes a ₹30 travel charge');
+
+      // Counted back up to 5: Rs 200 and free again is Rs 200, more than Rs 190, so the customer decides, and sees the charge go.
+      const more = await editItems(placed.id, items(5), fewer.body.revision).expect(200);
+      expect(more.body).toMatchObject({ deliveryFeePaise: 3000, totalPaise: 19_000 }); // not applied until approved
+      const request = more.body.adjustments[0];
+      expect(request).toMatchObject({ status: 'PENDING_CUSTOMER', oldTotalPaise: 19_000, newTotalPaise: 20_000, subtotalPaise: 20_000, deliveryFeePaise: 0 });
+      const approved = await http.post(`/v1/orders/${placed.id}/adjustments/${request.id}/approve`).set(bearer(PHONES.customer)).expect(200);
+      expect(approved.body).toMatchObject({ deliveryFeePaise: 0, totalPaise: 20_000 });
+    });
+
+    it('lets an order booked before the rule keep its stored fee', async () => {
+      const placed = await place(items(1));
+      await prisma.order.update({ where: { id: placed.id }, data: { travelChargePaiseRule: null, travelFreeFromPaiseRule: null } });
+      const bigger = await editItems(placed.id, items(5), placed.revision).expect(200); // Rs 200 would be free under the rule
+      expect(bigger.body.adjustments[0]).toMatchObject({ deliveryFeePaise: 3000, newTotalPaise: 23_000 });
+      const preview = await http.post(`${orderPath(placed.id)}/items/quote`).set(bearer(PHONES.admin)).send({ items: items(0, 1) }).expect(200);
+      expect(preview.body).toMatchObject({ oldDeliveryFeePaise: 3000, deliveryFeePaise: 3000 });
+    });
+
+    describe('cancelling', () => {
+      const paidAndCancelled = async (body: Record<string, unknown>, paid = 7000) => {
+        const placed = await place(items(1)); // Rs 40 plus the Rs 30 charge
+        if (paid > 0) await payCash(placed.id, paid);
+        return { placed, response: await cancel(placed.id, body) };
+      };
+
+      it('refunds everything paid by default, the travel charge included', async () => {
+        const { placed, response } = await paidAndCancelled({ note: 'Changed their mind' });
+        expect(response.status).toBe(200);
+        expect(response.body).toMatchObject({ status: 'CANCELLED', travelChargeKept: false, paidPaise: 7000, refundablePaise: 7000 });
+        expect(await refundDueIds()).toContain(placed.id);
+        const customerView = await http.get(`/v1/orders/${placed.id}`).set(bearer(PHONES.customer)).expect(200);
+        expect(customerView.body.travelChargeKept).toBe(false);
+
+        await http.post(`${orderPath(placed.id)}/refunds`).set(bearer(PHONES.admin)).send({ amountPaise: 7000, method: 'CASH', note: 'Returned in cash' }).expect(201);
+        const done = await http.get(orderPath(placed.id)).set(bearer(PHONES.admin)).expect(200);
+        expect(done.body).toMatchObject({ paymentStatus: 'REFUNDED', refundedPaise: 7000, refundablePaise: 0 });
+        expect(await refundDueIds()).not.toContain(placed.id);
+      });
+
+      it('keeps the charge when staff say the partner had already travelled', async () => {
+        const { placed, response } = await paidAndCancelled({ note: 'Nobody home', keepTravelCharge: true });
+        expect(response.status).toBe(200);
+        expect(response.body).toMatchObject({ status: 'CANCELLED', travelChargeKept: true, deliveryFeePaise: 3000, paidPaise: 7000, refundablePaise: 4000, paymentStatus: 'PAID' });
+        const history = await http.get(orderPath(placed.id)).set(bearer(PHONES.admin)).expect(200);
+        expect(history.body.events.at(-1)).toMatchObject({ toStatus: 'CANCELLED', note: 'Nobody home. Travel charge kept: partner had already travelled' });
+        const stored = await prisma.order.findUniqueOrThrow({ where: { id: placed.id } });
+        expect(stored.travelChargeKept).toBe(true);
+
+        // The customer's own view says why.
+        const customerView = await http.get(`/v1/orders/${placed.id}`).set(bearer(PHONES.customer)).expect(200);
+        expect(customerView.body).toMatchObject({ travelChargeKept: true, status: 'CANCELLED' });
+
+        // The refund due is Rs 40, on the list and on the dashboard, and the staff alert says Rs 40.
+        const due = await http.get('/v1/admin/orders').set(bearer(PHONES.admin)).query({ refundDue: 'true', pageSize: 100 }).expect(200);
+        expect(due.body.items.map((o: { id: string }) => o.id)).toContain(placed.id);
+        expect((await http.get('/v1/admin/dashboard').set(bearer(PHONES.admin)).expect(200)).body.refundsDue).toBe(due.body.total);
+        await waitFor(async () => (await prisma.notification.count({ where: { type: 'refund_needed', data: { path: ['orderId'], equals: placed.id } } })) > 0);
+        const alert = await prisma.notification.findFirstOrThrow({ where: { type: 'refund_needed', data: { path: ['orderId'], equals: placed.id } } });
+        expect(alert.body).toContain('₹40');
+        expect(alert.body).not.toContain('₹70');
+
+        // A refund cannot take the charge back; the rest can go, and then the order is refunded and off the list.
+        const tooMuch = await http.post(`${orderPath(placed.id)}/refunds`).set(bearer(PHONES.admin)).send({ amountPaise: 7000, method: 'CASH', note: 'All of it' }).expect(409);
+        expect(tooMuch.body).toMatchObject({ code: 'REFUND_EXCEEDS_PAID', details: { refundablePaise: 4000 } });
+        await http.post(`${orderPath(placed.id)}/refunds`).set(bearer(PHONES.admin)).send({ amountPaise: 4000, method: 'CASH', note: 'Clothes charge returned' }).expect(201);
+        const done = await http.get(orderPath(placed.id)).set(bearer(PHONES.admin)).expect(200);
+        expect(done.body).toMatchObject({ paymentStatus: 'REFUNDED', refundedPaise: 4000, refundablePaise: 0, travelChargeKept: true });
+        expect(await refundDueIds()).not.toContain(placed.id);
+        expect((await http.post(`${orderPath(placed.id)}/refunds`).set(bearer(PHONES.admin)).send({ amountPaise: 100, method: 'CASH', note: 'More' }).expect(409)).body.code).toBe('NOTHING_TO_REFUND');
+      });
+
+      it('owes nothing when no more than the kept charge was paid, or nothing at all', async () => {
+        const small = await paidAndCancelled({ keepTravelCharge: true }, 1000);
+        expect(small.response.body).toMatchObject({ travelChargeKept: true, paidPaise: 1000, refundablePaise: 0 });
+        const unpaid = await paidAndCancelled({ keepTravelCharge: true }, 0);
+        expect(unpaid.response.body).toMatchObject({ travelChargeKept: true, paidPaise: 0, refundablePaise: 0 });
+        const due = await refundDueIds();
+        expect(due).not.toContain(small.placed.id);
+        expect(due).not.toContain(unpaid.placed.id);
+      });
+
+      it('only keeps a charge there is, and only on a cancellation', async () => {
+        const free = await place(items(5));
+        expect((await cancel(free.id, { keepTravelCharge: true }).expect(400)).body.code).toBe('NO_TRAVEL_CHARGE');
+        expect((await http.get(orderPath(free.id)).set(bearer(PHONES.admin)).expect(200)).body.status).toBe('PENDING');
+
+        const charged = await place(items(1));
+        const wrong = await http.post(`${orderPath(charged.id)}/status`).set(bearer(PHONES.admin)).send({ status: 'PROCESSING', keepTravelCharge: true }).expect(400);
+        expect(wrong.body.code).toBe('KEEP_ONLY_WITH_CANCEL');
+      });
+
+      it('never keeps the charge when the customer cancels', async () => {
+        const placed = await place(items(1));
+        await payCash(placed.id, 7000);
+        const res = await http.post(`/v1/orders/${placed.id}/cancel`).set(bearer(PHONES.customer)).send({ reason: 'Changed my mind' }).expect(200);
+        expect(res.body).toMatchObject({ status: 'CANCELLED', travelChargeKept: false });
+        expect((await http.get(orderPath(placed.id)).set(bearer(PHONES.admin)).expect(200)).body.refundablePaise).toBe(7000);
+      });
     });
   });
 
@@ -1298,6 +1494,717 @@ describe('Laundry API (e2e)', () => {
       await http.post(`/v1/orders/${placed.id}/reschedule`).send(A).expect(401);
       expect(await mine(placed.id)).toMatchObject({ pickupDate: tomorrow, rescheduleCount: 0 });
       await cleanUp(placed.id);
+    });
+  });
+
+  describe('service area rules, capacity and the waiting list', () => {
+    // Customers are created directly: the session endpoint is rate limited and this suite has used its share.
+    const HUB = { serviceCenterLatitude: 17.4126, serviceCenterLongitude: 78.4482, serviceRadiusKm: 6 };
+    const LISTED = ['500033', '500034'];
+    const admin = bearer(PHONES.admin);
+    const superAdmin = bearer(PHONES.superAdmin);
+    /** A map position `km` north of the centre, so its distance is known without trusting a second formula. */
+    const km = (n: number) => ({ latitude: 17.4126 + n / 111.195, longitude: 78.4482 });
+
+    let seq = 0;
+    const customers: string[] = [];
+    async function customer(name: string, extra: { contactPhone?: string } = {}): Promise<{ id: string; auth: { Authorization: string }; phone: string }> {
+      seq += 1;
+      const digits = `98010${String(seq).padStart(5, '0')}`;
+      const user = await prisma.user.create({ data: { firebaseUid: `dev-91${digits}`, phone: `+91${digits}`, name, role: 'CUSTOMER', ...extra } });
+      customers.push(user.id);
+      return { id: user.id, auth: bearer(digits), phone: `+91${digits}` };
+    }
+    async function addressFor(who: { auth: { Authorization: string } }, place: { pincode: string; area?: string; latitude?: number; longitude?: number }) {
+      const res = await http
+        .post('/v1/me/addresses')
+        .set(who.auth)
+        .send({ houseNo: '12', street: 'Main Road', area: place.area, city: 'Hyderabad', state: 'Telangana', ...place })
+        .expect(201);
+      return res.body as { id: string; serviceable: boolean; notServiceableReason: string | null };
+    }
+    const setArea = (data: object) => http.patch('/v1/admin/settings').set(superAdmin).send(data).expect(200);
+    const draft = (addressId: string, w: { pickupDate: string; pickupSlot: string }, extra: object = {}) => ({
+      items: [{ catalogItemId: shirtId, quantity: 3 }],
+      pickupDate: w.pickupDate,
+      pickupSlot: w.pickupSlot,
+      deliveryDate: addDays(w.pickupDate, 2),
+      deliverySlot: 'NOON',
+      pickupAddressId: addressId,
+      paymentMethod: 'COD',
+      ...extra,
+    });
+    const orderRow = (id: string) => prisma.order.findUniqueOrThrow({ where: { id } });
+    const auditOf = async (action: string, entityId: string) => {
+      await waitFor(async () => (await prisma.auditLog.count({ where: { action, entityId } })) > 0);
+      return prisma.auditLog.findFirstOrThrow({ where: { action, entityId } });
+    };
+
+    afterAll(async () => {
+      // Leave the shared settings and orders as the later sections expect them. Through the API, which also refreshes the
+      // settings the server keeps for a few seconds.
+      await setArea({ serviceCenterLatitude: null, serviceCenterLongitude: null, serviceRadiusKm: null, servicePincodes: [], pickupCapacityPerSlot: null });
+      await prisma.order.updateMany({ where: { customerId: { in: customers } }, data: { status: 'CANCELLED' } });
+    });
+
+    describe('staff phone orders', () => {
+      const W = () => ({ pickupDate: addDays(tomorrow, 5), pickupSlot: 'MORNING' });
+      let who: Awaited<ReturnType<typeof customer>>;
+      let pinned: { id: string }; // inside, with a map pin
+      let pinOnly: { id: string }; // no pin, served PIN code
+      let blind: { id: string }; // no pin, PIN code not on the list
+      let far: { id: string }; // outside by distance
+      const place = (addressId: string, extra: object = {}) =>
+        http.post('/v1/admin/orders').set(admin).send({ customerId: who.id, ...draft(addressId, W()), ...extra });
+
+      beforeAll(async () => {
+        who = await customer('Phone Caller');
+        await setArea({ ...HUB, servicePincodes: LISTED });
+        pinned = await addressFor(who, { pincode: '500033', area: 'Jubilee Hills', ...km(4) });
+        pinOnly = await addressFor(who, { pincode: '500034', area: 'Banjara Hills' });
+        blind = await addressFor(who, { pincode: '500099', area: 'Elsewhere' });
+        far = await addressFor(who, { pincode: '500033', area: 'Gachibowli', ...km(11) });
+      });
+
+      it('takes an address with a map pin inside the area, or a served PIN code with no pin, and stores no reason', async () => {
+        for (const address of [pinned, pinOnly]) {
+          const res = await place(address.id).expect(201);
+          const row = await orderRow(res.body.id);
+          expect(row.areaOverrideReason).toBeNull();
+          expect(row.capacityOverrideReason).toBeNull();
+          expect(res.body).toMatchObject({ areaOverrideReason: null, capacityOverrideReason: null });
+        }
+      });
+
+      it('needs a map pin or a served PIN code: neither is ADDRESS_LOCATION_REQUIRED, and a reason does not help', async () => {
+        await setArea({ servicePincodes: [] });
+        const noList = await place(pinOnly.id).expect(400);
+        expect(noList.body).toMatchObject({ code: 'ADDRESS_LOCATION_REQUIRED', details: { addressId: pinOnly.id } });
+        const withReason = await place(pinOnly.id, { outsideAreaReason: 'A perfectly good reason' }).expect(400);
+        expect(withReason.body.code).toBe('ADDRESS_LOCATION_REQUIRED');
+        // The same address passes once its PIN code is on the list.
+        await setArea({ servicePincodes: LISTED });
+        await place(pinOnly.id).expect(201);
+        // With no area set at all, a map pin is still required.
+        await setArea({ serviceCenterLatitude: null, serviceCenterLongitude: null, serviceRadiusKm: null, servicePincodes: [] });
+        expect((await place(pinOnly.id).expect(400)).body.code).toBe('ADDRESS_LOCATION_REQUIRED');
+        await place(pinned.id).expect(201);
+        await setArea({ ...HUB, servicePincodes: LISTED });
+      });
+
+      it('refuses an address outside the area until staff type a reason, then stores it on the order and in the audit log', async () => {
+        for (const address of [far, blind]) {
+          const refused = await place(address.id).expect(400);
+          expect(refused.body).toMatchObject({ code: 'ADDRESS_NOT_SERVICEABLE', details: { addressId: address.id, canOverride: true } });
+        }
+        expect((await place(far.id).expect(400)).body.details).toMatchObject({ reason: 'OUTSIDE_RADIUS', distanceKm: 11 });
+        expect((await place(blind.id).expect(400)).body.details).toMatchObject({ reason: 'PINCODE_NOT_SERVED' });
+
+        // Too short (or only spaces) is a validation error: nothing is placed.
+        await place(far.id, { outsideAreaReason: 'abc' }).expect(400);
+        await place(far.id, { outsideAreaReason: '     ' }).expect(400);
+        const before = await prisma.order.count({ where: { customerId: who.id } });
+
+        const res = await place(far.id, { outsideAreaReason: '  Regular customer, our partner passes there daily  ' }).expect(201);
+        expect(await prisma.order.count({ where: { customerId: who.id } })).toBe(before + 1);
+        expect(res.body.areaOverrideReason).toBe('Regular customer, our partner passes there daily');
+        expect((await orderRow(res.body.id)).areaOverrideReason).toBe('Regular customer, our partner passes there daily');
+        const log = await auditOf('order.placed_for_customer', res.body.id);
+        expect(log.data).toMatchObject({ outsideAreaReason: 'Regular customer, our partner passes there daily' });
+        expect(log.data).not.toHaveProperty('capacityOverrideReason');
+
+        // Staff see it on the order; the customer does not.
+        expect((await http.get(`/v1/admin/orders/${res.body.id}`).set(admin).expect(200)).body.areaOverrideReason).toBe('Regular customer, our partner passes there daily');
+        const asCustomer = (await http.get(`/v1/orders/${res.body.id}`).set(who.auth).expect(200)).body;
+        expect(asCustomer).not.toHaveProperty('areaOverrideReason');
+        expect(asCustomer).not.toHaveProperty('capacityOverrideReason');
+      });
+
+      it('keeps no reason when the address turns out to be inside', async () => {
+        const res = await place(pinned.id, { outsideAreaReason: 'Not needed for this one' }).expect(201);
+        expect(res.body.areaOverrideReason).toBeNull();
+        expect((await orderRow(res.body.id)).areaOverrideReason).toBeNull();
+      });
+
+      it('checks the delivery address too', async () => {
+        const res = await place(pinned.id, { deliveryAddressId: far.id }).expect(400);
+        expect(res.body).toMatchObject({ code: 'ADDRESS_NOT_SERVICEABLE', details: { addressId: far.id } });
+        await place(pinned.id, { deliveryAddressId: far.id, outsideAreaReason: 'Delivering to the office there' }).expect(201);
+      });
+
+      it('leaves customers as they were: outside is refused, and they cannot send either override', async () => {
+        const refused = await http.post('/v1/orders').set(who.auth).send(draft(far.id, W())).expect(400);
+        expect(refused.body).toMatchObject({ code: 'ADDRESS_NOT_SERVICEABLE', details: { addressId: far.id, reason: 'OUTSIDE_RADIUS' } });
+        expect(refused.body.details).not.toHaveProperty('canOverride');
+        await http.post('/v1/orders').set(who.auth).send(draft(far.id, W(), { outsideAreaReason: 'Please let me' })).expect(400);
+        await http.post('/v1/orders').set(who.auth).send(draft(pinned.id, W(), { capacityOverrideReason: 'Please let me' })).expect(400);
+        // An address with no map pin and a PIN code off the list is still just "not served" for a customer.
+        expect((await http.post('/v1/orders').set(who.auth).send(draft(blind.id, W())).expect(400)).body.code).toBe('ADDRESS_NOT_SERVICEABLE');
+      });
+
+      it('keeps a reason of at least 5 characters in the database itself', async () => {
+        const res = await place(pinned.id).expect(201);
+        for (const data of [{ areaOverrideReason: 'abc' }, { areaOverrideReason: '   ab   ' }, { capacityOverrideReason: 'four' }]) {
+          await expect(prisma.order.update({ where: { id: res.body.id }, data })).rejects.toThrow();
+        }
+        await prisma.order.update({ where: { id: res.body.id }, data: { areaOverrideReason: 'five!', capacityOverrideReason: 'also fine' } });
+      });
+    });
+
+    describe('checking an address from settings', () => {
+      const check = (body: object, auth = admin) => http.post('/v1/admin/settings/check-address').set(auth).send(body);
+      beforeAll(async () => {
+        await setArea({ ...HUB, servicePincodes: LISTED });
+      });
+
+      it('says served, with the distance, for a map position inside the radius', async () => {
+        const res = await check({ ...km(4.5) }).expect(200);
+        expect(res.body).toEqual({ served: true, reason: null, distanceKm: 4.5, verified: true });
+      });
+
+      it('says why not, with the distance, outside the radius or off the PIN list', async () => {
+        expect((await check({ ...km(7.2) }).expect(200)).body).toEqual({ served: false, reason: 'OUTSIDE_RADIUS', distanceKm: 7.2, verified: true });
+        // Inside the radius but on a PIN code we do not serve: refused, and the distance is still shown.
+        expect((await check({ ...km(3), pincode: '500099' }).expect(200)).body).toEqual({ served: false, reason: 'PINCODE_NOT_SERVED', distanceKm: 3, verified: true });
+        expect((await check({ ...km(3), pincode: '500033' }).expect(200)).body).toEqual({ served: true, reason: null, distanceKm: 3, verified: true });
+      });
+
+      it('answers for a PIN code alone, and says when nothing could be checked', async () => {
+        expect((await check({ pincode: '500034' }).expect(200)).body).toEqual({ served: true, reason: null, distanceKm: null, verified: true });
+        expect((await check({ pincode: '500099' }).expect(200)).body).toMatchObject({ served: false, reason: 'PINCODE_NOT_SERVED', distanceKm: null });
+        await setArea({ servicePincodes: [] });
+        expect((await check({ pincode: '500034' }).expect(200)).body).toEqual({ served: true, reason: null, distanceKm: null, verified: false });
+        await setArea({ servicePincodes: LISTED });
+      });
+
+      it('uses the settings as they are saved now', async () => {
+        expect((await check({ ...km(7.2) }).expect(200)).body.served).toBe(false);
+        await setArea({ serviceRadiusKm: 8 });
+        expect((await check({ ...km(7.2) }).expect(200)).body).toMatchObject({ served: true, distanceKm: 7.2 });
+        await setArea({ serviceRadiusKm: 6 });
+        expect((await check({ ...km(7.2) }).expect(200)).body.served).toBe(false);
+      });
+
+      it('wants a position or a PIN code, a full position, and real values', async () => {
+        expect((await check({}).expect(400)).body.code).toBe('INVALID_LOCATION');
+        expect((await check({ latitude: 17.4 }).expect(400)).body.code).toBe('INVALID_LOCATION');
+        await check({ pincode: '12345' }).expect(400);
+        await check({ latitude: 95, longitude: 78 }).expect(400);
+        await check({ pincode: '500033', extra: 1 }).expect(400);
+      });
+
+      it('is for staff only, and any staff member (not just the owner)', async () => {
+        await check({ pincode: '500033' }, who().auth).expect(403);
+        await http.post('/v1/admin/settings/check-address').send({ pincode: '500033' }).expect(401);
+        await check({ pincode: '500033' }, superAdmin).expect(200);
+      });
+
+      function who() {
+        return { auth: bearer(PHONES.otherCustomer) };
+      }
+    });
+
+    describe('the waiting list', () => {
+      let cohort: Record<string, { who: Awaited<ReturnType<typeof customer>>; address: { id: string; serviceable: boolean } }>;
+      const register = (auth: { Authorization: string }, addressId: string) => http.post('/v1/me/area-interest').set(auth).send({ addressId });
+      const overview = (query: object = {}) => http.get('/v1/admin/area-interest').set(admin).query(query);
+
+      beforeAll(async () => {
+        await setArea({ ...HUB, servicePincodes: LISTED });
+        const spec: [string, { pincode: string; area: string; latitude?: number; longitude?: number }][] = [
+          ['a', { pincode: '500032', area: 'Gachibowli', ...km(11) }],
+          ['b', { pincode: '500032', area: 'Gachibowli', ...km(10.4) }],
+          ['c', { pincode: '500032', area: 'Gachibowli', ...km(8.4) }],
+          ['d', { pincode: '500036', area: 'Malakpet', ...km(6.5) }],
+          ['e', { pincode: '500028', area: 'Mehdipatnam', ...km(3) }],
+          ['f', { pincode: '500099', area: 'Somewhere' }],
+        ];
+        cohort = {};
+        for (const [key, place] of spec) {
+          const who = await customer(`Waiting ${key.toUpperCase()}`);
+          cohort[key] = { who, address: await addressFor(who, place) };
+        }
+      });
+
+      it('records a request for an address outside the area, from the saved address and the signed-in number', async () => {
+        const { who, address } = cohort.a;
+        // 11 km out and on a PIN code off the list: either rule alone would refuse it.
+        expect(address.serviceable).toBe(false);
+        const res = await register(who.auth, address.id).expect(200);
+        expect(res.body).toMatchObject({ pincode: '500032', locality: 'Gachibowli' });
+        expect(Object.keys(res.body).sort()).toEqual(['createdAt', 'id', 'locality', 'pincode']);
+        const row = await prisma.areaInterest.findUniqueOrThrow({ where: { id: res.body.id } });
+        expect(row).toMatchObject({ userId: who.id, addressId: address.id, pincode: '500032', locality: 'Gachibowli', distanceKm: 11, notifiedAt: null });
+        expect(row.latitude).toBeCloseTo(km(11).latitude, 6);
+        expect(row.longitude).toBeCloseTo(km(11).longitude, 6);
+      });
+
+      it('is idempotent: the same address, another address on the same PIN code, and many taps at once are one request', async () => {
+        const { who, address } = cohort.a;
+        const first = await prisma.areaInterest.findFirstOrThrow({ where: { userId: who.id } });
+        const again = await register(who.auth, address.id).expect(200);
+        expect(again.body.id).toBe(first.id);
+        const sameCode = await addressFor(who, { pincode: '500032', area: 'Gachibowli Phase 2', ...km(11.5) });
+        expect((await register(who.auth, sameCode.id).expect(200)).body.id).toBe(first.id);
+        const taps = await Promise.all([1, 2, 3, 4, 5].map(() => register(who.auth, address.id)));
+        expect(taps.map((t) => t.status)).toEqual([200, 200, 200, 200, 200]);
+        expect(new Set(taps.map((t) => t.body.id))).toEqual(new Set([first.id]));
+        expect(await prisma.areaInterest.count({ where: { userId: who.id } })).toBe(1);
+        // Another PIN code is another request.
+        const other = await addressFor(who, { pincode: '500081', area: 'Madhapur', ...km(14) });
+        expect((await register(who.auth, other.id).expect(200)).body.id).not.toBe(first.id);
+        expect(await prisma.areaInterest.count({ where: { userId: who.id } })).toBe(2);
+        await prisma.areaInterest.deleteMany({ where: { userId: who.id, pincode: '500081' } });
+      });
+
+      it('never takes a place from the client, and only for the customer\'s own saved address', async () => {
+        const { who } = cohort.b;
+        const mine = cohort.b.address.id;
+        await http.post('/v1/me/area-interest').set(who.auth).send({ addressId: mine, latitude: 17.4126, longitude: 78.4482, pincode: '500033' }).expect(400);
+        const res = await register(who.auth, mine).expect(200);
+        expect(await prisma.areaInterest.findUniqueOrThrow({ where: { id: res.body.id } })).toMatchObject({ pincode: '500032', distanceKm: 10.4 });
+
+        expect((await register(who.auth, cohort.c.address.id).expect(404)).body.code).toBe('NOT_FOUND');
+        await register(who.auth, '00000000-0000-4000-8000-000000000000').expect(404);
+        await http.post('/v1/me/area-interest').set(who.auth).send({ addressId: 'not-a-uuid' }).expect(400);
+        await http.post('/v1/me/area-interest').set(who.auth).send({}).expect(400);
+      });
+
+      it('refuses an address that is served, a signed-out caller, staff, and a customer with no number', async () => {
+        const insider = await customer('Inside Ira');
+        const inside = await addressFor(insider, { pincode: '500033', area: 'Jubilee Hills', ...km(4) });
+        expect((await register(insider.auth, inside.id).expect(400)).body.code).toBe('ADDRESS_SERVICEABLE');
+        expect(await prisma.areaInterest.count({ where: { userId: insider.id } })).toBe(0);
+
+        await http.post('/v1/me/area-interest').send({ addressId: cohort.a.address.id }).expect(401);
+        await register(admin, cohort.a.address.id).expect(403);
+
+        // Signed in with Google and no number on the account: staff would have nobody to call.
+        const google = { Authorization: 'Bearer dev-google:nonumber@example.com' };
+        const noNumber = await prisma.user.create({ data: { firebaseUid: 'dev-google-nonumber@example.com', phone: null, email: 'nonumber@example.com', name: 'No Number', role: 'CUSTOMER' } });
+        customers.push(noNumber.id);
+        const theirs = await addressFor({ auth: google }, { pincode: '500032', area: 'Gachibowli', ...km(11) });
+        expect((await register(google, theirs.id).expect(400)).body.code).toBe('PHONE_REQUIRED');
+        // A number typed at checkout is enough: that is the number staff would call.
+        await prisma.user.update({ where: { id: noNumber.id }, data: { contactPhone: '+919123456789' } });
+        await register(google, theirs.id).expect(200);
+        await prisma.areaInterest.deleteMany({ where: { userId: noNumber.id } });
+      });
+
+      it('lets a customer who has been told ask again', async () => {
+        const { who, address } = cohort.e;
+        const first = (await register(who.auth, address.id).expect(200)).body.id as string;
+        await http.post(`/v1/admin/area-interest/${first}/told`).set(admin).expect(200);
+        const second = (await register(who.auth, address.id).expect(200)).body.id as string;
+        expect(second).not.toBe(first);
+        await http.post(`/v1/admin/area-interest/${second}/told`).set(admin).expect(200);
+        await register(who.auth, address.id).expect(200);
+        // Left open for the counts below; the told ones stay in the list as history.
+        expect(await prisma.areaInterest.count({ where: { userId: who.id } })).toBe(3);
+        await prisma.areaInterest.deleteMany({ where: { userId: who.id } });
+      });
+
+      it('counts open requests by PIN code, locality and distance band, most first', async () => {
+        for (const key of ['a', 'b', 'c', 'd', 'e', 'f']) await register(cohort[key].who.auth, cohort[key].address.id).expect(200);
+        const res = await overview().expect(200);
+        expect(res.body.openTotal).toBe(6);
+        expect(res.body.bands).toEqual([
+          { band: 'UNDER_6', count: 1 },
+          { band: 'KM_6_8', count: 1 },
+          { band: 'KM_8_10', count: 1 },
+          { band: 'KM_10_PLUS', count: 2 },
+          { band: 'UNKNOWN', count: 1 },
+        ]);
+        expect(res.body.areas).toHaveLength(5);
+        expect(res.body.areas[0]).toMatchObject({ pincode: '500032', locality: 'Gachibowli', band: 'KM_10_PLUS', count: 2, nearestKm: 10.4 });
+        const rest = res.body.areas.slice(1).map((a: { pincode: string; locality: string; band: string; count: number; nearestKm: number | null }) => [a.pincode, a.locality, a.band, a.count, a.nearestKm]);
+        expect(rest).toEqual(expect.arrayContaining([
+          ['500032', 'Gachibowli', 'KM_8_10', 1, 8.4],
+          ['500036', 'Malakpet', 'KM_6_8', 1, 6.5],
+          ['500028', 'Mehdipatnam', 'UNDER_6', 1, 3],
+          ['500099', 'Somewhere', 'UNKNOWN', 1, null],
+        ]));
+        for (const a of res.body.areas) expect(Number.isNaN(Date.parse(a.newestAt))).toBe(false);
+      });
+
+      it('puts each band edge in the band the list is read in', async () => {
+        const edges: [number | null, string][] = [[5.9, 'UNDER_6'], [6, 'KM_6_8'], [7.9, 'KM_6_8'], [8, 'KM_8_10'], [9.9, 'KM_8_10'], [10, 'KM_10_PLUS'], [null, 'UNKNOWN']];
+        const user = await customer('Edge Eddie');
+        const rows: { id: string }[] = [];
+        for (const [i, [distance]] of edges.entries()) {
+          rows.push(await prisma.areaInterest.create({ data: { userId: user.id, pincode: `5990${i}0`, locality: `Edge ${i}`, distanceKm: distance } }));
+        }
+        const res = await overview({ pageSize: 100 }).expect(200);
+        for (const [i, [, band]] of edges.entries()) {
+          expect(res.body.areas.find((a: { locality: string }) => a.locality === `Edge ${i}`)).toMatchObject({ band, count: 1 });
+          expect(res.body.items.find((it: { id: string }) => it.id === rows[i].id)).toMatchObject({ band });
+        }
+        await prisma.areaInterest.deleteMany({ where: { userId: user.id } });
+      });
+
+      it('lists requests newest first with the customer\'s name and number, a page at a time', async () => {
+        const first = await overview({ pageSize: 4 }).expect(200);
+        expect(first.body).toMatchObject({ page: 1, pageSize: 4, total: 6 });
+        expect(first.body.items.map((i: { customerName: string }) => i.customerName)).toEqual(['Waiting F', 'Waiting E', 'Waiting D', 'Waiting C']);
+        expect(first.body.items[0]).toMatchObject({
+          customerId: cohort.f.who.id,
+          customerPhone: cohort.f.who.phone,
+          pincode: '500099',
+          locality: 'Somewhere',
+          distanceKm: null,
+          band: 'UNKNOWN',
+          notifiedAt: null,
+        });
+        const second = await overview({ pageSize: 4, page: 2 }).expect(200);
+        expect(second.body.items.map((i: { customerName: string }) => i.customerName)).toEqual(['Waiting B', 'Waiting A']);
+        // The counts are the whole waiting list, not the page.
+        expect(second.body.openTotal).toBe(6);
+        await overview({ pageSize: 0 }).expect(400);
+        await overview({ status: 'SOON' }).expect(400);
+      });
+
+      it('shows the customer\'s name and number to staff only', async () => {
+        await http.get('/v1/admin/area-interest').set(cohort.a.who.auth).expect(403);
+        await http.get('/v1/admin/area-interest').expect(401);
+        await http.post(`/v1/admin/area-interest/${(await prisma.areaInterest.findFirstOrThrow()).id}/told`).set(cohort.a.who.auth).expect(403);
+        const mine = await register(cohort.a.who.auth, cohort.a.address.id).expect(200);
+        expect(JSON.stringify(mine.body)).not.toContain(cohort.a.who.phone);
+      });
+
+      it('marks one as told once, leaving the open counts, and says so in the audit log', async () => {
+        const target = await prisma.areaInterest.findFirstOrThrow({ where: { userId: cohort.d.who.id } });
+        const told = await http.post(`/v1/admin/area-interest/${target.id}/told`).set(admin).expect(200);
+        expect(told.body).toMatchObject({ id: target.id, customerName: 'Waiting D', band: 'KM_6_8' });
+        expect(told.body.notifiedAt).not.toBeNull();
+        const log = await auditOf('area_interest.told', target.id);
+        expect(log.data).toMatchObject({ customerId: cohort.d.who.id, pincode: '500036', locality: 'Malakpet' });
+        expect(JSON.stringify(log.data)).not.toContain(cohort.d.who.phone);
+
+        // Telling again changes nothing and logs nothing more.
+        const again = await http.post(`/v1/admin/area-interest/${target.id}/told`).set(admin).expect(200);
+        expect(again.body.notifiedAt).toBe(told.body.notifiedAt);
+        expect(await prisma.auditLog.count({ where: { action: 'area_interest.told', entityId: target.id } })).toBe(1);
+
+        const open = await overview().expect(200);
+        expect(open.body.openTotal).toBe(5);
+        expect(open.body.areas.some((a: { locality: string }) => a.locality === 'Malakpet')).toBe(false);
+        expect(open.body.total).toBe(5);
+        expect(open.body.items.some((i: { id: string }) => i.id === target.id)).toBe(false);
+        const toldList = await overview({ status: 'TOLD' }).expect(200);
+        expect(toldList.body.items.map((i: { id: string }) => i.id)).toEqual([target.id]);
+        expect((await overview({ status: 'ALL' }).expect(200)).body.total).toBe(6);
+
+        await http.post('/v1/admin/area-interest/00000000-0000-4000-8000-000000000000/told').set(admin).expect(404);
+        await http.post('/v1/admin/area-interest/nope/told').set(admin).expect(400);
+      });
+
+      it('holds one open request per customer and PIN code in the database itself, and a position is both numbers or neither', async () => {
+        const { who } = cohort.b;
+        await expect(prisma.areaInterest.create({ data: { userId: who.id, pincode: '500032', locality: 'Gachibowli' } })).rejects.toThrow();
+        await expect(prisma.areaInterest.create({ data: { userId: who.id, pincode: '500777', locality: 'X', latitude: 17.4 } })).rejects.toThrow();
+        await expect(prisma.areaInterest.create({ data: { userId: who.id, pincode: '500778', locality: 'X', distanceKm: -1 } })).rejects.toThrow();
+        // Once told, the same customer and PIN code can be open again.
+        const done = await prisma.areaInterest.create({ data: { userId: who.id, pincode: '500779', locality: 'X', notifiedAt: new Date() } });
+        await prisma.areaInterest.create({ data: { userId: who.id, pincode: '500779', locality: 'X' } });
+        expect(done.notifiedAt).not.toBeNull();
+        await prisma.areaInterest.deleteMany({ where: { userId: who.id, pincode: '500779' } });
+      });
+
+      it('is erased with the customer\'s account', async () => {
+        const leaving = await customer('Leaving Lena');
+        const address = await addressFor(leaving, { pincode: '500032', area: 'Gachibowli', ...km(11) });
+        await register(leaving.auth, address.id).expect(200);
+        expect(await prisma.areaInterest.count({ where: { userId: leaving.id } })).toBe(1);
+        await http.delete('/v1/me').set(leaving.auth).expect(204);
+        expect(await prisma.areaInterest.count({ where: { userId: leaving.id } })).toBe(0);
+        const list = await overview({ pageSize: 100, status: 'ALL' }).expect(200);
+        expect(list.body.items.some((i: { customerId: string }) => i.customerId === leaving.id)).toBe(false);
+        // The account-deletion section counts erased accounts: leave no extra one behind.
+        await prisma.user.delete({ where: { id: leaving.id } });
+      });
+
+      afterAll(async () => {
+        await prisma.areaInterest.deleteMany({});
+        await setArea({ serviceCenterLatitude: null, serviceCenterLongitude: null, serviceRadiusKm: null, servicePincodes: [] });
+      });
+    });
+
+    describe('pickup capacity', () => {
+      // Each test uses its own windows, far enough ahead not to meet the orders of the sections above.
+      const win = (days: number, slot = 'MORNING') => ({ pickupDate: addDays(tomorrow, days), pickupSlot: slot });
+      let who: Awaited<ReturnType<typeof customer>>;
+      let home: { id: string };
+      const used = (w: { pickupDate: string; pickupSlot: string }) =>
+        prisma.order.count({ where: { pickupDate: new Date(`${w.pickupDate}T00:00:00.000Z`), pickupSlot: w.pickupSlot as never, status: { in: ['PENDING', 'PICKUP_ASSIGNED'] } } });
+      const book = (w: { pickupDate: string; pickupSlot: string }, extra: object = {}, auth = who.auth, addressId = home.id) =>
+        http.post('/v1/orders').set(auth).send(draft(addressId, w, extra));
+      const phoneOrder = (w: { pickupDate: string; pickupSlot: string }, extra: object = {}) =>
+        http.post('/v1/admin/orders').set(admin).send({ customerId: who.id, ...draft(home.id, w, extra) });
+      const slots = async () => (await http.get('/v1/schedule/pickup-slots').query({ days: 31 }).expect(200)).body as { date: string; slot: string; available: boolean; reason: string | null }[];
+      const slotOf = (all: Awaited<ReturnType<typeof slots>>, w: { pickupDate: string; pickupSlot: string }) => all.find((s) => s.date === w.pickupDate && s.slot === w.pickupSlot)!;
+
+      beforeAll(async () => {
+        who = await customer('Capacity Cara');
+        home = await addressFor(who, { pincode: '500033', area: 'Jubilee Hills', ...km(4) });
+        await setArea({ pickupCapacityPerSlot: 2 });
+      });
+
+      it('is a setting: 8 to start, empty for no cap, and never zero', async () => {
+        expect((await prisma.$queryRaw<{ column_default: string }[]>`SELECT column_default FROM information_schema.columns WHERE table_name = 'business_settings' AND column_name = 'pickup_capacity_per_slot'`)[0].column_default).toBe('8');
+        expect((await http.get('/v1/admin/settings').set(admin).expect(200)).body.pickupCapacityPerSlot).toBe(2);
+        expect((await setArea({ pickupCapacityPerSlot: null })).body.pickupCapacityPerSlot).toBeNull();
+        expect((await setArea({ pickupCapacityPerSlot: 5 })).body.pickupCapacityPerSlot).toBe(5);
+        for (const bad of [0, -1, 1.5, '8', 1001]) await http.patch('/v1/admin/settings').set(superAdmin).send({ pickupCapacityPerSlot: bad }).expect(400);
+        await http.patch('/v1/admin/settings').set(admin).send({ pickupCapacityPerSlot: 3 }).expect(403);
+        await expect(prisma.businessSettings.update({ where: { id: 1 }, data: { pickupCapacityPerSlot: 0 } })).rejects.toThrow();
+        await setArea({ pickupCapacityPerSlot: 2 });
+      });
+
+      it('counts a window\'s waiting orders, refuses the next booking with SLOT_FULL, and shows the window as FULL', async () => {
+        const w = win(12);
+        await book(w).expect(201);
+        expect(slotOf(await slots(), w)).toMatchObject({ available: true, reason: null });
+        await book(w).expect(201);
+
+        const full = slotOf(await slots(), w);
+        expect(full).toMatchObject({ available: false, reason: 'FULL' });
+        // Other windows are untouched, including the same slot on other days and other slots on this day.
+        const all = await slots();
+        expect(slotOf(all, win(12, 'NOON'))).toMatchObject({ available: true, reason: null });
+        expect(slotOf(all, win(13))).toMatchObject({ available: true, reason: null });
+
+        const refused = await book(w).expect(409);
+        expect(refused.body).toMatchObject({ code: 'SLOT_FULL', details: { date: w.pickupDate, slot: 'MORNING' } });
+        expect(await used(w)).toBe(2);
+        // The order number was not used up by the refusal.
+        const a = await book(win(12, 'NOON')).expect(201);
+        const b = await book(win(12, 'NOON')).expect(201);
+        expect(Number(b.body.orderNumber.replace(/\D/g, ''))).toBe(Number(a.body.orderNumber.replace(/\D/g, '')) + 1);
+      });
+
+      it('keeps the old fields for old apps and gives new apps the reason', async () => {
+        const all = await slots();
+        for (const s of all) {
+          expect(typeof s.available).toBe('boolean');
+          expect([null, 'FULL']).toContain(s.reason);
+          if (s.reason === 'FULL') expect(s.available).toBe(false);
+        }
+        // Closed windows are closed, not full; delivery windows never are.
+        expect(all[0].reason).toBeNull();
+        const delivery = (await http.get('/v1/schedule/delivery-slots').query({ pickupDate: addDays(tomorrow, 12), pickupSlot: 'MORNING', days: 7 }).expect(200)).body as { reason: string | null }[];
+        expect(delivery.every((s) => s.reason === null)).toBe(true);
+        // Anyone can look, signed in or not.
+        await http.get('/v1/schedule/pickup-slots').expect(200);
+      });
+
+      it('frees a place when an order is cancelled or picked up, and counts one a partner has accepted', async () => {
+        const w = win(14);
+        const first = await book(w).expect(201);
+        const second = await book(w).expect(201);
+        await book(w).expect(409);
+
+        await prisma.order.update({ where: { id: first.body.id }, data: { status: 'PICKUP_ASSIGNED' } });
+        await book(w).expect(409);
+        await prisma.order.update({ where: { id: first.body.id }, data: { status: 'CANCELLED' } });
+        expect(slotOf(await slots(), w)).toMatchObject({ available: true, reason: null });
+        const third = await book(w).expect(201);
+        await book(w).expect(409);
+
+        await prisma.order.update({ where: { id: second.body.id }, data: { status: 'PICKED_UP' } });
+        expect(slotOf(await slots(), w).available).toBe(true);
+        await book(w).expect(201);
+        await book(w).expect(409);
+        expect(third.body.status).toBe('PENDING');
+      });
+
+      it('has no limit when the setting is empty', async () => {
+        await setArea({ pickupCapacityPerSlot: null });
+        const w = win(15);
+        for (let i = 0; i < 4; i++) await book(w).expect(201);
+        expect(slotOf(await slots(), w)).toMatchObject({ available: true, reason: null });
+        await setArea({ pickupCapacityPerSlot: 2 });
+        // Over the new cap already: full, and the orders already booked stay.
+        expect(slotOf(await slots(), w)).toMatchObject({ available: false, reason: 'FULL' });
+        expect(await used(w)).toBe(4);
+      });
+
+      it('gives the last place to one of many bookings made at the same moment', async () => {
+        await setArea({ pickupCapacityPerSlot: 3 });
+        const w = win(16);
+        await book(w).expect(201);
+        await book(w).expect(201);
+        const rivals = await Promise.all(Array.from({ length: 6 }, () => book(w)));
+        const outcomes = rivals.map((r) => r.status).sort();
+        expect(outcomes).toEqual([201, 409, 409, 409, 409, 409]);
+        for (const r of rivals.filter((x) => x.status === 409)) expect(r.body.code).toBe('SLOT_FULL');
+        expect(await used(w)).toBe(3);
+
+        // Different windows do not wait for each other: one place each, all at once.
+        await setArea({ pickupCapacityPerSlot: 1 });
+        const apart = await Promise.all([win(17), win(17, 'NOON'), win(17, 'EVENING'), win(18)].map((x) => book(x)));
+        expect(apart.map((r) => r.status)).toEqual([201, 201, 201, 201]);
+        await setArea({ pickupCapacityPerSlot: 2 });
+      });
+
+      it('treats a retry of the booking that took the last place as that booking, not as a second one', async () => {
+        await setArea({ pickupCapacityPerSlot: 1 });
+        const w = win(19);
+        const key1 = { 'Idempotency-Key': 'capacity-last-place-1' };
+        const both = await Promise.all([book(w).set(key1), book(w).set(key1)]);
+        expect(both.map((r) => r.status)).toEqual([201, 201]);
+        expect(both[0].body.id).toBe(both[1].body.id);
+        expect(await used(w)).toBe(1);
+        // Someone else asking for that place is refused.
+        await book(w).expect(409);
+        // A retry later, after the window filled, still returns the order.
+        expect((await book(w).set(key1).expect(201)).headers['idempotent-replayed']).toBe('true');
+        await setArea({ pickupCapacityPerSlot: 2 });
+      });
+
+      describe('rescheduling', () => {
+        const move = (id: string, to: { pickupDate: string; pickupSlot: string }, auth = who.auth) =>
+          http.post(`/v1/orders/${id}/reschedule`).set(auth).send({ ...to, deliveryDate: addDays(to.pickupDate, 2), deliverySlot: 'NOON' });
+        const mine = async (id: string) => (await http.get(`/v1/orders/${id}`).set(who.auth).expect(200)).body;
+
+        it('refuses a move into a full window with SLOT_FULL, changing and counting nothing', async () => {
+          const full = win(21);
+          await book(full).expect(201);
+          await book(full).expect(201);
+          const order = (await book(win(22)).expect(201)).body;
+
+          const refused = await move(order.id, full).expect(409);
+          expect(refused.body).toMatchObject({ code: 'SLOT_FULL', details: { date: full.pickupDate, slot: 'MORNING' } });
+          expect(await mine(order.id)).toMatchObject({ pickupDate: win(22).pickupDate, rescheduleCount: 0, reschedulesRemaining: 2, status: 'PENDING' });
+          expect(await used(full)).toBe(2);
+          expect(await prisma.auditLog.count({ where: { action: 'order.rescheduled', entityId: order.id } })).toBe(0);
+
+          // The moment a place opens, the same move works.
+          await prisma.order.updateMany({ where: { pickupDate: new Date(`${full.pickupDate}T00:00:00.000Z`), pickupSlot: 'MORNING', customerId: who.id }, data: { status: 'CANCELLED' } });
+          await move(order.id, full).expect(200);
+          expect(await mine(order.id)).toMatchObject({ pickupDate: full.pickupDate, rescheduleCount: 1 });
+        });
+
+        it('does not count the order against itself: keeping the pickup window and moving only the delivery works in a full window', async () => {
+          const w = win(23);
+          const one = (await book(w).expect(201)).body;
+          await book(w).expect(201);
+          expect(slotOf(await slots(), w).reason).toBe('FULL');
+          const res = await http
+            .post(`/v1/orders/${one.id}/reschedule`)
+            .set(who.auth)
+            .send({ pickupDate: w.pickupDate, pickupSlot: 'MORNING', deliveryDate: addDays(w.pickupDate, 3), deliverySlot: 'EVENING' })
+            .expect(200);
+          expect(res.body).toMatchObject({ pickupDate: w.pickupDate, deliveryDate: addDays(w.pickupDate, 3), rescheduleCount: 1 });
+          expect(await used(w)).toBe(2);
+        });
+
+        it('lets a partner-accepted order move into a window with room, releasing its old place', async () => {
+          const from = win(24);
+          const to = win(25);
+          const order = (await book(from).expect(201)).body;
+          await book(from).expect(201);
+          await prisma.order.update({ where: { id: order.id }, data: { status: 'PICKUP_ASSIGNED' } });
+          await move(order.id, to).expect(200);
+          expect(await used(from)).toBe(1);
+          expect(await used(to)).toBe(1);
+          // The place it left is free for someone else.
+          await book(from).expect(201);
+          await book(from).expect(409);
+        });
+
+        it('gives the last place to one of two moves made at the same moment', async () => {
+          await setArea({ pickupCapacityPerSlot: 3 });
+          const target = win(26);
+          await book(target).expect(201);
+          await book(target).expect(201);
+          const x = (await book(win(27)).expect(201)).body;
+          const y = (await book(win(28)).expect(201)).body;
+          const results = await Promise.all([move(x.id, target), move(y.id, target)]);
+          expect(results.map((r) => r.status).sort()).toEqual([200, 409]);
+          expect(results.find((r) => r.status === 409)!.body.code).toBe('SLOT_FULL');
+          expect(await used(target)).toBe(3);
+          // The one that lost kept its place and its change.
+          const loser = results[0].status === 409 ? x : y;
+          expect(await mine(loser.id)).toMatchObject({ rescheduleCount: 0 });
+          await setArea({ pickupCapacityPerSlot: 2 });
+        });
+
+        it('lets a move and a booking compete fairly for the last place', async () => {
+          await setArea({ pickupCapacityPerSlot: 2 });
+          const target = win(29);
+          await book(target).expect(201);
+          const mover = (await book(win(20)).expect(201)).body;
+          const [moved, booked] = await Promise.all([move(mover.id, target), book(target)]);
+          // One got the place; the other was told SLOT_FULL.
+          expect([moved.status === 200, booked.status === 201].filter(Boolean)).toHaveLength(1);
+          expect([moved.status, booked.status].filter((code) => code === 409)).toHaveLength(1);
+          expect(await used(target)).toBe(2);
+        });
+      });
+
+      describe('staff overrides', () => {
+        let full: { pickupDate: string; pickupSlot: string };
+        beforeAll(async () => {
+          full = win(8, 'EVENING');
+          await setArea({ pickupCapacityPerSlot: 2 });
+          await book(full).expect(201);
+          await book(full).expect(201);
+        });
+
+        it('refuses a phone order into a full window until staff type a reason, then stores it on the order and in the audit log', async () => {
+          expect((await phoneOrder(full).expect(409)).body.code).toBe('SLOT_FULL');
+          await phoneOrder(full, { capacityOverrideReason: 'abc' }).expect(400);
+          await phoneOrder(full, { capacityOverrideReason: '      ' }).expect(400);
+          expect(await used(full)).toBe(2);
+
+          const res = await phoneOrder(full, { capacityOverrideReason: '  Customer is away on the other days  ' }).expect(201);
+          expect(res.body.capacityOverrideReason).toBe('Customer is away on the other days');
+          expect((await orderRow(res.body.id)).capacityOverrideReason).toBe('Customer is away on the other days');
+          expect((await orderRow(res.body.id)).areaOverrideReason).toBeNull();
+          const log = await auditOf('order.placed_for_customer', res.body.id);
+          expect(log.data).toMatchObject({ capacityOverrideReason: 'Customer is away on the other days' });
+          expect(log.data).not.toHaveProperty('outsideAreaReason');
+          expect(await used(full)).toBe(3);
+          // It is over the cap now: still full for everyone else.
+          expect(slotOf(await slots(), full)).toMatchObject({ available: false, reason: 'FULL' });
+          expect((await book(full).expect(409)).body.code).toBe('SLOT_FULL');
+        });
+
+        it('keeps no reason when the window has room, and a customer cannot send one', async () => {
+          const room = win(9, 'EVENING');
+          const res = await phoneOrder(room, { capacityOverrideReason: 'Not needed here at all' }).expect(201);
+          expect(res.body.capacityOverrideReason).toBeNull();
+          expect((await orderRow(res.body.id)).capacityOverrideReason).toBeNull();
+          await book(full, { capacityOverrideReason: 'Please let me in' }).expect(400);
+          expect(await used(full)).toBe(3);
+        });
+
+        it('can use both overrides on one order', async () => {
+          await setArea({ ...HUB, servicePincodes: LISTED });
+          const farAddress = await addressFor(who, { pincode: '500033', area: 'Gachibowli', ...km(11) });
+          const res = await http
+            .post('/v1/admin/orders')
+            .set(admin)
+            .send({ customerId: who.id, ...draft(farAddress.id, full), outsideAreaReason: 'Regular customer there', capacityOverrideReason: 'Customer is away on other days' })
+            .expect(201);
+          expect(res.body).toMatchObject({ areaOverrideReason: 'Regular customer there', capacityOverrideReason: 'Customer is away on other days' });
+          const log = await auditOf('order.placed_for_customer', res.body.id);
+          expect(log.data).toMatchObject({ outsideAreaReason: 'Regular customer there', capacityOverrideReason: 'Customer is away on other days' });
+          await setArea({ serviceCenterLatitude: null, serviceCenterLongitude: null, serviceRadiusKm: null, servicePincodes: [] });
+        });
+
+        it('replays a committed phone order without asking for the reason again', async () => {
+          const room = win(10, 'MORNING');
+          await book(room).expect(201);
+          await book(room).expect(201);
+          const send = () => phoneOrder(room, { capacityOverrideReason: 'Customer is away on other days' }).set('Idempotency-Key', 'staff-capacity-override-1');
+          const first = await send().expect(201);
+          const replay = await send().expect(201);
+          expect(replay.body.id).toBe(first.body.id);
+          expect(replay.headers['idempotent-replayed']).toBe('true');
+          expect(await used(room)).toBe(3);
+        });
+      });
     });
   });
 
@@ -2174,6 +3081,196 @@ describe('Laundry API (e2e)', () => {
         expect(page.body.total).toBe(10_001);
         expect(page.body.totals.captured).toEqual({ count: 10_001, amountPaise: 1_000_100 });
       }, 60_000);
+    });
+  });
+
+  describe('care notes and photos', () => {
+    // Each test books into a window of its own, far from the ones other tests fill (a window takes a limited number of pickups).
+    let windowDay = 4;
+    beforeEach(() => {
+      windowDay += 1;
+    });
+    const STORAGE = 'http://localhost:4999/uploads';
+    const customer = bearer(PHONES.customer);
+    let customerId: string;
+    let otherId: string;
+    let driverOrderId: string;
+    let driverPhotos: string[];
+
+    const draft = (extra: Record<string, unknown> = {}) => ({
+      items: [{ catalogItemId: shirtId, quantity: 1 }],
+      pickupDate: addDays(tomorrow, windowDay), pickupSlot: 'NOON', deliveryDate: addDays(tomorrow, windowDay + 2), deliverySlot: 'EVENING',
+      pickupAddressId: addressId, paymentMethod: 'COD', ...extra,
+    });
+    const place = (extra: Record<string, unknown> = {}, key?: string) => {
+      const req = http.post('/v1/orders').set(customer);
+      return (key ? req.set('Idempotency-Key', key) : req).send(draft(extra));
+    };
+    // The upload route allows 6 requests a minute, so most photos are recorded directly and only a few go through it.
+    let uploadedAt = Date.now();
+    const photo = async (userId = customerId): Promise<string> => {
+      const key = `care/${userId}/${randomUUID()}.webp`;
+      await prisma.orderCarePhoto.create({ data: { userId, key, createdAt: new Date((uploadedAt += 10)) } });
+      return `${STORAGE}/${key}`;
+    };
+
+    beforeAll(async () => {
+      customerId = (await http.get('/v1/me').set(customer).expect(200)).body.id;
+      // Signed in by the "hides other customers’ orders" test.
+      otherId = (await http.get('/v1/me').set(bearer(PHONES.otherCustomer)).expect(200)).body.id;
+    });
+
+    it('takes a care note without photos, trimmed, and keeps it apart from the pickup note', async () => {
+      const res = await place({ careNote: '  Stain on the collar of the white shirt  ', instructions: 'Gate code 4410' }).expect(201);
+      expect(res.body).toMatchObject({ careNote: 'Stain on the collar of the white shirt', carePhotoUrls: [], instructions: 'Gate code 4410' });
+      const stored = await prisma.order.findUniqueOrThrow({ where: { id: res.body.id } });
+      expect(stored).toMatchObject({ careNote: 'Stain on the collar of the white shirt', instructions: 'Gate code 4410' });
+      expect((await place({ careNote: '   ' }).expect(201)).body).toMatchObject({ careNote: null, carePhotoUrls: [] });
+      expect((await place().expect(201)).body).toMatchObject({ careNote: null, carePhotoUrls: [] });
+      const long = await place({ careNote: 'a'.repeat(501) }).expect(400);
+      expect(long.body.message).toEqual(expect.arrayContaining([expect.stringContaining('careNote')]));
+      expect((await place({ careNote: 'a'.repeat(500) }).expect(201)).body.careNote).toHaveLength(500);
+    });
+
+    it('accepts a cleaned photo from a customer, refuses files that are not images, and leaves report photos alone', async () => {
+      const reportPhotos = await prisma.issuePhoto.count();
+      const image = await sharp({ create: { width: 30, height: 20, channels: 3, background: '#654321' } }).png().toBuffer();
+      const res = await http.post('/v1/me/uploads/care-photos').set(customer).attach('file', image, 'stain.png').expect(201);
+      expect(res.body.url).toContain(`/care/${customerId}/`);
+      expect(res.body.url).toMatch(/\.webp$/);
+      expect(res.body).toMatchObject({ width: 30, height: 20 });
+      const row = await prisma.orderCarePhoto.findFirstOrThrow({ where: { key: res.body.url.split('/uploads/')[1] } });
+      expect(row).toMatchObject({ userId: customerId, orderId: null });
+      expect(await prisma.issuePhoto.count()).toBe(reportPhotos);
+
+      const fake = await http.post('/v1/me/uploads/care-photos').set(customer).attach('file', Buffer.from('not an image'), 'fake.jpg').expect(400);
+      expect(fake.body.code).toBe('INVALID_IMAGE');
+      await http.post('/v1/me/uploads/care-photos').attach('file', image, 'stain.png').expect(401);
+      await http.post('/v1/me/uploads/care-photos').set(bearer(PHONES.admin)).attach('file', image, 'stain.png').expect(403);
+    });
+
+    it('stops at 20 care photos a day for each customer', async () => {
+      // Another customer, whose photos nothing else here depends on.
+      await prisma.orderCarePhoto.createMany({ data: Array.from({ length: 20 }, (_, i) => ({ userId: otherId, key: `care/${otherId}/cap-${i}.webp` })) });
+      const image = await sharp({ create: { width: 10, height: 10, channels: 3, background: '#112233' } }).png().toBuffer();
+      const capped = await http.post('/v1/me/uploads/care-photos').set(bearer(PHONES.otherCustomer)).attach('file', image, 'one-more.png').expect(429);
+      expect(capped.body.code).toBe('PHOTO_LIMIT');
+      expect(await prisma.orderCarePhoto.count({ where: { userId: otherId } })).toBe(20);
+      // The first customer is not held back by it.
+      await http.post('/v1/me/uploads/care-photos').set(customer).attach('file', image, 'mine.png').expect(201);
+      await prisma.orderCarePhoto.deleteMany({ where: { userId: otherId } });
+    });
+
+    it('attaches up to 3 of the customer’s own photos to the order, oldest first', async () => {
+      const [a, b, c] = [await photo(), await photo(), await photo()];
+      const res = await place({ careNote: 'Silk saree: stain on the pallu', carePhotoUrls: [a, b, c] }).expect(201);
+      expect(res.body.carePhotoUrls).toEqual([a, b, c]);
+      const rows = await prisma.orderCarePhoto.findMany({ where: { orderId: res.body.id } });
+      expect(rows).toHaveLength(3);
+      expect(rows.every((r) => r.userId === customerId)).toBe(true);
+      const mine = await http.get(`/v1/orders/${res.body.id}`).set(customer).expect(200);
+      expect(mine.body).toMatchObject({ careNote: 'Silk saree: stain on the pallu', carePhotoUrls: [a, b, c] });
+      const listed = await http.get('/v1/orders').set(customer).expect(200);
+      expect(listed.body.items.find((o: { id: string }) => o.id === res.body.id).carePhotoUrls).toEqual([a, b, c]);
+    });
+
+    it('refuses another customer’s photo, a photo already used, a report photo, a made-up address and more than 3', async () => {
+      const before = await prisma.order.count();
+      const used = await prisma.orderCarePhoto.findFirstOrThrow({ where: { userId: customerId, orderId: { not: null } } });
+      const theirs = await photo(otherId);
+      const mine = await photo();
+      const refusals = [
+        theirs,
+        mine.replace(customerId, otherId),
+        `${STORAGE}/issues/${customerId}/${randomUUID()}.webp`,
+        `${STORAGE}/${used.key}`,
+        `${STORAGE}/care/${customerId}/${randomUUID()}.webp`,
+        `https://example.com/${mine.split('/uploads/')[1]}`,
+      ];
+      for (const url of refusals) {
+        const res = await place({ careNote: 'x', carePhotoUrls: [url] }).expect(400);
+        expect(res.body.code).toBe('INVALID_PHOTO');
+      }
+      const invalid = expect.arrayContaining([expect.stringContaining('carePhotoUrls')]);
+      expect((await place({ carePhotoUrls: [mine, mine] }).expect(400)).body.message).toEqual(invalid);
+      const four = [mine, await photo(), await photo(), await photo()];
+      expect((await place({ carePhotoUrls: four }).expect(400)).body.message).toEqual(invalid);
+      // Nothing was placed, and the customer's photo is still free to use.
+      expect(await prisma.order.count()).toBe(before);
+      expect((await place({ carePhotoUrls: [mine] }).expect(201)).body.carePhotoUrls).toEqual([mine]);
+      // One photo goes to one order: the same URL on a second order is refused.
+      expect((await place({ carePhotoUrls: [mine] }).expect(400)).body.code).toBe('INVALID_PHOTO');
+    });
+
+    it('does not place two orders when the app retries, and does not replay a retry with a changed note or photos', async () => {
+      const [a, b] = [await photo(), await photo()];
+      const key = 'care-retry-20261117';
+      const first = await place({ careNote: 'Colours may run', carePhotoUrls: [a] }, key).expect(201);
+      const replay = await place({ careNote: 'Colours may run', carePhotoUrls: [a] }, key).expect(201);
+      expect(replay.body.id).toBe(first.body.id);
+      expect(replay.headers['idempotent-replayed']).toBe('true');
+      expect(replay.body).toMatchObject({ careNote: 'Colours may run', carePhotoUrls: [a] });
+      expect(await prisma.order.count({ where: { customerId, idempotencyKey: key } })).toBe(1);
+      expect(await prisma.orderCarePhoto.count({ where: { orderId: first.body.id } })).toBe(1);
+      // Spaces around the note are not a different request.
+      expect((await place({ careNote: ' Colours may run ', carePhotoUrls: [a] }, key).expect(201)).body.id).toBe(first.body.id);
+      const changes = [
+        { careNote: 'Wash separately', carePhotoUrls: [a] },
+        { careNote: 'Colours may run', carePhotoUrls: [a, b] },
+        { careNote: 'Colours may run' },
+        { carePhotoUrls: [a] },
+        {},
+      ];
+      for (const changed of changes) {
+        const res = await place(changed, key).expect(409);
+        expect(res.body.code).toBe('IDEMPOTENCY_KEY_REUSED');
+      }
+      // Without a care note the request is the one that was sent before care notes existed.
+      const plain = await place({}, 'care-retry-plain-1').expect(201);
+      expect((await place({}, 'care-retry-plain-1').expect(201)).body.id).toBe(plain.body.id);
+      expect((await place({ careNote: '' }, 'care-retry-plain-1').expect(201)).body.id).toBe(plain.body.id);
+      expect((await place({ careNote: 'Starch' }, 'care-retry-plain-1').expect(409)).body.code).toBe('IDEMPOTENCY_KEY_REUSED');
+    });
+
+    it('shows the note and the photos to the customer, to staff and to the assigned partner only', async () => {
+      driverPhotos = [await photo(), await photo()];
+      const placed = await place({ careNote: 'Embroidered kurta: handle with care', carePhotoUrls: driverPhotos }).expect(201);
+      driverOrderId = placed.body.id;
+      const expected = { careNote: 'Embroidered kurta: handle with care', carePhotoUrls: driverPhotos };
+
+      expect((await http.get(`/v1/admin/orders/${driverOrderId}`).set(bearer(PHONES.admin)).expect(200)).body).toMatchObject(expected);
+      const adminList = await http.get('/v1/admin/orders').set(bearer(PHONES.admin)).query({ search: placed.body.orderNumber }).expect(200);
+      expect(adminList.body.items[0]).toMatchObject(expected);
+
+      // Nobody else sees it: another customer, and a partner who does not hold the order.
+      await http.get(`/v1/orders/${driverOrderId}`).set(bearer(PHONES.otherCustomer)).expect(404);
+      await http.get(`/v1/driver/orders/${driverOrderId}`).set(bearer(PHONES.driver1)).expect(404);
+
+      await http.post(`/v1/admin/orders/${driverOrderId}/assign`).set(bearer(PHONES.admin)).send({ leg: 'PICKUP', driverId: driver1Id }).expect(200);
+      expect((await http.get(`/v1/driver/orders/${driverOrderId}`).set(bearer(PHONES.driver1)).expect(200)).body).toMatchObject(expected);
+      const tasks = await http.get('/v1/driver/tasks').set(bearer(PHONES.driver1)).expect(200);
+      expect(tasks.body.find((o: { id: string }) => o.id === driverOrderId)).toMatchObject(expected);
+      await http.get(`/v1/driver/orders/${driverOrderId}`).set(bearer(PHONES.driver2)).expect(404);
+    });
+
+    it('keeps the note and photos when the order is cancelled', async () => {
+      const moved = await http.post(`/v1/admin/orders/${driverOrderId}/status`).set(bearer(PHONES.admin)).send({ status: 'CANCELLED', note: 'Test finished' }).expect(200);
+      expect(moved.body).toMatchObject({ careNote: 'Embroidered kurta: handle with care', carePhotoUrls: driverPhotos });
+      expect((await http.get(`/v1/orders/${driverOrderId}`).set(customer).expect(200)).body.carePhotoUrls).toEqual(driverPhotos);
+    });
+
+    it('takes a care note on a phone order, but no photos', async () => {
+      const staff = bearer(PHONES.admin);
+      const phone = { ...draft({ careNote: '  Delicate silk, please iron on low heat ' }), customerId };
+      const res = await http.post('/v1/admin/orders').set(staff).send(phone).expect(201);
+      expect(res.body).toMatchObject({ careNote: 'Delicate silk, please iron on low heat', carePhotoUrls: [], source: 'ADMIN' });
+      await http.post('/v1/admin/orders').set(staff).send({ ...phone, carePhotoUrls: [await photo()] }).expect(400);
+      // The same draft retried with a changed note is not replayed.
+      const key = 'staff-care-retry-1';
+      const first = await http.post('/v1/admin/orders').set(staff).set('Idempotency-Key', key).send(phone).expect(201);
+      expect((await http.post('/v1/admin/orders').set(staff).set('Idempotency-Key', key).send(phone).expect(201)).body.id).toBe(first.body.id);
+      const changed = await http.post('/v1/admin/orders').set(staff).set('Idempotency-Key', key).send({ ...phone, careNote: 'Something else' }).expect(409);
+      expect(changed.body.code).toBe('IDEMPOTENCY_KEY_REUSED');
     });
   });
 });

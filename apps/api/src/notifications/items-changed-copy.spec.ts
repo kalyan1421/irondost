@@ -35,4 +35,19 @@ describe('itemsChangedCopy', () => {
     expect(copy.body).not.toContain('return the extra');
     expect(copy.body).not.toContain('still due');
   });
+
+  it('says when the new count adds the travel charge', () => {
+    const copy = itemsChangedCopy({ ...base, previousTotalPaise: 22000, totalPaise: 21000, previousTravelChargePaise: 0, travelChargePaise: 3000 })!;
+    expect(copy.body).toContain('includes a ₹30 travel charge');
+  });
+
+  it('says when the new count makes travel free', () => {
+    const copy = itemsChangedCopy({ ...base, previousTotalPaise: 22000, totalPaise: 21000, previousTravelChargePaise: 3000, travelChargePaise: 0 })!;
+    expect(copy.body).toContain('Travel is now free');
+  });
+
+  it('does not mention travel when the charge did not move', () => {
+    const copy = itemsChangedCopy({ ...base, previousTravelChargePaise: 3000, travelChargePaise: 3000 })!;
+    expect(copy.body).not.toContain('ravel');
+  });
 });
