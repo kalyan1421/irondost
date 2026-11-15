@@ -24,7 +24,7 @@ Every selected Trust-core capability now has a local implementation. The other f
 
 ## Release checks
 
-1. Apply the five new Prisma migrations (trust core, report retry key, contact phone, payment capture time, report remedy) before deploying the matching API and clients. The API reads the new tables when it starts, so deploying it first fails at boot.
+1. The new Prisma migrations (trust core, report retry key, contact phone, payment capture time, report remedy, and later ones) apply on their own when the API deploys: the container runs `prisma migrate deploy` before it starts. If a migration fails the new instance does not start and Render keeps serving the old one. Take a database backup first and rehearse the migrations on a copy; see [RELEASE-CHECKLIST.md](RELEASE-CHECKLIST.md). Deploy the API before the admin and before the apps.
 2. Verify Razorpay success, pending and failed refunds, mixed COD/online collection, deep-linked receipts, and order-linked report photos on test devices with test provider credentials.
 3. Run staff/customer pilot tasks for changed-price approval, report response and compensation, one phone order with response loss, cash handoff and manual partner assignment. Confirm staffing before enabling any public reply deadline.
 
