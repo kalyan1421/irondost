@@ -253,11 +253,11 @@ class _ActiveOrder extends ConsumerWidget {
               Text(order.status.customerLabel, style: context.text.titleLg),
               const SizedBox(height: IdSpace.s1),
               Text(
-                '${waitingForPickup
+                keepWindowTogether('${waitingForPickup
                     ? 'Pickup'
                     : missed
                     ? 'Delivery estimate missed'
-                    : 'Delivery'} · ${dayLong(waitingForPickup ? order.pickupDate : order.deliveryDate)}, ${windowFromLabel(waitingForPickup ? order.pickupSlotLabel : order.deliverySlotLabel)}',
+                    : 'Delivery'} · ${dayLong(waitingForPickup ? order.pickupDate : order.deliveryDate)}, ${windowFromLabel(waitingForPickup ? order.pickupSlotLabel : order.deliverySlotLabel)}'),
                 style: context.text.body,
               ),
               const SizedBox(height: IdSpace.s1),

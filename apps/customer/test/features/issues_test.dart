@@ -42,7 +42,7 @@ void main() {
       orderRepositoryProvider.overrideWithValue(FakeOrderRepository()), issueRepositoryProvider.overrideWithValue(repo)]));
     await tester.pumpAndSettle();
     expect(find.text('My shirt still has creases.'), findsOneWidget);
-    await tester.ensureVisible(find.text('Send report'));
+    await tester.scrollUntilVisible(find.text('Send report'), 200, scrollable: find.byType(Scrollable).first);
     await tester.tap(find.text('Send report'));
     await tester.pumpAndSettle();
     expect(repo.submitted?.category, IssueCategory.quality);
@@ -58,11 +58,35 @@ void main() {
     await tester.pumpWidget(themed(const ReportProblemScreen(orderId: 'o-1'), overrides: [...overrides,
       orderRepositoryProvider.overrideWithValue(FakeOrderRepository()), issueRepositoryProvider.overrideWithValue(repo)]));
     await tester.pumpAndSettle();
+    await tester.scrollUntilVisible(find.text('Retry same report'), 200, scrollable: find.byType(Scrollable).first);
     expect(find.text('Retry same report'), findsOneWidget);
     await tester.tap(find.text('Retry same report'));
     await tester.pumpAndSettle();
     expect(repo.requestKey, firstKey);
     expect(tester.takeException(), isNull);
+  });
+
+  testWidgets('a new report asks for a problem type and a description before it sends anything', (tester) async {
+    final repo = Reports();
+    final overrides = await basketOverrides();
+    await tester.pumpWidget(themed(const ReportProblemScreen(orderId: 'o-1'), overrides: [...overrides,
+      orderRepositoryProvider.overrideWithValue(FakeOrderRepository()), issueRepositoryProvider.overrideWithValue(repo)]));
+    await tester.pumpAndSettle();
+    await tester.scrollUntilVisible(find.text('Send report'), 200, scrollable: find.byType(Scrollable).first);
+    await tester.tap(find.text('Send report'));
+    await tester.pumpAndSettle();
+    expect(find.text('Choose a problem type.'), findsOneWidget);
+    expect(find.text('Describe the problem.'), findsOneWidget);
+    expect(repo.submitted, isNull);
+
+    await tester.scrollUntilVisible(find.text('Choose one'), -200, scrollable: find.byType(Scrollable).first);
+    await tester.tap(find.text('Choose one'));
+    await tester.pumpAndSettle();
+    await tester.tap(find.text(issueCategories[IssueCategory.quality]!));
+    await tester.pumpAndSettle();
+    expect(find.text('Choose a problem type.'), findsNothing);
+    expect(find.text(issueCategories[IssueCategory.quality]!), findsOneWidget);
+    expect(find.text('Describe the problem.'), findsOneWidget);
   });
 
   testWidgets('report detail recovers from offline, keeps failed replies, and shows no invented deadline', (tester) async {

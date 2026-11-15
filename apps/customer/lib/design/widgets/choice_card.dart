@@ -6,16 +6,16 @@ import '../theme.dart';
 class ChoiceCard extends StatelessWidget {
   const ChoiceCard({
     super.key,
-    required this.icon,
+    this.icon,
     required this.title,
-    required this.description,
+    this.description,
     required this.selected,
     required this.onTap,
   });
 
-  final IconData icon;
+  final IconData? icon;
   final String title;
-  final String description;
+  final String? description;
   final bool selected;
   final VoidCallback onTap;
 
@@ -27,7 +27,7 @@ class ChoiceCard extends StatelessWidget {
     return Semantics(
       inMutuallyExclusiveGroup: true,
       checked: selected,
-      label: '$title. $description',
+      label: description == null ? title : '$title. $description',
       excludeSemantics: true,
       child: Material(
         color: selected ? c.primarySoft : c.surface,
@@ -45,21 +45,24 @@ class ChoiceCard extends StatelessWidget {
             ),
             child: Row(
               children: [
-                Icon(
-                  icon,
-                  size: IdSize.iconMd,
-                  color: selected ? c.primary : c.textMuted,
-                ),
-                const SizedBox(width: IdSpace.s3),
+                if (icon != null) ...[
+                  Icon(
+                    icon,
+                    size: IdSize.iconMd,
+                    color: selected ? c.primary : c.textMuted,
+                  ),
+                  const SizedBox(width: IdSpace.s3),
+                ],
                 Expanded(
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       Text(title, style: t.title),
-                      Text(
-                        description,
-                        style: t.body.copyWith(color: c.textMuted),
-                      ),
+                      if (description != null)
+                        Text(
+                          description!,
+                          style: t.body.copyWith(color: c.textMuted),
+                        ),
                     ],
                   ),
                 ),

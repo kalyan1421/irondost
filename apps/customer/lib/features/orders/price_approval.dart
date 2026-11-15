@@ -93,25 +93,21 @@ class _ApprovalSheetState extends ConsumerState<_ApprovalSheet> {
     final request = widget.request;
     final pending = request.status == AdjustmentStatus.pendingCustomer && !terminal;
     final t = context.text;
-    Widget lines(String label, List<AdjustmentLineDto> items) => Column(crossAxisAlignment: CrossAxisAlignment.stretch, children: [
-      Text(label, style: t.title),
-      for (final line in items) Padding(padding: const EdgeInsets.symmetric(vertical: IdSpace.s2), child: Text(
-        '${line.name}\n${line.quantity.toInt()} × ${rupees(line.unitPricePaise)} ${unitLabel(line.unit)} = ${rupees(line.lineTotalPaise)}', style: t.body)),
-    ]);
+    final changes = _lineChanges(request.itemsBefore, request.itemsAfter);
     return PopScope(canPop: !busy, child: Column(crossAxisAlignment: CrossAxisAlignment.stretch, mainAxisSize: MainAxisSize.min, children: [
       Semantics(header: true, child: Text('Review the new total', style: t.titleLg)),
       Text(widget.order.orderNumber, style: t.orderId),
       const SizedBox(height: IdSpace.s3),
       Text(request.reason, style: t.bodyLg),
-      const SizedBox(height: IdSpace.s3),
-      lines('Accepted items', request.itemsBefore),
-      Text('Accepted total: ${rupees(request.oldTotalPaise)}', style: t.title),
-      const Divider(),
-      lines('Proposed items', request.itemsAfter),
-      Text('Items ${rupees(request.subtotalPaise)} · Discount ${rupees(request.discountPaise)} · Delivery ${rupees(request.deliveryFeePaise)}', style: t.body),
-      Text('New total: ${rupees(request.newTotalPaise)}', style: t.titleLg),
-      Text('Increase: ${rupees(request.newTotalPaise - request.oldTotalPaise)}', style: t.body),
-      const SizedBox(height: IdSpace.s3),
+      const SizedBox(height: IdSpace.s5),
+      Text('What changed', style: t.title),
+      for (var i = 0; i < changes.length; i++) ...[
+        if (i > 0) Divider(height: 1, color: context.colors.border),
+        _ChangeRow(changes[i]),
+      ],
+      const SizedBox(height: IdSpace.s4),
+      _TotalsPanel(request),
+      const SizedBox(height: IdSpace.s4),
       Text(pending ? 'Decide by ${istDateTimeLabel(request.expiresAt)}. If you decline or do not respond, the original bill stands. Our team will contact you about the item count.'
         : 'This request ${switch (request.status) {
             AdjustmentStatus.approved => 'was approved',
@@ -119,7 +115,7 @@ class _ApprovalSheetState extends ConsumerState<_ApprovalSheet> {
             AdjustmentStatus.expired => 'expired',
             _ => 'is no longer waiting for your decision',
           }}. Open the order for your current bill.', style: t.body),
-      if (error != null) Text(error!, style: t.body.copyWith(color: context.colors.danger)),
+      if (error != null) Padding(padding: const EdgeInsets.only(top: IdSpace.s3), child: Text(error!, style: t.body.copyWith(color: context.colors.danger))),
       const SizedBox(height: IdSpace.s4),
       if (pending) ...[
         IdButton(label: 'Approve ${rupees(request.newTotalPaise)}', loading: busy, onPressed: () => decide(true), expand: true),
@@ -128,5 +124,167 @@ class _ApprovalSheetState extends ConsumerState<_ApprovalSheet> {
       ],
       IdButton.text(label: 'Close', onPressed: busy ? null : () => Navigator.of(context).pop()),
     ]));
+  }
+}
+
+/// One item as the accepted bill had it and as the new bill has it. Either side is null when the item is new or gone.
+class _LineChange {
+  const _LineChange(this.before, this.after);
+  final AdjustmentLineDto? before;
+  final AdjustmentLineDto? after;
+
+  AdjustmentLineDto get line => (after ?? before)!;
+  bool get added => before == null;
+  bool get removed => after == null;
+  bool get changed => before != null && after != null && (before!.quantity != after!.quantity || before!.unitPricePaise != after!.unitPricePaise);
+  bool get touched => added || removed || changed;
+}
+
+/// Changed items first, so the difference is the first thing read; unchanged items keep their order below.
+List<_LineChange> _lineChanges(List<AdjustmentLineDto> before, List<AdjustmentLineDto> after) {
+  String key(AdjustmentLineDto l) => l.catalogItemId ?? l.name;
+  final old = {for (final l in before) key(l): l};
+  final all = [for (final l in after) _LineChange(old.remove(key(l)), l), for (final l in old.values) _LineChange(l, null)];
+  return [...all.where((c) => c.touched), ...all.where((c) => !c.touched)];
+}
+
+String _number(num n) => n == n.toInt() ? '${n.toInt()}' : '$n';
+String _unitSuffix(ItemUnit unit) => switch (unit) {
+  ItemUnit.kg => ' kg', ItemUnit.pair => ' pairs', ItemUnit.valueSet => ' sets', _ => '',
+};
+
+class _ChangeRow extends StatelessWidget {
+  const _ChangeRow(this.change);
+  final _LineChange change;
+
+  @override
+  Widget build(BuildContext context) {
+    final t = context.text;
+    final c = context.colors;
+    final line = change.line;
+    final unit = _unitSuffix(line.unit);
+    final (tag, tagBg, tagFg) = change.added
+        ? ('New', c.successSoft, c.success)
+        : change.removed
+        ? ('Removed', c.surfaceSoft, c.textMuted)
+        : change.changed
+        ? ('${_number(change.before!.quantity)} → ${_number(change.after!.quantity)}$unit', c.primarySoft, c.onPrimarySoft)
+        : (null, c.surface, c.text);
+    final rate = '${rupees(line.unitPricePaise)} ${unitLabel(line.unit)}';
+    // An item that is only changing keeps its rate; every other row also says how many.
+    final caption = change.changed ? rate : '${_number(line.quantity)}$unit × $rate';
+    final muted = !change.touched || change.removed;
+    final strike = t.body.copyWith(color: c.textMuted, decoration: TextDecoration.lineThrough);
+    return MergeSemantics(
+      child: Padding(
+        padding: const EdgeInsets.symmetric(vertical: IdSpace.s3),
+        child: Row(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(line.name, style: t.title.copyWith(color: muted ? c.textMuted : null)),
+                  const SizedBox(height: IdSpace.s1),
+                  Wrap(
+                    spacing: IdSpace.s2,
+                    runSpacing: IdSpace.s1,
+                    crossAxisAlignment: WrapCrossAlignment.center,
+                    children: [
+                      if (tag != null)
+                        Container(
+                          padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+                          decoration: BoxDecoration(color: tagBg, borderRadius: BorderRadius.circular(IdRadius.full)),
+                          child: Text(tag, style: t.labelSm.copyWith(color: tagFg)),
+                        ),
+                      Text(caption, style: t.body.copyWith(color: c.textMuted)),
+                    ],
+                  ),
+                ],
+              ),
+            ),
+            const SizedBox(width: IdSpace.s3),
+            Column(
+              crossAxisAlignment: CrossAxisAlignment.end,
+              children: [
+                if (change.changed) Text(rupees(change.before!.lineTotalPaise), style: strike),
+                Text(
+                  rupees(line.lineTotalPaise),
+                  style: change.removed ? strike : t.title.copyWith(color: muted ? c.textMuted : null),
+                ),
+              ],
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+/// The new bill's arithmetic, amounts on the right: items, discount and delivery, then accepted total, the increase,
+/// and the new total as the one large figure.
+class _TotalsPanel extends StatelessWidget {
+  const _TotalsPanel(this.request);
+  final OrderAdjustmentDto request;
+
+  @override
+  Widget build(BuildContext context) {
+    final t = context.text;
+    final c = context.colors;
+    final delta = request.newTotalPaise - request.oldTotalPaise;
+    return Container(
+      padding: const EdgeInsets.all(IdSpace.s4),
+      decoration: BoxDecoration(color: c.surfaceSoft, borderRadius: BorderRadius.circular(IdRadius.lg)),
+      child: MergeSemantics(
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            _AmountRow('Items', rupees(request.subtotalPaise)),
+            if (request.discountPaise > 0) _AmountRow('Discount', '−${rupees(request.discountPaise)}'),
+            _AmountRow('Delivery', request.deliveryFeePaise == 0 ? 'Free' : rupees(request.deliveryFeePaise)),
+            Padding(padding: const EdgeInsets.symmetric(vertical: IdSpace.s3), child: Divider(height: 1, color: c.border)),
+            _AmountRow('Accepted total', rupees(request.oldTotalPaise), muted: true),
+            _AmountRow(delta >= 0 ? 'Increase' : 'Decrease', '${delta >= 0 ? '+' : '−'}${rupees(delta.abs())}', emphasis: true),
+            const SizedBox(height: IdSpace.s3),
+            Row(
+              crossAxisAlignment: CrossAxisAlignment.baseline,
+              textBaseline: TextBaseline.alphabetic,
+              children: [
+                Expanded(child: Text('New total', style: t.title)),
+                const SizedBox(width: IdSpace.s3),
+                Text(rupees(request.newTotalPaise), style: t.headline),
+              ],
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+class _AmountRow extends StatelessWidget {
+  const _AmountRow(this.label, this.value, {this.muted = false, this.emphasis = false});
+  final String label;
+  final String value;
+  final bool muted;
+  final bool emphasis;
+
+  @override
+  Widget build(BuildContext context) {
+    final t = context.text;
+    final c = context.colors;
+    final style = (emphasis ? t.title : t.bodyLg).copyWith(color: muted ? c.textMuted : null);
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: 2),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Expanded(child: Text(label, style: style)),
+          const SizedBox(width: IdSpace.s3),
+          Text(value, style: style, textAlign: TextAlign.end),
+        ],
+      ),
+    );
   }
 }

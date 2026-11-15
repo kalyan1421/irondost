@@ -56,14 +56,23 @@ String refundState(RefundStatus status) => switch (status) {
   RefundStatus.$unknown => 'Confirm with support',
 };
 
+/// Money paid that no refund, pending or completed, accounts for.
+num unaccountedRefundPaise(OrderDto o) =>
+    (o.paidPaise - completedRefundPaise(o) - pendingRefundPaise(o)).clamp(0, o.paidPaise);
+
+/// The one thing refund rows cannot say: paid money with no refund behind it. Null when every rupee is accounted for.
+String? refundGapNote(OrderDto o) {
+  final gap = unaccountedRefundPaise(o);
+  return gap > 0 ? '${rupees(gap)} has no confirmed refund. Contact support for the current status.' : null;
+}
+
 String refundSummary(OrderDto o) {
   final completed = completedRefundPaise(o);
   final pending = pendingRefundPaise(o);
-  final remaining = (o.paidPaise - completed - pending).clamp(0, o.paidPaise);
   return [
     if (completed > 0) '${rupees(completed)} refunded.',
     if (pending > 0) '${rupees(pending)} refund pending.',
-    if (remaining > 0) '${rupees(remaining)} has no confirmed refund. Contact support for the current status.',
+    ?refundGapNote(o),
   ].join(' ');
 }
 

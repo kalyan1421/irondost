@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:irondost_customer/design/theme.dart';
 import 'package:irondost_customer/design/widgets/id_button.dart';
+import 'package:irondost_customer/design/widgets/id_select_field.dart';
 import 'package:irondost_customer/design/widgets/otp_input.dart';
 import 'package:irondost_customer/features/auth/auth_repository.dart';
 import 'package:irondost_customer/features/auth/phone_screen.dart';
@@ -55,6 +56,35 @@ void main() {
     final size = tester.getSize(find.byType(TextButton));
     expect(size.height, greaterThanOrEqualTo(IdSize.touchTarget));
     expect(size.width, greaterThanOrEqualTo(IdSize.touchTarget));
+  });
+
+  testWidgets('a text link lines up with the page text edge instead of sitting inside it', (tester) async {
+    await tester.pumpWidget(themed(Scaffold(body: Padding(
+      padding: const EdgeInsets.symmetric(horizontal: IdSpace.s5),
+      child: Align(alignment: Alignment.centerLeft, child: IdButton.text(label: 'Track order', onPressed: () {})),
+    ))));
+    expect(tester.getTopLeft(find.text('Track order')).dx, IdSpace.s5);
+  });
+
+  testWidgets('IdSelectField shows the choice in a sheet, then the chosen words in the field', (tester) async {
+    String? picked;
+    await tester.pumpWidget(themed(Scaffold(body: StatefulBuilder(builder: (context, setState) => IdSelectField<String>(
+      label: 'Problem type', sheetTitle: 'What went wrong?', options: const {'late': 'Late delivery', 'damaged': 'Damaged item'},
+      value: picked, error: picked == null ? 'Choose a problem type.' : null, onChanged: (v) => setState(() => picked = v),
+    )))));
+    expect(find.text('Choose one'), findsOneWidget);
+    expect(find.text('Choose a problem type.'), findsOneWidget);
+
+    await tester.tap(find.text('Choose one'));
+    await tester.pumpAndSettle();
+    expect(find.text('What went wrong?'), findsOneWidget);
+    await tester.tap(find.text('Damaged item'));
+    await tester.pumpAndSettle();
+
+    expect(picked, 'damaged');
+    expect(find.text('Damaged item'), findsOneWidget);
+    expect(find.text('What went wrong?'), findsNothing);
+    expect(find.text('Choose a problem type.'), findsNothing);
   });
 
   testWidgets('the phone screen explains an invalid number under the field', (tester) async {

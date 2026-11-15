@@ -78,7 +78,7 @@ class _PayDueSheetState extends ConsumerState<_PayDueSheet> {
     final t = context.text;
     final o = widget.order;
     final due = rupees(o.amountDuePaise);
-    final delivery = '${dayLong(o.deliveryDate, today: istToday())}, ${windowFromLabel(o.deliverySlotLabel)}';
+    final delivery = keepWindowTogether('${dayLong(o.deliveryDate, today: istToday())}, ${windowFromLabel(o.deliverySlotLabel)}');
 
     return SafeArea(
       child: SingleChildScrollView(

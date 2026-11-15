@@ -223,7 +223,7 @@ class _NoneOpenNotice extends StatelessWidget {
                   child: Text(
                     earliest == null
                         ? "$what We'll open more times soon. Please check back."
-                        : '$what The earliest is ${slotSummary(earliest!, today: today)}.',
+                        : keepWindowTogether('$what The earliest is ${slotSummary(earliest!, today: today)}.'),
                     style: t.body,
                   ),
                 ),

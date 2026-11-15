@@ -7,6 +7,7 @@ import '../../app/routes.dart';
 import '../../core/money.dart';
 import '../../core/order_status.dart';
 import '../../core/order_text.dart';
+import '../../core/text_wrap.dart';
 import '../../core/order_timeline.dart';
 import '../../core/phone.dart';
 import '../../core/slots.dart';
@@ -319,16 +320,19 @@ class OrderDetailScreen extends ConsumerWidget {
 
   List<Widget> _cancelledBody(BuildContext context, OrderDto order) {
     final paid = order.paidPaise > 0;
-    final refunded = completedRefundPaise(order) >= order.paidPaise;
+    final hasRecords = order.refunds?.isNotEmpty ?? false;
+    // Refund rows say what each refund is and where it stands. Without rows (an older server, or none recorded yet) one
+    // sentence does; with rows it only speaks up for money that no refund accounts for.
+    final notice = !paid ? null : hasRecords ? refundGapNote(order) : refundSummary(order);
     return [
-      if (paid)
-        _Notice(
-          icon: LucideIcons.refreshCw,
-          tone: _NoticeTone.info,
-          text: refundSummary(order),
-        ),
-      if (paid) const SizedBox(height: IdSpace.s4),
-      if (paid) RefundList(order: order),
+      if (notice != null && notice.isNotEmpty) ...[
+        _Notice(icon: LucideIcons.refreshCw, tone: _NoticeTone.info, text: notice),
+        const SizedBox(height: IdSpace.s4),
+      ],
+      if (paid && hasRecords) ...[
+        RefundList(order: order),
+        const SizedBox(height: IdSpace.s4),
+      ],
       IdCard(
         child: Column(
           children: [
@@ -339,12 +343,9 @@ class OrderDetailScreen extends ConsumerWidget {
             const SizedBox(height: 10),
             _Line('Count', piecesLabel(order)),
             const SizedBox(height: 10),
-            _Line(
-              'Amount',
-              paid
-                  ? '${rupees(order.totalPaise)} · ${refunded ? 'refunded' : 'refund pending'}'
-                  : '${rupees(order.totalPaise)} · nothing charged',
-            ),
+            paid
+                ? _Line('Paid', rupees(order.paidPaise))
+                : _Line('Amount', '${rupees(order.totalPaise)} · nothing charged'),
           ],
         ),
       ),
@@ -567,12 +568,11 @@ class _Hero extends StatelessWidget {
           children: [
             Container(
               constraints: const BoxConstraints(minHeight: 28),
-              padding: const EdgeInsets.symmetric(horizontal: 10),
+              padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
               decoration: BoxDecoration(
                 color: c.surface,
                 borderRadius: BorderRadius.circular(IdRadius.full),
               ),
-              alignment: Alignment.center,
               child: Text(
                 'Cancelled',
                 style: t.labelSm.copyWith(color: c.textMuted),
@@ -582,9 +582,11 @@ class _Hero extends StatelessWidget {
             Semantics(
               header: true,
               child: Text(
-                byStaff
-                    ? 'This order was cancelled'
-                    : 'You cancelled this order',
+                keepLastWordsTogether(
+                  byStaff
+                      ? 'This order was cancelled'
+                      : 'You cancelled this order',
+                ),
                 style: t.headline,
               ),
             ),

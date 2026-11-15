@@ -116,28 +116,7 @@ class IdTextField extends StatelessWidget {
               minHeight: 0,
             ),
             suffixIcon: trailing,
-            error: error == null
-                ? null
-                : Row(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Padding(
-                        padding: const EdgeInsets.only(top: 1),
-                        child: Icon(
-                          LucideIcons.circleAlert,
-                          size: IdSize.iconSm,
-                          color: c.danger,
-                        ),
-                      ),
-                      const SizedBox(width: 6),
-                      Expanded(
-                        child: Text(
-                          error!,
-                          style: t.caption.copyWith(color: c.danger),
-                        ),
-                      ),
-                    ],
-                  ),
+            error: error == null ? null : IdFieldError(error!),
           ),
         ),
         // Keep help outside InputDecorator's counter row. At large text that
@@ -146,6 +125,37 @@ class IdTextField extends StatelessWidget {
           const SizedBox(height: IdSpace.s1),
           Text(help!, style: t.caption.copyWith(color: c.textMuted)),
         ],
+      ],
+    );
+  }
+}
+
+/// An error under a field: the alert icon and the message, in the danger colour.
+class IdFieldError extends StatelessWidget {
+  const IdFieldError(this.message, {super.key});
+  final String message;
+
+  @override
+  Widget build(BuildContext context) {
+    final c = context.colors;
+    return Row(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Padding(
+          padding: const EdgeInsets.only(top: 1),
+          child: Icon(
+            LucideIcons.circleAlert,
+            size: IdSize.iconSm,
+            color: c.danger,
+          ),
+        ),
+        const SizedBox(width: 6),
+        Expanded(
+          child: Text(
+            message,
+            style: context.text.caption.copyWith(color: c.danger),
+          ),
+        ),
       ],
     );
   }

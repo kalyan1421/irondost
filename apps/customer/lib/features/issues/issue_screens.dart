@@ -8,10 +8,13 @@ import 'package:lucide_icons_flutter/lucide_icons.dart';
 import '../../app/routes.dart';
 import '../../core/money.dart';
 import '../../core/slots.dart';
+import '../../core/text_wrap.dart';
 import '../../core/uuid.dart';
 import '../../data/api_client.dart';
 import '../../design/theme.dart';
 import '../../design/widgets/id_button.dart';
+import '../../design/widgets/id_select_field.dart';
+import '../../design/widgets/id_text_field.dart';
 import '../../design/widgets/state_view.dart';
 import '../../design/widgets/surfaces.dart';
 import '../basket/basket.dart';
@@ -26,8 +29,8 @@ class ReportProblemScreen extends ConsumerStatefulWidget {
 }
 class _ReportProblemState extends ConsumerState<ReportProblemScreen> {
   final description = TextEditingController();
-  final formKey = GlobalKey<FormState>();
   IssueCategory? category;
+  String? categoryError, descriptionError;
   final urls = <String>[];
   final pending = <XFile>[];
   bool sending = false, uploading = false;
@@ -95,8 +98,16 @@ class _ReportProblemState extends ConsumerState<ReportProblemScreen> {
       if (mounted) setState(() => error = e is StateError ? e.message.toString() : 'Photo upload stopped. Retry or remove the pending photo before sending.');
     } finally { if (mounted) setState(() { uploading = false; progress = ''; }); }
   }
+  /// A report that was already sent (a retry) keeps what was sent; a new one needs a category and a description.
+  bool validate() {
+    setState(() {
+      categoryError = category == null ? 'Choose a problem type.' : null;
+      descriptionError = description.text.trim().isEmpty ? 'Describe the problem.' : null;
+    });
+    return categoryError == null && descriptionError == null;
+  }
   Future<void> send() async {
-    if (sending || uploading || pending.isNotEmpty || (submitted == null && !formKey.currentState!.validate())) return;
+    if (sending || uploading || pending.isNotEmpty || (submitted == null && !validate())) return;
     setState(() { sending = true; error = null; });
     try {
       submitted ??= CreateIssueDto(category: category!, description: description.text.trim(), photoUrls: [...urls]);
@@ -130,34 +141,35 @@ class _ReportProblemState extends ConsumerState<ReportProblemScreen> {
       ? StateView(icon: LucideIcons.circleAlert, title: "Couldn't load this order", body: 'Try again before sending a report.',
         primary: IdButton(label: 'Try again', onPressed: () => ref.invalidate(orderProvider(widget.orderId)))) : const Center(child: CircularProgressIndicator())); }
     return PopScope(canPop: !sending, child: Scaffold(appBar: AppBar(title: const Text('Report a problem')),
-      body: Form(key: formKey, child: ListView(padding: const EdgeInsets.all(IdSpace.s5), children: [
+      body: ListView(padding: const EdgeInsets.all(IdSpace.s5), children: [
         Text(order.value!.orderNumber, style: t.orderId),
         const SizedBox(height: IdSpace.s3),
         Text('Tell us what happened', style: t.titleLg),
-        const SizedBox(height: IdSpace.s3),
-        DropdownButtonFormField<IssueCategory>(key: ValueKey(category), initialValue: category, isExpanded: true, itemHeight: null, decoration: const InputDecoration(labelText: 'Problem type'),
-          items: issueCategories.entries.map((e) => DropdownMenuItem(value: e.key, child: Text(e.value))).toList(),
-          onChanged: sending || submitted != null ? null : (v) { setState(() => category = v); persist(); }, validator: (v) => v == null ? 'Choose a problem type.' : null),
         const SizedBox(height: IdSpace.s4),
-        TextFormField(controller: description, enabled: !sending && submitted == null, minLines: 4, maxLines: 8, maxLength: 2000,
-          decoration: const InputDecoration(labelText: 'What happened?', helperText: 'Include the garment and any details that help us check.'),
-          onChanged: (_) => persist(), validator: (v) => v == null || v.trim().isEmpty ? 'Describe the problem.' : null),
-        const SizedBox(height: IdSpace.s3),
-        Text('Photos (optional, up to 5)', style: t.title),
+        IdSelectField<IssueCategory>(label: 'Problem type', sheetTitle: 'What went wrong?', options: issueCategories, value: category,
+          error: categoryError, enabled: !sending && submitted == null,
+          onChanged: (v) { setState(() { category = v; categoryError = null; }); persist(); }),
+        const SizedBox(height: IdSpace.s4),
+        IdTextField(label: 'What happened?', controller: description, enabled: !sending && submitted == null, minLines: 4, maxLines: 8, maxLength: 2000,
+          textCapitalization: TextCapitalization.sentences, help: 'Include the garment and any details that help us check.', error: descriptionError,
+          onChanged: (_) { if (descriptionError != null) setState(() => descriptionError = null); persist(); }),
+        const SizedBox(height: IdSpace.s4),
+        Text('Photos (optional, up to 5)', style: t.labelSm),
+        const SizedBox(height: IdSpace.s2),
         for (final url in urls) ListTile(leading: SizedBox(width: 48, height: 48, child: Image.network(url, fit: BoxFit.cover, semanticLabel: 'Selected garment photo', errorBuilder: (_, _, _) => const Icon(LucideIcons.image))), title: Text( 'Uploaded photo ${urls.indexOf(url) + 1}'),
           trailing: IconButton(tooltip: 'Remove uploaded photo ${urls.indexOf(url) + 1}', onPressed: sending || uploading || submitted != null ? null : () { setState(() => urls.remove(url)); persist(); }, icon: const Icon(LucideIcons.x))),
         for (final file in [...pending]) ListTile(leading: const Icon(LucideIcons.image), title: Text( 'Pending photo: ${file.name}'),
           trailing: IconButton(tooltip: 'Remove pending photo', onPressed: sending || uploading ? null : () { setState(() => pending.remove(file)); persist(); }, icon: const Icon(LucideIcons.x))),
-        if (urls.length + pending.length < 5 && submitted == null) IdButton.outline(label: 'Add photos', onPressed: sending || uploading ? null : choosePhotos),
+        if (urls.length + pending.length < 5 && submitted == null) IdButton.outline(label: 'Add photos', icon: LucideIcons.imagePlus, onPressed: sending || uploading ? null : choosePhotos, expand: true),
         if (uploading) ...[Text(progress.isEmpty ? 'Uploading photo…' : progress, style: t.body), IdButton.text(label: 'Stop upload', onPressed: () => upload?.cancel())],
         if (!uploading && pending.isNotEmpty) IdButton.outline(label: 'Retry photo upload', onPressed: uploadPending),
         if (error != null) Text(error!, style: t.body.copyWith(color: context.colors.danger)),
         const SizedBox(height: IdSpace.s4),
-        Text('Your report will appear in Your reports. You can see replies and its status there.', style: t.body),
+        Text(keepLastWordsTogether('You can follow replies and the status under Your reports.'), style: t.body),
         if (pending.isNotEmpty) Text('Upload or remove pending photos to send.', style: t.body),
         const SizedBox(height: IdSpace.s4),
         IdButton(label: submitted == null ? 'Send report' : 'Retry same report', loading: sending, onPressed: uploading || pending.isNotEmpty ? null : send, expand: true),
-      ])),
+      ]),
     ));
   }
 }
@@ -181,8 +193,8 @@ class _IssuesState extends ConsumerState<IssuesScreen> {
         : RefreshIndicator(onRefresh: () async { ref.invalidate(issuesProvider(query)); await ref.read(issuesProvider(query).future); }, child: ListView(padding: const EdgeInsets.all(IdSpace.s5), children: [
           for (final issue in data.items) IdListRow(icon: LucideIcons.messageSquare, label: '${issue.orderNumber} · ${issueCategories[issue.category] ?? 'Report'}',
             value: issueStatusLabel(issue.status), onTap: () => context.push(Routes.issue(issue.id))),
-          Wrap(spacing: IdSpace.s3, children: [TextButton(onPressed: page > 1 ? () => setState(() => page--) : null, child: const Text('Previous')),
-            TextButton(onPressed: page * data.pageSize < data.total ? () => setState(() => page++) : null, child: const Text('Next'))]),
+          Wrap(spacing: IdSpace.s5, children: [IdButton.text(label: 'Previous', onPressed: page > 1 ? () => setState(() => page--) : null),
+            IdButton.text(label: 'Next', onPressed: page * data.pageSize < data.total ? () => setState(() => page++) : null)]),
         ])),
     ));
   }
@@ -217,7 +229,7 @@ class _IssueDetailState extends ConsumerState<IssueDetailScreen> {
       data: (issue) => ListView(padding: const EdgeInsets.all(IdSpace.s5), children: [
         SelectableText('Report ${issue.id}', style: t.caption),
         Text(issueStatusLabel(issue.status), style: t.titleLg),
-        TextButton(onPressed: () => context.push(Routes.order(issue.orderId)), child: Text(issue.orderNumber)),
+        Align(alignment: Alignment.centerLeft, child: IdButton.text(label: issue.orderNumber, icon: LucideIcons.chevronRight, iconAtEnd: true, onPressed: () => context.push(Routes.order(issue.orderId)))),
         Text(issueCategories[issue.category] ?? 'Report', style: t.title),
         Text(issue.description, style: t.bodyLg),
         if (issue.firstResponseDueAt != null && issue.acknowledgedAt == null) Text('First response target: ${istDateTimeLabel(issue.firstResponseDueAt!)}', style: t.body),
@@ -233,11 +245,12 @@ class _IssueDetailState extends ConsumerState<IssueDetailScreen> {
           if ((issue.compensationPaise ?? 0) > 0) Text('Agreed remedy: ${rupees(issue.compensationPaise!)}. Any refund shows under Refunds on the order.', style: t.body),
         ])),
         if (issue.status == IssueStatus.open || issue.status == IssueStatus.acknowledged) ...[
-          TextField(controller: reply, enabled: !sending, minLines: 2, maxLines: 6, maxLength: 2000, decoration: const InputDecoration(labelText: 'Reply to the team')),
-          if (error != null) Text(error!, style: t.body.copyWith(color: context.colors.danger)),
+          IdTextField(label: 'Reply to the team', controller: reply, enabled: !sending, minLines: 2, maxLines: 6, maxLength: 2000,
+            textCapitalization: TextCapitalization.sentences, error: error),
+          const SizedBox(height: IdSpace.s3),
           IdButton(label: 'Send reply', loading: sending, onPressed: send, expand: true),
         ],
-        TextButton(onPressed: () => ref.invalidate(issueProvider(widget.id)), child: const Text('Refresh report')),
+        IdButton.text(label: 'Refresh report', icon: LucideIcons.refreshCw, onPressed: () => ref.invalidate(issueProvider(widget.id))),
       ]),
     ));
   }

@@ -27,8 +27,11 @@ void main() {
       await tester.pumpWidget(themed(Scaffold(body: PriceApprovalCard(order: testOrder(adjustments: [request]))), overrides: [adjustmentRepositoryProvider.overrideWithValue(repo)]));
       await tester.tap(find.text('Review price change'));
       await tester.pumpAndSettle();
-      expect(find.text('Accepted total: ₹248'), findsOneWidget);
-      expect(find.text('New total: ₹496'), findsOneWidget);
+      expect(find.text('Accepted total'), findsOneWidget);
+      expect(find.text('New total'), findsOneWidget);
+      expect(find.text('2 → 4'), findsOneWidget, reason: 'the changed quantity is marked on its line');
+      expect(find.text('+₹248'), findsOneWidget, reason: 'and the increase is stated once');
+      expect(find.text('₹496'), findsNWidgets(3), reason: 'new line total, items subtotal and the new total');
       final button = find.text(approve ? 'Approve ₹496' : 'Decline new total');
       await tester.ensureVisible(button);
       await tester.tap(button);
@@ -37,6 +40,31 @@ void main() {
       expect(find.text('Review the new total'), findsNothing);
     });
   }
+  testWidgets('the review lists added, removed and unchanged items, the discount and the delivery fee', (tester) async {
+    AdjustmentLineDto item(String id, String name, int rate, int qty) =>
+        AdjustmentLineDto(catalogItemId: id, name: name, unit: ItemUnit.piece, unitPricePaise: rate, quantity: qty, lineTotalPaise: rate * qty);
+    final mixed = OrderAdjustmentDto(id: 'mixed', status: AdjustmentStatus.pendingCustomer, reason: 'Counted again at the workshop',
+      oldTotalPaise: 9000, newTotalPaise: 12500, subtotalPaise: 13500, discountPaise: 1500, deliveryFeePaise: 500,
+      itemsBefore: [item('shirt', 'Shirt', 1500, 4), item('pants', 'Trousers', 3000, 1)],
+      itemsAfter: [item('shirt', 'Shirt', 1500, 6), item('saree', 'Saree', 5000, 1), item('suit', 'Kurta', 500, 3)],
+      expiresAt: DateTime.utc(2099), decidedAt: null, createdAt: DateTime.utc(2026));
+    await tester.pumpWidget(themed(Scaffold(body: PriceApprovalCard(order: testOrder(adjustments: [mixed]))),
+      overrides: [adjustmentRepositoryProvider.overrideWithValue(Decisions())]));
+    await tester.tap(find.text('Review price change'));
+    await tester.pumpAndSettle();
+    final sheet = find.byType(Scrollable).last;
+    await tester.scrollUntilVisible(find.text('Increase'), 200, scrollable: sheet);
+    expect(find.text('4 → 6'), findsOneWidget);
+    expect(find.text('New'), findsNWidgets(2), reason: 'two items are new');
+    expect(find.text('Removed'), findsOneWidget);
+    expect(find.text('Trousers'), findsOneWidget);
+    expect(find.text('Discount'), findsOneWidget);
+    expect(find.text('−₹15'), findsOneWidget);
+    expect(find.text('₹5'), findsWidgets, reason: 'the delivery fee is shown as an amount, not Free');
+    expect(find.text('Free'), findsNothing);
+    expect(find.text('+₹35'), findsOneWidget);
+  });
+
   testWidgets('a failed decision keeps both bills and allows retry at 200% text', (tester) async {
     tester.view.physicalSize = const Size(320 * 3, 740 * 3);
     tester.view.devicePixelRatio = 3;

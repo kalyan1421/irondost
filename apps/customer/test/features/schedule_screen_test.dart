@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:irondost_customer/core/slots.dart';
 import 'package:irondost_customer/data/api_client.dart';
 import 'package:irondost_customer/features/schedule/schedule.dart';
 import 'package:irondost_customer/features/schedule/schedule_screen.dart';
@@ -124,7 +125,7 @@ void main() {
     final today = {for (final s in [TimeSlot.morning, TimeSlot.noon, TimeSlot.evening]) (date: testToday, slot: s)};
     await pump(tester, repo: FakeScheduleRepository(closed: today));
 
-    expect(find.textContaining("Today's pickups have closed. The earliest is Sun 4 Oct, 7 – 11 AM."), findsOneWidget);
+    expect(find.textContaining(keepWindowTogether("Today's pickups have closed. The earliest is Sun 4 Oct, 7 – 11 AM.")), findsOneWidget);
     expect(find.text('Delivery'), findsNothing);
     expect(continueButton(tester).onPressed, isNull);
 

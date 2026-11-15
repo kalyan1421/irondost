@@ -207,7 +207,8 @@ ThemeData buildTheme(Brightness brightness, {FontResolver font = plainFont}) {
       style: TextButton.styleFrom(
         foregroundColor: c.primary,
         minimumSize: const Size(IdSize.touchTarget, IdSize.touchTarget),
-        padding: const EdgeInsets.symmetric(horizontal: IdSpace.s3),
+        // No side padding: a link's label lines up with the page's text edge. The 48 dp tap target comes from minimumSize.
+        padding: EdgeInsets.zero,
         shape: buttonShape,
         textStyle: text.label,
       ),

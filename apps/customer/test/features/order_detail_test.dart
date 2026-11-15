@@ -4,6 +4,8 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:go_router/go_router.dart';
+import 'package:irondost_customer/core/slots.dart';
+import 'package:irondost_customer/core/text_wrap.dart';
 import 'package:irondost_customer/app/routes.dart';
 import 'package:irondost_customer/data/api_client.dart';
 import 'package:irondost_customer/design/theme.dart';
@@ -361,7 +363,7 @@ void main() {
     );
 
     expect(find.text('Cancelled'), findsOneWidget);
-    expect(find.text('You cancelled this order'), findsOneWidget);
+    expect(find.text(keepLastWordsTogether('You cancelled this order')), findsOneWidget);
     expect(
       find.text('Fri 2 Oct, 2:14 PM · "I booked by mistake"'),
       findsOneWidget,
@@ -370,8 +372,41 @@ void main() {
       find.textContaining('₹248 has no confirmed refund'),
       findsOneWidget,
     );
-    expect(find.text('₹248 · refund pending'), findsOneWidget);
+    expect(find.text('Paid'), findsOneWidget, reason: 'the line no longer claims a refund state the notice above denies');
+    expect(find.textContaining('refund pending'), findsNothing);
     expect(find.text('Book again'), findsOneWidget);
+  });
+
+  group('cancelled and paid, with refund records', () {
+    RefundDto refund(RefundStatus status, {int amount = 24800}) => RefundDto(id: 'r-$status', amountPaise: amount, method: RefundMethod.razorpay,
+      status: status, note: 'Order cancelled before collection.', createdAt: DateTime.utc(2026, 10, 2, 9), processedAt: null, failureReason: null);
+    OrderDto cancelled(List<RefundDto> refunds) => testOrder(status: OrderStatus.cancelled, method: PaymentMethod.online,
+      paymentStatus: PaymentStatus.paid, paidPaise: 24800, refundedPaise: 24800, refunds: refunds);
+
+    testWidgets('a pending refund is one row with its state, and no second sentence repeats it', (tester) async {
+      await pump(tester, cancelled([refund(RefundStatus.pending)]));
+      expect(find.text('Refund'), findsOneWidget, reason: 'the row says what it is');
+      expect(find.text('Pending'), findsOneWidget);
+      expect(find.text('₹248'), findsNWidgets(2), reason: 'the refund row, and what was paid');
+      expect(find.textContaining('Original online payment'), findsOneWidget);
+      expect(find.text('Order cancelled before collection.'), findsOneWidget);
+      expect(find.textContaining('refund pending'), findsNothing);
+      expect(find.textContaining('has no confirmed refund'), findsNothing);
+    });
+
+    testWidgets('a completed refund says Completed, a failed one says to contact support', (tester) async {
+      await pump(tester, cancelled([refund(RefundStatus.processed)]));
+      expect(find.text('Completed'), findsOneWidget);
+      await pump(tester, cancelled([refund(RefundStatus.failed)]));
+      expect(find.text('Failed'), findsOneWidget);
+      expect(find.text('The refund did not complete. Contact support.'), findsOneWidget);
+    });
+
+    testWidgets('money that no refund accounts for is still called out beside the rows', (tester) async {
+      await pump(tester, cancelled([refund(RefundStatus.processed, amount: 10000)]));
+      expect(find.text('Completed'), findsOneWidget);
+      expect(find.textContaining('₹148 has no confirmed refund'), findsOneWidget);
+    });
   });
 
   testWidgets('what the API says now replaces what the list showed', (
@@ -447,7 +482,7 @@ void main() {
         expect(repo.cancelled, [('o-1', 'I booked by mistake')]);
         expect(find.text('Cancel this order?'), findsNothing);
         expect(find.text('Order ID001046 cancelled'), findsOneWidget);
-        expect(find.text('You cancelled this order'), findsOneWidget);
+        expect(find.text(keepLastWordsTogether('You cancelled this order')), findsOneWidget);
         expect(find.text('Book again'), findsOneWidget);
       },
     );
@@ -581,7 +616,7 @@ void main() {
           findsOneWidget,
         );
         expect(
-          find.text('12 items. Delivery Sun 4 Oct, 4 – 8 PM.'),
+          find.text(keepWindowTogether('12 items. Delivery Sun 4 Oct, 4 – 8 PM.')),
           findsOneWidget,
         );
 
