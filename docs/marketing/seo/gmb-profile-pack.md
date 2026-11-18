@@ -28,16 +28,16 @@ IronDost picks up your clothes from your door, irons, washes or dry-cleans them,
 
 ## 3. Services
 
-Under Laundry service add these as custom services. **Price: leave empty until the owner confirms prices**; then use "Starting at".
+Under Laundry service add these as custom services. Prices confirmed by the owner on 19 Nov 2026 (live catalogue; same as irondost.in/prices). Use "Starting at" where there is a range.
 
 | Service | Description (up to 300 characters) | Price |
 | --- | --- | --- |
-| Ironing (shirts, trousers, kurtas) | Steam pressed and folded or hung. Pickup and delivery at your door around LB Nagar. | **NEED** |
-| Saree ironing | Cotton and silk sarees pressed with care for zari and borders. | **NEED** |
-| Wash and iron | Washed, dried, pressed and packed. Shirts, trousers, bedsheets and more. | **NEED** |
-| Dry cleaning: suits and blazers | Suits, blazers and coats cleaned and pressed. | **NEED** |
-| Dry cleaning: silk sarees | Silk and heavy sarees. Tell us about stains and zari before pickup. | **NEED** |
-| Bedsheets and household | Bedsheets, pillow covers and curtains, washed and ironed. | **NEED** |
+| Ironing (shirts, trousers, kurtas) | Steam pressed and folded or hung. Pickup and delivery at your door around LB Nagar. | Starting at ₹15 (shirt on offer, ₹20 regular; trousers ₹15, kurta ₹20, dupatta ₹10) |
+| Saree ironing | Cotton and silk sarees pressed with care for zari and borders. | ₹50 |
+| Wash and iron | Washed, dried, pressed and packed. Shirts, trousers, bedsheets and more. | Starting at ₹35 (shirt ₹35, trousers ₹40) |
+| Dry cleaning: suits and blazers | Suits, blazers and coats cleaned and pressed. | Starting at ₹200 (blazer ₹200, 2-piece suit ₹350) |
+| Dry cleaning: silk sarees | Silk and heavy sarees. Tell us about stains and zari before pickup. | ₹250 |
+| Bedsheets and household | Bedsheets washed and ironed (pillow covers and curtains: add only once they are in the app). | Ironing single ₹25; wash and iron double ₹70 |
 | Doorstep pickup and delivery | Three pickup windows every day: 7 to 11 am, 11 am to 4 pm, 4 to 8 pm. | Free (**NEED**: confirm; the ₹30 travel charge under ₹200 is built but not live) |
 
 ## 4. Attributes to tick
