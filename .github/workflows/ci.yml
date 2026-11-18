@@ -1,15 +1,48 @@
 name: CI
 
+# Checks run on every pull request and push to main. On main, each app that changed is deployed after its own
+# checks pass: website to Firebase Hosting, admin to Vercel, API to Render (deploy hook). "Run workflow" deploys all.
+# Secrets and setup: docs/ci-cd.md.
+
 on:
   push:
     branches: [main]
   pull_request:
+  workflow_dispatch:
 
 concurrency:
   group: ci-${{ github.ref }}
-  cancel-in-progress: true
+  # Never cancel a run on main halfway through a deploy.
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
 
 jobs:
+  changes:
+    name: What changed
+    runs-on: ubuntu-latest
+    outputs:
+      web: ${{ steps.filter.outputs.web }}
+      admin: ${{ steps.filter.outputs.admin }}
+      api: ${{ steps.filter.outputs.api }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: dorny/paths-filter@v3
+        id: filter
+        with:
+          filters: |
+            web:
+              - 'apps/web/**'
+              - 'packages/legal/**'
+              - 'packages/brand/**'
+              - 'pnpm-lock.yaml'
+            admin:
+              - 'apps/admin/**'
+              - 'packages/contracts/**'
+              - 'pnpm-lock.yaml'
+            api:
+              - 'apps/api/**'
+              - 'packages/contracts/**'
+              - 'pnpm-lock.yaml'
+
   api:
     name: API (typecheck, lint, unit and e2e tests)
     runs-on: ubuntu-latest
@@ -85,3 +118,86 @@ jobs:
       - run: flutter pub get
       - run: flutter analyze
       - run: flutter test
+
+  web:
+    name: Website (typecheck, lint, build)
+    runs-on: ubuntu-latest
+    env:
+      DATABASE_URL: postgresql://build:build@localhost:5432/build
+    steps:
+      - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version-file: .nvmrc
+          cache: pnpm
+      - run: pnpm install --frozen-lockfile
+      - run: pnpm --filter @laundry/web typecheck
+      - run: pnpm --filter @laundry/web lint
+      - run: pnpm --filter @laundry/web build
+        env:
+          NEXT_PUBLIC_SITE_URL: https://irondost.in
+
+  deploy-web:
+    name: Deploy website to Firebase Hosting
+    needs: [changes, web]
+    if: github.ref == 'refs/heads/main' && (github.event_name == 'workflow_dispatch' || (github.event_name == 'push' && needs.changes.outputs.web == 'true'))
+    runs-on: ubuntu-latest
+    environment: production
+    env:
+      DATABASE_URL: postgresql://build:build@localhost:5432/build
+    steps:
+      - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version-file: .nvmrc
+          cache: pnpm
+      - run: pnpm install --frozen-lockfile
+      - run: pnpm --filter @laundry/web build
+        env:
+          NEXT_PUBLIC_SITE_URL: https://irondost.in
+      - uses: FirebaseExtended/action-hosting-deploy@v0
+        with:
+          repoToken: ${{ secrets.GITHUB_TOKEN }}
+          firebaseServiceAccount: ${{ secrets.FIREBASE_SERVICE_ACCOUNT_IRONDOST_APP }}
+          projectId: irondost-app
+          entryPoint: apps/web
+          channelId: live
+
+  deploy-admin:
+    name: Deploy admin to Vercel
+    needs: [changes, admin]
+    if: github.ref == 'refs/heads/main' && (github.event_name == 'workflow_dispatch' || (github.event_name == 'push' && needs.changes.outputs.admin == 'true'))
+    runs-on: ubuntu-latest
+    environment: production
+    env:
+      DATABASE_URL: postgresql://build:build@localhost:5432/build
+      VERCEL_ORG_ID: ${{ secrets.VERCEL_ORG_ID }}
+      VERCEL_PROJECT_ID: ${{ secrets.VERCEL_PROJECT_ID }}
+    defaults:
+      run:
+        working-directory: apps/admin
+    steps:
+      - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version-file: .nvmrc
+          cache: pnpm
+      - run: pnpm install --frozen-lockfile
+      - run: pnpm dlx vercel@65 pull --yes --environment=production --token=${{ secrets.VERCEL_TOKEN }}
+      - run: pnpm dlx vercel@65 build --prod --token=${{ secrets.VERCEL_TOKEN }}
+      - run: pnpm dlx vercel@65 deploy --prebuilt --prod --token=${{ secrets.VERCEL_TOKEN }}
+
+  deploy-api:
+    name: Deploy API to Render
+    needs: [changes, api]
+    if: github.ref == 'refs/heads/main' && (github.event_name == 'workflow_dispatch' || (github.event_name == 'push' && needs.changes.outputs.api == 'true'))
+    runs-on: ubuntu-latest
+    environment: production
+    steps:
+      # The API runs `prisma migrate deploy` when its container starts, so a merge to main with a new migration changes
+      # the production database. Review migrations before merging (docs/ui-ux-audit/review-2026-11-14/RELEASE-CHECKLIST.md).
+      - name: Trigger the Render deploy hook
+        run: curl --fail --silent --show-error -X POST "${{ secrets.RENDER_DEPLOY_HOOK_API }}"
