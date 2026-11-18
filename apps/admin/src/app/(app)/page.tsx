@@ -1,7 +1,7 @@
 "use client";
 
 import { useQuery } from "@tanstack/react-query";
-import { AlertTriangle, ArrowRight, Plus } from "lucide-react";
+import { AlertTriangle, ArrowRight, Plus, Undo2 } from "lucide-react";
 import Link from "next/link";
 import { EmptyState, ErrorState, PageBody, PageHeader } from "@/components/page";
 import { StatusBadge } from "@/components/status";
@@ -56,6 +56,23 @@ export default function DashboardPage() {
           <Kpis d={dashboard.data} />
         )}
 
+        {dashboard.data && dashboard.data.refundsDue > 0 ? (
+          <Card className="border-rose-300/70 bg-rose-50/60 dark:border-rose-400/30 dark:bg-rose-400/5">
+            <CardHeader className="flex-row items-center gap-2 space-y-0">
+              <Undo2 className="size-4 text-rose-600 dark:text-rose-300" />
+              <CardTitle className="text-base">
+                Customers are owed money back on {dashboard.data.refundsDue} order{dashboard.data.refundsDue === 1 ? "" : "s"}
+              </CardTitle>
+              <Button asChild variant="ghost" size="sm" className="ml-auto">
+                <Link href="/orders?refundDue=1">
+                  Review <ArrowRight />
+                </Link>
+              </Button>
+            </CardHeader>
+          </Card>
+        ) : null}
+
+        {attention.isError ? <ErrorState error={attention.error} onRetry={() => void attention.refetch()} /> : attention.isPending ? <Skeleton className="h-24" /> : null}
         {attention.data && attention.data.total > 0 ? (
           <Card className="border-amber-300/70 bg-amber-50/60 dark:border-amber-400/30 dark:bg-amber-400/5">
             <CardHeader className="flex-row items-center gap-2 space-y-0">
@@ -88,6 +105,12 @@ export default function DashboardPage() {
           </Card>
         ) : null}
 
+        {dashboard.data ? <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
+          <Link className="rounded-lg border bg-card p-4 hover:bg-accent/40" href="/issues?status=OPEN"><span className="block text-sm text-muted-foreground">New customer reports</span><strong className="text-2xl">{dashboard.data.openIssues}</strong></Link>
+          <Link className="rounded-lg border bg-card p-4 hover:bg-accent/40" href="/issues?overdue=1"><span className="block text-sm text-muted-foreground">Reports past response target</span><strong className="text-2xl">{dashboard.data.overdueIssues}</strong></Link>
+          <Link className="rounded-lg border bg-card p-4 hover:bg-accent/40" href="/orders?approvalPending=1&tab=all"><span className="block text-sm text-muted-foreground">Waiting for price approval</span><strong className="text-2xl">{dashboard.data.pendingAdjustments}</strong></Link>
+          <Link className="rounded-lg border bg-card p-4 hover:bg-accent/40" href="/notification-deliveries"><span className="block text-sm text-muted-foreground">Alerts not delivered, last 14 days</span><strong className={cn("text-2xl", dashboard.data.undeliveredAlerts > 0 && "text-amber-700 dark:text-amber-300")}>{dashboard.data.undeliveredAlerts}</strong></Link>
+        </div> : null}
         <div className="grid gap-6 xl:grid-cols-[minmax(0,2fr)_minmax(0,1fr)]">
           <Card>
             <CardHeader>
@@ -109,10 +132,10 @@ export default function DashboardPage() {
 
 function Kpis({ d }: { d: Dashboard }) {
   const items = [
-    { label: "Orders placed today", value: d.ordersToday, href: "/orders?tab=all" },
-    { label: "Pickups today", value: d.pickupsToday, href: "/orders?tab=pickup" },
-    { label: "Deliveries today", value: d.deliveriesToday, href: "/orders?tab=delivery" },
-    { label: "Partners online", value: d.driversOnline, href: "/drivers" },
+    { label: "Orders placed today", value: d.ordersToday, href: `/orders?tab=all&createdFrom=${istToday()}&createdTo=${istToday()}` },
+    { label: "Pickups today", value: d.pickupsToday, href: `/orders?tab=all&from=${istToday()}&to=${istToday()}&excludeCancelled=1` },
+    { label: "Deliveries today", value: d.deliveriesToday, href: `/orders?tab=all&deliveryFrom=${istToday()}&deliveryTo=${istToday()}&excludeCancelled=1` },
+    { label: "Partners online", value: d.driversOnline, href: "/drivers?filter=online" },
     { label: "Collected today", value: rupees(d.collectedTodayPaise), sub: `${rupees(d.collectedLast7DaysPaise)} in 7 days` },
   ];
   return (
@@ -188,6 +211,9 @@ function DailyChart({ days }: { days: Dashboard["dailyOrders"] }) {
           </span>
         ))}
       </div>
+      <details className="mt-4"><summary className="cursor-pointer rounded-md py-3 text-sm underline underline-offset-4">View daily numbers</summary>
+        <div className="overflow-x-auto"><table className="w-full text-left text-sm"><caption className="sr-only">Orders and order value for each of the last 14 days</caption><thead><tr><th scope="col">Date</th><th scope="col">Orders</th><th scope="col">Value</th></tr></thead><tbody>{days.map((d) => <tr key={d.date}><th scope="row" className="py-2 font-normal">{calendarDate(d.date)}</th><td>{d.orders}</td><td>{rupees(d.valuePaise)}</td></tr>)}</tbody></table></div>
+      </details>
     </div>
   );
 }

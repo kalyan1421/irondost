@@ -20,6 +20,10 @@ PlaceOrderDto _$PlaceOrderDtoFromJson(Map<String, dynamic> json) =>
       promoCode: json['promoCode'] as String?,
       deliveryAddressId: json['deliveryAddressId'] as String?,
       instructions: json['instructions'] as String?,
+      careNote: json['careNote'] as String?,
+      carePhotoUrls: (json['carePhotoUrls'] as List<dynamic>?)
+          ?.map((e) => e as String)
+          .toList(),
     );
 
 Map<String, dynamic> _$PlaceOrderDtoToJson(PlaceOrderDto instance) =>
@@ -34,4 +38,6 @@ Map<String, dynamic> _$PlaceOrderDtoToJson(PlaceOrderDto instance) =>
       'deliveryAddressId': instance.deliveryAddressId,
       'paymentMethod': instance.paymentMethod,
       'instructions': instance.instructions,
+      'careNote': instance.careNote,
+      'carePhotoUrls': instance.carePhotoUrls,
     };

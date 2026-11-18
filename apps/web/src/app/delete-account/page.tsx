@@ -16,7 +16,7 @@ const deleted = [
 
 export default function DeleteAccountPage() {
   const subject = encodeURIComponent("Delete my IronDost account");
-  const body = encodeURIComponent("Please delete my IronDost account.\n\nMobile number I sign in with: ");
+  const body = encodeURIComponent("Please delete my IronDost account.\n\nMobile number or Google email I sign in with: ");
   return (
     <div className="mx-auto max-w-3xl px-4 py-14 sm:px-6 sm:py-20">
       <h1 className="font-display text-4xl font-bold tracking-tight sm:text-5xl">Delete your IronDost account</h1>
@@ -43,8 +43,8 @@ export default function DeleteAccountPage() {
           Can&apos;t open the app? Ask us
         </h2>
         <p className="mt-4 text-lg leading-relaxed">
-          Email us from the address on your account, or call us, and say the mobile number you sign in with. We will check it is you,
-          usually with a call to that number, and then delete the account.
+          Email us from the address on your account, or call us, and say the mobile number or Google email you sign in with. We will check it is you,
+          usually with a call to the number on the account, and then delete the account.
         </p>
         <div className="mt-6 flex flex-wrap gap-4">
           <a

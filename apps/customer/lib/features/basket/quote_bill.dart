@@ -1,3 +1,4 @@
+import '../../core/quantities.dart';
 import 'package:flutter/material.dart';
 
 import '../../core/money.dart';
@@ -5,7 +6,7 @@ import '../../data/api_client.dart';
 import '../../design/theme.dart';
 import '../../design/widgets/surfaces.dart';
 
-/// The server's bill for a basket: items, discount, delivery and what to pay. Dimmed while a new
+/// The server's bill for a basket: items, discount, travel charge and what to pay. Dimmed while a new
 /// quote loads, a skeleton before the first one.
 class QuoteBill extends StatelessWidget {
   const QuoteBill({
@@ -91,7 +92,8 @@ class QuoteBill extends StatelessWidget {
           label: 'Bill, to pay ${rupees(q.totalPaise)}',
           child: Column(
             children: [
-              row('Items ($pieces)', rupees(q.subtotalPaise)),
+              row(q.lines.every((l) => l.unit == ItemUnit.piece) ? 'Items ($pieces)' : 'Items', rupees(q.subtotalPaise)),
+              if (q.lines.any((l) => l.unit != ItemUnit.piece)) Text(quantitySummary(q.lines.map((l) => (l.unit, l.quantity))), style: t.caption),
               if (q.discountPaise > 0) ...[
                 const SizedBox(height: 10),
                 row(
@@ -103,8 +105,8 @@ class QuoteBill extends StatelessWidget {
               ],
               const SizedBox(height: 10),
               row(
-                'Pickup & delivery',
-                q.deliveryFeePaise == 0 ? 'Free' : rupees(q.deliveryFeePaise),
+                'Travel charge',
+                travelChargeLabel(q.deliveryFeePaise),
                 color: c.textMuted,
               ),
               const SizedBox(height: IdSpace.s3),

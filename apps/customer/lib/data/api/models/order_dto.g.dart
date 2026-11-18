@@ -7,7 +7,11 @@ part of 'order_dto.dart';
 // **************************************************************************
 
 OrderDto _$OrderDtoFromJson(Map<String, dynamic> json) => OrderDto(
-  instructions: json['instructions'] as String?,
+  carePhotoUrls: (json['carePhotoUrls'] as List<dynamic>)
+      .map((e) => e as String)
+      .toList(),
+  updatedAt: DateTime.parse(json['updatedAt'] as String),
+  id: json['id'] as String,
   orderNumber: json['orderNumber'] as String,
   status: OrderStatus.fromJson(json['status'] as String),
   source: OrderSource.fromJson(json['source'] as String),
@@ -23,7 +27,9 @@ OrderDto _$OrderDtoFromJson(Map<String, dynamic> json) => OrderDto(
   deliveryAddress: OrderAddressDto.fromJson(
     json['deliveryAddress'] as Map<String, dynamic>,
   ),
-  id: json['id'] as String,
+  instructions: json['instructions'] as String?,
+  careNote: json['careNote'] as String?,
+  createdAt: DateTime.parse(json['createdAt'] as String),
   items: (json['items'] as List<dynamic>)
       .map((e) => OrderItemDto.fromJson(e as Map<String, dynamic>))
       .toList(),
@@ -33,20 +39,21 @@ OrderDto _$OrderDtoFromJson(Map<String, dynamic> json) => OrderDto(
   totalPaise: json['totalPaise'] as num,
   paidPaise: json['paidPaise'] as num,
   refundedPaise: json['refundedPaise'] as num,
-  updatedAt: DateTime.parse(json['updatedAt'] as String),
+  deliveryDriver: json['deliveryDriver'] == null
+      ? null
+      : PersonRefDto.fromJson(json['deliveryDriver'] as Map<String, dynamic>),
+  travelChargeKept: json['travelChargeKept'] as bool,
   amountDuePaise: json['amountDuePaise'] as num,
   promoCode: json['promoCode'] as String?,
   paymentMethod: PaymentMethod.fromJson(json['paymentMethod'] as String),
-  createdAt: DateTime.parse(json['createdAt'] as String),
+  paymentStatus: PaymentStatus.fromJson(json['paymentStatus'] as String),
   customer: json['customer'] == null
       ? null
       : PersonRefDto.fromJson(json['customer'] as Map<String, dynamic>),
   pickupDriver: json['pickupDriver'] == null
       ? null
       : PersonRefDto.fromJson(json['pickupDriver'] as Map<String, dynamic>),
-  deliveryDriver: json['deliveryDriver'] == null
-      ? null
-      : PersonRefDto.fromJson(json['deliveryDriver'] as Map<String, dynamic>),
+  canReschedule: json['canReschedule'] as bool,
   allowedNextStatuses: (json['allowedNextStatuses'] as List<dynamic>)
       .map((e) => OrderStatus.fromJson(e as String))
       .toList(),
@@ -63,17 +70,29 @@ OrderDto _$OrderDtoFromJson(Map<String, dynamic> json) => OrderDto(
   cancelledAt: json['cancelledAt'] == null
       ? null
       : DateTime.parse(json['cancelledAt'] as String),
-  paymentStatus: PaymentStatus.fromJson(json['paymentStatus'] as String),
-  refundablePaise: json['refundablePaise'] as num?,
+  reschedulesRemaining: json['reschedulesRemaining'] as num,
+  rescheduleCount: json['rescheduleCount'] as num,
+  capacityOverrideReason: json['capacityOverrideReason'] as String?,
+  revision: json['revision'] as num?,
+  adjustments: (json['adjustments'] as List<dynamic>?)
+      ?.map((e) => OrderAdjustmentDto.fromJson(e as Map<String, dynamic>))
+      .toList(),
   events: (json['events'] as List<dynamic>?)
       ?.map((e) => OrderEventDto.fromJson(e as Map<String, dynamic>))
       .toList(),
   refunds: (json['refunds'] as List<dynamic>?)
       ?.map((e) => RefundDto.fromJson(e as Map<String, dynamic>))
       .toList(),
+  payments: (json['payments'] as List<dynamic>?)
+      ?.map((e) => OrderPaymentDto.fromJson(e as Map<String, dynamic>))
+      .toList(),
+  areaOverrideReason: json['areaOverrideReason'] as String?,
+  refundablePaise: json['refundablePaise'] as num?,
 );
 
 Map<String, dynamic> _$OrderDtoToJson(OrderDto instance) => <String, dynamic>{
+  'revision': instance.revision,
+  'adjustments': instance.adjustments,
   'id': instance.id,
   'orderNumber': instance.orderNumber,
   'status': instance.status,
@@ -87,6 +106,8 @@ Map<String, dynamic> _$OrderDtoToJson(OrderDto instance) => <String, dynamic>{
   'pickupAddress': instance.pickupAddress,
   'deliveryAddress': instance.deliveryAddress,
   'instructions': instance.instructions,
+  'careNote': instance.careNote,
+  'carePhotoUrls': instance.carePhotoUrls,
   'items': instance.items,
   'subtotalPaise': instance.subtotalPaise,
   'discountPaise': instance.discountPaise,
@@ -95,6 +116,7 @@ Map<String, dynamic> _$OrderDtoToJson(OrderDto instance) => <String, dynamic>{
   'paidPaise': instance.paidPaise,
   'refundedPaise': instance.refundedPaise,
   'refundablePaise': instance.refundablePaise,
+  'travelChargeKept': instance.travelChargeKept,
   'amountDuePaise': instance.amountDuePaise,
   'promoCode': instance.promoCode,
   'paymentMethod': instance.paymentMethod,
@@ -108,8 +130,14 @@ Map<String, dynamic> _$OrderDtoToJson(OrderDto instance) => <String, dynamic>{
   'pickedUpAt': instance.pickedUpAt?.toIso8601String(),
   'deliveredAt': instance.deliveredAt?.toIso8601String(),
   'cancelledAt': instance.cancelledAt?.toIso8601String(),
+  'rescheduleCount': instance.rescheduleCount,
+  'reschedulesRemaining': instance.reschedulesRemaining,
+  'canReschedule': instance.canReschedule,
   'createdAt': instance.createdAt.toIso8601String(),
   'updatedAt': instance.updatedAt.toIso8601String(),
   'events': instance.events,
   'refunds': instance.refunds,
+  'payments': instance.payments,
+  'areaOverrideReason': instance.areaOverrideReason,
+  'capacityOverrideReason': instance.capacityOverrideReason,
 };

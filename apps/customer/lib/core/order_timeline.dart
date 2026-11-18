@@ -41,7 +41,7 @@ List<TimelineStep> buildTimeline(OrderDto o, {String? today}) {
       'Picked up',
       state(2),
       step >= 2
-          ? [if (o.pickedUpAt != null) time(o.pickedUpAt!), '${pieceCount(o)} items counted'].join(' · ')
+          ? [if (o.pickedUpAt != null) time(o.pickedUpAt!), '${piecesLabel(o)} counted'].join(' · ')
           : '${dayLong(o.pickupDate, today: now)}, ${windowFromLabel(o.pickupSlotLabel)}',
     ),
     TimelineStep(

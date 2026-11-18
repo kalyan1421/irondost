@@ -115,7 +115,7 @@ export function OrderSummary({
                     className="text-success"
                   />
                 ) : null}
-                <Money label="Delivery fee" value={q.deliveryFeePaise > 0 ? rupees(q.deliveryFeePaise) : "Free"} />
+                <Money label="Travel charge" value={q.deliveryFeePaise > 0 ? rupees(q.deliveryFeePaise) : "Free"} />
                 <Money label="Total" value={rupees(q.totalPaise)} strong />
               </dl>
               {quote.updating ? (

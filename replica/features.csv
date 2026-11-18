@@ -1,0 +1,57 @@
+feature,area,priority,original,clone,notes,dhobilite,tumbledry,fabrico,laundrymate,laundrokart,apps_seen
+Mobile-number OTP sign-in,auth,must,yes,yes,IronDost: Firebase phone OTP plus Google sign-in.,C,I,O,-,-,2
+Area check with a clear 'not served' state,serviceability,should,yes,yes,IronDost checks at the address step (S07). Reviews say DhobiLite and Tumbledry only decide after booking.,-,-,O,-,-,1
+Public price list on the website,web,must,yes,no,Fabrico lists 213 garments per store with an update date (agent-observed). Tumbledry offers a download only. IronDost web has no price page though GET /v1/catalog is public.,O,C,O,-,-,3
+Saved addresses with map pin or GPS,checkout,must,yes,yes,"All five. IronDost: map pin, place search, saved addresses.",O,O,O,O,O,5
+Itemised catalogue with prices before you confirm,catalogue,must,yes,yes,"DhobiLite, Tumbledry and Fabrico flows show no item price at booking (reviews allege bill shock). IronDost shows prices and a server quote. A differentiator.",-,-,-,O,O,2
+Running total from a server quote before paying,checkout,must,yes,yes,LaundryMate basket total and LaundroKart order bill seen in screenshots.,-,-,-,O,O,2
+"Audience filters in the catalogue (Men, Women, Kids, Household)",catalogue,should,yes,no,IronDost catalogue is by service category only.,O,O,O,O,-,4
+Item search,catalogue,should,yes,yes,IronDost S13.,O,O,O,-,O,4
+Per-kg pricing option for everyday wash,pricing,should,yes,partial,IronDost schema has a KG unit; weighing and repricing happen in the admin after pickup.,O,O,O,-,-,3
+"Care options and add-ons (starch, hanger pack, softener, packing choice)",catalogue,should,yes,no,None in IronDost.,O,O,O,C,-,4
+"Range beyond everyday clothes (shoes, bags, carpets, curtains, sofa)",catalogue,could,yes,no,Outside the ironing-first launch scope; IronDost has Dry Cleaning but not these.,O,O,O,-,O,4
+Pickup date strip with time windows,scheduling,must,yes,yes,"All five. IronDost: Morning 7-11, Noon 11-16, Evening 16-20.",O,O,O,O,O,5
+Pickup windows of 2.5 hours or less,scheduling,should,yes,no,"DhobiLite 2 h, Tumbledry and Fabrico 1 h, LaundryMate 2.5 h. IronDost windows are 4 to 5 h. LaundroKart about 3 to 4 h.",O,O,O,O,-,4
+Customer picks the delivery window separately,scheduling,should,yes,yes,IronDost chooses pickup and delivery together.,-,C,C,O,-,3
+Express or faster-turnaround option with the extra charge shown,express,must,yes,no,"All five, with surcharges from +20% to +100%. Tumbledry states both 1.5x and 2x on different pages. IronDost has a fixed 20 h minimum turnaround and no option.",O,O,O,O,O,5
+"Ultra-fast local mode (15-minute pickup, 4-hour delivery)",express,could,yes,no,"LaundryMate Sprint, one Bengaluru area only.",-,-,-,O,-,1
+Reschedule a pickup in the app,scheduling,should,yes,no,IronDost help text says cancel and book again.,-,O,O,C,C,4
+Cancel an order in the app,scheduling,must,yes,yes,IronDost allows cancel until pickup.,O,O,O,-,O,4
+Minimum order rule shown before confirming,pricing,should,yes,yes,"DhobiLite 299 + tax, Tumbledry 350, Fabrico 349.",O,O,C,-,-,3
+Free pickup and delivery above a threshold,pricing,should,yes,yes,IronDost has a free-delivery limit setting.,C,O,C,C,-,4
+Promo codes at checkout,offers,should,yes,yes,IronDost promo sheet.,O,O,O,O,O,5
+First-order discount applied automatically,offers,should,yes,partial,Coupon engine exists; first-order eligibility and a free-garments benefit are not implemented (IMPLEMENTATION.md).,O,O,C,O,-,4
+Prepaid wallet or credit with bonus,wallet,should,yes,no,"All five: plans, packages, wallet credit. Package terms differ between surfaces at Tumbledry and DhobiLite (OBSERVED).",O,O,O,O,O,5
+Membership with guaranteed slots or free delivery,wallet,could,yes,no,Needs a wallet and recurring pickups first.,C,O,-,O,C,4
+Referral programme,offers,should,yes,no,Fabrico Refer and Earn tab; DhobiLite referral coupon.,O,C,O,-,-,3
+Recurring scheduled pickups,scheduling,should,yes,no,LaundryMate ClubUltimate auto-creates orders.,C,-,C,O,-,3
+"Online payment (UPI, cards, netbanking)",payments,must,yes,yes,IronDost: Razorpay.,C,O,C,-,O,4
+Cash on delivery,payments,should,yes,yes,IronDost: staff record cash at delivery.,C,C,C,-,-,3
+Bill or invoice viewable in the app,payments,must,yes,yes,Tumbledry reviewers say they cannot see an invoice in the app.,C,-,C,-,O,3
+Pay a balance due on an existing order,payments,could,yes,yes,IronDost S43.,-,O,-,-,-,1
+Stage-by-stage order timeline,tracking,must,yes,yes,Tumbledry shows four counters only; Fabrico shows a pickups and drop-offs list.,O,-,-,O,O,3
+Push or SMS update at each stage,notifications,must,yes,yes,IronDost: push plus in-app inbox; no SMS.,O,-,C,-,C,3
+Partner name and call button on the order,tracking,could,yes,yes,IronDost shows the partner once assigned.,O,-,-,-,-,1
+Share live location with the rider,tracking,could,yes,no,DhobiLite only.,O,-,-,-,-,1
+Book again from a finished order,orders,could,yes,yes,IronDost 'Book again'.,-,-,-,-,O,1
+"Quick order: schedule now, count items at pickup",catalogue,should,yes,no,Four apps work this way. Pair it with customer approval of the final price.,O,O,O,O,-,4
+"In-app support with call, form and photo",support,must,yes,partial,IronDost has Help and a support call; no ticket form or photo.,O,O,O,C,C,5
+WhatsApp channel in the app or one tap away,support,must,yes,no,IronDost marketing plans use WhatsApp as a fallback; the app has none.,O,O,O,-,-,3
+Order-linked problem report with a visible status,support,must,yes,no,"Top complaint theme (unanswered support, 18% of sampled reviews). Not seen working in any app.",-,C,-,-,-,1
+Damage or loss policy with a stated remedy,trust,must,yes,partial,"IronDost has an FAQ answer only, no claim record.",C,C,C,C,-,4
+Free reprocessing if unhappy,trust,should,yes,no,"DhobiLite 7-day, LaundryMate 'no questions asked'.",C,-,-,C,-,2
+Garment tagging or photos at pickup,trust,should,yes,no,"Needs the partner flow, which does not exist yet.",C,C,C,-,-,3
+Process steps shown to the customer,trust,could,yes,no,Marketing storytelling more than function.,O,O,C,-,C,4
+Rating or feedback prompt after delivery,feedback,could,no,no,Not seen in any of the five. A chance to be first.,-,-,-,-,-,0
+Language switch (Hindi or Telugu),localisation,should,yes,no,"Only Fabrico, and only a switch whose options were not seen. IronDost is English only.",-,-,O,-,-,1
+Dark mode,design,could,yes,yes,DhobiLite dark only; IronDost light and dark.,O,-,-,-,-,1
+Contrast and text scaling that meet WCAG AA,accessibility,should,no,yes,"Fabrico (2.2:1), DhobiLite (blue button 3.7:1), LaundryMate (3.3:1) and LaundroKart (3.4:1) each fail at least one pair I measured. Tumbledry passed the four I could measure, but its agent estimates white on amber near 1.6:1 from eyeballed colours. IronDost passes 26 of 26 pairs.",-,-,-,-,-,0
+Delete account inside the app,account,should,yes,yes,IronDost S46 and S47.,-,O,O,-,-,2
+In-app notification inbox,notifications,should,yes,yes,IronDost S25.,O,O,O,-,-,3
+Offers list with codes,offers,should,yes,yes,IronDost Offers tab.,O,O,C,-,-,3
+Local landing pages per neighbourhood,web,should,yes,no,"IronDost web has home, support and policy pages only.",O,O,O,-,-,3
+Store locator or walk-in drop-off,footprint,should,yes,skip,IronDost is doorstep-only with no retail stores.,O,O,O,-,-,3
+Franchise programme,footprint,could,yes,skip,Not a customer feature.,O,O,C,-,-,3
+Business or bulk accounts,b2b,could,yes,no,product-marketing lists B2B as later.,C,I,C,-,-,2
+Price-change notice with refund-due alert,orders,could,no,yes,"IronDost only: staff reprice, customer told, refund alert raised.",-,-,-,-,-,0
+Honest overdue label instead of a made-up ETA,tracking,could,no,yes,IronDost only (IMPLEMENTATION.md).,-,-,-,-,-,0

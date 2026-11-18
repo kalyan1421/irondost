@@ -1,0 +1,84 @@
+feature,area,status,evidence_url,notes
+Promo carousel at top of home (Schedule) screen,onboarding/home,OBSERVED,https://apps.apple.com/in/app/dhobilite-dry-clean-laundry/id1128126966,"App Store screenshot 1 of 7: blue banner ""20% Discount on your order, coupon MY20"" with pagination dots; video shows rotating banners (franchise, Dry-clean any 4/6 clothes for 666/999) - https://www.youtube.com/watch?v=Yj6duSR84w4"
+"OTP login, no password",auth,CLAIMED,https://play.google.com/store/apps/details?id=com.dhobilite&hl=en_IN&gl=IN,"Listing copy says verify number with OTP, no password, no social login. Login screen itself not observed"
+No social-media sign-in required,auth,CLAIMED,https://play.google.com/store/apps/details?id=com.dhobilite&hl=en_IN&gl=IN,"Listing copy ""no social media needed"""
+Serviceability checked after registration,serviceability,INFERRED,https://play.google.com/store/apps/details?id=com.dhobilite&hl=en_IN&gl=IN,"Play 2-star review 1 Oct 2025 (siddharth ranjan): registers first, then app says not in serviceable zone. Single user report"
+"City picker modal (89 cities, 8 popular)",serviceability,OBSERVED,https://www.dhobilite.com/,"Modal with city icons (Delhi, Hyderabad, Chandigarh, Ahmedabad, Pune, Chennai, Kolkata, Kochi) plus A-Z list; selection changes header label and price tables"
+Locality dropdown on rate pages,serviceability,OBSERVED,https://www.dhobilite.com/steam-ironing-services,"Heading reads ""Bandlaguda, Hyderabad Steam Press Rate"" with a dropdown; Bandlaguda appeared as default after Hyderabad was chosen on home"
+Nearest Store link on address card,serviceability,OBSERVED,https://apps.apple.com/in/app/dhobilite-dry-clean-laundry/id1128126966,"Screenshots 1-2: small ""Nearest Store >"" link right of the Address label"
+Find nearest store and get directions in one tap,serviceability,CLAIMED,https://apps.apple.com/in/app/dhobilite-dry-clean-laundry/id1128126966,v14.00.00 release notes (24 Oct)
+Saved address card with edit pencil,checkout,OBSERVED,https://apps.apple.com/in/app/dhobilite-dry-clean-laundry/id1128126966,"Screenshot 1-2: address row inside a rounded card, orange pin icon, pencil edit"
+"Website lead form (Location, Name, Mobile, Address -> Book Pickup Now)",checkout,OBSERVED,https://www.dhobilite.com/,"Fields seen, not filled or submitted. Callback-style capture, not a real booking cart"
+WhatsApp click-to-chat booking,scheduling,OBSERVED,https://www.dhobilite.com/,"""Chat on WhatsApp"" button opens wa.me/918800414848 with prefilled text asking to book a service; floating green WhatsApp FAB on every page"
+Request Call Back button,support,OBSERVED,https://www.dhobilite.com/,Orange pill in header and repeated under each price block
+Day picker: Today / Tomorrow / Day after tomorrow,scheduling,OBSERVED,https://apps.apple.com/in/app/dhobilite-dry-clean-laundry/id1128126966,Screenshots 1-2: three square cards with weekday label + big date number; selected card gets orange outline. Only 3 days ahead
+Four pickup windows with mood subtitles,scheduling,OBSERVED,https://apps.apple.com/in/app/dhobilite-dry-clean-laundry/id1128126966,"Screenshot 2: Morning 09-11 AM, Afternoon 11-01 PM, Evening 04-06 PM, Night 06-08 PM; 2x2 grid of selectable cards with icons and one-line captions"
+Older app: radio-list day and slot picker (Aug 2025),scheduling,OBSERVED,https://www.youtube.com/watch?v=Yj6duSR84w4,"Light theme; slots 09-11 AM, 11-01 PM, 04-06 PM, 07-09 PM; no icons"
+Coupon field on schedule screen,offers,OBSERVED,https://apps.apple.com/in/app/dhobilite-dry-clean-laundry/id1128126966,Screenshot 2 and video: single text field above Place Order
+Terms & Conditions checkbox gates Place Order,checkout,OBSERVED,https://apps.apple.com/in/app/dhobilite-dry-clean-laundry/id1128126966,Screenshot 2; video frame shows it pre-ticked
+Order Confirmation summary screen,checkout,OBSERVED,https://apps.apple.com/in/app/dhobilite-dry-clean-laundry/id1128126966,"Screenshot 3: Pickup Date, Time Slot, coupon status, Compulsory Min Order, Add On Services, Back and Confirm buttons"
+Compulsory minimum order Rs 299 + tax,pricing,OBSERVED,https://apps.apple.com/in/app/dhobilite-dry-clean-laundry/id1128126966,"Shown on confirmation screen (screenshot 3, Ghaziabad address) and in Aug 2025 video (Noida). Website says minimum varies by location and is lower for first order"
+"Add-on services: Antiseptic, Neutralizer, Softener, Emulsifier",catalogue,OBSERVED,https://apps.apple.com/in/app/dhobilite-dry-clean-laundry/id1128126966,Screenshot 3: four outlined orange chips with icons; checkbox style in older version. Price of add-ons not shown
+"No item picker, cart or bill estimate in booking flow",catalogue,INFERRED,https://play.google.com/store/apps/details?id=com.dhobilite&hl=en_IN&gl=IN,Screens 1-3 and video go from schedule straight to confirm. Play 3-star review 19 Oct 2026 asks for a page to select items and see bill amount
+Rate List tab in bottom nav,catalogue,OBSERVED,https://apps.apple.com/in/app/dhobilite-dry-clean-laundry/id1128126966,Tab label only; contents not observed
+Laundry priced per kg,pricing,OBSERVED,https://www.dhobilite.com/laundry-services,"Compare table: Wash & Fold, Organic Wash, Wash & Iron, Organic Laundry, Premium Laundry; regular vs MY25 offer rate"
+"Dry clean, shoes, bags, jackets priced per piece",pricing,OBSERVED,https://www.dhobilite.com/,Per-piece tables (/pc) with struck-through MRP and MY25 price
+"Sofa per seat, carpet per sq ft",pricing,OBSERVED,https://www.dhobilite.com/,"Sofa/seat Rs 399, carpet Rs 35/sqft on home tables; Bandlaguda page shows Rs 49* for both with minimums (10 seats / 150 sqft)"
+Standalone steam ironing per piece (roughly 140 SKUs, approximate count),pricing,OBSERVED,https://www.dhobilite.com/steam-ironing-services,"Bandlaguda, Hyderabad table: shirt Rs 50 list / Rs 38 with MY25; groups Gents, Ladies, Kids, Home Linen"
+Wash & Iron per kg bundles steam press,pricing,OBSERVED,https://www.dhobilite.com/laundry-services,"Process row reads Machine Wash + Steam Press; ""best for T-shirts, trousers, bedsheets"""
+Ironing finish tiers R / M / H and POLISH variants,pricing,OBSERVED,https://www.dhobilite.com/steam-ironing-services,"e.g. Saree - R Rs 119, Saree - M Rs 229, plus POLISH rows and Saree Roll Polish Press"
+First-order 25% code MY25 with strike-through MRP,offers,OBSERVED,https://www.dhobilite.com/,"Hero chip, every price table footnote ""valid on first order"""
+Code APP30 up to 30% off,offers,CLAIMED,https://apps.apple.com/in/app/dhobilite-dry-clean-laundry/id1128126966,"Store listing copy; video shows APP30 as 30% cashback capped at Rs 150, min order Rs 219 + tax (Aug 2025)"
+"Coupons for me list (APP30, WIN21)",offers,OBSERVED,https://www.youtube.com/watch?v=Yj6duSR84w4,"Older app: ticket-style coupon cards with code, validity, service scope, min order"
+Referral coupon with Invite Now share,offers,OBSERVED,https://www.youtube.com/watch?v=Yj6duSR84w4,"Older app: personal code (REF...), invite button, share via WhatsApp or link; min payable after discount Rs 200"
+Developer replies on Play carry codes (Sorry25 / Thanks20),offers,OBSERVED,https://play.google.com/store/apps/details?id=com.dhobilite&hl=en_IN&gl=IN,"Sorry25 25% off on 1-2 star replies, Thanks20 on 4-5 star, none on 3-star"
+Prepaid plans (wallet top-up),wallet/plans,OBSERVED,https://www.dhobilite.com/,"Home carousel (Hyderabad selected): Small Rs 1,399, Medium Rs 2,199, Big Rs 3,499 (Recommended), Jumbo Rs 6,399"
+Prepaid plan prices differ across surfaces,wallet/plans,OBSERVED,https://www.dhobilite.com/laundry-recharge-plans,"Plans page (Delhi): Bachelor 1,399 / Couple 2,199 / Family 5,555 / Jumbo 11,999. App Store art: Big 5,555, Jumbo 11,999, Super Jumbo 14,999"
+Prepaid validity stated inconsistently,wallet/plans,OBSERVED,https://www.dhobilite.com/laundry-recharge-plans,Plans page says 12-month validity; home FAQ says no expiry
+Express 12-hour option at +40%,express,OBSERVED,https://www.dhobilite.com/laundry-services,Row in compare table for all laundry services
+Same-day or 24-hour dry clean subject to availability,express,CLAIMED,https://www.dhobilite.com/laundry-and-dry-cleaning-hyderabad-bandlaguda,FAQ answer via text fetch; depends on garment type and workload
+Standard turnaround 48 hours / 2-3 days,express,OBSERVED,https://www.dhobilite.com/laundry-services,Service time row 2-3 days; listing says 48-hour on most orders. Reviews report 5-8 days
+Steam ironing 24-hour turnaround chip,express,OBSERVED,https://www.dhobilite.com/steam-ironing-services,"Hero chip ""24-Hour Turnaround""; copy says typical load ready within 24 hours"
+"Payment: cash, UPI, cards",payments,CLAIMED,https://www.dhobilite.com/,FAQ text; no checkout UI observed
+Tap to Pay online payment and invoices in app,payments,CLAIMED,https://apps.apple.com/in/app/dhobilite-dry-clean-laundry/id1128126966,Listing How It Works step; payment screen not observed
+Discount on online payment,payments,CLAIMED,https://apps.apple.com/in/app/dhobilite-dry-clean-laundry/id1128126966,"In ""What's New"" for both stores"
+Order tracking stepper with 7 icon steps,tracking,OBSERVED,https://apps.apple.com/in/app/dhobilite-dry-clean-laundry/id1128126966,"Screenshot 4: horizontal rail of 7 circular icons, first active; text labels not legible"
+Runner assignment row with call button,tracking,OBSERVED,https://apps.apple.com/in/app/dhobilite-dry-clean-laundry/id1128126966,"""Runner not yet assigned"" plus green call button"
+Share My Location button on active order,tracking,OBSERVED,https://apps.apple.com/in/app/dhobilite-dry-clean-laundry/id1128126966,Full-width blue button on order card
+"Order comment, coupon apply and cancel on order card",tracking,OBSERVED,https://apps.apple.com/in/app/dhobilite-dry-clean-laundry/id1128126966,"Red Cancel link top right, Add Comment, coupon field (Apply in older version)"
+OTP for Minimum Order chip on active order,tracking,OBSERVED,https://apps.apple.com/in/app/dhobilite-dry-clean-laundry/id1128126966,Outlined chip showing a masked code; purpose not explained on screen (INFERRED handover verification)
+SMS if an issue is found at inspection,notifications,OBSERVED,https://apps.apple.com/in/app/dhobilite-dry-clean-laundry/id1128126966,Note on order card: customer is asked to reply quickly
+Step-by-step notification messages,notifications,CLAIMED,https://www.dhobilite.com/laundry-and-dry-cleaning-hyderabad-bandlaguda,Brand-curated testimonial says notifications at every step
+Floating orange bell button on all in-app screens,notifications,OBSERVED,https://apps.apple.com/in/app/dhobilite-dry-clean-laundry/id1128126966,Circular FAB bottom-right above tab bar; purpose not shown
+Bottom navigation with five tabs,navigation,OBSERVED,https://apps.apple.com/in/app/dhobilite-dry-clean-laundry/id1128126966,"SCHEDULE, MY ORDERS, PREPAID, RATE LIST, ACCOUNT; active tab orange"
+Order history and invoices,account,CLAIMED,https://apps.apple.com/in/app/dhobilite-dry-clean-laundry/id1128126966,Listing: view past orders and invoices anytime; screen not observed
+"Support by phone, WhatsApp, email, call-back",support,OBSERVED,https://www.dhobilite.com/,"8800414848, wa.me link, cc@dhobilite.com; footer hours 9 AM-10 PM daily while FAQ claims 24/7"
+WhatsApp bot and AI agent bot,support,CLAIMED,https://play.google.com/store/apps/details?id=com.dhobilite&hl=en_IN&gl=IN,"Play What's New lists ""AI agent bot""; Apple review 22 Jun 2025 says routed to a basic WhatsApp bot"
+7-day satisfaction guarantee (reprocess),trust,CLAIMED,https://www.dhobilite.com/,Site badge and app download block
+"Lost or damaged garment reimbursed up to 3x processing cost, prepaid account only",trust,CLAIMED,https://www.dhobilite.com/,FAQ text via fetch; repeated on Bandlaguda page
+10-step cleaning process shown in app and site,trust,OBSERVED,https://www.dhobilite.com/,"Dirty Clothes, Easy Pickup, Inspection by Experts, Dry Spotting, Preprocessing, Processing, Steam Ironing, QC & Packing, Delivery, Happy Customer; horizontal photo cards also embedded in app screens"
+Barcode tagging and fabric-wise sorting,trust,CLAIMED,https://www.dhobilite.com/laundry-and-dry-cleaning-hyderabad-bandlaguda,SEO article text; not seen in app
+Organic / enzyme-based wash variants,trust,CLAIMED,https://www.dhobilite.com/,"Organic Wash, Organic Laundry, Organic Dry Clean tiers"
+Press logos / media mentions,trust,CLAIMED,https://apps.apple.com/in/app/dhobilite-dry-clean-laundry/id1128126966,"Listing: Forbes, GulfNews, YourStory, Business World Disrupt, Indian Express, Economic Times"
+Google rating widget with locality reviews,trust,OBSERVED,https://www.dhobilite.com/laundry-and-dry-cleaning-hyderabad-bandlaguda,"4.7 rating, three 5-star Google reviews (Nov, Oct, Sep 2026)"
+Store rating gap: App Store 3.3 vs Play 4.9,trust,INFERRED,https://play.google.com/store/apps/details?id=com.dhobilite&hl=en_IN&gl=IN,504 iOS ratings vs ~14.8K Play reviews; gap suggests different review-prompt behaviour
+Rating and text mismatches on Play,trust,INFERRED,https://play.google.com/store/apps/details?id=com.dhobilite&hl=en_IN&gl=IN,"Several 1-2 star reviews have positive text (e.g. 14 Oct 2026 ""nice""); suggests mis-taps or prompted reviews"
+English-only app listing; no Telugu seen,localisation,OBSERVED,https://apps.apple.com/in/app/dhobilite-dry-clean-laundry/id1128126966,App Store languages: English. Website English only. Hindi/Bengali appear only inside user reviews
+Accessibility features not declared,accessibility,OBSERVED,https://apps.apple.com/in/app/dhobilite-dry-clean-laundry/id1128126966,"""Developer has not yet indicated which accessibility features this app supports"""
+Privacy label mismatch between stores,accessibility,OBSERVED,https://play.google.com/store/apps/details?id=com.dhobilite&hl=en_IN&gl=IN,"App Store: Data Not Collected. Play: may collect location, personal info and 2 others, encrypted in transit"
+Corporate / hotel / bulk laundry,B2B,CLAIMED,https://www.dhobilite.com/,FAQ says bulk discounts and flexible scheduling; no B2B flow seen
+"Franchise: retail partner from Rs 7 lakh, master franchise Rs 1-2.5 crore",B2B,OBSERVED,https://www.dhobilite.com/laundry-franchise-in-hyderabad,Hyderabad franchise page; app carousel also pushes franchise
+Laundry consultancy service,B2B,OBSERVED,https://www.dhobilite.com/,"Nav item ""Consultancy""; page not opened"
+"Hyderabad store list: 10 localities, 3 marked On Our Radar",serviceability,OBSERVED,https://www.dhobilite.com/laundry-dryclean-locations,"Kokapet, Bachupally*, Banjara Hills*, Vanasthalipuram, Miyapur, Kompally, Mokila, Kukatpally, Bandlaguda, Manikonda* (*no map link). Read via text fetch"
+Bandlaguda store address and locality page,serviceability,OBSERVED,https://www.dhobilite.com/laundry-and-dry-cleaning-hyderabad-bandlaguda,"19/77 NRR Square, Kismatpur Rd, Bandlaguda Jagir, 500086. Names Kothapet, LB Nagar, Nagole, Uppal as nearby"
+LB Nagar appears only in franchise coverage list,serviceability,OBSERVED,https://www.dhobilite.com/laundry-franchise-in-hyderabad,"Listed with Secunderabad, Manikonda, Tolichowki; no LB Nagar store or service page found. Dilsukhnagar, Saroornagar not found"
+Dark theme in current app screenshots,design,OBSERVED,https://apps.apple.com/in/app/dhobilite-dry-clean-laundry/id1128126966,Near-black UI in all four app screenshots; Aug 2025 version was light. No theme toggle observed
+Orange organic-curve header on detail screens,design,OBSERVED,https://apps.apple.com/in/app/dhobilite-dry-clean-laundry/id1128126966,Order Confirmation and Active Orders share a rounded orange blob header with logo at right
+Recurring pickup schedule,scheduling,CLAIMED,https://www.dhobilite.com/laundry-and-dry-cleaning-hyderabad-bandlaguda,FAQ: set up via app or website; not observed
+Subscription / membership plans,wallet/plans,CLAIMED,https://www.dhobilite.com/laundry-and-dry-cleaning-hyderabad-bandlaguda,FAQ; appears to refer to prepaid plans
+"Shoe, bag, jacket, sofa, carpet, curtain, blanket services",catalogue,OBSERVED,https://www.dhobilite.com/,Separate price tables per category
+Packing options by tier,trust,OBSERVED,https://www.dhobilite.com/laundry-services,"Biodegradable polybag, butter paper, box packing, multi-layer packing"
+Typing animation of city names in hero,design,OBSERVED,https://www.dhobilite.com/,"""Now Serving in"" followed by cycling city text"
+"Sticky quick-nav pills (Pricing, How It Works, FAQs, Download App)",design,OBSERVED,https://www.dhobilite.com/,Right-edge floating pill group on home and rate pages
+Install counts claimed on site differ from store bands,trust,CLAIMED,https://www.dhobilite.com/,"Site: 300K iOS and 800K Android installs, 700K+ downloads; Play shows 5L+"
+City and outlet counts inconsistent across pages,trust,OBSERVED,https://www.dhobilite.com/,"89 cities / 194 outlets hero vs 79+, 76, 75, 72+ cities and 175+ / 168+ outlets elsewhere"

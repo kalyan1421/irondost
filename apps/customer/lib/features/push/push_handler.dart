@@ -5,6 +5,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../app/routes.dart';
 import '../../data/api_client.dart';
 import '../basket/basket.dart';
+import '../issues/issues.dart';
 import '../notifications/notifications.dart';
 import '../orders/order_repository.dart';
 import '../orders/orders_list.dart';
@@ -13,6 +14,8 @@ import 'push_source.dart';
 
 /// Where tapping a notification should go: its order, the offers, else the inbox.
 String routeForPush(PushMessage m) {
+  final issueId = m.data['issueId'];
+  if (issueId != null && issueId.isNotEmpty) return Routes.issue(issueId);
   final orderId = m.orderId;
   if (orderId != null && orderId.isNotEmpty) return Routes.order(orderId);
   if (m.type.contains('offer') || m.type.contains('promo')) return Routes.offers;
@@ -51,6 +54,9 @@ final pushHandlerProvider = Provider<void>((ref) {
   final subs = <StreamSubscription<PushMessage>>[
     source.foreground.listen((m) {
       ref.invalidate(notificationsProvider);
+      ref.invalidate(issuesProvider);
+      final issueId = m.data['issueId'];
+      if (issueId != null) ref.invalidate(issueProvider(issueId));
       final id = m.orderId;
       if (id != null) {
         ref.invalidate(orderProvider(id));

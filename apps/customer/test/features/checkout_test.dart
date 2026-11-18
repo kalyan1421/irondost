@@ -189,6 +189,17 @@ void main() {
       expect(container.read(basketProvider).isEmpty, isFalse, reason: 'the basket and code are kept');
     });
 
+    test('a pickup window that filled up: the windows are read again and the basket is kept', () async {
+      await setUp();
+      final repo = container.read(scheduleRepositoryProvider) as FakeScheduleRepository;
+      final asked = repo.pickupAsked;
+      expect(await failWith(const ApiFailure(ApiFailureKind.rejected, statusCode: 409, code: 'SLOT_FULL', details: {'date': testToday, 'slot': 'EVENING'})), CheckoutProblem.slotFull);
+      expect(container.read(basketProvider).isEmpty, isFalse, reason: 'the basket and code are kept');
+      container.read(pickupSlotsProvider);
+      await Future<void>.delayed(Duration.zero);
+      expect(repo.pickupAsked, greaterThan(asked), reason: 'the full window must show as Full when the customer goes back');
+    });
+
     test('an address we do not serve', () async {
       await setUp();
       expect(await failWith(rejected('ADDRESS_NOT_SERVICEABLE')), CheckoutProblem.notServiceable);

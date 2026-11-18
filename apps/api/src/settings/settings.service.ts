@@ -22,6 +22,13 @@ export class SettingsService {
     return value;
   }
 
+  /** The saved settings, skipping the short cache: for a check made right after an edit, which another instance may not have seen. */
+  async getFresh(): Promise<BusinessSettings> {
+    const value = await this.prisma.businessSettings.upsert({ where: { id: 1 }, create: { id: 1 }, update: {} });
+    this.cached = { value, at: Date.now() };
+    return value;
+  }
+
   async update(data: Partial<Omit<BusinessSettings, 'id' | 'updatedAt'>>): Promise<BusinessSettings> {
     const value = await this.prisma.businessSettings.update({ where: { id: 1 }, data });
     this.cached = { value, at: Date.now() };

@@ -59,11 +59,6 @@ class FakeAuth implements AuthRepository {
   final sentTo = <String>[];
   int googleSignIns = 0;
 
-  /// Whether the signed-in account already carries a verified number.
-  bool verifiedPhone = false;
-  int unlinks = 0;
-  final linkRequests = <bool>[];
-
   @override
   Future<bool> hasCredentials() async => signedIn;
 
@@ -71,20 +66,15 @@ class FakeAuth implements AuthRepository {
   Future<String?> token({bool forceRefresh = false}) async => signedIn ? 'test-token' : null;
 
   @override
-  Future<PhoneChallenge> sendCode(String phone, {PhoneChallenge? resendOf, void Function()? onAutoVerified, bool link = false}) async {
+  Future<PhoneChallenge> sendCode(String phone, {PhoneChallenge? resendOf, void Function()? onAutoVerified}) async {
     sentTo.add(phone);
-    linkRequests.add(link);
     if (sendFailure != null) throw sendFailure!;
-    return PhoneChallenge(phone: phone, verificationId: 'v-${sentTo.length}', link: link);
+    return PhoneChallenge(phone: phone, verificationId: 'v-${sentTo.length}');
   }
 
   @override
   Future<void> confirmCode(PhoneChallenge challenge, String code) async {
     if (confirmFailure != null) throw confirmFailure!;
-    if (challenge.link) {
-      verifiedPhone = true;
-      return;
-    }
     signedIn = true;
   }
 
@@ -93,15 +83,6 @@ class FakeAuth implements AuthRepository {
     googleSignIns++;
     if (googleFailure != null) throw googleFailure!;
     signedIn = true;
-  }
-
-  @override
-  Future<bool> hasVerifiedPhone() async => verifiedPhone;
-
-  @override
-  Future<void> unlinkPhone() async {
-    unlinks++;
-    verifiedPhone = false;
   }
 
   @override
@@ -216,7 +197,7 @@ class FakeLocation implements LocationService {
 /// A signed-in session, so providers that need one (addresses) work without the API.
 class SignedInSession extends SessionController {
   @override
-  Future<Session> build() async => const SignedIn(Profile(id: 'u1', phone: '+919876543210', name: 'Priya Sharma', isComplete: true));
+  Future<Session> build() async => const SignedIn(Profile(id: 'u1', phone: '+919876543210', phoneVerified: true, name: 'Priya Sharma', isComplete: true));
 }
 
 // ── Catalogue and basket ───────────────────────────────────────────────────
@@ -280,7 +261,10 @@ Future<List<Override>> basketOverrides({
 class FakeQuoteRepository implements QuoteRepository {
   final calls = <(List<OrderLineInput>, String?)>[];
   int minOrderPaise = 0;
+
+  /// The flat travel charge, and the items total (before any coupon) from which it is free; null = always charged.
   int deliveryFeePaise = 0;
+  int? freeTravelFromPaise;
   ApiFailure? failure;
 
   @override
@@ -326,12 +310,15 @@ class FakeQuoteRepository implements QuoteRepository {
       }
     }
     final shortfall = subtotal < minOrderPaise ? minOrderPaise - subtotal : null;
+    final free = freeTravelFromPaise != null && subtotal >= freeTravelFromPaise!;
+    final travel = free ? 0 : deliveryFeePaise;
     return QuoteDto(
       lines: lines,
       subtotalPaise: subtotal,
       discountPaise: discount,
-      deliveryFeePaise: deliveryFeePaise,
-      totalPaise: subtotal - discount + deliveryFeePaise,
+      deliveryFeePaise: travel,
+      freeTravelShortfallPaise: freeTravelFromPaise != null && travel > 0 ? freeTravelFromPaise! - subtotal : null,
+      totalPaise: subtotal - discount + travel,
       promoCode: applied,
       promoError: error,
       promoShortfallPaise: promoShortfall,
@@ -370,7 +357,7 @@ PromotionDto testPromo(
 // ── Schedule ───────────────────────────────────────────────────────────────
 
 /// One window, with its IST hours turned into the UTC instants the API sends.
-SlotOptionDto testSlot(String date, TimeSlot slot, {bool available = true}) {
+SlotOptionDto testSlot(String date, TimeSlot slot, {bool available = true, SlotUnavailableReason? reason}) {
   final (startHour, endHour, label) = switch (slot) {
     TimeSlot.morning => (7, 11, '07:00–11:00'),
     TimeSlot.noon => (11, 16, '11:00–16:00'),
@@ -381,7 +368,7 @@ SlotOptionDto testSlot(String date, TimeSlot slot, {bool available = true}) {
     return DateTime.utc(d.year, d.month, d.day, hour).subtract(const Duration(hours: 5, minutes: 30));
   }
 
-  return SlotOptionDto(date: date, slot: slot, label: label, startsAt: at(startHour), endsAt: at(endHour), available: available);
+  return SlotOptionDto(date: date, slot: slot, label: label, startsAt: at(startHour), endsAt: at(endHour), available: available, reason: reason);
 }
 
 /// Saturday 3 Oct 2026, 6:30 pm in India: this morning's and noon's windows are over.
@@ -390,15 +377,23 @@ const testDays = ['2026-10-03', '2026-10-04', '2026-10-05', '2026-10-06', '2026-
 
 /// Pickup windows for [testDays]; the API's rules for delivery (20 hours after the pickup ends).
 class FakeScheduleRepository implements ScheduleRepository {
-  FakeScheduleRepository({Set<SlotKey>? closed, bool todayOver = true})
-      : closed = closed ??
+  /// [days] replaces [testDays] (a test that must not depend on the date it runs on gives days from the real today).
+  FakeScheduleRepository({Set<SlotKey>? closed, Set<SlotKey>? full, bool todayOver = true, List<String>? days})
+      : days = days ?? testDays,
+        full = full ?? {},
+        closed = closed ??
             {
               if (todayOver) (date: testToday, slot: TimeSlot.morning),
               if (todayOver) (date: testToday, slot: TimeSlot.noon),
             };
 
+  final List<String> days;
+
   /// Pickup windows that are not open.
   final Set<SlotKey> closed;
+
+  /// Open windows with no place left: the API says `available: false` with the reason `FULL`.
+  final Set<SlotKey> full;
   ApiFailure? pickupFailure;
   ApiFailure? deliveryFailure;
   final deliveryAsked = <SlotKey>[];
@@ -411,8 +406,14 @@ class FakeScheduleRepository implements ScheduleRepository {
     pickupAsked++;
     if (pickupFailure != null) throw pickupFailure!;
     return [
-      for (final d in testDays)
-        for (final s in _order) testSlot(d, s, available: !closed.contains((date: d, slot: s))),
+      for (final d in days)
+        for (final s in _order)
+          testSlot(
+            d,
+            s,
+            available: !closed.contains((date: d, slot: s)) && !full.contains((date: d, slot: s)),
+            reason: full.contains((date: d, slot: s)) && !closed.contains((date: d, slot: s)) ? SlotUnavailableReason.full : null,
+          ),
     ];
   }
 
@@ -422,7 +423,7 @@ class FakeScheduleRepository implements ScheduleRepository {
     if (deliveryFailure != null) throw deliveryFailure!;
     final earliest = testSlot(pickupDate, pickupSlot).endsAt.add(const Duration(hours: 20));
     return [
-      for (final d in testDays.where((d) => d.compareTo(pickupDate) >= 0))
+      for (final d in days.where((d) => d.compareTo(pickupDate) >= 0))
         for (final s in _order) testSlot(d, s, available: !testSlot(d, s).startsAt.isBefore(earliest)),
     ];
   }
@@ -440,6 +441,9 @@ OrderDto testOrder({
   PersonRefDto? deliveryDriver,
   DateTime? dispatchFailedAt,
   List<OrderEventDto>? events,
+  List<OrderPaymentDto>? payments,
+  List<OrderAdjustmentDto>? adjustments,
+  List<RefundDto>? refunds,
   String id = 'o-1',
   String number = 'ID001046',
   PaymentMethod method = PaymentMethod.cod,
@@ -451,30 +455,52 @@ OrderDto testOrder({
   String deliveryDate = '2026-10-04',
   String deliveryLabel = '16:00–20:00',
   int pieces = 17,
+  TimeSlot pickupSlot = TimeSlot.evening,
+  TimeSlot deliverySlot = TimeSlot.evening,
+  int rescheduleCount = 0,
+  int deliveryFeePaise = 0,
+  bool travelChargeKept = false,
+  String? careNote,
+  List<String> carePhotoUrls = const [],
+
+  /// Off unless a test asks: most screens do not care, and the "Change pickup time" row would change their layout.
+  bool canReschedule = false,
 }) =>
     OrderDto(
       id: id,
       orderNumber: number,
+      revision: 0,
+      adjustments: adjustments,
       status: status,
       source: OrderSource.customerApp,
       instructions: null,
+      careNote: careNote,
+      carePhotoUrls: carePhotoUrls,
       pickupDate: pickupDate,
-      pickupSlot: TimeSlot.evening,
+      pickupSlot: pickupSlot,
       pickupSlotLabel: pickupLabel,
       deliveryDate: deliveryDate,
-      deliverySlot: TimeSlot.evening,
+      deliverySlot: deliverySlot,
       deliverySlotLabel: deliveryLabel,
       pickupAddress: _orderAddress,
       deliveryAddress: _orderAddress,
       items: [
         OrderItemDto(id: 'i1', catalogItemId: 'shirt', name: 'Shirt / T-shirt', unit: ItemUnit.piece, unitPricePaise: 1500, quantity: pieces, lineTotalPaise: 1500 * pieces),
       ],
-      subtotalPaise: totalPaise,
+      subtotalPaise: totalPaise - deliveryFeePaise,
       discountPaise: 0,
-      deliveryFeePaise: 0,
+      deliveryFeePaise: deliveryFeePaise,
+      travelChargeKept: travelChargeKept,
       totalPaise: totalPaise,
       paidPaise: paidPaise,
       refundedPaise: refundedPaise,
+      payments: payments ?? [if (paidPaise > 0) OrderPaymentDto(
+        id: 'payment-1', provider: method == PaymentMethod.cod && status == OrderStatus.delivered ? PaymentProvider.cash : PaymentProvider.razorpay,
+        amountPaise: paidPaise, reference: 'pay_test', capturedAt: DateTime.utc(2026, 10, 3, 12),
+      )],
+      refunds: refunds ?? [if (refundedPaise > 0) RefundDto(id: 'refund-1', amountPaise: refundedPaise,
+        method: RefundMethod.razorpay, status: RefundStatus.processed, note: 'Order cancelled',
+        createdAt: DateTime.utc(2026, 10, 3, 12), processedAt: DateTime.utc(2026, 10, 4, 12), failureReason: null)],
       amountDuePaise: totalPaise - paidPaise,
       promoCode: null,
       paymentMethod: method,
@@ -488,6 +514,9 @@ OrderDto testOrder({
       pickedUpAt: pickedUpAt,
       deliveredAt: deliveredAt,
       cancelledAt: cancelledAt,
+      rescheduleCount: rescheduleCount,
+      reschedulesRemaining: (2 - rescheduleCount).clamp(0, 2),
+      canReschedule: canReschedule,
       events: events,
       createdAt: DateTime.utc(2026, 10, 3, 12),
       updatedAt: DateTime.utc(2026, 10, 3, 12),
@@ -531,6 +560,8 @@ class FakeOrderRepository implements OrderRepository {
       pickupDate: dto.pickupDate,
       deliveryDate: dto.deliveryDate,
       pieces: dto.items.fold(0, (a, i) => a + i.quantity.toInt()),
+      careNote: dto.careNote,
+      carePhotoUrls: dto.carePhotoUrls ?? const [],
     );
     orders[order.id] = order;
     return order;
@@ -580,6 +611,47 @@ class FakeOrderRepository implements OrderRepository {
       paymentStatus: before.paymentStatus,
       paidPaise: before.paidPaise.toInt(),
       cancelledAt: DateTime.utc(2026, 10, 3, 9),
+    );
+    orders[id] = order;
+    return order;
+  }
+
+  /// Every time change asked for: the order, what was sent and the Idempotency-Key.
+  final rescheduled = <(String, RescheduleOrderDto, String)>[];
+
+  /// Thrown one per call, before anything changes.
+  final rescheduleFailures = <ApiFailure>[];
+  Completer<void>? holdReschedule;
+
+  @override
+  Future<OrderDto> reschedule(String id, RescheduleOrderDto dto, {required String idempotencyKey}) async {
+    rescheduled.add((id, dto, idempotencyKey));
+    if (holdReschedule != null) await holdReschedule!.future;
+    if (rescheduleFailures.isNotEmpty) throw rescheduleFailures.removeAt(0);
+    final before = orders[id] ?? testOrder(id: id);
+    // A partner who had accepted is released when the pickup moves, as the API does.
+    final pickupMoved = dto.pickupDate != before.pickupDate || dto.pickupSlot != before.pickupSlot;
+    final released = pickupMoved && before.status == OrderStatus.pickupAssigned;
+    final count = before.rescheduleCount.toInt() + 1;
+    const labels = {TimeSlot.morning: '07:00–11:00', TimeSlot.noon: '11:00–16:00', TimeSlot.evening: '16:00–20:00'};
+    final order = testOrder(
+      id: id,
+      number: before.orderNumber,
+      status: released ? OrderStatus.pending : before.status,
+      pickupDriver: released ? null : before.pickupDriver,
+      method: before.paymentMethod,
+      paymentStatus: before.paymentStatus,
+      totalPaise: before.totalPaise.toInt(),
+      paidPaise: before.paidPaise.toInt(),
+      pieces: before.items.fold(0, (a, i) => a + i.quantity.toInt()),
+      pickupDate: dto.pickupDate,
+      pickupSlot: dto.pickupSlot,
+      pickupLabel: labels[dto.pickupSlot]!,
+      deliveryDate: dto.deliveryDate,
+      deliverySlot: dto.deliverySlot,
+      deliveryLabel: labels[dto.deliverySlot]!,
+      rescheduleCount: count,
+      canReschedule: count < 2,
     );
     orders[id] = order;
     return order;

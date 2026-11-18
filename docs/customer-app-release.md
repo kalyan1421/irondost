@@ -16,7 +16,7 @@ what I can do in the repo, and what only you can do.
 | Store listing copy | Drafted below | you review |
 | App Privacy and Data safety answers | Drafted below; iOS privacy manifest added | you review |
 | Privacy policy and account-deletion web pages | Live: https://irondost-app.web.app/privacy and /delete-account (move to your own domain later) | you review the text |
-| Store screenshots | Captured: 7 per platform in `apps/customer/store/` | you review |
+| Store assets | Current icons, Google Play feature graphic and 5 screenshots per platform exported; see [`store-submission-assets.md`](store-submission-assets.md) | you review |
 | Play internal testing, TestFlight | Needs the steps above | you upload, I prepare builds |
 
 ## Done in Phase 6 so far
@@ -39,17 +39,20 @@ what I can do in the repo, and what only you can do.
 
 ## Screenshots
 
-`apps/customer/store/ios/` is 1320 × 2868 (iPhone 6.9"), `apps/customer/store/android/` is 1080 × 2424 (Pixel 9). Both are
-01 Welcome, 02 Home, 03 Choose items, 04 Basket, 05 Pickup time, 06 Order tracking, 07 Offers. They are plain screenshots in light mode
-with a 9:41 status bar and demo data (customer "Priya Sharma"; the order shows "Paid online" because a cash payment was recorded
-on a dev order). The stores allow a caption and frame around each; that is a design decision for you.
+The current exports are in `apps/customer/store/app-store/` and `apps/customer/store/google-play/`. They use the most recent
+screens captured on 5 October 2026: Services, Basket, Pickup, Checkout and Search. The App Store set is 1260 × 2736; the Play set is
+1080 × 1920. The Play feature graphic and both store icons are included. The older Phase 6 screenshots are archived under
+`apps/customer/store/archive/phase6-2026-10-03/` and should not be uploaded. See [`store-submission-assets.md`](store-submission-assets.md)
+for official asset specs and the export command. The current mock order-tracking capture contains a past estimated delivery date,
+so it is not in the upload set.
 
 ## 1. Identity and versions
 
-- Android application ID stays `com.cloudironingfactory.customer`, so this ships as an update to the live listing.
+- Android application ID is `com.irondost.customer`, a new Play listing (changed on 6 Oct 2026; see `play-store-release-flow.md`). The old
+  `com.cloudironingfactory.customer` listing is separate: customers of the old app are not moved over automatically.
 - iOS bundle ID is `com.irondost.customer`, Apple team `AQLMTLP6PD`.
-- App version is `2.0.0+100` (versionName 2.0.0, versionCode 100). The versionCode must be higher than the highest code already
-  uploaded for the live app. Check Play Console → App bundle explorer; if the live app is above 100, raise the `+100`.
+- App version is `2.0.0+101` (versionName 2.0.0, versionCode / build number 101). Build 100 is already in App Store Connect, so iOS needs
+  101 or higher; Play has not received a bundle yet. Raise the `+101` if either console already holds a higher number.
 - The app is called IronDost; the store listing for the live app will change its name when this update goes out.
 
 ## 2. Icons and splash
@@ -63,7 +66,7 @@ on a dev order). The stores allow a caption and frame around each; that is a des
 **Android.** Release builds are signed with the upload key in `android/key.properties` when that file exists, and with the debug key
 when it does not (fine for a local test, rejected by Play). I need from you one of:
 
-- the existing upload keystore and its passwords for `com.cloudironingfactory.customer`, or
+- the existing upload keystore and its passwords for `com.irondost.customer`, or
 - if Play App Signing is on and the upload key is lost, a new upload key registered through Play Console → App integrity.
 
 Do not paste keystore passwords into chat; put them in `android/key.properties` yourself.
@@ -106,7 +109,7 @@ decision: where to host it (Postgres, the API process and the pg-boss worker).
 > • Apply offers and promo codes in your basket.
 > • Cancel before pickup, or call us from the app if something is wrong.
 >
-> Available in Hyderabad. Sign in with your mobile number; we send a one-time code by SMS.
+> Available in Hyderabad. Sign in with your mobile number (we send a one-time code by SMS), or with Google on Android.
 
 **What's new (2.0.0):** A new, faster IronDost: easier booking, live order tracking, online payment and offers.
 
@@ -148,11 +151,11 @@ push notifications. Payments are handled by Razorpay's checkout, so card and UPI
 
 | Store | Sizes | Count |
 |---|---|---|
-| App Store | 6.9" iPhone (1320×2868); 6.5" is optional if 6.9" is supplied | 3–10 |
-| Play | Phone, 16:9 to 9:16, at least 1080 px on the short side | 2–8 |
+| App Store | 6.9" iPhone (1260×2736) | 1–10 |
+| Play | Phone, 1080×1920 portrait | At least 2; 4+ recommended for promotion |
 
-Planned set, taken from the real app with dev data, light mode: Home, Choose items, Basket, Pickup time, Order tracking, Offers.
-Each is captured from the iOS simulator and the Android emulator, with a one-line caption on a brand-colour background.
+The current five-screen set and the required Play feature graphic are complete. Screenshot capture sources, formats, requirements,
+and current release dependencies are documented in [`store-submission-assets.md`](store-submission-assets.md).
 
 ## 8. Test tracks
 

@@ -14,6 +14,7 @@ QuoteDto _$QuoteDtoFromJson(Map<String, dynamic> json) => QuoteDto(
   discountPaise: json['discountPaise'] as num,
   deliveryFeePaise: json['deliveryFeePaise'] as num,
   totalPaise: json['totalPaise'] as num,
+  freeTravelShortfallPaise: json['freeTravelShortfallPaise'] as num?,
   promoCode: json['promoCode'] as String?,
   promoError: json['promoError'] == null
       ? null
@@ -29,6 +30,7 @@ Map<String, dynamic> _$QuoteDtoToJson(QuoteDto instance) => <String, dynamic>{
   'discountPaise': instance.discountPaise,
   'deliveryFeePaise': instance.deliveryFeePaise,
   'totalPaise': instance.totalPaise,
+  'freeTravelShortfallPaise': instance.freeTravelShortfallPaise,
   'promoCode': instance.promoCode,
   'promoError': instance.promoError,
   'promoShortfallPaise': instance.promoShortfallPaise,

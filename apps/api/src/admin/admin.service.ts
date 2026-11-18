@@ -2,7 +2,7 @@ import { Injectable } from '@nestjs/common';
 import { Clock } from '../common/clock.js';
 import { AppError } from '../common/errors.js';
 import { pageArgs } from '../common/pagination.js';
-import { normalizeIndianPhone } from '../common/phone.js';
+import { customerPhone, normalizeIndianPhone } from '../common/phone.js';
 import { addDays, istDate, istInstant, toDbDate } from '../common/time.js';
 import type { Prisma, User } from '../generated/prisma/client.js';
 import {
@@ -10,9 +10,13 @@ import {
   PaymentRecordStatus,
   Role,
 } from '../generated/prisma/enums.js';
+import { undeliveredWhere } from '../notifications/push-delivery.js';
+import { refundDueOrderIds } from '../orders/refund-due.js';
 import { PrismaService } from '../prisma/prisma.service.js';
 import { toUserDto } from '../users/user.dto.js';
 import type {
+  AuditPageDto,
+  AuditQuery,
   CreateCustomerDto,
   CreateStaffDto,
   CustomerPageDto,
@@ -50,12 +54,13 @@ export class AdminService {
       role: Role.CUSTOMER,
       deletedAt: null,
       ...(exactPhone
-        ? { phone: exactPhone }
+        ? { OR: [{ phone: exactPhone }, { contactPhone: exactPhone }] }
         : search
           ? {
               OR: [
                 { name: { contains: search, mode: 'insensitive' } },
                 { phone: { contains: search.replace(/\s/g, '') } },
+                { contactPhone: { contains: search.replace(/\s/g, '') } },
               ],
             }
           : {}),
@@ -123,7 +128,7 @@ export class AdminService {
       data: {
         // Changing the number unlinks the old Firebase login. A Google customer with no number yet keeps theirs:
         // their login is the Google account, not a phone.
-        ...(phone && phone !== current.phone
+        ...(phone && phone !== customerPhone(current)
           ? { phone, ...(current.phone ? { firebaseUid: null } : {}) }
           : {}),
         name: dto.name?.trim(),
@@ -192,6 +197,42 @@ export class AdminService {
     });
   }
 
+  // ───────────── Audit log ─────────────
+
+  async audit(q: AuditQuery): Promise<AuditPageDto> {
+    const where: Prisma.AuditLogWhereInput = {
+      ...(q.actorId ? { actorId: q.actorId } : {}),
+      ...(q.action ? { action: { contains: q.action.trim(), mode: 'insensitive' } } : {}),
+      ...(q.from || q.to ? { createdAt: { ...(q.from ? { gte: istInstant(q.from, 0) } : {}), ...(q.to ? { lt: istInstant(addDays(q.to, 1), 0) } : {}) } } : {}),
+      ...(q.entity ? { entity: q.entity } : {}),
+      ...(q.entityId ? { entityId: q.entityId } : {}),
+    };
+    const [rows, total] = await Promise.all([
+      this.prisma.auditLog.findMany({
+        where,
+        include: { actor: { select: { name: true, phone: true } } },
+        orderBy: { createdAt: 'desc' },
+        ...pageArgs(q),
+      }),
+      this.prisma.auditLog.count({ where }),
+    ]);
+    return {
+      items: rows.map((r) => ({
+        id: r.id,
+        action: r.action,
+        entity: r.entity,
+        entityId: r.entityId,
+        actorId: r.actorId,
+        actorName: r.actor ? (r.actor.name ?? r.actor.phone) : null,
+        data: r.data,
+        createdAt: r.createdAt,
+      })),
+      page: q.page,
+      pageSize: q.pageSize,
+      total,
+    };
+  }
+
   // ───────────── Dashboard ─────────────
 
   async dashboard(): Promise<DashboardDto> {
@@ -216,6 +257,7 @@ export class AdminService {
       deliveriesToday,
       ordersToday,
       needsAttention,
+      refundsDue,
       driversOnline,
       c1,
       c7,
@@ -242,6 +284,7 @@ export class AdminService {
           status: { in: [OrderStatus.PENDING, OrderStatus.READY_FOR_DELIVERY] },
         },
       }),
+      refundDueOrderIds(this.prisma).then((ids) => ids.length),
       this.prisma.driverProfile.count({
         where: { isOnline: true, user: { isActive: true, deletedAt: null } },
       }),
@@ -259,8 +302,15 @@ export class AdminService {
           GROUP BY 1 ORDER BY 1`,
     ]);
 
+    const [openIssues, overdueIssues, pendingAdjustments, undeliveredAlerts] = await Promise.all([
+      this.prisma.orderIssue.count({ where: { status: 'OPEN' } }),
+      this.prisma.orderIssue.count({ where: { status: 'OPEN', acknowledgedAt: null, firstResponseDueAt: { lte: now } } }),
+      this.prisma.orderAdjustment.count({ where: { status: 'PENDING_CUSTOMER', expiresAt: { gt: now } } }),
+      this.prisma.pushDelivery.count({ where: undeliveredWhere(now) }),
+    ]);
     const dailyMap = new Map(daily.map((d) => [d.date, d]));
     return {
+      openIssues, overdueIssues, pendingAdjustments, undeliveredAlerts,
       byStatus: Object.fromEntries(
         byStatus.map((s) => [s.status, s._count._all]),
       ),
@@ -268,6 +318,7 @@ export class AdminService {
       deliveriesToday,
       ordersToday,
       needsAttention,
+      refundsDue,
       driversOnline,
       collectedTodayPaise: c1,
       collectedLast7DaysPaise: c7,

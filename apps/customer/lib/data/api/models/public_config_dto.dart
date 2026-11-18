@@ -28,7 +28,11 @@ class PublicConfigDto {
   final String? supportPhone;
   final String? supportEmail;
   final num minOrderPaise;
+
+  /// The flat travel charge for a small order, in paise.
   final num deliveryFeePaise;
+
+  /// Travel is free from this items total (before any coupon), in paise. Null = never free.
   final num? freeDeliveryAbovePaise;
   final num minTurnaroundHours;
   final num maxAdvanceDays;

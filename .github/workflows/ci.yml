@@ -1,0 +1,179 @@
+name: CI
+
+# Checks run on every pull request and push to main. On main, each app that changed is deployed after its own
+# checks pass: website to Firebase Hosting, API to Render (deploy hook). "Run workflow" deploys both.
+# The admin deploys through Vercel's own GitHub link (production from main, a preview for every pull request).
+# Secrets and setup: docs/ci-cd.md.
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+  workflow_dispatch:
+
+concurrency:
+  group: ci-${{ github.ref }}
+  # Never cancel a run on main halfway through a deploy.
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
+
+jobs:
+  changes:
+    name: What changed
+    runs-on: ubuntu-latest
+    outputs:
+      web: ${{ steps.filter.outputs.web }}
+      admin: ${{ steps.filter.outputs.admin }}
+      api: ${{ steps.filter.outputs.api }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: dorny/paths-filter@v3
+        id: filter
+        with:
+          filters: |
+            web:
+              - 'apps/web/**'
+              - 'packages/legal/**'
+              - 'packages/brand/**'
+              - 'pnpm-lock.yaml'
+            admin:
+              - 'apps/admin/**'
+              - 'packages/contracts/**'
+              - 'pnpm-lock.yaml'
+            api:
+              - 'apps/api/**'
+              - 'packages/contracts/**'
+              - 'pnpm-lock.yaml'
+
+  api:
+    name: API (typecheck, lint, unit and e2e tests)
+    runs-on: ubuntu-latest
+    services:
+      postgres:
+        image: postgres:16
+        env:
+          POSTGRES_PASSWORD: postgres
+        ports: ["5432:5432"]
+        options: >-
+          --health-cmd pg_isready --health-interval 5s --health-timeout 5s --health-retries 10
+    env:
+      # prisma generate reads prisma.config.ts, which needs the variable to exist; it never connects.
+      DATABASE_URL: postgresql://postgres:postgres@localhost:5432/postgres
+      # The e2e run creates and drops its own throwaway database on this server.
+      TEST_DATABASE_SERVER_URL: postgresql://postgres:postgres@localhost:5432/postgres
+    steps:
+      - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version-file: .nvmrc
+          cache: pnpm
+      - run: pnpm install --frozen-lockfile
+      - run: pnpm --filter @laundry/api exec prisma generate
+      - run: pnpm --filter @laundry/api typecheck
+      - run: pnpm --filter @laundry/api lint
+      - run: pnpm --filter @laundry/api test
+      - run: pnpm --filter @laundry/api test:e2e
+      - name: The OpenAPI contract matches the code
+        run: |
+          pnpm --filter @laundry/api openapi
+          git diff --exit-code packages/contracts/openapi.json
+
+  admin:
+    name: Admin (typed client, typecheck, lint, build)
+    runs-on: ubuntu-latest
+    env:
+      # pnpm install also runs apps/api's postinstall (prisma generate). That reads prisma.config.ts, which needs the
+      # variable to exist; it never connects. A placeholder, as in apps/api/Dockerfile.
+      DATABASE_URL: postgresql://build:build@localhost:5432/build
+    steps:
+      - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version-file: .nvmrc
+          cache: pnpm
+      - run: pnpm install --frozen-lockfile
+      - name: The typed API client matches the contract
+        run: |
+          pnpm --filter @laundry/admin gen:api
+          git diff --exit-code apps/admin/src/lib/api/schema.d.ts
+      - name: Generate Next's route types (LayoutProps, PageProps) for a fresh checkout
+        run: pnpm --filter @laundry/admin exec next typegen
+      - run: pnpm --filter @laundry/admin exec tsc --noEmit
+      - run: pnpm --filter @laundry/admin lint
+      - run: pnpm --filter @laundry/admin build
+
+  customer:
+    name: Customer app (analyze and tests)
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: apps/customer
+    steps:
+      - uses: actions/checkout@v4
+      - uses: subosito/flutter-action@v2
+        with:
+          flutter-version: 3.47.2
+          channel: stable
+          cache: true
+      - run: flutter pub get
+      - run: flutter analyze
+      - run: flutter test
+
+  web:
+    name: Website (typecheck, lint, build)
+    runs-on: ubuntu-latest
+    env:
+      DATABASE_URL: postgresql://build:build@localhost:5432/build
+    steps:
+      - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version-file: .nvmrc
+          cache: pnpm
+      - run: pnpm install --frozen-lockfile
+      - run: pnpm --filter @laundry/web typecheck
+      - run: pnpm --filter @laundry/web lint
+      - run: pnpm --filter @laundry/web build
+        env:
+          NEXT_PUBLIC_SITE_URL: https://irondost.in
+
+  deploy-web:
+    name: Deploy website to Firebase Hosting
+    needs: [changes, web]
+    if: github.ref == 'refs/heads/main' && (github.event_name == 'workflow_dispatch' || (github.event_name == 'push' && needs.changes.outputs.web == 'true'))
+    runs-on: ubuntu-latest
+    environment: production
+    env:
+      DATABASE_URL: postgresql://build:build@localhost:5432/build
+    steps:
+      - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version-file: .nvmrc
+          cache: pnpm
+      - run: pnpm install --frozen-lockfile
+      - run: pnpm --filter @laundry/web build
+        env:
+          NEXT_PUBLIC_SITE_URL: https://irondost.in
+      - uses: FirebaseExtended/action-hosting-deploy@v0
+        with:
+          repoToken: ${{ secrets.GITHUB_TOKEN }}
+          firebaseServiceAccount: ${{ secrets.FIREBASE_SERVICE_ACCOUNT_IRONDOST_APP }}
+          projectId: irondost-app
+          entryPoint: apps/web
+          channelId: live
+
+  deploy-api:
+    name: Deploy API to Render
+    needs: [changes, api]
+    if: github.ref == 'refs/heads/main' && (github.event_name == 'workflow_dispatch' || (github.event_name == 'push' && needs.changes.outputs.api == 'true'))
+    runs-on: ubuntu-latest
+    environment: production
+    steps:
+      # The API runs `prisma migrate deploy` when its container starts, so a merge to main with a new migration changes
+      # the production database. Review migrations before merging (docs/ui-ux-audit/review-2026-11-14/RELEASE-CHECKLIST.md).
+      - name: Trigger the Render deploy hook
+        run: curl --fail --silent --show-error -X POST "${{ secrets.RENDER_DEPLOY_HOOK_API }}"

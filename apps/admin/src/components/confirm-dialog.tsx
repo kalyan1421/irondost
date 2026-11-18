@@ -16,37 +16,54 @@ import {
 /**
  * Confirmation step for irreversible actions. `onConfirm` may be async; the
  * dialog shows progress until it settles, closes on success, and stays open if it fails.
+ * Pass `trigger` for the usual uncontrolled use, or `open`/`onOpenChange` (with no trigger) to open it from code.
  */
 export function ConfirmDialog({
   trigger,
+  open: openProp,
+  onOpenChange,
   title,
   description,
   confirmLabel = "Confirm",
   destructive = false,
   onConfirm,
+  cancelLabel = 'Go back',
+  confirmDisabled = false,
+  onOpen,
 }: {
-  trigger: React.ReactNode;
+  trigger?: React.ReactNode;
+  open?: boolean;
+  onOpenChange?: (open: boolean) => void;
   title: string;
   description?: React.ReactNode;
   confirmLabel?: string;
   destructive?: boolean;
   onConfirm: () => Promise<unknown> | void;
+  cancelLabel?: string;
+  confirmDisabled?: boolean;
+  onOpen?: () => void;
 }) {
-  const [open, setOpen] = useState(false);
+  const [innerOpen, setInnerOpen] = useState(false);
   const [busy, setBusy] = useState(false);
+  const controlled = openProp !== undefined;
+  const open = controlled ? openProp : innerOpen;
+  const setOpen = (o: boolean) => {
+    if (!controlled) setInnerOpen(o);
+    onOpenChange?.(o);
+  };
 
   return (
-    <AlertDialog open={open} onOpenChange={(o) => !busy && setOpen(o)}>
-      <AlertDialogTrigger asChild>{trigger}</AlertDialogTrigger>
+    <AlertDialog open={open} onOpenChange={(o) => { if (!busy) { if (o) onOpen?.(); setOpen(o); } }}>
+      {trigger ? <AlertDialogTrigger asChild>{trigger}</AlertDialogTrigger> : null}
       <AlertDialogContent>
         <AlertDialogHeader>
           <AlertDialogTitle>{title}</AlertDialogTitle>
           {description ? <AlertDialogDescription>{description}</AlertDialogDescription> : null}
         </AlertDialogHeader>
         <AlertDialogFooter>
-          <AlertDialogCancel disabled={busy}>Keep it</AlertDialogCancel>
+          <AlertDialogCancel disabled={busy}>{cancelLabel}</AlertDialogCancel>
           <AlertDialogAction
-            disabled={busy}
+            disabled={busy || confirmDisabled}
             className={destructive ? "bg-destructive text-white hover:bg-destructive/90" : undefined}
             onClick={async (e) => {
               e.preventDefault();

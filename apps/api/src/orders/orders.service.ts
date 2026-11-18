@@ -1,12 +1,14 @@
 import { createHash } from 'node:crypto';
-import { Inject, Injectable } from '@nestjs/common';
+import { Inject, Injectable, Logger, OnModuleInit, Optional } from '@nestjs/common';
 import { EventEmitter2 } from '@nestjs/event-emitter';
 import { formatAddress } from '../addresses/address.dto.js';
 import { AddressesService } from '../addresses/addresses.service.js';
+import { JobScheduler } from '../jobs/job-scheduler.js';
 import { Clock } from '../common/clock.js';
 import { AppError } from '../common/errors.js';
 import { pageArgs, type Page } from '../common/pagination.js';
-import { toDbDate } from '../common/time.js';
+import { customerPhone } from '../common/phone.js';
+import { addDays, istDate, istInstant, slotEnd, SLOT_ORDER, toDbDate } from '../common/time.js';
 import { APP_ENV } from '../config/config.module.js';
 import type { Env } from '../config/env.js';
 import {
@@ -14,25 +16,53 @@ import {
   type OffersClosedEvent,
   type OrderCreatedEvent,
   type OrderRef,
+  type OrderRescheduledEvent,
   type OrderStatusChangedEvent,
   type OrderUpdatedEvent,
+  type OrderWindows,
 } from '../events.js';
-import { Prisma, type Address, type Order, type User } from '../generated/prisma/client.js';
+import { Prisma, type Address, type BusinessSettings, type Order, type User } from '../generated/prisma/client.js';
 import { DispatchLeg, OfferStatus, OrderSource, OrderStatus, PaymentMethod, Role } from '../generated/prisma/enums.js';
 import { PrismaService, type Tx } from '../prisma/prisma.service.js';
+import { reservePickupWindow } from '../scheduling/pickup-capacity.js';
 import { checkDelivery, checkPickup, SCHEDULE_ERROR_MESSAGES } from '../scheduling/schedule-rules.js';
 import { checkServiceArea } from '../settings/service-area.js';
+import { staffAreaOverrideReason } from './staff-area.js';
 import { SettingsService } from '../settings/settings.service.js';
-import type { AdminOrdersQuery, OrderLineInput, OrderScope, OrderWithRelations, PlaceOrderDto, QuoteDto } from './order.dto.js';
+import type { AdminOrdersQuery, OrderLineInput, OrderScope, OrderWithRelations, PlaceOrderDto, QuoteDto, RescheduleOrderDto } from './order.dto.js';
+import { careNoteOf, carePhotoKey, CARE_PHOTOS_PER_ORDER, setCarePhotoBaseUrl } from './care-note.js';
 import { canTransition, FINAL_STATUSES, ITEMS_EDITABLE, type ActorKind } from './order-state.js';
-import { computeQuote, paymentStatusFor, type PricingLine, type PricingPromotion, type Quote } from './pricing.js';
+import { keptTravelPaise, refundDueOrderIds } from './refund-due.js';
+import { computeQuote, orderTravelRule, paymentStatusFor, type PricingLine, type PricingPromotion, type Quote } from './pricing.js';
+import {
+  deliveryChanged,
+  pickupChanged,
+  RESCHEDULE_ERROR_MESSAGES,
+  rescheduleError,
+  rescheduleNote,
+  rescheduleRequestHash,
+  windowsOf,
+  type RescheduleError,
+} from './reschedule.js';
 
 export const ORDER_INCLUDE = {
   items: true,
   customer: true,
   pickupDriver: true,
   deliveryDriver: true,
+  adjustments: { orderBy: { createdAt: 'desc' } },
+  payments: { where: { status: 'CAPTURED' }, orderBy: { createdAt: 'asc' } },
   refunds: { orderBy: { createdAt: 'asc' }, include: { createdBy: { select: { id: true, name: true } } } },
+  carePhotos: { orderBy: [{ createdAt: 'asc' }, { id: 'asc' }] },
+} as const satisfies Prisma.OrderInclude;
+
+/**
+ * For lists: only the newest price request. A pending one is always the newest (a new request waits for the decision), and
+ * a list row needs no more than that, so the item snapshots of older requests are not read for every order on the page.
+ */
+export const ORDER_LIST_INCLUDE = {
+  ...ORDER_INCLUDE,
+  adjustments: { orderBy: { createdAt: 'desc' }, take: 1 },
 } as const satisfies Prisma.OrderInclude;
 
 export interface TransitionActor {
@@ -42,6 +72,9 @@ export interface TransitionActor {
 }
 
 export const SYSTEM_ACTOR: TransitionActor = { id: null, role: null, kind: 'SYSTEM' };
+
+/** Added to the history line of a cancellation that keeps the travel charge. */
+export const TRAVEL_KEPT_NOTE = 'Travel charge kept: partner had already travelled';
 
 export function actorFor(user: User, kind: ActorKind): TransitionActor {
   return { id: user.id, role: user.role, kind };
@@ -56,7 +89,25 @@ export interface TransitionOptions {
   expectDriverId?: string;
   /** Extra writes that must commit atomically with the status change. */
   inTx?: (tx: Tx, before: Order) => Promise<void>;
+  /** With CANCELLED, by staff: the partner had already travelled, so the travel charge is kept rather than refunded. */
+  keepTravelCharge?: boolean;
 }
+
+/** What only staff can add to a phone order: a typed reason to go past the service area, or into a full pickup window. */
+export interface PlaceOverrides {
+  outsideAreaReason?: string;
+  capacityOverrideReason?: string;
+}
+
+export interface RescheduleResult {
+  order: OrderWithRelations;
+  /** A retry of a request that already went through: nothing changed and nothing was counted. */
+  replayed: boolean;
+  previous: OrderWindows;
+  next: OrderWindows;
+}
+
+const CARE_PHOTO_REFUSED = 'Use only photos uploaded from your own account that are not on an order yet.';
 
 type PromoError = 'PROMO_NOT_FOUND' | 'PROMO_EXPIRED' | 'PROMO_LIMIT_REACHED' | 'PROMO_MIN_ORDER';
 
@@ -77,7 +128,8 @@ export function orderRef(o: Order): OrderRef {
 }
 
 @Injectable()
-export class OrdersService {
+export class OrdersService implements OnModuleInit {
+  private readonly logger = new Logger(OrdersService.name);
   constructor(
     private readonly prisma: PrismaService,
     private readonly settings: SettingsService,
@@ -85,7 +137,16 @@ export class OrdersService {
     private readonly events: EventEmitter2,
     private readonly clock: Clock,
     @Inject(APP_ENV) private readonly env: Env,
+    @Optional() private readonly jobs?: JobScheduler,
   ) {}
+
+  async onModuleInit(): Promise<void> {
+    setCarePhotoBaseUrl(this.env.STORAGE_PUBLIC_BASE_URL);
+    if (!this.jobs) return;
+    this.jobs.register<{ adjustmentId: string }>('adjustments-expire', (data) => this.expireAdjustment(data.adjustmentId));
+    const pending = await this.prisma.orderAdjustment.findMany({ where: { status: 'PENDING_CUSTOMER' }, select: { id: true, expiresAt: true } });
+    for (const request of pending) await this.jobs.schedule('adjustments-expire', { adjustmentId: request.id }, { startAfter: request.expiresAt, jobId: request.id });
+  }
 
   // ───────────── Pricing ─────────────
 
@@ -97,6 +158,7 @@ export class OrdersService {
       subtotalPaise: quote.subtotalPaise,
       discountPaise: quote.discountPaise,
       deliveryFeePaise: quote.deliveryFeePaise,
+      freeTravelShortfallPaise: quote.freeTravelShortfallPaise,
       totalPaise: quote.totalPaise,
       promoCode: quote.appliedPromotion?.code ?? null,
       promoError,
@@ -133,8 +195,10 @@ export class OrdersService {
     customerId: string,
     items: OrderLineInput[],
     promoCode?: string,
+    /** The settings the caller already read, so a booking's quote and its frozen travel rule come from the same read. */
+    known?: BusinessSettings,
   ): Promise<{ quote: Quote; promoError: PromoError | null }> {
-    const [lines, settings] = await Promise.all([this.pricingLines(items), this.settings.get()]);
+    const [lines, settings] = await Promise.all([this.pricingLines(items), known ?? this.settings.get()]);
 
     let promotion: PricingPromotion | null = null;
     let promoError: PromoError | null = null;
@@ -176,6 +240,7 @@ export class OrdersService {
     source: OrderSource,
     createdBy: User,
     idempotencyKey?: string,
+    overrides: PlaceOverrides = {},
   ): Promise<{ order: OrderWithRelations; replayed: boolean }> {
     const idempotency = idempotencyKey ? { key: idempotencyKey, hash: placeRequestHash(dto) } : null;
     if (idempotency) {
@@ -184,10 +249,12 @@ export class OrdersService {
     }
 
     const customer = await this.activeCustomer(customerId);
-    // A customer who signed in with Google has no number until they verify one; the pickup partner needs it.
-    if (!customer.phone) {
-      throw AppError.badRequest('PHONE_REQUIRED', 'Add and verify your mobile number to place an order');
+    // A customer who signed in with Google has no number until they add one; the pickup partner needs it.
+    if (!customerPhone(customer)) {
+      throw AppError.badRequest('PHONE_REQUIRED', 'Add your mobile number to place an order');
     }
+    const careNote = careNoteOf(dto);
+    const carePhotoIds = await this.ownCarePhotos(customerId, source, dto.carePhotoUrls ?? []);
 
     const settings = await this.settings.get();
     const scheduleError =
@@ -197,7 +264,9 @@ export class OrdersService {
 
     const pickup = await this.addresses.get(customerId, dto.pickupAddressId);
     const delivery = dto.deliveryAddressId ? await this.addresses.get(customerId, dto.deliveryAddressId) : pickup;
-    // Staff placing a phone order may knowingly serve an address outside the area.
+    // A customer's address must be inside the area. Staff placing a phone order need a map pin or a served PIN code, and may
+    // serve an address outside the area only with a typed reason, which stays on the order.
+    let areaOverrideReason: string | null = null;
     if (source === OrderSource.CUSTOMER_APP) {
       for (const address of new Set([pickup, delivery])) {
         const area = checkServiceArea(address, settings);
@@ -208,9 +277,13 @@ export class OrdersService {
           });
         }
       }
+    } else {
+      areaOverrideReason = staffAreaOverrideReason([pickup, delivery], settings, overrides.outsideAreaReason);
     }
+    // Only staff can book into a full window, and only with a reason.
+    const capacityOverrideReason = source === OrderSource.ADMIN ? overrides.capacityOverrideReason?.trim() || null : null;
 
-    const { quote, promoError } = await this.buildQuote(customerId, dto.items, dto.promoCode);
+    const { quote, promoError } = await this.buildQuote(customerId, dto.items, dto.promoCode, settings);
     if (dto.promoCode && promoError) {
       throw AppError.badRequest('PROMO_INVALID', 'This promo code cannot be applied', { promoError });
     }
@@ -222,9 +295,14 @@ export class OrdersService {
     }
 
     const create = () => this.prisma.$transaction(async (tx) => {
+      // The place in the pickup window is taken first, under the window's lock, so two bookings cannot share the last one
+      // (and a refused booking does not use up an order number).
+      const place = await reservePickupWindow(tx, dto.pickupDate, dto.pickupSlot, settings.pickupCapacityPerSlot, {
+        allowFull: capacityOverrideReason !== null,
+      });
       const [{ nextval }] = await tx.$queryRaw<{ nextval: bigint }[]>`SELECT nextval('order_number_seq')`;
       const orderNumber = `${this.env.ORDER_NUMBER_PREFIX}${String(nextval).padStart(6, '0')}`;
-      return tx.order.create({
+      const created = await tx.order.create({
         data: {
           orderNumber,
           customerId,
@@ -244,14 +322,20 @@ export class OrdersService {
           deliveryLatitude: delivery.latitude,
           deliveryLongitude: delivery.longitude,
           instructions: dto.instructions?.trim() || null,
+          careNote,
           subtotalPaise: quote.subtotalPaise,
           discountPaise: quote.discountPaise,
           deliveryFeePaise: quote.deliveryFeePaise,
+          // The rule this order was booked under: later settings changes never alter it, and item edits re-check against it.
+          travelChargePaiseRule: settings.deliveryFeePaise,
+          travelFreeFromPaiseRule: settings.freeDeliveryAbovePaise,
           totalPaise: quote.totalPaise,
           paymentStatus: paymentStatusFor(quote.totalPaise, 0),
           promotionId: quote.appliedPromotion?.id ?? null,
           promoCode: quote.appliedPromotion?.code ?? null,
           paymentMethod: dto.paymentMethod,
+          areaOverrideReason,
+          capacityOverrideReason: place.overrode ? capacityOverrideReason : null,
           idempotencyKey: idempotency?.key ?? null,
           idempotencyHash: idempotency?.hash ?? null,
           items: {
@@ -275,14 +359,25 @@ export class OrdersService {
         },
         include: ORDER_INCLUDE,
       });
+      if (!carePhotoIds.length) return created;
+      // Each photo goes to one order: the guard fails when another order of this customer took it after it was checked above.
+      const { count } = await tx.orderCarePhoto.updateMany({
+        where: { id: { in: carePhotoIds }, userId: customerId, orderId: null },
+        data: { orderId: created.id },
+      });
+      if (count !== carePhotoIds.length) throw AppError.badRequest('INVALID_PHOTO', CARE_PHOTO_REFUSED);
+      return { ...created, carePhotos: await tx.orderCarePhoto.findMany({ where: { orderId: created.id }, orderBy: [{ createdAt: 'asc' }, { id: 'asc' }] }) };
     });
 
     let order: OrderWithRelations;
     try {
       order = await create();
     } catch (err) {
-      // Two attempts with the same key raced; the other one created the order.
-      if (idempotency && err instanceof Prisma.PrismaClientKnownRequestError && err.code === 'P2002') {
+      // Two attempts with the same key raced; the other one created the order. (When it took the last place in the window,
+      // this one finds the window full, but it is a retry, not a second booking.)
+      const raced =
+        (err instanceof Prisma.PrismaClientKnownRequestError && err.code === 'P2002') || (err instanceof AppError && err.code === 'SLOT_FULL');
+      if (idempotency && raced) {
         const prior = await this.priorAttempt(customerId, idempotency);
         if (prior) return { order: prior, replayed: true };
       }
@@ -304,6 +399,29 @@ export class OrdersService {
     return prior;
   }
 
+  /**
+   * The ids of the customer's own care photos behind these URLs, each used once and not yet on an order. Staff placing a
+   * phone order cannot add photos, so they cannot arrive with one.
+   */
+  private async ownCarePhotos(customerId: string, source: OrderSource, urls: string[]): Promise<string[]> {
+    if (!urls.length) return [];
+    if (source !== OrderSource.CUSTOMER_APP) throw AppError.badRequest('INVALID_PHOTO', 'Photos can only be added from the customer app');
+    if (urls.length > CARE_PHOTOS_PER_ORDER) {
+      throw AppError.badRequest('TOO_MANY_PHOTOS', `Add up to ${CARE_PHOTOS_PER_ORDER} photos`);
+    }
+    if (new Set(urls).size !== urls.length) throw AppError.badRequest('INVALID_PHOTO', 'Use each photo once.');
+    const keys: string[] = [];
+    for (const url of urls) {
+      const key = carePhotoKey(customerId, url);
+      if (!key) throw AppError.badRequest('INVALID_PHOTO', CARE_PHOTO_REFUSED);
+      keys.push(key);
+    }
+    const rows = await this.prisma.orderCarePhoto.findMany({ where: { userId: customerId, key: { in: keys }, orderId: null } });
+    // The URLs are distinct, so the keys are too: every one must be a photo of this customer that is still free.
+    if (rows.length !== keys.length) throw AppError.badRequest('INVALID_PHOTO', CARE_PHOTO_REFUSED);
+    return keys.map((key) => rows.find((row) => row.key === key)!.id);
+  }
+
   // ───────────── Reading ─────────────
 
   async listForCustomer(customerId: string, page: number, pageSize: number, scope?: OrderScope): Promise<Page<OrderWithRelations>> {
@@ -315,7 +433,7 @@ export class OrdersService {
     const [items, total] = await Promise.all([
       this.prisma.order.findMany({
         where,
-        include: ORDER_INCLUDE,
+        include: ORDER_LIST_INCLUDE,
         orderBy: { createdAt: 'desc' },
         ...pageArgs({ page, pageSize }),
       }),
@@ -330,6 +448,9 @@ export class OrdersService {
       include: { ...ORDER_INCLUDE, events: { orderBy: { createdAt: 'asc' } } },
     });
     if (!order) throw AppError.notFound('Order');
+    if (order.adjustments.some((a) => a.status === 'PENDING_CUSTOMER' && a.expiresAt <= this.clock.now())) {
+      return this.getById(id);
+    }
     return order;
   }
 
@@ -366,7 +487,121 @@ export class OrdersService {
     return this.getForCustomer(customer.id, orderId);
   }
 
+  // ───────────── Rescheduling ─────────────
+
+  /**
+   * The customer moves the pickup and/or delivery time of an order that has not been picked up, at most
+   * MAX_RESCHEDULES times. Prices do not change. When the pickup moves and a partner had accepted it, the partner is
+   * released and the order goes back to PENDING so dispatch offers the new window; offers still open for the old
+   * window are cancelled. The new dates, the count, the history line and the release commit together, and dispatch
+   * hears about it only after the commit, so it always reads the new dates. A retry with the same Idempotency-Key
+   * and the same times returns the order as it is now (`replayed: true`) and counts nothing.
+   */
+  async reschedule(customer: User, orderId: string, dto: RescheduleOrderDto, idempotencyKey?: string): Promise<RescheduleResult> {
+    const next: OrderWindows = {
+      pickupDate: dto.pickupDate,
+      pickupSlot: dto.pickupSlot,
+      deliveryDate: dto.deliveryDate,
+      deliverySlot: dto.deliverySlot,
+    };
+    const hash = rescheduleRequestHash(orderId, next);
+    const settings = await this.settings.get();
+    const now = this.clock.now();
+
+    const done = await this.prisma.$transaction(async (tx) => {
+      // Lock the customer's own order: a partner accepting or a pickup being recorded at this moment waits for this
+      // move to commit, then re-checks the status it expected.
+      await tx.$queryRaw`SELECT id FROM orders WHERE id = ${orderId}::uuid AND customer_id = ${customer.id}::uuid FOR UPDATE`;
+      const order = await tx.order.findFirst({
+        where: { id: orderId, customerId: customer.id },
+        include: { ...ORDER_INCLUDE, events: { orderBy: { createdAt: 'asc' } } },
+      });
+      if (!order) throw AppError.notFound('Order');
+
+      const previous = windowsOf(order);
+      if (idempotencyKey && order.rescheduleKey === idempotencyKey) {
+        if (order.rescheduleHash !== hash) {
+          throw AppError.conflict('IDEMPOTENCY_KEY_REUSED', 'This Idempotency-Key was already used for a different change');
+        }
+        return { order, replayed: true as const, previous, next };
+      }
+
+      const failure = rescheduleError(order, previous, next, now, settings);
+      if (failure) throw rescheduleFailure(failure);
+
+      const movesPickup = pickupChanged(previous, next);
+      // A new pickup window needs a place in it, taken under the window's lock. Keeping the same pickup window (only the
+      // delivery moves) needs nothing, and the order's own place in its old window is never counted against the new one.
+      if (movesPickup) {
+        await reservePickupWindow(tx, next.pickupDate, next.pickupSlot, settings.pickupCapacityPerSlot, { excludeOrderId: orderId });
+      }
+      const releasesPartner = movesPickup && order.status === OrderStatus.PICKUP_ASSIGNED;
+      const to = releasesPartner ? OrderStatus.PENDING : order.status;
+      await tx.order.update({
+        where: { id: orderId },
+        data: {
+          pickupDate: toDbDate(next.pickupDate),
+          pickupSlot: next.pickupSlot,
+          deliveryDate: toDbDate(next.deliveryDate),
+          deliverySlot: next.deliverySlot,
+          rescheduleCount: { increment: 1 },
+          rescheduleKey: idempotencyKey ?? null,
+          rescheduleHash: idempotencyKey ? hash : null,
+          // A new pickup window gets a fresh dispatch attempt, so an earlier "no partner found" no longer applies.
+          ...(movesPickup ? { dispatchFailedAt: null, pickupRescheduledAt: now } : {}),
+          ...(releasesPartner ? { status: OrderStatus.PENDING, pickupDriverId: null } : {}),
+        },
+      });
+      await tx.orderEvent.create({
+        data: {
+          orderId,
+          fromStatus: order.status,
+          toStatus: to,
+          actorId: customer.id,
+          actorRole: customer.role,
+          note: rescheduleNote(previous, next),
+        },
+      });
+
+      // Offers still open were made for the old window: a partner must not accept one and land on the new time.
+      let closed: { driverId: string; leg: DispatchLeg }[] = [];
+      if (movesPickup) {
+        closed = await tx.dispatchOffer.findMany({ where: { orderId, status: OfferStatus.PENDING }, select: { driverId: true, leg: true } });
+        if (closed.length) {
+          await tx.dispatchOffer.updateMany({ where: { orderId, status: OfferStatus.PENDING }, data: { status: OfferStatus.CANCELLED, respondedAt: now } });
+        }
+      }
+      const updated = await tx.order.findUniqueOrThrow({
+        where: { id: orderId },
+        include: { ...ORDER_INCLUDE, events: { orderBy: { createdAt: 'asc' } } },
+      });
+      return { order: updated, replayed: false as const, previous, next, before: order, to, movesPickup, closed };
+    });
+
+    if (done.replayed) return { order: done.order, replayed: true, previous: done.previous, next: done.next };
+
+    this.events.emit(Events.OrderRescheduled, {
+      ...orderRef(done.order),
+      from: done.before.status,
+      to: done.to,
+      previous: done.previous,
+      next: done.next,
+      pickupChanged: done.movesPickup,
+      deliveryChanged: deliveryChanged(done.previous, done.next),
+      removedDriverId: done.to === OrderStatus.PENDING && done.before.status === OrderStatus.PICKUP_ASSIGNED ? done.before.pickupDriverId : null,
+    } satisfies OrderRescheduledEvent);
+    if (done.closed.length) {
+      this.events.emit(Events.OffersClosed, {
+        orderId,
+        leg: done.closed[0].leg,
+        driverIds: done.closed.map((c) => c.driverId),
+      } satisfies OffersClosedEvent);
+    }
+    return { order: done.order, replayed: false, previous: done.previous, next: done.next };
+  }
+
   async getById(id: string): Promise<OrderWithRelations> {
+    await this.expireOrderAdjustments(id);
     const order = await this.prisma.order.findUnique({
       where: { id },
       include: { ...ORDER_INCLUDE, events: { orderBy: { createdAt: 'asc' } } },
@@ -377,7 +612,19 @@ export class OrdersService {
 
   async adminList(q: AdminOrdersQuery): Promise<Page<OrderWithRelations>> {
     const search = q.search?.trim();
+    const refundDueIds = q.refundDue ? await refundDueOrderIds(this.prisma) : null;
     const where: Prisma.OrderWhereInput = {
+      ...(refundDueIds ? { id: { in: refundDueIds } } : {}),
+      ...(q.excludeCancelled ? { NOT: { status: OrderStatus.CANCELLED } } : {}),
+      ...(q.approvalPending ? { adjustments: { some: { status: 'PENDING_CUSTOMER', expiresAt: { gt: this.clock.now() } } } } : {}),
+      ...(q.unpaid ? { paidPaise: { lt: this.prisma.order.fields.totalPaise } } : {}),
+      ...(q.createdFrom || q.createdTo ? { createdAt: {
+        ...(q.createdFrom ? { gte: istInstant(q.createdFrom, 0) } : {}),
+        ...(q.createdTo ? { lt: istInstant(addDays(q.createdTo, 1), 0) } : {}),
+      } } : {}),
+      ...(q.deliveryFrom || q.deliveryTo ? { deliveryDate: {
+        ...(q.deliveryFrom ? { gte: toDbDate(q.deliveryFrom) } : {}), ...(q.deliveryTo ? { lte: toDbDate(q.deliveryTo) } : {}),
+      } } : {}),
       ...(q.status?.length ? { status: { in: q.status } } : {}),
       ...(q.customerId ? { customerId: q.customerId } : {}),
       ...(q.driverId ? { OR: [{ pickupDriverId: q.driverId }, { deliveryDriverId: q.driverId }] } : {}),
@@ -397,6 +644,7 @@ export class OrdersService {
                 OR: [
                   { orderNumber: { contains: search, mode: 'insensitive' } },
                   { customer: { phone: { contains: search.replace(/\s/g, '') } } },
+                  { customer: { contactPhone: { contains: search.replace(/\s/g, '') } } },
                   { customer: { name: { contains: search, mode: 'insensitive' } } },
                 ],
               },
@@ -404,8 +652,16 @@ export class OrdersService {
           }
         : {}),
     };
+    if (q.overdue) {
+      const now = this.clock.now(); const today = istDate(now);
+      const pickup = q.overdue === 'pickup'; const dateKey = pickup ? 'pickupDate' : 'deliveryDate'; const slotKey = pickup ? 'pickupSlot' : 'deliverySlot';
+      const condition: Prisma.OrderWhereInput = { status: { in: pickup ? [OrderStatus.PENDING, OrderStatus.PICKUP_ASSIGNED]
+        : [OrderStatus.PICKED_UP, OrderStatus.PROCESSING, OrderStatus.READY_FOR_DELIVERY, OrderStatus.DELIVERY_ASSIGNED, OrderStatus.OUT_FOR_DELIVERY] },
+        OR: [{ [dateKey]: { lt: toDbDate(today) } }, ...SLOT_ORDER.filter((slot) => slotEnd(today, slot) <= now).map((slot) => ({ [dateKey]: toDbDate(today), [slotKey]: slot }))] };
+      where.AND = [...(Array.isArray(where.AND) ? where.AND : where.AND ? [where.AND] : []), condition];
+    }
     const [items, total] = await Promise.all([
-      this.prisma.order.findMany({ where, include: ORDER_INCLUDE, orderBy: { createdAt: 'desc' }, ...pageArgs(q) }),
+      this.prisma.order.findMany({ where, include: ORDER_LIST_INCLUDE, orderBy: { createdAt: 'desc' }, ...pageArgs(q) }),
       this.prisma.order.count({ where }),
     ]);
     return { items, page: q.page, pageSize: q.pageSize, total };
@@ -424,6 +680,8 @@ export class OrdersService {
     actor: TransitionActor,
     opts: TransitionOptions = {},
   ): Promise<OrderWithRelations> {
+    // An elapsed price request must not block pickup or delivery just because its expiry job has not run yet.
+    await this.expireOrderAdjustments(orderId);
     const before = await this.prisma.order.findUnique({ where: { id: orderId } });
     if (!before) throw AppError.notFound('Order');
     if (!canTransition(before.status, to, actor.kind)) {
@@ -466,6 +724,10 @@ export class OrdersService {
       case OrderStatus.CANCELLED:
         data.cancelledAt = now;
         data.cancelReason = opts.cancelReason?.trim() || null;
+        if (opts.keepTravelCharge) {
+          if (before.deliveryFeePaise <= 0) throw AppError.badRequest('NO_TRAVEL_CHARGE', 'This order has no travel charge to keep');
+          data.travelChargeKept = true;
+        }
         break;
     }
 
@@ -474,6 +736,11 @@ export class OrdersService {
       if (res.count === 0) {
         throw AppError.conflict('ORDER_CHANGED', 'The order was just updated by someone else. Refresh and try again.');
       }
+      if (['PICKED_UP', 'READY_FOR_DELIVERY', 'OUT_FOR_DELIVERY', 'DELIVERED'].includes(to) &&
+        await tx.orderAdjustment.findFirst({ where: { orderId, status: 'PENDING_CUSTOMER' } })) {
+        throw AppError.conflict('APPROVAL_PENDING', 'The customer must decide the proposed total before this step.');
+      }
+      if (to === OrderStatus.CANCELLED) await tx.orderAdjustment.updateMany({ where: { orderId, status: 'PENDING_CUSTOMER' }, data: { status: 'EXPIRED', decidedAt: now } });
       await tx.orderEvent.create({
         data: {
           orderId,
@@ -481,7 +748,7 @@ export class OrdersService {
           toStatus: to,
           actorId: actor.id,
           actorRole: actor.role,
-          note: opts.note?.trim() || opts.cancelReason?.trim() || null,
+          note: [opts.note?.trim() || opts.cancelReason?.trim(), data.travelChargeKept ? TRAVEL_KEPT_NOTE : null].filter(Boolean).join('. ') || null,
         },
       });
       if (opts.inTx) await opts.inTx(tx, before);
@@ -518,6 +785,7 @@ export class OrdersService {
             : null,
       paidPaise: order.paidPaise,
       refundedPaise: order.refundedPaise,
+      keptPaise: keptTravelPaise(order),
     } satisfies OrderStatusChangedEvent);
     if (closed.length) {
       this.events.emit(Events.OffersClosed, {
@@ -529,62 +797,146 @@ export class OrdersService {
     return order;
   }
 
-  // ───────────── Editing items ─────────────
+  // ───────────── Item changes and customer consent ─────────────
 
-  /** Replaces line items (e.g. after counting clothes at pickup) and reprices the order. */
-  async updateItems(orderId: string, lines: OrderLineInput[], actor: TransitionActor, note?: string): Promise<OrderWithRelations> {
-    const order = await this.prisma.order.findUnique({ where: { id: orderId }, include: { promotion: true } });
+  private async editQuote(orderId: string, lines: OrderLineInput[], expectedRevision?: number) {
+    await this.expireOrderAdjustments(orderId);
+    const order = await this.prisma.order.findUnique({ where: { id: orderId }, include: { ...ORDER_INCLUDE, promotion: true } });
     if (!order) throw AppError.notFound('Order');
-    if (!ITEMS_EDITABLE.includes(order.status)) {
-      throw AppError.conflict('ITEMS_LOCKED', 'Items can no longer be changed for this order');
+    if (!ITEMS_EDITABLE.includes(order.status)) throw AppError.conflict('ITEMS_LOCKED', 'Items can no longer be changed for this order');
+    if (expectedRevision !== undefined && expectedRevision !== order.revision) throw AppError.conflict('ORDER_CHANGED', 'This bill changed. Refresh and compare your draft before saving.');
+    const quantities = new Map<string, number>();
+    for (const line of lines) {
+      const quantity = (quantities.get(line.catalogItemId) ?? 0) + line.quantity;
+      if (quantity > 500) throw AppError.badRequest('QUANTITY_LIMIT', 'Use no more than 500 of one item');
+      quantities.set(line.catalogItemId, quantity);
     }
-
-    // Reprice with today's catalogue prices, the order's original promotion and delivery fee.
-    const priced = computeQuote(
-      await this.pricingLines(lines),
-      { minOrderPaise: 0, deliveryFeePaise: order.deliveryFeePaise, freeDeliveryAbovePaise: null },
-      order.promotion,
-    );
-
-    const updated = await this.prisma.$transaction(async (tx) => {
-      const res = await tx.order.updateMany({
-        where: { id: orderId, status: order.status },
-        data: {
-          subtotalPaise: priced.subtotalPaise,
-          discountPaise: priced.discountPaise,
-          totalPaise: priced.totalPaise,
-          paymentStatus: paymentStatusFor(priced.totalPaise, order.paidPaise, order.refundedPaise),
-        },
-      });
-      if (res.count === 0) throw AppError.conflict('ORDER_CHANGED', 'The order was just updated. Refresh and try again.');
-      await tx.orderItem.deleteMany({ where: { orderId } });
-      await tx.orderItem.createMany({
-        data: priced.lines.map((l) => ({
-          orderId,
-          catalogItemId: l.catalogItemId,
-          name: l.name,
-          unit: l.unit,
-          unitPricePaise: l.unitPricePaise,
-          quantity: l.quantity,
-          lineTotalPaise: l.lineTotalPaise,
-        })),
-      });
-      await tx.orderEvent.create({
-        data: {
-          orderId,
-          fromStatus: order.status,
-          toStatus: order.status,
-          actorId: actor.id,
-          actorRole: actor.role,
-          note: note?.trim() || `Items updated, new total ₹${(priced.totalPaise / 100).toFixed(2)}`,
-        },
-      });
-      return tx.order.findUniqueOrThrow({ where: { id: orderId }, include: ORDER_INCLUDE });
-    });
-
-    this.events.emit(Events.OrderUpdated, { ...orderRef(updated), reason: 'items_changed' } satisfies OrderUpdatedEvent);
-    return updated;
+    const existing = new Map(order.items.filter((i) => i.catalogItemId).map((i) => [i.catalogItemId!, i]));
+    const added = await this.pricingLines([...quantities].filter(([id]) => !existing.has(id)).map(([catalogItemId, quantity]) => ({ catalogItemId, quantity })));
+    const current = new Map(added.map((i) => [i.catalogItemId, i]));
+    // The travel charge is re-checked on the new items total under the rule the order was booked with, in both directions:
+    // reaching the free-from amount removes it, falling under adds it. Orders booked before the rule keep their stored fee.
+    const rule = orderTravelRule(order);
+    const priced = computeQuote([...quantities].map(([id, quantity]) => {
+      const item = existing.get(id) ?? current.get(id)!;
+      return { catalogItemId: id, name: item.name, unit: item.unit, unitPricePaise: item.unitPricePaise, quantity };
+    }), { minOrderPaise: 0, deliveryFeePaise: rule.chargePaise, freeDeliveryAbovePaise: rule.freeFromPaise }, order.promotion);
+    return { order, priced };
   }
+
+  async previewItems(orderId: string, lines: OrderLineInput[], expectedRevision?: number) {
+    const { order, priced } = await this.editQuote(orderId, lines, expectedRevision);
+    return { revision: order.revision, oldTotalPaise: order.totalPaise, newTotalPaise: priced.totalPaise,
+      subtotalPaise: priced.subtotalPaise, discountPaise: priced.discountPaise, deliveryFeePaise: priced.deliveryFeePaise,
+      oldDeliveryFeePaise: order.deliveryFeePaise,
+      lines: priced.lines, requiresApproval: priced.totalPaise > order.totalPaise };
+  }
+
+  private async writeItemLines(tx: Tx, order: Pick<Order, 'id' | 'status'>, lines: PricingLine[], actor: TransitionActor, note: string) {
+    await tx.orderItem.deleteMany({ where: { orderId: order.id } });
+    await tx.orderItem.createMany({ data: lines.map((l) => ({ orderId: order.id, ...l, lineTotalPaise: l.unitPricePaise * l.quantity })) });
+    await tx.orderEvent.create({ data: { orderId: order.id, fromStatus: order.status, toStatus: order.status, actorId: actor.id, actorRole: actor.role, note } });
+  }
+
+  async updateItems(orderId: string, lines: OrderLineInput[], actor: TransitionActor, note?: string, expectedRevision?: number): Promise<OrderWithRelations> {
+    const { order, priced } = await this.editQuote(orderId, lines, expectedRevision);
+    const increase = priced.totalPaise > order.totalPaise;
+    if (increase && !actor.id) throw AppError.badRequest('ACTOR_REQUIRED', 'A staff member or assigned partner must request the change');
+    const settings = increase ? await this.settings.get() : null;
+    const now = this.clock.now();
+    const result = await this.prisma.$transaction(async (tx) => {
+      // Updating the revision locks the row. A second editor cannot replace the same accepted revision.
+      const changed = await tx.order.updateMany({ where: { id: orderId, revision: order.revision, status: order.status,
+        paidPaise: order.paidPaise, refundedPaise: order.refundedPaise }, data: { revision: { increment: 1 },
+        ...(!increase ? { subtotalPaise: priced.subtotalPaise, discountPaise: priced.discountPaise, deliveryFeePaise: priced.deliveryFeePaise, totalPaise: priced.totalPaise,
+          paymentStatus: paymentStatusFor(priced.totalPaise, order.paidPaise, order.refundedPaise) } : {}) } });
+      if (changed.count !== 1) throw AppError.conflict('ORDER_CHANGED', 'This order changed. Refresh and compare your draft before saving.');
+      if (await tx.orderAdjustment.findFirst({ where: { orderId, status: 'PENDING_CUSTOMER' } })) {
+        throw AppError.conflict('APPROVAL_PENDING', 'Wait for the customer to decide the existing price request.');
+      }
+      let adjustmentId: string | undefined;
+      if (increase) {
+        const adjustment = await tx.orderAdjustment.create({ data: { orderId, requestedById: actor.id!,
+          reason: note?.trim() || 'Item count updated after collection', oldTotalPaise: order.totalPaise, newTotalPaise: priced.totalPaise,
+          subtotalPaise: priced.subtotalPaise, discountPaise: priced.discountPaise, deliveryFeePaise: priced.deliveryFeePaise,
+          baseRevision: order.revision + 1, itemsBefore: order.items as unknown as Prisma.InputJsonValue,
+          itemsAfter: priced.lines as unknown as Prisma.InputJsonValue,
+          expiresAt: new Date(now.getTime() + (settings?.adjustmentExpiryHours ?? 12) * 3_600_000) } });
+        adjustmentId = adjustment.id;
+        await tx.orderEvent.create({ data: { orderId, fromStatus: order.status, toStatus: order.status,
+          actorId: actor.id, actorRole: actor.role, note: `Customer approval requested: ${adjustment.reason}` } });
+      } else {
+        await this.writeItemLines(tx, order, priced.lines, actor, note?.trim() || 'Item count updated; quoted rates preserved');
+      }
+      return { updated: await tx.order.findUniqueOrThrow({ where: { id: orderId }, include: ORDER_INCLUDE }), adjustmentId };
+    });
+    if (result.adjustmentId) {
+      const adjustment = result.updated.adjustments.find((a) => a.id === result.adjustmentId)!;
+      this.events.emit(Events.AdjustmentChanged, { ...orderRef(result.updated), adjustmentId: adjustment.id, status: 'PENDING_CUSTOMER', newTotalPaise: adjustment.newTotalPaise });
+      await this.jobs?.schedule('adjustments-expire', { adjustmentId: adjustment.id }, { startAfter: adjustment.expiresAt, jobId: adjustment.id }).catch((err) => this.logger.error('Could not schedule adjustment expiry', err));
+    } else {
+      this.events.emit(Events.OrderUpdated, { ...orderRef(result.updated), reason: 'items_changed', previousTotalPaise: order.totalPaise,
+        totalPaise: result.updated.totalPaise, paidPaise: result.updated.paidPaise, refundedPaise: result.updated.refundedPaise, actorRole: actor.role,
+        previousTravelChargePaise: order.deliveryFeePaise, travelChargePaise: result.updated.deliveryFeePaise } satisfies OrderUpdatedEvent);
+    }
+    this.events.emit(Events.OrderUpdated, { ...orderRef(result.updated), reason: 'details_changed' } satisfies OrderUpdatedEvent);
+    return result.updated;
+  }
+
+  async decideAdjustment(customer: User, orderId: string, adjustmentId: string, approve: boolean): Promise<OrderWithRelations> {
+    await this.expireOrderAdjustments(orderId);
+    const result = await this.prisma.$transaction(async (tx) => {
+      // All bill mutations lock the order first, then inspect the request.
+      await tx.$queryRaw`SELECT id FROM orders WHERE id = ${orderId}::uuid FOR UPDATE`;
+      const order = await tx.order.findFirst({ where: { id: orderId, customerId: customer.id }, include: ORDER_INCLUDE });
+      if (!order) throw AppError.notFound('Order');
+      const adjustment = await tx.orderAdjustment.findFirst({ where: { id: adjustmentId, orderId } });
+      if (!adjustment) throw AppError.notFound('Price request');
+      const status = approve ? 'APPROVED' : 'DECLINED';
+      if (adjustment.status === status) return { order, changed: false };
+      if (adjustment.status !== 'PENDING_CUSTOMER') throw AppError.conflict('ADJUSTMENT_DECIDED', 'This price request is no longer waiting for a decision.');
+      if (this.clock.now() >= adjustment.expiresAt) throw AppError.conflict('ADJUSTMENT_EXPIRED', 'This price request expired. The original total stands.');
+      if (!ITEMS_EDITABLE.includes(order.status) || order.revision !== adjustment.baseRevision || order.totalPaise !== adjustment.oldTotalPaise) {
+        throw AppError.conflict('ORDER_CHANGED', 'The order changed. Contact support before approving another total.');
+      }
+      const decided = await tx.orderAdjustment.updateMany({ where: { id: adjustmentId, status: 'PENDING_CUSTOMER' }, data: { status, decidedAt: this.clock.now() } });
+      if (decided.count !== 1) throw AppError.conflict('ADJUSTMENT_DECIDED', 'This price request has already been decided.');
+      if (approve) {
+        await tx.order.update({ where: { id: orderId }, data: { subtotalPaise: adjustment.subtotalPaise, discountPaise: adjustment.discountPaise,
+          deliveryFeePaise: adjustment.deliveryFeePaise, totalPaise: adjustment.newTotalPaise, revision: { increment: 1 },
+          paymentStatus: paymentStatusFor(adjustment.newTotalPaise, order.paidPaise, order.refundedPaise) } });
+        await this.writeItemLines(tx, order, adjustment.itemsAfter as unknown as PricingLine[], actorFor(customer, 'CUSTOMER'), `Customer approved the new total: ${adjustment.reason}`);
+      } else {
+        await tx.orderEvent.create({ data: { orderId, fromStatus: order.status, toStatus: order.status, actorId: customer.id, actorRole: customer.role, note: 'Customer declined the proposed total. The original bill stands.' } });
+      }
+      return { order: await tx.order.findUniqueOrThrow({ where: { id: orderId }, include: ORDER_INCLUDE }), changed: true };
+    });
+    if (result.changed) {
+      this.events.emit(Events.AdjustmentChanged, { ...orderRef(result.order), adjustmentId, status: approve ? 'APPROVED' : 'DECLINED', newTotalPaise: result.order.totalPaise });
+      this.events.emit(Events.OrderUpdated, { ...orderRef(result.order), reason: 'details_changed' } satisfies OrderUpdatedEvent);
+    }
+    return result.order;
+  }
+
+  async expireAdjustment(adjustmentId: string): Promise<void> {
+    const changed = await this.prisma.orderAdjustment.updateMany({ where: { id: adjustmentId, status: 'PENDING_CUSTOMER', expiresAt: { lte: this.clock.now() } }, data: { status: 'EXPIRED', decidedAt: this.clock.now() } });
+    if (changed.count !== 1) return;
+    const adjustment = await this.prisma.orderAdjustment.findUniqueOrThrow({ where: { id: adjustmentId }, include: { order: true } });
+    this.events.emit(Events.AdjustmentChanged, { ...orderRef(adjustment.order), adjustmentId, status: 'EXPIRED', newTotalPaise: adjustment.newTotalPaise });
+    this.events.emit(Events.OrderUpdated, { ...orderRef(adjustment.order), reason: 'details_changed' } satisfies OrderUpdatedEvent);
+  }
+
+  private async expireOrderAdjustments(orderId: string): Promise<void> {
+    const due = await this.prisma.orderAdjustment.findMany({ where: { orderId, status: 'PENDING_CUSTOMER', expiresAt: { lte: this.clock.now() } }, select: { id: true } });
+    for (const request of due) await this.expireAdjustment(request.id);
+  }
+
+}
+
+/** Rules about the order's state are conflicts (409); a time that is not allowed is a bad request, as when booking. */
+function rescheduleFailure(code: RescheduleError): AppError {
+  const message = RESCHEDULE_ERROR_MESSAGES[code];
+  return code === 'RESCHEDULE_NOT_ALLOWED' || code === 'RESCHEDULE_LIMIT' ? AppError.conflict(code, message) : AppError.badRequest(code, message);
 }
 
 function addressSnapshot(a: Address, customer: User): Prisma.InputJsonObject {
@@ -602,7 +954,7 @@ function addressSnapshot(a: Address, customer: User): Prisma.InputJsonObject {
     latitude: a.latitude,
     longitude: a.longitude,
     contactName: customer.name,
-    contactPhone: customer.phone,
+    contactPhone: customerPhone(customer),
   };
 }
 
@@ -615,6 +967,9 @@ export function placeRequestHash(dto: PlaceOrderDto): string {
     delivery: [dto.deliveryDate, dto.deliverySlot, dto.deliveryAddressId ?? null],
     paymentMethod: dto.paymentMethod,
     instructions: dto.instructions?.trim() || null,
+    // Only present when used, so the fingerprint of a request without a care note is the same as before care notes existed.
+    ...(careNoteOf(dto) ? { careNote: careNoteOf(dto) } : {}),
+    ...(dto.carePhotoUrls?.length ? { carePhotoUrls: dto.carePhotoUrls } : {}),
   };
   return createHash('sha256').update(JSON.stringify(canonical)).digest('hex');
 }

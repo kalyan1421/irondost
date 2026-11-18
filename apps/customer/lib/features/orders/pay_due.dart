@@ -78,7 +78,7 @@ class _PayDueSheetState extends ConsumerState<_PayDueSheet> {
     final t = context.text;
     final o = widget.order;
     final due = rupees(o.amountDuePaise);
-    final delivery = '${dayLong(o.deliveryDate, today: istToday())}, ${windowFromLabel(o.deliverySlotLabel)}';
+    final delivery = keepWindowTogether('${dayLong(o.deliveryDate, today: istToday())}, ${windowFromLabel(o.deliverySlotLabel)}');
 
     return SafeArea(
       child: SingleChildScrollView(
@@ -93,7 +93,7 @@ class _PayDueSheetState extends ConsumerState<_PayDueSheet> {
             ),
             const SizedBox(height: IdSpace.s1),
             Text(
-              '${piecesLabel(o)}${o.pickedUpAt != null ? ', ironed' : ''}. Delivery $delivery.',
+              '${piecesLabel(o)}. Delivery $delivery.',
               style: t.bodyLg.copyWith(color: c.textMuted),
             ),
             const SizedBox(height: IdSpace.s4),

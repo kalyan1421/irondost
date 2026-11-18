@@ -1,0 +1,20 @@
+{
+  "_about": "LaundroKart customer app (v3.0 redesign, Aug 2026). MEASURED from pixels of public store-listing screenshots (replica/screens/laundrokart/ios-01..06.jpg), inside the phone frames, 2026-11-07. The gold is the italic accent word used in headlines and section titles (marketing frames; the in-app use is smaller).",
+  "color": {
+    "bg": "#F6F3EE",
+    "surface": "#FEFDFE",
+    "ink-plum": "#2B1331",
+    "magenta": "#B8227D",
+    "on-magenta": "#FFFFFF",
+    "purple": "#7C2C8C",
+    "gold-accent": "#AC7C1C"
+  },
+  "pairs": [
+    ["ink-plum", "bg"],
+    ["ink-plum", "surface"],
+    ["magenta", "bg"],
+    ["on-magenta", "magenta"],
+    ["on-magenta", "purple"],
+    ["gold-accent", "bg"]
+  ]
+}

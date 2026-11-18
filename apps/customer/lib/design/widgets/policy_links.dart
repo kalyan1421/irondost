@@ -18,6 +18,8 @@ class PolicyLinks extends StatelessWidget {
       ),
       Wrap(
         alignment: WrapAlignment.center,
+        // The links carry no side padding of their own, so the gap between them is set here.
+        spacing: IdSpace.s5,
         children: [
           TextButton(
             onPressed: () => context.push(Routes.legal('terms')),

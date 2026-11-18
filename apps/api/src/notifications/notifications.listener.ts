@@ -6,14 +6,18 @@ import {
   type OffersCreatedEvent,
   type OrderCreatedEvent,
   type OrderStatusChangedEvent,
+  type OrderUpdatedEvent,
   type PaymentCapturedEvent,
   type RefundCreatedEvent,
   type RefundFailedEvent,
   type RefundProcessedEvent,
+  type OrderRescheduledEvent,
 } from '../events.js';
 import { rupees } from '../common/money.js';
 import { ClientApp, DispatchLeg, OrderStatus, Role } from '../generated/prisma/enums.js';
 import { PrismaService } from '../prisma/prisma.service.js';
+import { partnerRescheduleCopy, staffRescheduleCopy } from '../orders/reschedule-copy.js';
+import { itemsChangedCopy } from './items-changed-copy.js';
 import { PushService } from './push.service.js';
 import { refundCopy, type RefundStage } from './refund-copy.js';
 
@@ -50,8 +54,16 @@ export class NotificationsListener {
     app: ClientApp,
   ): Promise<void> {
     if (userIds.length === 0) return;
-    await this.prisma.notification.createMany({ data: userIds.map((userId) => ({ userId, type, title, body, data })) });
-    await this.push.send(userIds, { title, body, data: { type, ...data } }, app);
+    // The rows' ids go to the push service so each person's delivery can be written down against their notification.
+    const rows = await this.prisma.notification.createManyAndReturn({
+      data: userIds.map((userId) => ({ userId, type, title, body, data })),
+      select: { id: true, userId: true },
+    });
+    await this.push.send(userIds, { title, body, data: { type, ...data } }, app, {
+      type,
+      orderId: data.orderId ?? null,
+      notificationIds: new Map(rows.map((r) => [r.userId, r.id])),
+    });
   }
 
   private async adminIds(): Promise<string[]> {
@@ -60,6 +72,47 @@ export class NotificationsListener {
       select: { id: true },
     });
     return admins.map((a) => a.id);
+  }
+
+  @OnEvent(Events.AdjustmentChanged, { async: true, suppressErrors: true })
+  async adjustmentChanged(e: { orderId: string; orderNumber: string; customerId: string; adjustmentId: string; status: string; newTotalPaise: number }): Promise<void> {
+    const pending = e.status === 'PENDING_CUSTOMER';
+    const text = pending ? `Review the proposed ${rupees(e.newTotalPaise)} total for order ${e.orderNumber}. Your accepted bill stays unchanged until you approve.`
+      : `Price request for order ${e.orderNumber}: ${e.status.toLowerCase()}. ${e.status === 'APPROVED' ? 'The approved total now applies.' : 'The original bill stands.'}`;
+    const data = { orderId: e.orderId, adjustmentId: e.adjustmentId };
+    await this.inboxAndPush([e.customerId], 'price_approval', pending ? 'Your total needs your OK' : 'Price request updated', text, data, ClientApp.CUSTOMER);
+    if (!pending) await this.inboxAndPush(await this.adminIds(), 'price_approval', 'Price request updated', text, data, ClientApp.ADMIN);
+  }
+
+  /**
+   * A customer moved a pickup or delivery time. The partner who had accepted the pickup is told it is no longer theirs,
+   * and staff see the board change. The customer is not told: they just did it and the app shows the result.
+   */
+  @OnEvent(Events.OrderRescheduled, { async: true, suppressErrors: true })
+  async orderRescheduled(e: OrderRescheduledEvent): Promise<void> {
+    const data = { orderId: e.orderId, orderNumber: e.orderNumber };
+    if (e.removedDriverId) {
+      const copy = partnerRescheduleCopy(e.orderNumber);
+      await this.inboxAndPush([e.removedDriverId], 'task_removed', copy.title, copy.body, data, ClientApp.PARTNER);
+    }
+    const staff = staffRescheduleCopy({
+      orderNumber: e.orderNumber,
+      previous: e.previous,
+      next: e.next,
+      partnerReleased: e.removedDriverId !== null,
+    });
+    await this.inboxAndPush(await this.adminIds(), 'order_rescheduled', staff.title, staff.body, data, ClientApp.ADMIN);
+  }
+
+  @OnEvent(Events.IssueChanged, { async: true, suppressErrors: true })
+  async issueChanged(e: { issueId: string; orderId: string; orderNumber: string; customerId: string; status: string; kind: string; fromStaff: boolean }): Promise<void> {
+    const data = { issueId: e.issueId, orderId: e.orderId };
+    if (e.kind === 'created' || e.kind === 'overdue' || !e.fromStaff) {
+      await this.inboxAndPush(await this.adminIds(), 'issue_update', e.kind === 'overdue' ? 'Report needs a response' : 'Customer report updated',
+        `Report for order ${e.orderNumber}. Open the report to review it.`, data, ClientApp.ADMIN);
+    }
+    if (e.fromStaff) await this.inboxAndPush([e.customerId], 'issue_update', 'Your report has an update',
+      `Our team updated your report for order ${e.orderNumber}. Open it for the reply and status.`, data, ClientApp.CUSTOMER);
   }
 
   @OnEvent(Events.OrderCreated, { async: true, suppressErrors: true })
@@ -88,7 +141,7 @@ export class NotificationsListener {
         await this.inboxAndPush(drivers, 'order_cancelled', 'Order cancelled', `Order ${e.orderNumber} was cancelled.`, { orderId: e.orderId }, ClientApp.PARTNER);
       }
       // Cancelling does not move money by itself: staff refund from the order page, so tell them it is owed.
-      const owed = e.paidPaise - e.refundedPaise;
+      const owed = e.paidPaise - e.refundedPaise - (e.keptPaise ?? 0);
       if (e.to === OrderStatus.CANCELLED && owed > 0) {
         await this.inboxAndPush(
           await this.adminIds(),
@@ -107,6 +160,46 @@ export class NotificationsListener {
         e.to === OrderStatus.PICKUP_ASSIGNED ? e.pickupDriverId : e.to === OrderStatus.DELIVERY_ASSIGNED ? e.deliveryDriverId : null;
       if (assigned && e.actorRole !== Role.DRIVER) {
         await this.inboxAndPush([assigned], 'task_assigned', 'New task assigned', `You have been assigned order ${e.orderNumber}.`, { orderId: e.orderId }, ClientApp.PARTNER);
+      }
+    } catch (err) {
+      this.logger.error(err);
+    }
+  }
+
+  /** Staff changed the items (usually after counting the clothes): the customer is told what the total is now. */
+  @OnEvent(Events.OrderUpdated, { async: true, suppressErrors: true })
+  async orderUpdated(e: OrderUpdatedEvent): Promise<void> {
+    try {
+      if (
+        e.reason !== 'items_changed' ||
+        e.actorRole === Role.CUSTOMER ||
+        e.previousTotalPaise === undefined ||
+        e.totalPaise === undefined ||
+        e.paidPaise === undefined
+      ) {
+        return;
+      }
+      const copy = itemsChangedCopy({
+        orderNumber: e.orderNumber,
+        previousTotalPaise: e.previousTotalPaise,
+        totalPaise: e.totalPaise,
+        paidPaise: e.paidPaise,
+        refundedPaise: e.refundedPaise ?? 0,
+        previousTravelChargePaise: e.previousTravelChargePaise,
+        travelChargePaise: e.travelChargePaise,
+      });
+      if (!copy) return;
+      const data = { orderId: e.orderId, orderNumber: e.orderNumber };
+      await this.inboxAndPush([e.customerId], 'order_updated', copy.title, copy.body, data, ClientApp.CUSTOMER);
+      if (copy.refundOwedPaise > 0) {
+        await this.inboxAndPush(
+          await this.adminIds(),
+          'refund_needed',
+          'Refund needed',
+          `Order ${e.orderNumber} was reduced to ${rupees(e.totalPaise)} after ${rupees(e.paidPaise)} was paid. Refund the extra ${rupees(copy.refundOwedPaise)} from the order page.`,
+          { orderId: e.orderId },
+          ClientApp.ADMIN,
+        );
       }
     } catch (err) {
       this.logger.error(err);

@@ -1,3 +1,9 @@
+import 'dart:convert';
+import '../../test/features/issues_test.dart' show Reports;
+import '../../test/features/price_approval_test.dart' show Decisions;
+import 'package:irondost_customer/features/issues/issues.dart';
+import 'package:irondost_customer/features/issues/issue_screens.dart';
+import 'package:irondost_customer/features/orders/price_approval.dart';
 import 'package:irondost_customer/features/orders/pay_due.dart';
 import 'package:irondost_customer/features/orders/cancel_order.dart';
 import 'package:irondost_customer/features/basket/promo_sheet.dart';
@@ -42,6 +48,7 @@ import 'package:irondost_customer/features/offers/promotions.dart';
 import 'package:irondost_customer/features/orders/order_detail_screen.dart';
 import 'package:irondost_customer/features/orders/order_repository.dart';
 import 'package:irondost_customer/features/orders/orders_screen.dart';
+import 'package:irondost_customer/features/orders/reschedule_order.dart';
 import 'package:irondost_customer/features/schedule/schedule.dart';
 import 'package:irondost_customer/features/schedule/schedule_screen.dart';
 import 'package:irondost_customer/features/shell/offline_banner.dart';
@@ -88,6 +95,32 @@ void main() {
         );
       await loader.load();
     }
+    final junction = FontLoader('Junction');
+    for (final weight in ['regular', 'bold']) {
+      junction.addFont(rootBundle.load('assets/fonts/Junction-$weight.otf'));
+    }
+    await junction.load();
+    const direction = String.fromEnvironment('AUDIT_TYPE');
+    if (direction.isNotEmpty) {
+      final serif = direction == 'a';
+      final loader = FontLoader(serif ? 'Charis' : 'Junction');
+      for (final file
+          in serif
+              ? ['charis/Charis-Regular.ttf', 'charis/Charis-Bold.ttf']
+              : [
+                  'junction/Junction-regular.otf',
+                  'junction/Junction-bold.otf',
+                ]) {
+        loader.addFont(
+          Future.value(
+            ByteData.sublistView(
+              File('../../docs/design/round-1/fonts/$file').readAsBytesSync(),
+            ),
+          ),
+        );
+      }
+      await loader.load();
+    }
     final icon = FontLoader('packages/lucide_icons_flutter/Lucide')
       ..addFont(
         rootBundle.load('packages/lucide_icons_flutter/assets/lucide.ttf'),
@@ -126,6 +159,22 @@ void main() {
       .add(const Duration(hours: 5, minutes: 30))
       .toIso8601String()
       .substring(0, 10);
+
+  /// An order that can still be moved: booked for Sunday 4 Oct morning (the schedule fake's days), delivery on the 6th.
+  /// [driver]: a partner has already accepted the pickup.
+  OrderDto reschedulable({bool used = false, bool driver = false}) => testOrder(
+    id: 'r1',
+    status: driver ? OrderStatus.pickupAssigned : OrderStatus.pending,
+    pickupDriver: driver ? const PersonRefDto(id: 'd1', name: 'Ravi K.', phone: '+919876500001') : null,
+    pickupDate: '2026-10-04',
+    pickupSlot: TimeSlot.morning,
+    pickupLabel: '07:00–11:00',
+    deliveryDate: '2026-10-06',
+    deliverySlot: TimeSlot.morning,
+    deliveryLabel: '07:00–11:00',
+    rescheduleCount: used ? 2 : 0,
+    canReschedule: !used,
+  );
 
   /// Puts [screen] at [path] in a router, with a page behind it to go back to.
   GoRouter at(String path, Widget screen) => GoRouter(
@@ -265,6 +314,55 @@ void main() {
       brightness: b,
       textScale: s,
     ),
+    // A small basket: the ₹30 travel charge as its own line, and the one calm line on how to make it free.
+    'Basket travel charge': (b, s) async => auditThemed(
+      const BasketScreen(),
+      overrides: await basketOverrides(
+        saved: {'basket.v1': '{"lines":{"shirt":6,"trousers":2},"promoCode":null}'},
+        quotes: FakeQuoteRepository()
+          ..deliveryFeePaise = 3000
+          ..freeTravelFromPaise = 20000,
+      ),
+      brightness: b,
+      textScale: s,
+    ),
+    // Cancelled after the partner had already travelled: the ₹30 charge kept, the rest refunded.
+    'Order bill travel kept': (b, s) async => auditThemed(
+      OrderBillScreen(
+        orderId: 'o-1',
+        initial: testOrder(
+          status: OrderStatus.cancelled,
+          method: PaymentMethod.online,
+          paymentStatus: PaymentStatus.paid,
+          totalPaise: 15000,
+          paidPaise: 15000,
+          refundedPaise: 12000,
+          deliveryFeePaise: 3000,
+          pieces: 8,
+          travelChargeKept: true,
+          cancelledAt: now,
+        ),
+      ),
+      overrides: [
+        orderRepositoryProvider.overrideWithValue(
+          FakeOrderRepository()
+            ..orders['o-1'] = testOrder(
+              status: OrderStatus.cancelled,
+              method: PaymentMethod.online,
+              paymentStatus: PaymentStatus.paid,
+              totalPaise: 15000,
+              paidPaise: 15000,
+              refundedPaise: 12000,
+              deliveryFeePaise: 3000,
+              pieces: 8,
+              travelChargeKept: true,
+              cancelledAt: now,
+            ),
+        ),
+      ],
+      brightness: b,
+      textScale: s,
+    ),
     'Orders': (b, s) async => auditRouter(
       testRouter({
         Routes.orders: () => const OrdersScreen(),
@@ -320,6 +418,60 @@ void main() {
         textScale: s,
       );
     },
+    // Changing an order's time: the booked order, the picker, the confirmation and the two ways it can fail to open.
+    'Order detail (change pickup)': (b, s) async => auditRouter(
+      at(Routes.order('r1'), OrderDetailScreen(orderId: 'r1', initial: reschedulable())),
+      overrides: [
+        orderRepositoryProvider.overrideWithValue(FakeOrderRepository()..orders['r1'] = reschedulable()),
+        ...await basketOverrides(),
+      ],
+      brightness: b,
+      textScale: s,
+    ),
+    'Change pickup time': (b, s) async => auditRouter(
+      at(Routes.reschedule('r1'), RescheduleScreen(orderId: 'r1', initial: reschedulable())),
+      overrides: [
+        orderRepositoryProvider.overrideWithValue(FakeOrderRepository()..orders['r1'] = reschedulable()),
+        scheduleRepositoryProvider.overrideWithValue(FakeScheduleRepository()),
+        startup,
+        ...await basketOverrides(),
+      ],
+      brightness: b,
+      textScale: s,
+    ),
+    'Change pickup time confirm': (b, s) async => auditRouter(
+      at(Routes.reschedule('r1'), RescheduleScreen(orderId: 'r1', initial: reschedulable(driver: true))),
+      overrides: [
+        orderRepositoryProvider.overrideWithValue(FakeOrderRepository()..orders['r1'] = reschedulable(driver: true)),
+        scheduleRepositoryProvider.overrideWithValue(FakeScheduleRepository()),
+        startup,
+        ...await basketOverrides(),
+      ],
+      brightness: b,
+      textScale: s,
+    ),
+    'Change pickup time offline': (b, s) async => auditRouter(
+      at(Routes.reschedule('r1'), RescheduleScreen(orderId: 'r1', initial: reschedulable())),
+      overrides: [
+        orderRepositoryProvider.overrideWithValue(FakeOrderRepository()..orders['r1'] = reschedulable()),
+        scheduleRepositoryProvider.overrideWithValue(FakeScheduleRepository()..pickupFailure = const ApiFailure(ApiFailureKind.offline)),
+        startup,
+        ...await basketOverrides(),
+      ],
+      brightness: b,
+      textScale: s,
+    ),
+    'Change pickup time used up': (b, s) async => auditRouter(
+      at(Routes.reschedule('r1'), RescheduleScreen(orderId: 'r1', initial: reschedulable(used: true))),
+      overrides: [
+        orderRepositoryProvider.overrideWithValue(FakeOrderRepository()..orders['r1'] = reschedulable(used: true)),
+        scheduleRepositoryProvider.overrideWithValue(FakeScheduleRepository()),
+        startup,
+        ...await basketOverrides(),
+      ],
+      brightness: b,
+      textScale: s,
+    ),
     'Offers': (b, s) async => auditThemed(
       const OffersScreen(),
       overrides: [
@@ -410,6 +562,91 @@ void main() {
         scheduleRepositoryProvider.overrideWithValue(FakeScheduleRepository()),
         startup,
         ...await basketOverrides(),
+      ],
+      brightness: b,
+      textScale: s,
+    ),
+    // Pickup windows with no place left: disabled, with the word Full, beside the ones that are open.
+    'Schedule full windows': (b, s) async => auditThemed(
+      const ScheduleScreen(),
+      overrides: [
+        scheduleRepositoryProvider.overrideWithValue(
+          FakeScheduleRepository(
+            todayOver: false,
+            full: {(date: testToday, slot: TimeSlot.morning), (date: testToday, slot: TimeSlot.noon)},
+          ),
+        ),
+        startup,
+        ...await basketOverrides(),
+      ],
+      brightness: b,
+      textScale: s,
+    ),
+    // Nothing left today: the last window is full and the others closed.
+    'Schedule nothing left today': (b, s) async => auditThemed(
+      const ScheduleScreen(),
+      overrides: [
+        scheduleRepositoryProvider.overrideWithValue(
+          FakeScheduleRepository(full: {(date: testToday, slot: TimeSlot.evening)}),
+        ),
+        startup,
+        ...await basketOverrides(),
+      ],
+      brightness: b,
+      textScale: s,
+    ),
+    // The order's own window stays selected even when the API counts it as full; another full window shows as Full.
+    'Change pickup time full windows': (b, s) async => auditRouter(
+      at(Routes.reschedule('r1'), RescheduleScreen(orderId: 'r1', initial: reschedulable())),
+      overrides: [
+        orderRepositoryProvider.overrideWithValue(FakeOrderRepository()..orders['r1'] = reschedulable()),
+        scheduleRepositoryProvider.overrideWithValue(
+          FakeScheduleRepository(
+            full: {(date: '2026-10-04', slot: TimeSlot.morning), (date: '2026-10-04', slot: TimeSlot.noon)},
+          ),
+        ),
+        startup,
+        ...await basketOverrides(),
+      ],
+      brightness: b,
+      textScale: s,
+    ),
+    // The saved address is outside the area: Home says so and offers "Tell me when you're here" with the consent line.
+    'Home outside the area': (b, s) async => auditThemed(
+      const HomeScreen(),
+      overrides: [
+        ...await basketOverrides(),
+        addressRepositoryProvider.overrideWithValue(
+          FakeAddressRepository([testAddress(serviceable: false, area: 'Gachibowli')]),
+        ),
+        orderRepositoryProvider.overrideWithValue(FakeOrderRepository()),
+      ],
+      brightness: b,
+      textScale: s,
+    ),
+    // After "Tell me when you're here" on the map screen: the details form says what saving will also do.
+    'Address form tell me': (b, s) async => auditRouter(
+      at(
+        '/address',
+        const AddressFormScreen(
+          args: FormArgs(
+            draft: AddressDraft(
+              latitude: 17.4401,
+              longitude: 78.3489,
+              street: 'ISB Road',
+              area: 'Gachibowli',
+              city: 'Hyderabad',
+              state: 'Telangana',
+              pincode: '500032',
+            ),
+            onboarding: true,
+            tellMe: true,
+          ),
+        ),
+      ),
+      overrides: [
+        addressRepositoryProvider.overrideWithValue(FakeAddressRepository()),
+        sessionProvider.overrideWith(SignedInSession.new),
       ],
       brightness: b,
       textScale: s,
@@ -569,6 +806,53 @@ void main() {
       brightness: b,
       textScale: s,
     ),
+    'Checkout care note': (b, s) async => auditRouter(
+      at('/checkout', const CheckoutScreen()),
+      overrides: [
+        ...await basketOverrides(
+          saved: {
+            'basket.v1': '{"lines":{"shirt":10,"wash-shirt":2},"promoCode":null}',
+            'care.draft.v1':
+                '{"note":"Red silk saree, stain on the pallu. Colours may run.","photos":["https://files.test/care/u1/a.webp","https://files.test/care/u1/b.webp","https://files.test/care/u1/c.webp"],"pending":[]}',
+          },
+        ),
+        scheduleRepositoryProvider.overrideWithValue(FakeScheduleRepository()),
+        orderRepositoryProvider.overrideWithValue(FakeOrderRepository()),
+        addressRepositoryProvider.overrideWithValue(
+          FakeAddressRepository([testAddress()]),
+        ),
+      ],
+      brightness: b,
+      textScale: s,
+    ),
+    'Order detail care note': (b, s) async {
+      // Delivered keeps the page short, so the care note is in the first screen of the capture.
+      final order = testOrder(
+        id: 'o-1',
+        status: OrderStatus.delivered,
+        method: PaymentMethod.online,
+        paymentStatus: PaymentStatus.paid,
+        paidPaise: 24800,
+        pickedUpAt: DateTime.utc(2026, 10, 3, 12, 10),
+        deliveredAt: DateTime.utc(2026, 10, 4, 12, 10),
+        careNote: 'Red silk saree, stain on the pallu. Colours may run.',
+        carePhotoUrls: const [
+          'https://files.test/care/u1/a.webp',
+          'https://files.test/care/u1/b.webp',
+        ],
+      );
+      return auditRouter(
+        at('/order', OrderDetailScreen(orderId: 'o-1', initial: order)),
+        overrides: [
+          orderRepositoryProvider.overrideWithValue(
+            FakeOrderRepository()..orders['o-1'] = order,
+          ),
+          ...await basketOverrides(),
+        ],
+        brightness: b,
+        textScale: s,
+      );
+    },
     'Confirmed': (b, s) async => auditRouter(
       at(
         '/confirmed',
@@ -592,14 +876,7 @@ void main() {
     'Payment receipt': (b, s) async => auditRouter(
       at(
         '/paid',
-        PaymentReceiptScreen(
-          orderId: 'o-1',
-          initial: testOrder(
-            method: PaymentMethod.online,
-            paymentStatus: PaymentStatus.paid,
-            paidPaise: 24800,
-          ),
-        ),
+        const PaymentReceiptScreen(orderId: 'o-1'),
       ),
       overrides: [
         orderRepositoryProvider.overrideWithValue(
@@ -645,6 +922,72 @@ void main() {
       textScale: s,
     ),
   };
+
+  if (const bool.fromEnvironment('AUDIT_TRUST')) {
+    const line = AdjustmentLineDto(catalogItemId: 'shirt', name: 'Shirt / T-shirt', unit: ItemUnit.piece, unitPricePaise: 1500, quantity: 4, lineTotalPaise: 6000);
+    final adjustment = OrderAdjustmentDto(id: 'price-1', status: AdjustmentStatus.pendingCustomer, reason: 'Two extra shirts counted at collection.',
+      oldTotalPaise: 6000, newTotalPaise: 9000, subtotalPaise: 9000, discountPaise: 0, deliveryFeePaise: 0, itemsBefore: [line],
+      itemsAfter: [const AdjustmentLineDto(catalogItemId: 'shirt', name: 'Shirt / T-shirt', unit: ItemUnit.piece, unitPricePaise: 1500, quantity: 6, lineTotalPaise: 9000)],
+      expiresAt: now.add(const Duration(hours: 12)), decidedAt: null, createdAt: now);
+    final pendingRefund = testOrder(status: OrderStatus.cancelled, paymentStatus: PaymentStatus.refunded, method: PaymentMethod.online, totalPaise: 25500, paidPaise: 25500,
+      refundedPaise: 25500, cancelledAt: now, refunds: [RefundDto(id: 'refund-1', amountPaise: 25500, method: RefundMethod.razorpay, status: RefundStatus.pending,
+        note: 'Order cancelled before collection.', createdAt: now, processedAt: null, failureReason: null)]);
+    // Booked as one shirt-load under ₹200 (₹30 charge); counted at pickup it reaches ₹200, so the charge goes.
+    final travelAdjustment = OrderAdjustmentDto(id: 'price-2', status: AdjustmentStatus.pendingCustomer, reason: 'Four more shirts counted at collection.',
+      oldTotalPaise: 15000, newTotalPaise: 21000, subtotalPaise: 21000, discountPaise: 0, deliveryFeePaise: 0, itemsBefore: [line],
+      itemsAfter: [const AdjustmentLineDto(catalogItemId: 'shirt', name: 'Shirt / T-shirt', unit: ItemUnit.piece, unitPricePaise: 1500, quantity: 14, lineTotalPaise: 21000)],
+      expiresAt: now.add(const Duration(hours: 12)), decidedAt: null, createdAt: now);
+    final keptTravel = testOrder(status: OrderStatus.cancelled, paymentStatus: PaymentStatus.refunded, method: PaymentMethod.online, totalPaise: 15000, paidPaise: 15000,
+      refundedPaise: 12000, deliveryFeePaise: 3000, pieces: 8, travelChargeKept: true, cancelledAt: now);
+    scenarios.clear();
+    scenarios.addAll({
+      'Price approval travel charge': (b, s) async => auditThemed(Scaffold(appBar: AppBar(title: const Text('Price change')), body: ListView(padding: const EdgeInsets.all(20), children: [PriceApprovalCard(order: testOrder(totalPaise: 15000, deliveryFeePaise: 3000, adjustments: [travelAdjustment]))])),
+        brightness: b, textScale: s, overrides: [adjustmentRepositoryProvider.overrideWithValue(Decisions())]),
+      'Cancelled travel kept': (b, s) async => auditRouter(at('/order', const OrderDetailScreen(orderId: 'o-1')), brightness: b, textScale: s,
+        overrides: [startup, orderRepositoryProvider.overrideWithValue(FakeOrderRepository()..orders['o-1'] = keptTravel)]),
+      'Price approval review': (b, s) async => auditThemed(Scaffold(appBar: AppBar(title: const Text('Price change')), body: ListView(padding: const EdgeInsets.all(20), children: [PriceApprovalCard(order: testOrder(totalPaise: 6000, adjustments: [adjustment]))])),
+        brightness: b, textScale: s, overrides: [adjustmentRepositoryProvider.overrideWithValue(Decisions())]),
+      'Refund pending tracking': (b, s) async => auditRouter(at('/order', const OrderDetailScreen(orderId: 'o-1')), brightness: b, textScale: s,
+        overrides: [startup, orderRepositoryProvider.overrideWithValue(FakeOrderRepository()..orders['o-1'] = pendingRefund)]),
+      'Refund pending bill': (b, s) async => auditThemed(const OrderBillScreen(orderId: 'o-1'), brightness: b, textScale: s,
+        overrides: [orderRepositoryProvider.overrideWithValue(FakeOrderRepository()..orders['o-1'] = pendingRefund)]),
+      'Receipt offline': (b, s) async => auditThemed(const PaymentReceiptScreen(orderId: 'o-1'), brightness: b, textScale: s,
+        overrides: [orderRepositoryProvider.overrideWithValue(FakeOrderRepository()..getFailure = const ApiFailure(ApiFailureKind.offline))]),
+      'Report problem': (b, s) async => auditThemed(const ReportProblemScreen(orderId: 'o-1'), brightness: b, textScale: s,
+        overrides: [...await basketOverrides(saved: {'issue.draft.o-1': jsonEncode({'category': 'QUALITY', 'description': 'My shirt still has creases around the collar.', 'photos': [], 'pending': []})}),
+          orderRepositoryProvider.overrideWithValue(FakeOrderRepository()), issueRepositoryProvider.overrideWithValue(Reports())]),
+      'Your reports': (b, s) async => auditThemed(const IssuesScreen(), brightness: b, textScale: s, overrides: [issueRepositoryProvider.overrideWithValue(Reports())]),
+      'Report conversation': (b, s) async => auditThemed(const IssueDetailScreen(id: 'issue-1'), brightness: b, textScale: s, overrides: [issueRepositoryProvider.overrideWithValue(Reports())]),
+      'Report resolved': (b, s) async => auditThemed(const IssueDetailScreen(id: 'issue-1'), brightness: b, textScale: s, overrides: [issueRepositoryProvider.overrideWithValue(Reports()..status = IssueStatus.resolved)]),
+    });
+  }
+
+  if (const bool.fromEnvironment('AUDIT_CHECKOUT') ||
+      const bool.fromEnvironment('AUDIT_KEYBOARD')) {
+    final checkout = scenarios['Checkout']!;
+    final careNote = scenarios['Checkout care note']!;
+    if (const bool.fromEnvironment('AUDIT_CHECKOUT')) scenarios.clear();
+    scenarios['Checkout note'] = checkout;
+    scenarios['Checkout care note'] = careNote;
+    scenarios['Checkout without phone'] = (b, s) async => auditRouter(
+      at('/checkout', const CheckoutScreen()),
+      overrides: [
+        ...await basketOverrides(
+          saved: {
+            'basket.v1': '{"lines":{"shirt":2,"saree":1},"promoCode":null}',
+          },
+          session: _AuditGoogleSession.new,
+        ),
+        scheduleRepositoryProvider.overrideWithValue(FakeScheduleRepository()),
+        orderRepositoryProvider.overrideWithValue(FakeOrderRepository()),
+        addressRepositoryProvider.overrideWithValue(
+          FakeAddressRepository([testAddress()]),
+        ),
+      ],
+      brightness: b,
+      textScale: s,
+    );
+  }
 
   // Supplemental lifecycle states are kept separate from the original 47-view comparison.
   if (const bool.fromEnvironment('AUDIT_EXTRA_STATES')) {
@@ -723,6 +1066,8 @@ void main() {
       'Address form',
       'Catalogue search',
       'Place search',
+      'Checkout note',
+      'Checkout care note',
     };
     scenarios.removeWhere((name, _) => !forms.contains(name));
   }
@@ -731,26 +1076,44 @@ void main() {
     for (final entry in scenarios.entries) {
       for (final brightness in Brightness.values) {
         testWidgets(
-          'stress ${entry.key} ${brightness.name} ${const int.fromEnvironment('AUDIT_WIDTH', defaultValue: 320)}dp 200%',
+          'stress ${entry.key} ${brightness.name} ${const int.fromEnvironment('AUDIT_WIDTH', defaultValue: 320)}dp scale=${const String.fromEnvironment('AUDIT_SCALE', defaultValue: '2')}',
           (tester) async {
             const width = int.fromEnvironment('AUDIT_WIDTH', defaultValue: 320);
+            const height = int.fromEnvironment(
+              'AUDIT_HEIGHT',
+              defaultValue: 740,
+            );
             tester.view
-              ..physicalSize = const Size(width * 2.0, 740 * 2)
+              ..physicalSize = const Size(width * 2.0, height * 2.0)
               ..devicePixelRatio = 2;
             addTearDown(tester.view.reset);
-            if (const bool.fromEnvironment('AUDIT_KEYBOARD')) {
+            if (const bool.fromEnvironment('AUDIT_KEYBOARD') &&
+                !isCheckoutForm(entry.key)) {
               tester.view.viewInsets = const FakeViewPadding(bottom: 600);
             }
             final errors = <String>[];
             final original = FlutterError.onError;
             FlutterError.onError = (details) => errors.add(details.toString());
             try {
-              await tester.pumpWidget(await entry.value(brightness, 2));
+              await tester.pumpWidget(
+                await entry.value(
+                  brightness,
+                  double.parse(
+                    const String.fromEnvironment(
+                      'AUDIT_SCALE',
+                      defaultValue: '2',
+                    ),
+                  ),
+                ),
+              );
               await tester.pump(
                 quoteDebounce + const Duration(milliseconds: 10),
               );
               await tester.pump(const Duration(milliseconds: 500));
               await tester.pump(const Duration(milliseconds: 500));
+              if (entry.key.startsWith('Price approval')) { await tester.tap(find.text('Review price change')); await tester.pumpAndSettle(); }
+              await prepareCheckoutNote(tester, entry.key);
+              await prepareReschedule(tester, entry.key);
               await tester.pumpWidget(const SizedBox());
               await tester.pump();
             } finally {
@@ -773,7 +1136,8 @@ void main() {
           )
           ..devicePixelRatio = 2;
         addTearDown(tester.view.reset);
-        if (const bool.fromEnvironment('AUDIT_KEYBOARD')) {
+        if (const bool.fromEnvironment('AUDIT_KEYBOARD') &&
+            !isCheckoutForm(entry.key)) {
           tester.view.viewInsets = const FakeViewPadding(bottom: 600);
         }
         final key = GlobalKey();
@@ -791,6 +1155,9 @@ void main() {
         await tester.pump(quoteDebounce + const Duration(milliseconds: 10));
         await tester.pump(const Duration(milliseconds: 500));
         await tester.pump(const Duration(milliseconds: 500));
+        if (entry.key.startsWith('Price approval')) { await tester.tap(find.text('Review price change')); await tester.pumpAndSettle(); }
+        await prepareCheckoutNote(tester, entry.key);
+        await prepareReschedule(tester, entry.key);
         await tester.runAsync(() async {
           await Future<void>.delayed(const Duration(milliseconds: 100));
         });
@@ -817,7 +1184,8 @@ void main() {
     }
   }
 
-  if (const bool.fromEnvironment('AUDIT_EXTRA_STATES') ||
+  if (const bool.fromEnvironment('AUDIT_TRUST') || const bool.fromEnvironment('AUDIT_CHECKOUT') ||
+      const bool.fromEnvironment('AUDIT_EXTRA_STATES') ||
       const bool.fromEnvironment('AUDIT_KEYBOARD')) {
     return;
   }
@@ -991,11 +1359,93 @@ class _Offline extends Reachability {
   bool build() => false;
 }
 
+/// "Change pickup time confirm": choose Monday and open the confirmation, as a customer would.
+Future<void> prepareReschedule(WidgetTester tester, String name) async {
+  if (name != 'Change pickup time confirm') return;
+  await tester.scrollUntilVisible(find.text('Mon'), 150, scrollable: find.byType(Scrollable).first);
+  await tester.tap(find.text('Mon'));
+  await tester.pumpAndSettle();
+  await tester.tap(find.widgetWithText(FilledButton, 'Review change'));
+  await tester.pumpAndSettle();
+}
+
+/// The checkout scenarios that open a text field (the keyboard is reserved by [prepareCheckoutNote], not for the whole screen).
+bool isCheckoutForm(String name) => name == 'Checkout note' || name == 'Checkout care note';
+
+Future<void> prepareCheckoutNote(WidgetTester tester, String name) async {
+  if (!isCheckoutForm(name)) return;
+  // The care note and the pickup note each have a field; this is the one the scenario is about.
+  final Finder field;
+  if (name == 'Checkout care note') {
+    field = find.descendant(
+      of: find.byKey(const ValueKey('care-note-input')),
+      matching: find.byType(TextField),
+    );
+  } else {
+    final note = find.text('Note for your pickup (optional)');
+    await tester.scrollUntilVisible(
+      note.hitTestable(),
+      150,
+      scrollable: find.byType(Scrollable).first,
+    );
+    await tester.tap(note.hitTestable());
+    await tester.pumpAndSettle();
+    field = find.descendant(
+      of: find.byKey(const PageStorageKey('pickup-note-input')),
+      matching: find.byType(TextField),
+    );
+  }
+  // Focus the input before reserving the keyboard inset, as on a device.
+  // This also keeps the editing field alive when the list viewport shrinks.
+  await tester.scrollUntilVisible(
+    field,
+    120,
+    scrollable: find.byType(Scrollable).first,
+  );
+  await tester.showKeyboard(field);
+  await tester.pumpAndSettle();
+  if (const bool.fromEnvironment('AUDIT_KEYBOARD')) {
+    tester.view.viewInsets = const FakeViewPadding(bottom: 600);
+    await tester.pumpAndSettle();
+  }
+  await tester.ensureVisible(field);
+  await tester.pumpAndSettle();
+}
+
+class _AuditGoogleSession extends SessionController {
+  @override
+  Future<Session> build() async => const SignedIn(
+    Profile(
+      id: 'u1',
+      name: 'Priya Sharma',
+      email: 'priya@example.com',
+      isComplete: true,
+    ),
+  );
+}
+
 class _AuditLogin extends LoginController {
   @override
   LoginState build() => const LoginState(
     phone: '9876543210',
     challenge: PhoneChallenge(phone: '9876543210', verificationId: 'audit'),
+  );
+}
+
+// Compare heading directions on the same real screens, with identical body copy
+// and controls. This opt-in override never changes the production theme.
+TextStyle auditFont(String family, TextStyle style) {
+  const direction = String.fromEnvironment('AUDIT_TYPE');
+  if (direction.isNotEmpty && family == IdFont.display) {
+    return style.copyWith(
+      fontFamily: direction == 'a' ? 'Charis' : 'Junction',
+      fontWeight: FontWeight.w700,
+      fontFamilyFallback: ['Figtree', 'Roboto'],
+    );
+  }
+  return style.copyWith(
+    fontFamily: family,
+    fontFamilyFallback: ['Figtree', 'Roboto'],
   );
 }
 
@@ -1009,11 +1459,7 @@ Widget auditThemed(
   overrides: overrides,
   child: MaterialApp(
     debugShowCheckedModeBanner: false,
-    theme: buildTheme(
-      brightness,
-      font: (family, style) =>
-          style.copyWith(fontFamily: family, fontFamilyFallback: ['Roboto']),
-    ),
+    theme: buildTheme(brightness, font: auditFont),
     builder: (context, child) => MediaQuery(
       data: MediaQuery.of(context)
           .copyWith(textScaler: TextScaler.linear(textScale)),
@@ -1032,11 +1478,7 @@ Widget auditRouter(
   overrides: overrides,
   child: MaterialApp.router(
     debugShowCheckedModeBanner: false,
-    theme: buildTheme(
-      brightness,
-      font: (family, style) =>
-          style.copyWith(fontFamily: family, fontFamilyFallback: ['Roboto']),
-    ),
+    theme: buildTheme(brightness, font: auditFont),
     builder: (context, child) => MediaQuery(
       data: MediaQuery.of(context)
           .copyWith(textScaler: TextScaler.linear(textScale)),

@@ -1,13 +1,16 @@
-import type { DispatchLeg, OrderStatus, RefundMethod, RefundStatus, Role } from './generated/prisma/enums.js';
+import type { DispatchLeg, OrderStatus, RefundMethod, RefundStatus, Role, TimeSlot } from './generated/prisma/enums.js';
 
 /**
  * In-process domain events (via @nestjs/event-emitter). Emitted after the
  * database transaction commits; listeners handle push, realtime and dispatch.
  */
 export const Events = {
+  IssueChanged: 'issue.changed',
+  AdjustmentChanged: 'adjustment.changed',
   OrderCreated: 'order.created',
   OrderStatusChanged: 'order.status_changed',
   OrderUpdated: 'order.updated',
+  OrderRescheduled: 'order.rescheduled',
   OffersCreated: 'dispatch.offers_created',
   OffersClosed: 'dispatch.offers_closed',
   DispatchFailed: 'dispatch.failed',
@@ -39,10 +42,42 @@ export interface OrderStatusChangedEvent extends OrderRef {
   /** Money in hand once the status changed: what was paid and how much of it has gone back. */
   paidPaise: number;
   refundedPaise: number;
+  /** Part of what was paid that staff kept (the travel charge on an order cancelled after the partner travelled); not owed back. */
+  keptPaise?: number;
 }
 
 export interface OrderUpdatedEvent extends OrderRef {
   reason: 'items_changed' | 'payment_changed' | 'details_changed';
+  /** For items_changed: the total before and after, and the money in hand, so the customer can be told what it means. */
+  previousTotalPaise?: number;
+  totalPaise?: number;
+  paidPaise?: number;
+  refundedPaise?: number;
+  actorRole?: Role | null;
+  /** For items_changed: the travel charge before and after, since a new count can add or remove it. */
+  previousTravelChargePaise?: number;
+  travelChargePaise?: number;
+}
+
+/** The booked pickup and delivery times of an order: IST calendar dates (YYYY-MM-DD) and slots. */
+export interface OrderWindows {
+  pickupDate: string;
+  pickupSlot: TimeSlot;
+  deliveryDate: string;
+  deliverySlot: TimeSlot;
+}
+
+/** The customer moved the pickup and/or delivery time. Emitted once the new times are committed. */
+export interface OrderRescheduledEvent extends OrderRef {
+  /** PICKUP_ASSIGNED to PENDING when the pickup moved and a partner had accepted. */
+  from: OrderStatus;
+  to: OrderStatus;
+  previous: OrderWindows;
+  next: OrderWindows;
+  pickupChanged: boolean;
+  deliveryChanged: boolean;
+  /** The pickup partner who held the order and no longer does, if any. */
+  removedDriverId: string | null;
 }
 
 export interface OffersCreatedEvent {

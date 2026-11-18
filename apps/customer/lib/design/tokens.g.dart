@@ -526,7 +526,7 @@ abstract final class IdSize {
 
 /// Font families. The app bundles these font families.
 abstract final class IdFont {
-  static const display = 'Outfit';
+  static const display = 'Junction';
   static const body = 'Figtree';
   static const mono = 'Geist Mono';
   static const devanagari = 'Noto Sans Devanagari';
@@ -551,30 +551,30 @@ class IdTypeSpec {
 
 /// Type scale. Use the TextStyles from `context.text` (theme.dart) rather than these directly.
 abstract final class IdType {
-  /// Totals and big numbers: the order total, the OTP digits.
+  /// Important amounts and OTP digits, in the text face for a consistent rupee glyph.
   static const display = IdTypeSpec(
-    IdFont.display,
+    IdFont.body,
     30.0,
-    36.0,
-    FontWeight.w600,
+    38.0,
+    FontWeight.w700,
     0.0,
   );
 
   /// Main screen heading; never repeated as a heading inside every card.
   static const headline = IdTypeSpec(
     IdFont.display,
-    26.0,
-    32.0,
-    FontWeight.w600,
+    28.0,
+    36.0,
+    FontWeight.w700,
     0.0,
   );
 
   /// Compact app bar title and section heading.
   static const titleLg = IdTypeSpec(
     IdFont.display,
-    20.0,
-    26.0,
-    FontWeight.w600,
+    21.0,
+    28.0,
+    FontWeight.w700,
     0.0,
   );
 

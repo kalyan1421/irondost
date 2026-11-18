@@ -3,7 +3,7 @@
 import 'legal_content.dart';
 
 const legalCompany = 'Cloud Ironing Factory Private Limited';
-const legalUpdated = 'October 2026';
+const legalUpdated = 'November 2026';
 
 const legalTerms = LegalPage(
   title: 'Terms of service',
@@ -12,7 +12,7 @@ const legalTerms = LegalPage(
       '1. Using IronDost',
       paragraphs: [
         'These terms are an agreement between you and Cloud Ironing Factory Private Limited ("we", "us"). By creating an account or placing an order you agree to them.',
-        'You sign in with your mobile number. Keep your phone secure: orders placed from your account are treated as yours.',
+        'You sign in with your mobile number or, on Android, with your Google account. Keep your phone secure: orders placed from your account are treated as yours.',
       ],
     ),
     LegalSection(
@@ -67,7 +67,7 @@ const legalPrivacy = LegalPage(
         'We collect only what we need to collect, clean and deliver your clothes and to talk to you about your orders.',
       ],
       bullets: [
-        'Your mobile number (to sign you in) and your name. Your email, if you add one, for receipts.',
+        'Your mobile number (to sign you in) and your name. Your email, if you add one, for receipts. If you sign in with Google, we receive your Google account name and email, and you add a mobile number before your first booking.',
         'Your saved addresses, including the point you place on the map. If you tap "use my current location", your phone\'s location is used once to fill in the address; we do not track you in the background.',
         'Your orders: items, prices, pickup and delivery times, and whether they are paid.',
         'A notification token for your phone, so we can send order updates if you allow notifications.',
@@ -86,7 +86,7 @@ const legalPrivacy = LegalPage(
         'A few services process data for us:',
       ],
       bullets: [
-        'Google Firebase sends your sign-in code by SMS and delivers notifications.',
+        'Google Firebase sends your sign-in code by SMS, signs you in if you choose Continue with Google, and delivers notifications.',
         'Razorpay processes online payments. Your card or UPI details go to Razorpay, not to us.',
         'Google Maps shows the map when you choose an address.',
       ],

@@ -32,7 +32,7 @@ class HelpScreen extends ConsumerWidget {
       ),
       (
         'Can I change or cancel a pickup?',
-        'You can cancel in the app until your clothes are picked up: open the order and tap Cancel order. After pickup, call us. To change the time, cancel and book again.',
+        'You can change the time or cancel in the app until your clothes are picked up: open the order and tap Change pickup time (up to two times) or Cancel order. After pickup, call us.',
       ),
       (
         'What if an item is damaged or missing?',
@@ -70,14 +70,14 @@ class HelpScreen extends ConsumerWidget {
                 icon: LucideIcons.phone,
                 title: 'Call us',
                 detail: IndianPhone.display(support.phone),
-                onTap: () => Support.dial(support.phone),
+                onTap: () => Support.dial(support.phone, context: context, fallback: support),
               ),
               if (support.email != null)
                 _ContactRow(
                   icon: LucideIcons.mail,
                   title: 'Email us',
                   detail: support.email!,
-                  onTap: () => Support.mail(support.email!),
+                  onTap: () => Support.mail(support.email!, context: context, fallback: support),
                 ),
             ],
           ),

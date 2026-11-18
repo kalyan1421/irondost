@@ -1,0 +1,110 @@
+"use client";
+
+import { useQuery } from "@tanstack/react-query";
+import { Bell } from "lucide-react";
+import { useRouter } from "next/navigation";
+import { useState } from "react";
+import { ConfirmDialog } from "@/components/confirm-dialog";
+import { ErrorState, Pager, TableSkeleton } from "@/components/page";
+import { Button } from "@/components/ui/button";
+import { Sheet, SheetContent, SheetDescription, SheetHeader, SheetTitle, SheetTrigger } from "@/components/ui/sheet";
+import { SidebarMenuBadge, SidebarMenuButton, SidebarMenuItem } from "@/components/ui/sidebar";
+import { api, unwrap } from "@/lib/api/client";
+import { useApiMutation } from "@/lib/api/mutation";
+import { relativeTime } from "@/lib/format";
+import { cn } from "@/lib/utils";
+
+/**
+ * What the API sends staff: a new order, "no partner found", "refund needed", "refund failed". Without this the only
+ * alert was a toast while a tab happened to be open.
+ */
+export function NotificationsMenu() {
+  const [open, setOpen] = useState(false);
+  const [page, setPage] = useState(1);
+  const router = useRouter();
+  const inbox = useQuery({
+    queryKey: ["notifications", page],
+    queryFn: () => unwrap(api.GET("/v1/me/notifications", { params: { query: { pageSize: 30, page } } })),
+    refetchInterval: 60_000,
+  });
+  const read = useApiMutation(
+    (id: string) => unwrap(api.POST("/v1/me/notifications/{id}/read", { params: { path: { id } } })),
+    { invalidate: [["notifications"]] },
+  );
+  const readAll = useApiMutation(() => unwrap(api.POST("/v1/me/notifications/read-all")), {
+    invalidate: [["notifications"]],
+  });
+  const unread = inbox.data?.unread ?? 0;
+
+  return (
+    <SidebarMenuItem>
+      <Sheet
+        open={open}
+        onOpenChange={(o) => {
+          setOpen(o);
+          if (o) void inbox.refetch();
+        }}
+      >
+        <SheetTrigger asChild>
+          <SidebarMenuButton tooltip="Alerts">
+            <Bell />
+            <span>Alerts</span>
+          </SidebarMenuButton>
+        </SheetTrigger>
+        {unread > 0 ? <SidebarMenuBadge className="bg-primary text-primary-foreground">{unread > 99 ? "99+" : unread}</SidebarMenuBadge> : null}
+        <SheetContent side="right" className="w-full gap-0 sm:max-w-md">
+          <SheetHeader>
+            <SheetTitle>Alerts</SheetTitle>
+            <SheetDescription>New orders, orders with no partner, and refunds that need you.</SheetDescription>
+          </SheetHeader>
+          <div className="flex items-center justify-between px-4 pb-2 text-sm text-muted-foreground">
+            <span role="status">{inbox.isError ? "Alerts could not refresh" : !inbox.data ? "Loading alerts…" : unread > 0 ? `${unread} unread` : "All caught up"}</span>
+            <ConfirmDialog
+              title={`Mark all ${unread} unread alerts as read?`}
+              description="This includes alerts on other pages."
+              confirmLabel="Mark all read"
+              cancelLabel="Go back"
+              trigger={
+                <Button variant="ghost" size="sm" disabled={!inbox.data || inbox.isError || unread === 0 || readAll.isPending}>
+                  Mark all read
+                </Button>
+              }
+              onConfirm={() => readAll.mutateAsync(undefined)}
+            />
+          </div>
+          <ul className="flex-1 divide-y overflow-y-auto border-t">
+            {inbox.isError ? <li><ErrorState error={inbox.error} onRetry={() => void inbox.refetch()} /></li> : !inbox.data ? <li><TableSkeleton rows={3} /></li> : null}
+            {inbox.data?.items.length === 0 ? <li className="px-4 py-10 text-center text-sm text-muted-foreground">Nothing yet.</li> : null}
+            {inbox.data?.items.map((n) => {
+              const orderId = (n.data as { orderId?: string } | null)?.orderId;
+              const issueId = (n.data as { issueId?: string } | null)?.issueId;
+              return (
+                <li key={n.id}>
+                  <button
+                    type="button"
+                    className={cn("flex w-full flex-col gap-0.5 px-4 py-3 text-left hover:bg-accent/50", !n.readAt && "bg-accent/30")}
+                    onClick={() => {
+                      if (!n.readAt) read.mutate(n.id);
+                      if (issueId || orderId) {
+                        setOpen(false);
+                        router.push(issueId ? `/issues/${issueId}` : `/orders/${orderId}`);
+                      }
+                    }}
+                  >
+                    <span className="flex items-center gap-2 text-sm font-medium">
+                      {!n.readAt ? <span className="size-2 shrink-0 rounded-full bg-primary" aria-label="Unread" /> : null}
+                      {n.title}
+                      <span className="ml-auto text-xs font-normal text-muted-foreground">{relativeTime(n.createdAt)}</span>
+                    </span>
+                    <span className="text-sm text-muted-foreground">{n.body}</span>
+                  </button>
+                </li>
+              );
+            })}
+          </ul>
+          {inbox.data ? <div className="border-t p-4"><Pager page={page} pageSize={30} total={inbox.data.total} onPage={setPage} /></div> : null}
+        </SheetContent>
+      </Sheet>
+    </SidebarMenuItem>
+  );
+}

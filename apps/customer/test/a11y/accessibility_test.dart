@@ -12,6 +12,7 @@ import 'package:irondost_customer/features/account/legal_screen.dart';
 import 'package:irondost_customer/features/account/account_repository.dart';
 import 'package:irondost_customer/features/addresses/address_repository.dart';
 import 'package:irondost_customer/features/addresses/addresses_screen.dart';
+import 'package:irondost_customer/features/auth/add_phone_screen.dart';
 import 'package:irondost_customer/features/auth/auth_repository.dart';
 import 'package:irondost_customer/features/auth/name_screen.dart';
 import 'package:irondost_customer/features/auth/phone_screen.dart';
@@ -19,6 +20,7 @@ import 'package:irondost_customer/features/auth/session.dart';
 import 'package:irondost_customer/features/auth/welcome_screen.dart';
 import 'package:irondost_customer/features/basket/basket_screen.dart';
 import 'package:irondost_customer/features/catalogue/catalogue_screen.dart';
+import 'package:irondost_customer/features/checkout/care_note_section.dart';
 import 'package:irondost_customer/features/basket/quote.dart';
 import 'package:irondost_customer/features/home/home_screen.dart';
 import 'package:irondost_customer/features/notifications/notifications.dart';
@@ -28,6 +30,7 @@ import 'package:irondost_customer/features/offers/promotions.dart';
 import 'package:irondost_customer/features/orders/order_detail_screen.dart';
 import 'package:irondost_customer/features/orders/order_repository.dart';
 import 'package:irondost_customer/features/orders/orders_screen.dart';
+import 'package:irondost_customer/features/orders/reschedule_order.dart';
 import 'package:irondost_customer/features/schedule/schedule.dart';
 import 'package:irondost_customer/features/schedule/schedule_screen.dart';
 import 'package:irondost_customer/features/shell/offline_banner.dart';
@@ -55,6 +58,19 @@ void main() {
   final startup = startupProvider.overrideWith((ref) async => const Startup(config: config, installedVersion: '2.0.0'));
   final now = DateTime.now();
   final today = DateTime.now().toUtc().add(const Duration(hours: 5, minutes: 30)).toIso8601String().substring(0, 10);
+
+  /// An order that can still be moved: booked for Sunday 4 Oct morning (the schedule fake's days), delivery on the 6th.
+  OrderDto reschedulable({bool used = false}) => testOrder(
+        id: 'r1',
+        pickupDate: '2026-10-04',
+        pickupSlot: TimeSlot.morning,
+        pickupLabel: '07:00–11:00',
+        deliveryDate: '2026-10-06',
+        deliverySlot: TimeSlot.morning,
+        deliveryLabel: '07:00–11:00',
+        rescheduleCount: used ? 2 : 0,
+        canReschedule: !used,
+      );
 
   /// Puts [screen] at [path] in a router, with a page behind it to go back to.
   GoRouter at(String path, Widget screen) => GoRouter(
@@ -97,7 +113,7 @@ void main() {
         ),
     'Welcome': (b, s) async => themedRouter(testRouter({Routes.welcome: () => const WelcomeScreen()}, initial: Routes.welcome), brightness: b, textScale: s),
     'Phone': (b, s) async => themed(const PhoneScreen(), overrides: [authRepositoryProvider.overrideWithValue(FakeAuth())], brightness: b, textScale: s),
-    'Add mobile number': (b, s) async => themed(const PhoneScreen(linking: true), overrides: [authRepositoryProvider.overrideWithValue(FakeAuth())], brightness: b, textScale: s),
+    'Add mobile number': (b, s) async => themed(const AddPhoneScreen(), overrides: [sessionProvider.overrideWith(_GoogleSession.new)], brightness: b, textScale: s),
     'Basket': (b, s) async => themed(
           const BasketScreen(),
           overrides: await basketOverrides(saved: {'basket.v1': '{"lines":{"shirt":10,"trousers":4,"saree":1},"promoCode":null}'}),
@@ -128,6 +144,59 @@ void main() {
         textScale: s,
       );
     },
+    'Order detail (care note)': (b, s) async {
+      final order = testOrder(
+        id: 'c1',
+        status: OrderStatus.processing,
+        pickedUpAt: DateTime.utc(2026, 10, 1, 12, 10),
+        careNote: 'Red silk saree: stain on the pallu. Colours may run.',
+        carePhotoUrls: const ['https://files.test/care/u1/a.webp', 'https://files.test/care/u1/b.webp'],
+      );
+      return themedRouter(
+        at(Routes.order('c1'), OrderDetailScreen(orderId: 'c1', initial: order)),
+        overrides: [orderRepositoryProvider.overrideWithValue(FakeOrderRepository()..orders['c1'] = order), ...await basketOverrides()],
+        brightness: b,
+        textScale: s,
+      );
+    },
+    'Checkout care note': (b, s) async => themed(
+          Scaffold(body: ListView(padding: const EdgeInsets.all(20), children: const [CareNoteSection()])),
+          overrides: await basketOverrides(saved: {
+            'basket.v1': '{"lines":{"shirt":2,"wash-shirt":1},"promoCode":null}',
+            'care.draft.v1': '{"note":"Red silk saree: stain on the pallu","photos":["https://files.test/care/u1/a.webp","https://files.test/care/u1/b.webp"],"pending":[]}',
+          }),
+          brightness: b,
+          textScale: s,
+        ),
+    'Order detail (change pickup time)': (b, s) async => themedRouter(
+          at(Routes.order('r1'), OrderDetailScreen(orderId: 'r1', initial: reschedulable())),
+          overrides: [orderRepositoryProvider.overrideWithValue(FakeOrderRepository()..orders['r1'] = reschedulable()), ...await basketOverrides()],
+          brightness: b,
+          textScale: s,
+        ),
+    'Change pickup time': (b, s) async => themedRouter(
+          at(Routes.reschedule('r1'), RescheduleScreen(orderId: 'r1', initial: reschedulable())),
+          overrides: [orderRepositoryProvider.overrideWithValue(FakeOrderRepository()..orders['r1'] = reschedulable()), scheduleRepositoryProvider.overrideWithValue(FakeScheduleRepository()), startup, ...await basketOverrides()],
+          brightness: b,
+          textScale: s,
+        ),
+    'Change pickup time (offline)': (b, s) async => themedRouter(
+          at(Routes.reschedule('r1'), RescheduleScreen(orderId: 'r1', initial: reschedulable())),
+          overrides: [
+            orderRepositoryProvider.overrideWithValue(FakeOrderRepository()..orders['r1'] = reschedulable()),
+            scheduleRepositoryProvider.overrideWithValue(FakeScheduleRepository()..pickupFailure = const ApiFailure(ApiFailureKind.offline)),
+            startup,
+            ...await basketOverrides(),
+          ],
+          brightness: b,
+          textScale: s,
+        ),
+    'Change pickup time (all used)': (b, s) async => themedRouter(
+          at(Routes.reschedule('r1'), RescheduleScreen(orderId: 'r1', initial: reschedulable(used: true))),
+          overrides: [orderRepositoryProvider.overrideWithValue(FakeOrderRepository()..orders['r1'] = reschedulable(used: true)), scheduleRepositoryProvider.overrideWithValue(FakeScheduleRepository()), startup, ...await basketOverrides()],
+          brightness: b,
+          textScale: s,
+        ),
     'Offers': (b, s) async => themed(
           const OffersScreen(),
           overrides: [
@@ -161,6 +230,32 @@ void main() {
                 ]),
             ),
             sessionProvider.overrideWith(SignedInSession.new),
+          ],
+          brightness: b,
+          textScale: s,
+        ),
+    'Schedule full windows': (b, s) async => themed(
+          const ScheduleScreen(),
+          overrides: [
+            scheduleRepositoryProvider.overrideWithValue(FakeScheduleRepository(todayOver: false, full: {(date: testToday, slot: TimeSlot.morning), (date: testToday, slot: TimeSlot.noon)})),
+            startup,
+            ...await basketOverrides(),
+          ],
+          brightness: b,
+          textScale: s,
+        ),
+    'Schedule nothing left today': (b, s) async => themed(
+          const ScheduleScreen(),
+          overrides: [scheduleRepositoryProvider.overrideWithValue(FakeScheduleRepository(full: {(date: testToday, slot: TimeSlot.evening)})), startup, ...await basketOverrides()],
+          brightness: b,
+          textScale: s,
+        ),
+    'Home outside the area': (b, s) async => themed(
+          const HomeScreen(),
+          overrides: [
+            ...await basketOverrides(),
+            addressRepositoryProvider.overrideWithValue(FakeAddressRepository([testAddress(serviceable: false, area: 'Gachibowli')])),
+            orderRepositoryProvider.overrideWithValue(FakeOrderRepository()),
           ],
           brightness: b,
           textScale: s,
@@ -239,6 +334,53 @@ void main() {
     });
   }
 
+  group('Change pickup time confirmation', () {
+    Future<Widget> screen(Brightness b, double scale) async => themedRouter(
+          at(Routes.reschedule('r1'), RescheduleScreen(orderId: 'r1', initial: reschedulable())),
+          overrides: [orderRepositoryProvider.overrideWithValue(FakeOrderRepository()..orders['r1'] = reschedulable()), scheduleRepositoryProvider.overrideWithValue(FakeScheduleRepository()), startup, ...await basketOverrides()],
+          brightness: b,
+          textScale: scale,
+        );
+
+    Future<void> openSheet(WidgetTester tester) async {
+      await tester.scrollUntilVisible(find.text('Mon'), 200, scrollable: find.byType(Scrollable).first);
+      await tester.tap(find.text('Mon'));
+      await tester.pumpAndSettle();
+      await tester.tap(find.widgetWithText(FilledButton, 'Review change'));
+      await tester.pumpAndSettle();
+      expect(find.text('Change your pickup time?'), findsOneWidget);
+    }
+
+    for (final brightness in Brightness.values) {
+      testWidgets('${brightness.name}: tap targets, labels and contrast', (tester) async {
+        final semantics = tester.ensureSemantics();
+        try {
+          await show(tester, await screen(brightness, 1));
+          await openSheet(tester);
+          await expectLater(tester, meetsGuideline(androidTapTargetGuideline));
+          await expectLater(tester, meetsGuideline(iOSTapTargetGuideline));
+          await expectLater(tester, meetsGuideline(labeledTapTargetGuideline));
+          await expectLater(tester, meetsGuideline(textContrastGuideline));
+        } finally {
+          semantics.dispose();
+        }
+      });
+
+      testWidgets('${brightness.name}: fits at 200% text', (tester) async {
+        final problems = <String>[];
+        final original = FlutterError.onError;
+        FlutterError.onError = (details) => problems.add(details.toString().split('\n').first);
+        try {
+          await show(tester, await screen(brightness, 2));
+          await openSheet(tester);
+        } finally {
+          FlutterError.onError = original;
+        }
+        expect(problems.toSet().toList(), isEmpty);
+      });
+    }
+  });
+
   group('Account sheets', () {
     Future<Widget> account(Brightness b, double scale, FakeAccountRepository repo) async => themedRouter(
           testRouter({Routes.account: () => const AccountScreen()}, initial: Routes.account),
@@ -308,6 +450,12 @@ void main() {
 }
 
 /// Starts with the API unreachable, so the banner is showing.
+/// Signed in with Google: no mobile number yet.
+class _GoogleSession extends SessionController {
+  @override
+  Future<Session> build() async => const SignedIn(Profile(id: 'g1', name: 'Gina', email: 'gina@example.com', isComplete: true));
+}
+
 class _Offline extends Reachability {
   @override
   bool build() => false;

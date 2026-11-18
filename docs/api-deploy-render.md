@@ -56,6 +56,10 @@ These are `sync: false` in the Blueprint, so Render prompts for them when it is 
 | `DATABASE_URL` | Supabase → Connect → **Session pooler** string, with the database password filled in (`postgresql://postgres.<ref>:<password>@aws-0-ap-southeast-1.pooler.supabase.com:5432/postgres`). Not the transaction pooler (port 6543), which Prisma migrations cannot use. |
 | `SUPABASE_SERVICE_ROLE_KEY` | Supabase → Project Settings → API Keys → the secret key (`service_role`). Server-side only. |
 | `CORS_ORIGINS` | Comma-separated browser origins: the admin site and `https://irondost-app.web.app` |
+| `TRUST_PROXY_HOPS` | `1` on Render (already in the Blueprint). Without it the rate limiter sees Render's load balancer as every caller, so all customers share one limit. |
+
+At startup in production the API logs a warning (never an error) for a Razorpay test key, missing Razorpay keys or webhook secret,
+missing Firebase credentials and `TRUST_PROXY_HOPS=0`. Check the service logs after each deploy.
 
 ## Storage on Supabase
 
@@ -118,7 +122,8 @@ service's Environment tab as the secret.
 2. Render dashboard → Blueprints → New Blueprint Instance → pick the repo, enter the values above, apply.
 3. The container applies pending migrations (`prisma migrate deploy`) and then starts. Check `https://<api-url>/v1/health`.
 4. Seed the first super admin once, from your own machine with the same `DATABASE_URL` (the session pooler string):
-   `SEED_SUPER_ADMIN_PHONE=+91… pnpm --filter @laundry/api db:seed`. For an email + password admin instead, run `db:admin` (see
+   `SEED_SUPER_ADMIN_PHONE=+91… pnpm --filter @laundry/api db:seed`. Against a database that is not on your machine the seed skips the
+   sample catalogue (placeholder prices); step 5 loads the real one. For an email + password admin instead, run `db:admin` (see
    "Email + password sign-in" above).
 5. Load the service catalogue (categories and items) from your local database into the live one. From `apps/api`, with the
    session pooler string as the target; the first run is a dry run that prints what it would add and writes nothing:

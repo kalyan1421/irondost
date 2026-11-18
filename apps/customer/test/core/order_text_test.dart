@@ -1,14 +1,34 @@
 import 'package:flutter_test/flutter_test.dart';
 import 'package:irondost_customer/core/order_text.dart';
+import 'package:irondost_customer/core/quantities.dart';
 import 'package:irondost_customer/data/api_client.dart';
 
 import '../helpers.dart';
 
 void main() {
+  test('mixed quantities keep kilograms separate from garments, pairs and sets', () {
+    expect(quantitySummary([(ItemUnit.piece, 2), (ItemUnit.kg, 3), (ItemUnit.pair, 1), (ItemUnit.valueSet, 2)]), '2 items · 3 kg · 1 pair · 2 sets');
+  });
   OrderDto order({OrderStatus status = OrderStatus.pending, PaymentMethod method = PaymentMethod.cod, PaymentStatus paid = PaymentStatus.unpaid, int paidPaise = 0, int total = 24800, int refunded = 0}) =>
       testOrder(status: status, method: method, paymentStatus: paid, paidPaise: paidPaise, totalPaise: total, refundedPaise: refunded);
 
   group('paidHow', () {
+    test('a delivered COD order paid online stays online, and mixed records stay mixed', () {
+      final online = OrderPaymentDto(id: 'p', provider: PaymentProvider.razorpay, amountPaise: 10000, reference: 'pay_1', capturedAt: DateTime.utc(2026));
+      final cash = OrderPaymentDto(id: 'c', provider: PaymentProvider.cash, amountPaise: 14800, reference: null, capturedAt: DateTime.utc(2026));
+      expect(paidHow(testOrder(status: OrderStatus.delivered, payments: [online])), 'Paid online');
+      expect(paidHow(testOrder(payments: [online, cash])), 'Paid online and in cash');
+      expect(paidHow(testOrder(payments: [])), 'Payment received');
+    });
+    test('pending and failed refunds never count as completed', () {
+      RefundDto refund(RefundStatus state) => RefundDto(id: 'r', amountPaise: 24800, method: RefundMethod.bankTransfer,
+        status: state, note: 'Refund', createdAt: DateTime.utc(2026), processedAt: null, failureReason: null);
+      final pending = testOrder(status: OrderStatus.cancelled, paidPaise: 24800, refundedPaise: 24800, refunds: [refund(RefundStatus.pending)]);
+      expect(completedRefundPaise(pending), 0);
+      expect(settledNote(pending), 'Refund pending');
+      expect(refundSummary(pending), '₹248 refund pending.');
+      expect(completedRefundPaise(testOrder(refunds: [refund(RefundStatus.failed)])), 0);
+    });
     test('an online order was paid online', () => expect(paidHow(order(method: PaymentMethod.online, paid: PaymentStatus.paid, paidPaise: 24800)), 'Paid online'));
 
     test('a cash order paid before it was delivered was paid online, since cash is only taken at the door', () {
@@ -59,6 +79,34 @@ void main() {
       expect(settledNote(order(status: OrderStatus.cancelled, paid: PaymentStatus.paid, paidPaise: 24800)), 'Refund pending');
       expect(settledNote(order(status: OrderStatus.delivered, paid: PaymentStatus.paid, paidPaise: 24800)), 'Paid in cash');
       expect(settledNote(order(status: OrderStatus.delivered, method: PaymentMethod.online, paid: PaymentStatus.paid, paidPaise: 24800)), 'Paid online');
+    });
+  });
+
+  group('a kept travel charge', () {
+    // Paid Rs 248 including a Rs 30 travel charge; staff cancelled after the partner had already travelled.
+    OrderDto kept({int paidPaise = 24800, int refundedPaise = 0, bool keptCharge = true, int fee = 3000}) =>
+        testOrder(status: OrderStatus.cancelled, paymentStatus: PaymentStatus.paid, paidPaise: paidPaise, refundedPaise: refundedPaise,
+          deliveryFeePaise: fee, travelChargeKept: keptCharge);
+
+    test('is never more than was paid, and nothing when it was not kept', () {
+      expect(keptTravelPaise(kept()), 3000);
+      expect(keptTravelPaise(kept(paidPaise: 1000)), 1000);
+      expect(keptTravelPaise(kept(paidPaise: 0)), 0);
+      expect(keptTravelPaise(kept(keptCharge: false)), 0);
+    });
+
+    test('is not owed back: the rest is, and once it is refunded nothing has no refund behind it', () {
+      expect(unaccountedRefundPaise(kept()), 21800);
+      expect(unaccountedRefundPaise(kept(keptCharge: false)), 24800);
+      expect(unaccountedRefundPaise(kept(refundedPaise: 21800)), 0);
+      expect(refundGapNote(kept(refundedPaise: 21800)), isNull);
+    });
+
+    test('the order list note says refunded once everything else went back, and Refund pending before', () {
+      expect(settledNote(kept(refundedPaise: 21800)), '₹218 refunded');
+      expect(settledNote(kept()), 'Refund pending');
+      expect(settledNote(kept(paidPaise: 3000)), 'Travel charge kept', reason: 'only the charge was paid, and it was kept');
+      expect(settledNote(kept(paidPaise: 0)), 'Nothing charged');
     });
   });
 

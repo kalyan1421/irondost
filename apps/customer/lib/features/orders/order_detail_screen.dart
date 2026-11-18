@@ -7,6 +7,7 @@ import '../../app/routes.dart';
 import '../../core/money.dart';
 import '../../core/order_status.dart';
 import '../../core/order_text.dart';
+import '../../core/text_wrap.dart';
 import '../../core/order_timeline.dart';
 import '../../core/phone.dart';
 import '../../core/slots.dart';
@@ -21,8 +22,12 @@ import '../../design/widgets/surfaces.dart';
 import '../basket/basket.dart';
 import '../support/support.dart';
 import 'cancel_order.dart';
+import 'care_note_view.dart';
 import 'order_repository.dart';
 import 'pay_due.dart';
+import 'refund_list.dart';
+import 'reschedule_order.dart';
+import 'price_approval.dart';
 
 /// One order: where it is, who has it, what is owed, and what to do next. Shows [initial] (from the
 /// list) at once, then the order as the API has it now.
@@ -99,6 +104,7 @@ class OrderDetailScreen extends ConsumerWidget {
             IdSpace.s6,
           ),
           children: [
+            PriceApprovalCard(order: order),
             _Hero(order: order, delayed: delayed),
             const SizedBox(height: IdSpace.s4),
             if (order.status == OrderStatus.cancelled)
@@ -107,6 +113,22 @@ class OrderDetailScreen extends ConsumerWidget {
               ..._deliveredBody(context, ref, order)
             else
               ..._activeBody(context, ref, order, delayed: delayed),
+            if (hasCareNote(order)) ...[
+              const SizedBox(height: IdSpace.s4),
+              OrderCareNote(order: order),
+            ],
+            const SizedBox(height: IdSpace.s4),
+            IdListGroup(children: [
+              if (order.canReschedule)
+                IdListRow(
+                  icon: LucideIcons.calendarClock,
+                  label: 'Change pickup time',
+                  value: changesLeft(order.reschedulesRemaining),
+                  onTap: () => context.push(Routes.reschedule(order.id), extra: order),
+                ),
+              if (order.status != OrderStatus.cancelled) IdListRow(icon: LucideIcons.messageSquare, label: 'Report a problem', onTap: () => context.push(Routes.report(order.id))),
+              IdListRow(icon: LucideIcons.messagesSquare, label: 'Reports for this order', onTap: () => context.push('${Routes.issues}?orderId=${order.id}')),
+            ]),
           ],
         ),
       ),
@@ -153,6 +175,7 @@ class OrderDetailScreen extends ConsumerWidget {
             expand: true,
             onPressed: () => showPayDueSheet(context, order),
           ),
+          _FooterNote(dueCaption(order)),
           if (cancel)
             IdButton.outline(
               label: 'Cancel order',
@@ -190,7 +213,6 @@ class OrderDetailScreen extends ConsumerWidget {
     required bool delayed,
   }) {
     final partner = partnerFor(order);
-    final due = canPayNow(order);
     return [
       if (delayed) ...[
         _DelayedNotice(order: order),
@@ -204,19 +226,10 @@ class OrderDetailScreen extends ConsumerWidget {
           role: partnerRole(order),
           caption: partnerCaption(order),
         ),
-      ] else if (!delayed) ...[
+      ] else if (!delayed && order.status == OrderStatus.pending) ...[
+        // Only while no one has been assigned yet. Later with no partner on record there is nothing to wait for.
         const SizedBox(height: IdSpace.s4),
         const _PartnerPending(),
-      ],
-      if (due) ...[
-        const SizedBox(height: IdSpace.s4),
-        _Notice(
-          icon: order.paymentMethod == PaymentMethod.online
-              ? LucideIcons.circleAlert
-              : LucideIcons.banknote,
-          tone: _NoticeTone.warning,
-          text: dueText(order),
-        ),
       ],
       const SizedBox(height: IdSpace.s4),
       _BillRow(order: order),
@@ -236,14 +249,11 @@ class OrderDetailScreen extends ConsumerWidget {
       IdCard(
         child: Column(
           children: [
-            _Line(
-              'Picked up',
-              order.pickedUpAt == null
-                  ? '—'
-                  : istDateTimeLabel(order.pickedUpAt!),
-            ),
-            const SizedBox(height: 10),
-            _Line('Items', '${pieceCount(order)}, ironed'),
+            if (order.pickedUpAt != null) ...[
+              _Line('Picked up', istDateTimeLabel(order.pickedUpAt!)),
+              const SizedBox(height: 10),
+            ],
+            _Line('Count', piecesLabel(order)),
             const SizedBox(height: 10),
             Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -277,7 +287,7 @@ class OrderDetailScreen extends ConsumerWidget {
                         Flexible(
                           child: Text(
                             paid
-                                ? '${rupees(order.paidPaise)} ${paidHow(order) == 'Paid in cash' ? 'in cash' : 'online'}'
+                                ? '${rupees(order.paidPaise)} · ${paidHow(order)}'
                                 : '${rupees(order.amountDuePaise)} due',
                             style: t.labelSm.copyWith(color: paymentColor),
                           ),
@@ -311,17 +321,28 @@ class OrderDetailScreen extends ConsumerWidget {
 
   List<Widget> _cancelledBody(BuildContext context, OrderDto order) {
     final paid = order.paidPaise > 0;
-    final refunded = order.refundedPaise >= order.paidPaise;
+    final hasRecords = order.refunds?.isNotEmpty ?? false;
+    // Refund rows say what each refund is and where it stands. Without rows (an older server, or none recorded yet) one
+    // sentence does; with rows it only speaks up for money that no refund accounts for.
+    final notice = !paid ? null : hasRecords ? refundGapNote(order) : refundSummary(order);
     return [
-      if (paid)
+      if (notice != null && notice.isNotEmpty) ...[
+        _Notice(icon: LucideIcons.refreshCw, tone: _NoticeTone.info, text: notice),
+        const SizedBox(height: IdSpace.s4),
+      ],
+      if (paid && hasRecords) ...[
+        RefundList(order: order),
+        const SizedBox(height: IdSpace.s4),
+      ],
+      // Only when money was actually kept: an unpaid order was not charged, whatever staff recorded.
+      if (keptTravelPaise(order) > 0) ...[
         _Notice(
-          icon: LucideIcons.refreshCw,
+          icon: LucideIcons.info,
           tone: _NoticeTone.info,
-          text: refunded
-              ? 'Your ${rupees(order.refundedPaise)} refund has been sent to the account you paid from.'
-              : '${rupees(order.paidPaise)} is awaiting refund confirmation. Contact support for the current status.',
+          text: keepLastWordsTogether('Travel charge kept: partner had already travelled'),
         ),
-      if (paid) const SizedBox(height: IdSpace.s4),
+        const SizedBox(height: IdSpace.s4),
+      ],
       IdCard(
         child: Column(
           children: [
@@ -330,14 +351,15 @@ class OrderDetailScreen extends ConsumerWidget {
               '${dayLong(order.pickupDate)}, ${windowFromLabel(order.pickupSlotLabel)}',
             ),
             const SizedBox(height: 10),
-            _Line('Items', '${pieceCount(order)}'),
+            _Line('Count', piecesLabel(order)),
             const SizedBox(height: 10),
-            _Line(
-              'Amount',
-              paid
-                  ? '${rupees(order.totalPaise)} · ${refunded ? 'refunded' : 'refund pending'}'
-                  : '${rupees(order.totalPaise)} · nothing charged',
-            ),
+            paid
+                ? _Line('Paid', rupees(order.paidPaise))
+                : _Line('Amount', '${rupees(order.totalPaise)} · nothing charged'),
+            if (keptTravelPaise(order) > 0) ...[
+              const SizedBox(height: 10),
+              _Line('Kept for travel', rupees(keptTravelPaise(order))),
+            ],
           ],
         ),
       ),
@@ -373,19 +395,18 @@ String partnerCaption(OrderDto o) => switch (o.status) {
   _ => 'Picked up your clothes',
 };
 
-/// The warning under the timeline: how much is owed and the ways to pay it.
-String dueText(OrderDto o) {
-  final amount = rupees(o.amountDuePaise);
+/// Under the Pay button: the other way to settle what is owed. The amount is on the button.
+String dueCaption(OrderDto o) {
   if (o.paymentMethod == PaymentMethod.online) {
-    return "$amount isn't paid yet. Pay online now, or switch to cash on delivery.";
+    return 'Not paid yet. You can also switch to cash on delivery.';
   }
   final delivering =
       o.status == OrderStatus.deliveryAssigned ||
       o.status == OrderStatus.outForDelivery;
   final first = o.deliveryDriver?.name?.split(' ').first;
   return delivering && first != null
-      ? '$amount is due. Pay $first in cash at the door, or pay online now.'
-      : '$amount is due. Pay the partner in cash or pay online now.';
+      ? 'Or pay $first in cash at the door.'
+      : 'Or pay the partner in cash when your clothes come back.';
 }
 
 /// Opens the cancel sheet, and says so when the order was cancelled.
@@ -461,7 +482,7 @@ Future<void> showOrderHelp(
             label: 'Call ${IndianPhone.display(support.phone)}',
             icon: LucideIcons.phone,
             expand: true,
-            onPressed: () => Support.dial(support.phone),
+            onPressed: () => Support.dial(support.phone, context: context, fallback: support),
           ),
           if (support.email != null) ...[
             const SizedBox(height: IdSpace.s2),
@@ -469,7 +490,7 @@ Future<void> showOrderHelp(
               label: 'Email ${support.email}',
               icon: LucideIcons.mail,
               expand: true,
-              onPressed: () => Support.mail(support.email!),
+              onPressed: () => Support.mail(support.email!, context: context, fallback: support, orderNumber: order.orderNumber),
             ),
           ],
         ],
@@ -560,12 +581,11 @@ class _Hero extends StatelessWidget {
           children: [
             Container(
               constraints: const BoxConstraints(minHeight: 28),
-              padding: const EdgeInsets.symmetric(horizontal: 10),
+              padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
               decoration: BoxDecoration(
                 color: c.surface,
                 borderRadius: BorderRadius.circular(IdRadius.full),
               ),
-              alignment: Alignment.center,
               child: Text(
                 'Cancelled',
                 style: t.labelSm.copyWith(color: c.textMuted),
@@ -575,9 +595,11 @@ class _Hero extends StatelessWidget {
             Semantics(
               header: true,
               child: Text(
-                byStaff
-                    ? 'This order was cancelled'
-                    : 'You cancelled this order',
+                keepLastWordsTogether(
+                  byStaff
+                      ? 'This order was cancelled'
+                      : 'You cancelled this order',
+                ),
                 style: t.headline,
               ),
             ),
@@ -616,11 +638,35 @@ class _Hero extends StatelessWidget {
     // No card around the hero: it is the page's own colour, so padding or a clip here would only
     // push the text 20 dp off the grid the timeline and partner card sit on, and a clip would cut
     // the edge of anything drawn right at the margin (a glyph, a button outline).
+    final statusLine = Row(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        ExcludeSemantics(
+          child: Padding(
+            // Centres the 20 dp icon on the first line of text.
+            padding: const EdgeInsets.only(top: 1),
+            child: Icon(
+              late ? LucideIcons.circleAlert : LucideIcons.clock,
+              size: IdSize.iconMd,
+              color: accent,
+            ),
+          ),
+        ),
+        const SizedBox(width: IdSpace.s2),
+        Expanded(
+          child: Text(
+            // The hours stay on one line: a wrap inside "4 – 8 PM" reads as two times.
+            keepWindowTogether(body),
+            // The time to look for is the point of this line.
+            style: t.title.copyWith(color: c.text),
+          ),
+        ),
+      ],
+    );
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
-        // The status is announced when it changes; the button below is kept out of this region
-        // so that announcing a new status does not also announce a button.
+        // The status is announced when it changes. The timeline below carries the progress, so there is no second bar.
         Semantics(
           container: true,
           liveRegion: true,
@@ -632,91 +678,36 @@ class _Hero extends StatelessWidget {
                 style: t.labelSm.copyWith(color: c.textMuted),
               ),
               Text(title, style: t.headline.copyWith(color: c.text)),
-              const SizedBox(height: IdSpace.s2),
-              Row(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  ExcludeSemantics(
-                    child: Padding(
-                      // Centres the 20 dp icon on the first line of text.
-                      padding: const EdgeInsets.only(top: 1),
-                      child: Icon(
-                        late ? LucideIcons.circleAlert : LucideIcons.clock,
-                        size: IdSize.iconMd,
-                        color: accent,
-                      ),
-                    ),
-                  ),
-                  const SizedBox(width: IdSpace.s2),
-                  Expanded(
-                    child: Text(
-                      // The hours stay on one line: a wrap inside "4 – 8 PM" reads as two times.
-                      keepWindowTogether(body),
-                      // The time to look for is the point of this line; a late message is a
-                      // sentence, so it stays at body weight.
-                      style: (missed ? t.body : t.title).copyWith(
-                        color: c.text,
-                      ),
-                    ),
-                  ),
-                ],
-              ),
-              const SizedBox(height: IdSpace.s4),
-              _StepBar(step: step, color: accent),
+              if (!missed) ...[const SizedBox(height: IdSpace.s2), statusLine],
             ],
           ),
         ),
-        if (missed) ...[const SizedBox(height: IdSpace.s4), const _CallUs()],
+        // A missed estimate is one amber notice: the sentence and the way to call, together.
+        if (missed) ...[
+          const SizedBox(height: IdSpace.s3),
+          _Notice(
+            icon: LucideIcons.circleAlert,
+            tone: _NoticeTone.warning,
+            text: keepWindowTogether(body),
+            actions: const [_CallUs()],
+          ),
+        ],
       ],
     );
   }
 }
 
-/// Five short segments, one per timeline step: those reached are filled. It repeats what "Step n of
-/// 5" and the timeline already say, so it is hidden from screen readers.
-class _StepBar extends StatelessWidget {
-  const _StepBar({required this.step, required this.color});
-  final int step;
-  final Color color;
-
-  @override
-  Widget build(BuildContext context) {
-    final c = context.colors;
-    return ExcludeSemantics(
-      child: Row(
-        children: [
-          for (var i = 1; i <= 5; i++) ...[
-            if (i > 1) const SizedBox(width: IdSpace.s1),
-            Expanded(
-              child: Container(
-                height: 4,
-                decoration: BoxDecoration(
-                  color: i <= step ? color : c.border,
-                  borderRadius: BorderRadius.circular(IdRadius.full),
-                ),
-              ),
-            ),
-          ],
-        ],
-      ),
-    );
-  }
-}
-
-/// Dials support. Shown when the delivery estimate has passed, next to the words that say so.
+/// Dials support. Sits inside the notice that says the delivery estimate has passed.
 class _CallUs extends ConsumerWidget {
   const _CallUs();
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final support = Support.of(ref);
-    return Align(
-      alignment: Alignment.centerLeft,
-      child: IdButton.outline(
-        label: 'Call us',
-        icon: LucideIcons.phone,
-        onPressed: () => Support.dial(support.phone),
-      ),
+    return IdButton.text(
+      label: 'Call us',
+      icon: LucideIcons.phone,
+      onPressed: () => Support.dial(support.phone, context: context, fallback: support),
     );
   }
 }
@@ -799,8 +790,13 @@ class _DelayedNotice extends ConsumerWidget {
       actions: [
         IdButton.outline(
           label: 'Call us',
-          onPressed: () => Support.dial(support.phone),
+          onPressed: () => Support.dial(support.phone, context: context, fallback: support),
         ),
+        if (order.canReschedule)
+          IdButton.text(
+            label: 'Change time',
+            onPressed: () => context.push(Routes.reschedule(order.id), extra: order),
+          ),
         IdButton.text(
           label: 'Cancel order',
           onPressed: () => cancelOrder(context, order),
@@ -922,7 +918,7 @@ class _PartnerRow extends StatelessWidget {
               fixedSize: const Size(48, 48),
             ),
             icon: const Icon(LucideIcons.phone),
-            onPressed: person.phone == null ? null : () => Support.dial(person.phone!),
+            onPressed: person.phone == null ? null : () => Support.dial(person.phone!, context: context),
           ),
         ],
       ),
@@ -990,6 +986,19 @@ class _Line extends StatelessWidget {
         child: Text(v, style: context.text.bodyLg, textAlign: TextAlign.end),
       ),
     ],
+  );
+}
+
+/// A line of explanation inside the footer, directly under the button it explains.
+class _FooterNote extends StatelessWidget {
+  const _FooterNote(this.text);
+  final String text;
+
+  @override
+  Widget build(BuildContext context) => Text(
+    text,
+    style: context.text.caption.copyWith(color: context.colors.textMuted),
+    textAlign: TextAlign.center,
   );
 }
 

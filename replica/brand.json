@@ -1,0 +1,6 @@
+{
+  "_about": "Competitor identifiers to keep OUT of IronDost's shipped code, used by sweep.py and listing.py. Colours are the brand colours measured from each app's public store screenshots (replica/design/*.tokens.json). IronDost's own palette is not on this list.",
+  "avoid": ["Tumbledry", "Tumble Dry", "DhobiLite", "Dhobi Lite", "Fabrico", "UClean", "FABO", "LaundryMate", "Laundry Mate", "LaundroKart", "Laundro Kart", "Washmart", "Pick My Laundry", "Cleanovo", "Easy Spin", "Quick Dry Cleaning"],
+  "domains": ["tumbledry.in", "dhobilite.com", "fabrico.in", "laundrymate.in", "laundrokart.com", "uclean.in", "fabonow.com"],
+  "colors": ["#4DC1AC", "#A4CC34", "#AED136", "#FD931B", "#FECC04", "#FCC40C", "#B8227D", "#044C6C", "#4288D4", "#0274BC", "#243C64", "#7C2C8C", "#AC7C1C"]
+}

@@ -12,6 +12,7 @@ import {
   IsNumber,
   IsOptional,
   IsString,
+  IsUUID,
   Length,
   Matches,
   Max,
@@ -70,6 +71,42 @@ export class CustomerPageDto {
   @ApiProperty() total!: number;
 }
 
+export class AuditQuery extends PageQueryDto {
+  @ApiPropertyOptional() @IsOptional() @IsUUID() actorId?: string;
+  @ApiPropertyOptional() @IsOptional() @IsString() @MaxLength(100) action?: string;
+  @ApiPropertyOptional() @IsOptional() @Matches(/^\d{4}-\d{2}-\d{2}$/) from?: string;
+  @ApiPropertyOptional() @IsOptional() @Matches(/^\d{4}-\d{2}-\d{2}$/) to?: string;
+  @ApiPropertyOptional({ description: 'Only this kind of record, e.g. order, user, app_version' })
+  @IsOptional()
+  @IsString()
+  @MaxLength(60)
+  entity?: string;
+
+  @ApiPropertyOptional({ description: 'Only this record, e.g. an order id' })
+  @IsOptional()
+  @IsString()
+  @MaxLength(80)
+  entityId?: string;
+}
+
+export class AuditEntryDto {
+  @ApiProperty() id!: string;
+  @ApiProperty() action!: string;
+  @ApiProperty() entity!: string;
+  @ApiProperty({ nullable: true, type: String }) entityId!: string | null;
+  @ApiProperty({ nullable: true, type: String }) actorId!: string | null;
+  @ApiProperty({ nullable: true, type: String }) actorName!: string | null;
+  @ApiProperty({ type: Object, nullable: true }) data!: unknown;
+  @ApiProperty() createdAt!: Date;
+}
+
+export class AuditPageDto {
+  @ApiProperty({ type: [AuditEntryDto] }) items!: AuditEntryDto[];
+  @ApiProperty() page!: number;
+  @ApiProperty() pageSize!: number;
+  @ApiProperty() total!: number;
+}
+
 export class CreateStaffDto {
   @ApiProperty({ example: '9876543210' })
   @IsString()
@@ -105,9 +142,12 @@ export class UpdateStaffDto {
 }
 
 export class UpdateSettingsDto {
+  @ApiPropertyOptional({ description: 'Price-approval expiry, in hours.' }) @IsOptional() @IsInt() @Min(1) @Max(168) adjustmentExpiryHours?: number;
+  @ApiPropertyOptional({ nullable: true, type: Number, description: 'Public first-response target; null keeps the promise off.' })
+  @IsOptional() @ValidateIf((_, v) => v !== null) @IsInt() @Min(1) @Max(168) issueFirstResponseHours?: number | null;
   @ApiPropertyOptional() @IsOptional() @IsInt() @Min(0) minOrderPaise?: number;
-  @ApiPropertyOptional() @IsOptional() @IsInt() @Min(0) deliveryFeePaise?: number;
-  @ApiPropertyOptional({ nullable: true, type: Number })
+  @ApiPropertyOptional({ description: 'The flat travel charge for a small order, in paise (0 = no charge).' }) @IsOptional() @IsInt() @Min(0) deliveryFeePaise?: number;
+  @ApiPropertyOptional({ nullable: true, type: Number, description: 'Travel is free when the items total, before any coupon, reaches this many paise. Null = the charge always applies.' })
   @IsOptional()
   @ValidateIf((_, v) => v !== null)
   @IsInt()
@@ -163,14 +203,34 @@ export class UpdateSettingsDto {
   @ArrayMaxSize(1000)
   @Matches(/^[1-9]\d{5}$/, { each: true, message: 'each PIN code must have 6 digits' })
   servicePincodes?: string[];
+
+  @ApiPropertyOptional({
+    nullable: true,
+    type: Number,
+    description: 'Pickups one window (a pickup date and slot) can hold. Null means no limit.',
+    example: 8,
+  })
+  @IsOptional()
+  @ValidateIf((_, v) => v !== null)
+  @IsInt()
+  @Min(1)
+  @Max(1000)
+  pickupCapacityPerSlot?: number | null;
 }
 
 export class DashboardDto {
+  @ApiProperty() openIssues!: number;
+  @ApiProperty() overdueIssues!: number;
+  @ApiProperty() pendingAdjustments!: number;
+  @ApiProperty({ description: 'Alerts from the last 14 days that did not reach the person and nobody has followed up' })
+  undeliveredAlerts!: number;
   @ApiProperty({ description: 'Count of orders per status' }) byStatus!: Record<string, number>;
   @ApiProperty() pickupsToday!: number;
   @ApiProperty() deliveriesToday!: number;
   @ApiProperty() ordersToday!: number;
   @ApiProperty() needsAttention!: number;
+  @ApiProperty({ description: 'Orders where the customer is owed money back (cancelled after paying, or overpaid)' })
+  refundsDue!: number;
   @ApiProperty() driversOnline!: number;
   @ApiProperty() collectedTodayPaise!: number;
   @ApiProperty() collectedLast7DaysPaise!: number;
@@ -180,9 +240,11 @@ export class DashboardDto {
 }
 
 export class BusinessSettingsDto {
+  @ApiProperty() adjustmentExpiryHours!: number;
+  @ApiProperty({ nullable: true, type: Number }) issueFirstResponseHours!: number | null;
   @ApiProperty() minOrderPaise!: number;
-  @ApiProperty() deliveryFeePaise!: number;
-  @ApiProperty({ nullable: true, type: Number }) freeDeliveryAbovePaise!: number | null;
+  @ApiProperty({ description: 'The flat travel charge for a small order, in paise.' }) deliveryFeePaise!: number;
+  @ApiProperty({ nullable: true, type: Number, description: 'Travel is free from this items total (before any coupon), in paise. Null = never free.' }) freeDeliveryAbovePaise!: number | null;
   @ApiProperty() minTurnaroundHours!: number;
   @ApiProperty() bookingCutoffMinutes!: number;
   @ApiProperty() maxAdvanceDays!: number;
@@ -198,6 +260,7 @@ export class BusinessSettingsDto {
   @ApiProperty({ nullable: true, type: Number }) serviceCenterLongitude!: number | null;
   @ApiProperty({ nullable: true, type: Number }) serviceRadiusKm!: number | null;
   @ApiProperty({ type: [String] }) servicePincodes!: string[];
+  @ApiProperty({ nullable: true, type: Number, description: 'Pickups one window can hold; null means no limit.' }) pickupCapacityPerSlot!: number | null;
   @ApiProperty() updatedAt!: Date;
 }
 

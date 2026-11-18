@@ -5,6 +5,7 @@ import 'package:lucide_icons_flutter/lucide_icons.dart';
 
 import '../../app/routes.dart';
 import '../../core/money.dart';
+import '../../core/phone.dart';
 import '../../core/slots.dart';
 import '../../data/api_client.dart';
 import '../../design/theme.dart';
@@ -24,6 +25,8 @@ import '../basket/quote.dart';
 import '../basket/quote_bill.dart';
 import '../payment/payment_flow.dart';
 import '../schedule/schedule.dart';
+import 'care_note.dart';
+import 'care_note_section.dart';
 import 'checkout.dart';
 
 /// Checkout: where from, when, how to pay, and the bill. One tap places the order; online payment
@@ -31,8 +34,8 @@ import 'checkout.dart';
 class CheckoutScreen extends ConsumerWidget {
   const CheckoutScreen({super.key});
 
-  /// A customer who signed in with Google has no verified number yet. The pickup partner calls it, so ask for it now
-  /// (a code by SMS) and carry on with the order once it is stored.
+  /// A customer who signed in with Google has no number yet. The pickup partner calls it, so ask for it now (typed, no SMS
+  /// code) and carry on with the order once it is saved.
   static Future<bool> _hasPhone(BuildContext context, WidgetRef ref) async {
     final session = ref.read(sessionProvider).value;
     if (session is SignedIn && !session.profile.hasPhone) {
@@ -62,7 +65,8 @@ class CheckoutScreen extends ConsumerWidget {
     CheckoutProblem problem,
   ) async {
     // Offline and unexpected failures stay as the line above the button until the next attempt.
-    if (problem != CheckoutProblem.offline && problem != CheckoutProblem.failed) {
+    if (problem != CheckoutProblem.offline &&
+        problem != CheckoutProblem.failed) {
       ref.read(checkoutProvider.notifier).dismissProblem();
     }
     switch (problem) {
@@ -76,11 +80,22 @@ class CheckoutScreen extends ConsumerWidget {
           secondaryLabel: 'Close',
         );
         if (change == true && context.mounted) context.pop();
+      case CheckoutProblem.slotFull:
+        final change = await showIdAlert(
+          context,
+          icon: LucideIcons.calendarX,
+          title: 'That pickup time just filled up',
+          body: "Someone else booked the last place. Pick another time. Your basket and code are kept, and you haven't been charged.",
+          primaryLabel: 'Pick another time',
+          secondaryLabel: 'Close',
+        );
+        if (change == true && context.mounted) context.pop();
       case CheckoutProblem.notServiceable:
+        final address = ref.read(selectedAddressProvider);
         final change = await showIdAlert(
           context,
           icon: LucideIcons.mapPinOff,
-          title: "We don't pick up from here yet",
+          title: "We're not in ${address?.area ?? address?.city ?? 'this area'} yet",
           body: 'Choose another address to book. You have not been charged.',
           primaryLabel: 'Choose another address',
           secondaryLabel: 'Close',
@@ -122,6 +137,14 @@ class CheckoutScreen extends ConsumerWidget {
       case CheckoutProblem.phoneRequired:
         // The app thought a number was on file but the server has none: ask for it, then the customer taps Place order again.
         await context.push<bool>(Routes.addPhone);
+      case CheckoutProblem.photosRefused:
+        await showIdAlert(
+          context,
+          icon: LucideIcons.imageOff,
+          title: "We couldn't use your photos",
+          body: 'We took them off your booking. Add them again, or book without them. You have not been charged.',
+          primaryLabel: 'OK',
+        );
       case CheckoutProblem.offline || CheckoutProblem.failed:
         // Shown inline above the button; nothing to ask.
         break;
@@ -187,7 +210,9 @@ class CheckoutScreen extends ConsumerWidget {
         q != null &&
         q.canPlaceOrder &&
         !quoting &&
-        !checkout.placing;
+        !checkout.placing &&
+        // A care photo still on its way, or waiting for a retry, would be left off the order.
+        !ref.watch(careNoteProvider.select((s) => s.busy));
     final online = checkout.method == PaymentMethod.online;
 
     return Scaffold(
@@ -201,43 +226,31 @@ class CheckoutScreen extends ConsumerWidget {
           IdSpace.s6,
         ),
         children: [
+          Semantics(
+            header: true,
+            child: Text('Your estimate', style: context.text.titleLg),
+          ),
+          if (quote.hasError && !quoting)
+            _QuoteFailure(onRetry: () => ref.invalidate(quoteProvider))
+          else
+            QuoteBill(quote: q, loading: quoting, pieces: basket.count),
+          Text(
+            'Your partner confirms the final count at pickup.',
+            style: context.text.caption.copyWith(
+              color: context.colors.textMuted,
+            ),
+          ),
+          const SizedBox(height: IdSpace.s6),
+          const _ContactNumber(),
           _Where(address: address, schedule: schedule),
           if (!servable) ...[
             const SizedBox(height: IdSpace.s3),
             _NotServed(address: address),
           ],
           const SizedBox(height: IdSpace.s6),
+          const CareNoteSection(),
+          const SizedBox(height: IdSpace.s6),
           const _Note(),
-          const SizedBox(height: IdSpace.s6),
-          Semantics(
-            header: true,
-            child: Text('Pay with', style: context.text.titleLg),
-          ),
-          const SizedBox(height: IdSpace.s3),
-          ChoiceCard(
-            icon: LucideIcons.smartphone,
-            title: 'Pay online',
-            description: 'UPI, cards and netbanking',
-            selected: online,
-            onTap: () => ref
-                .read(checkoutProvider.notifier)
-                .chooseMethod(PaymentMethod.online),
-          ),
-          const SizedBox(height: IdSpace.s2),
-          ChoiceCard(
-            icon: LucideIcons.banknote,
-            title: 'Cash on delivery',
-            description: 'Pay the partner when your clothes come back',
-            selected: !online,
-            onTap: () => ref
-                .read(checkoutProvider.notifier)
-                .chooseMethod(PaymentMethod.cod),
-          ),
-          const SizedBox(height: IdSpace.s6),
-          if (quote.hasError && !quoting)
-            _QuoteFailure(onRetry: () => ref.invalidate(quoteProvider))
-          else
-            QuoteBill(quote: q, loading: quoting, pieces: basket.count),
         ],
       ),
       bottomNavigationBar: _Footer(
@@ -247,8 +260,52 @@ class CheckoutScreen extends ConsumerWidget {
         enabled: canPlace,
         offline: checkout.problem == CheckoutProblem.offline,
         failed: checkout.problem == CheckoutProblem.failed,
+        onChooseMethod: ref.read(checkoutProvider.notifier).chooseMethod,
         onPlace: () => _place(context, ref, schedule, address),
       ),
+    );
+  }
+}
+
+class _ContactNumber extends ConsumerWidget {
+  const _ContactNumber();
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final profile = switch (ref.watch(sessionProvider).value) {
+      SignedIn(:final profile) => profile,
+      _ => null,
+    };
+    final phone = profile?.phone;
+    return ReviewRow(
+      label: 'Contact number',
+      value: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            phone == null
+                ? 'Add a number before booking'
+                : IndianPhone.display(phone),
+            style: context.text.title,
+          ),
+          Text(
+            'Your pickup partner calls this number.',
+            style: context.text.caption.copyWith(
+              color: context.colors.textMuted,
+            ),
+          ),
+        ],
+      ),
+      actionLabel: phone == null ? 'Add contact number' : 'Change contact number',
+      // A number that signs the customer in is fixed; one typed here can be corrected.
+      action: phone == null || profile?.phoneVerified == false
+          ? IdButton.text(
+              label: phone == null ? 'Add number' : 'Change',
+              onPressed: ref.watch(checkoutProvider.select((s) => s.placing))
+                  ? null
+                  : () => context.push<bool>(Routes.addPhone),
+            )
+          : null,
     );
   }
 }
@@ -261,15 +318,54 @@ class _Where extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final t = context.text;
-    void changePickup() => context.canPop() ? context.pop() : context.go(Routes.schedule);
-    return Column(crossAxisAlignment: CrossAxisAlignment.stretch, children: [
-      ReviewRow(label: 'Pickup address', value: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [Text(address.label, style: t.title), Text([address.formatted, if(address.landmark?.isNotEmpty ?? false) address.landmark!].join(' · '), style: t.body)]), action: IdButton.text(label: 'Change', onPressed: () => showAddressPicker(context))),
-      ReviewRow(label: 'Pickup', value: Text(slotSummary(schedule.pickup!, today: schedule.today), style: t.body), action: IdButton.text(label: 'Change', onPressed: changePickup)),
-      ReviewRow(label: 'Delivery', value: Text(slotSummary(schedule.delivery!, today: schedule.today), style: t.body), action: IdButton.text(label: 'Change', onPressed: () => showDeliverySheet(context))),
-    ]);
+    void changePickup() =>
+        context.canPop() ? context.pop() : context.go(Routes.schedule);
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        ReviewRow(
+          label: 'Pickup address',
+          value: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(address.label, style: t.title),
+              Text(
+                [
+                  address.formatted,
+                  if (address.landmark?.isNotEmpty ?? false) address.landmark!,
+                ].join(' · '),
+                style: t.body,
+              ),
+            ],
+          ),
+          action: IdButton.text(
+            label: 'Change',
+            onPressed: () => showAddressPicker(context),
+          ),
+        ),
+        ReviewRow(
+          label: 'Pickup',
+          value: Text(
+            slotSummary(schedule.pickup!, today: schedule.today),
+            style: t.body,
+          ),
+          action: IdButton.text(label: 'Change', onPressed: changePickup),
+        ),
+        ReviewRow(
+          label: 'Delivery',
+          value: Text(
+            slotSummary(schedule.delivery!, today: schedule.today),
+            style: t.body,
+          ),
+          action: IdButton.text(
+            label: 'Change',
+            onPressed: () => showDeliverySheet(context),
+          ),
+        ),
+      ],
+    );
   }
 }
-
 
 /// Quick phrases for the note. Only things that are about the pickup, never promises about how the
 /// clothes are handled: care requests are typed in the customer's own words.
@@ -316,11 +412,26 @@ class _NoteState extends ConsumerState<_Note> {
   @override
   Widget build(BuildContext context) {
     final placing = ref.watch(checkoutProvider.select((s) => s.placing));
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.stretch,
+    return ExpansionTile(
+      key: const PageStorageKey('pickup-note'),
+      tilePadding: EdgeInsets.zero,
+      childrenPadding: const EdgeInsets.only(bottom: IdSpace.s4),
+      shape: const Border(),
+      collapsedShape: const Border(),
+      title: Text('Note for your pickup (optional)', style: context.text.title),
+      subtitle:
+          ref.watch(checkoutProvider.select((s) => s.instructions.isNotEmpty))
+          ? Text(
+              'Note added',
+              style: context.text.caption.copyWith(
+                color: context.colors.textMuted,
+              ),
+            )
+          : null,
       children: [
         IdTextField(
-          label: 'Note for your pickup (optional)',
+          key: const PageStorageKey('pickup-note-input'),
+          label: 'Pickup note',
           hint: 'e.g. Call before arriving',
           help: 'IronDost sees this with your order.',
           controller: _controller,
@@ -424,7 +535,7 @@ class _NotServed extends StatelessWidget {
             const SizedBox(width: 10),
             Expanded(
               child: Text(
-                "We don't pick up from ${address.area ?? address.city} yet. Choose another address to book.",
+                "We're not in ${address.area ?? address.city} yet. Choose another address to book.",
                 style: t.body,
               ),
             ),
@@ -468,6 +579,7 @@ class _Footer extends StatelessWidget {
     required this.enabled,
     required this.offline,
     required this.failed,
+    required this.onChooseMethod,
     required this.onPlace,
   });
 
@@ -477,12 +589,20 @@ class _Footer extends StatelessWidget {
   final bool enabled;
   final bool offline;
   final bool failed;
+  final ValueChanged<PaymentMethod> onChooseMethod;
   final VoidCallback onPlace;
 
   @override
   Widget build(BuildContext context) {
     final c = context.colors;
     final t = context.text;
+    // While the keyboard is up (the pickup note) the footer shrinks to the button, so the field keeps its room.
+    final keyboardUp = MediaQuery.viewInsetsOf(context).bottom > 0;
+    final stacked = MediaQuery.textScalerOf(context).scale(1) > 1.3;
+    final methods = [
+      ChoiceCard(dense: true, title: 'Pay online', selected: online, onTap: () => onChooseMethod(PaymentMethod.online)),
+      ChoiceCard(dense: true, title: 'Cash on delivery', selected: !online, onTap: () => onChooseMethod(PaymentMethod.cod)),
+    ];
     final amount = totalPaise == null ? '' : ' ${rupees(totalPaise!)}';
     final label = online ? 'Pay$amount' : 'Place order$amount';
     return DecoratedBox(
@@ -515,6 +635,32 @@ class _Footer extends StatelessWidget {
                   ),
                 ),
                 const SizedBox(height: IdSpace.s2),
+              ],
+              // The way to pay stays on screen next to the button, so it never sits below the fold.
+              if (!keyboardUp) ...[
+                Semantics(
+                  header: true,
+                  child: Text('Pay with', style: t.labelSm),
+                ),
+                const SizedBox(height: IdSpace.s2),
+                if (stacked)
+                  Column(
+                    crossAxisAlignment: CrossAxisAlignment.stretch,
+                    children: [methods[0], const SizedBox(height: IdSpace.s2), methods[1]],
+                  )
+                else
+                  // Equal-height cards side by side: the row is only as tall as the taller card.
+                  IntrinsicHeight(
+                    child: Row(
+                      crossAxisAlignment: CrossAxisAlignment.stretch,
+                      children: [
+                        Expanded(child: methods[0]),
+                        const SizedBox(width: IdSpace.s2),
+                        Expanded(child: methods[1]),
+                      ],
+                    ),
+                  ),
+                const SizedBox(height: IdSpace.s3),
               ],
               IdButton(
                 label: label,

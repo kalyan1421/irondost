@@ -1,3 +1,4 @@
+import '../../core/quantities.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
@@ -5,6 +6,7 @@ import 'package:lucide_icons_flutter/lucide_icons.dart';
 
 import '../../app/routes.dart';
 import '../../core/money.dart';
+import '../../core/text_wrap.dart';
 import '../../data/api_client.dart';
 import '../../design/theme.dart';
 import '../../design/widgets/id_button.dart';
@@ -63,6 +65,10 @@ class BasketScreen extends ConsumerWidget {
                   _QuoteFailure(onRetry: () => ref.invalidate(quoteProvider))
                 else ...[
                   QuoteBill(quote: q, loading: loading, pieces: basket.count),
+                  if (q?.freeTravelShortfallPaise case final more?) ...[
+                    const SizedBox(height: IdSpace.s3),
+                    _FreeTravelHint(shortfallPaise: more, loading: loading),
+                  ],
                   const SizedBox(height: IdSpace.s3),
                   Text(
                     'The final amount changes only if the count differs at pickup.',
@@ -80,17 +86,43 @@ class BasketScreen extends ConsumerWidget {
   }
 }
 
+/// One calm line while the basket is under the free-travel amount. Basket only: checkout shows the charge, not the nudge.
+class _FreeTravelHint extends StatelessWidget {
+  const _FreeTravelHint({required this.shortfallPaise, required this.loading});
+
+  final num shortfallPaise;
+  final bool loading;
+
+  @override
+  Widget build(BuildContext context) {
+    return AnimatedOpacity(
+      duration: MediaQuery.disableAnimationsOf(context)
+          ? Duration.zero
+          : const Duration(milliseconds: 150),
+      opacity: loading ? 0.5 : 1,
+      child: Text(
+        keepLastWordsTogether(
+          'Add ${rupees(shortfallPaise)} more of clothes and travel is free.',
+        ),
+        style: context.text.body,
+      ),
+    );
+  }
+}
+
 class _Line {
   const _Line({
     required this.id,
     required this.name,
     required this.unitPaise,
     required this.quantity,
+    required this.unit,
   });
   final String id;
   final String name;
   final num unitPaise;
   final int quantity;
+  final ItemUnit unit;
 }
 
 class _Items extends ConsumerWidget {
@@ -116,6 +148,7 @@ class _Items extends ConsumerWidget {
         return _Line(
           id: id,
           name: item.name,
+          unit: item.unit,
           unitPaise: item.effectivePricePaise,
           quantity: qty,
         );
@@ -126,6 +159,7 @@ class _Items extends ConsumerWidget {
           : _Line(
               id: id,
               name: line.name,
+              unit: line.unit,
               unitPaise: line.unitPricePaise,
               quantity: qty,
             );
@@ -172,10 +206,10 @@ class _Items extends ConsumerWidget {
                   else
                     const Spacer(),
                   const SizedBox(width: IdSpace.s2),
-                  Text(
-                    _pieces(lines.fold(0, (a, l) => a + l.quantity)),
-                    style: t.caption.copyWith(color: c.textMuted),
-                  ),
+                  Flexible(child: Text(
+                    quantitySummary(lines.map((l) => (l.unit, l.quantity))),
+                    style: t.caption.copyWith(color: c.textMuted), textAlign: TextAlign.end,
+                  )),
                 ],
               ),
             ),
@@ -198,7 +232,6 @@ class _Items extends ConsumerWidget {
     );
   }
 
-  static String _pieces(int n) => '$n ${n == 1 ? 'item' : 'items'}';
 }
 
 class _BasketRow extends ConsumerWidget {
@@ -211,7 +244,7 @@ class _BasketRow extends ConsumerWidget {
     final t = context.text;
     return Padding(padding: const EdgeInsets.symmetric(vertical: IdSpace.s4), child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
       Row(crossAxisAlignment: CrossAxisAlignment.start, children: [
-        Expanded(child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [Text(line.name, style: t.title), Text('${rupees(line.unitPaise)} each', style: t.caption.copyWith(color: c.textMuted))])),
+        Expanded(child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [Text(line.name, style: t.title), Text('${rupees(line.unitPaise)} ${unitRateLabel(line.unit)}', style: t.caption.copyWith(color: c.textMuted))])),
         const SizedBox(width: IdSpace.s3),
         // Not Flexible: next to the Expanded name it would take half the row and start mid-screen.
         Text(rupees(line.unitPaise * line.quantity), textAlign: TextAlign.end, style: t.label.copyWith(fontFeatures: const [FontFeature.tabularFigures()])),

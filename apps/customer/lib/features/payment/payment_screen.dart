@@ -455,8 +455,9 @@ class _StillBooked extends StatelessWidget {
                 TextSpan(
                   children: [
                     TextSpan(
-                      text:
-                          'Your pickup is still booked for $day, ${windowFromLabel(order.pickupSlotLabel)}. Order ',
+                      text: keepWindowTogether(
+                        'Your pickup is still booked for $day, ${windowFromLabel(order.pickupSlotLabel)}. Order ',
+                      ),
                     ),
                     TextSpan(text: order.orderNumber, style: t.orderId),
                     const TextSpan(text: '.'),

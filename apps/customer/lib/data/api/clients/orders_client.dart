@@ -11,6 +11,7 @@ import '../models/order_page_dto.dart';
 import '../models/place_order_dto.dart';
 import '../models/quote_dto.dart';
 import '../models/quote_request_dto.dart';
+import '../models/reschedule_order_dto.dart';
 import '../models/scope.dart';
 
 part 'orders_client.g.dart';
@@ -45,10 +46,33 @@ abstract class OrdersClient {
     @Path('id') required String id,
   });
 
+  @POST('/v1/orders/{id}/adjustments/{adjustmentId}/approve')
+  Future<OrderDto> ordersControllerApprove({
+    @Path('id') required String id,
+    @Path('adjustmentId') required String adjustmentId,
+  });
+
+  @POST('/v1/orders/{id}/adjustments/{adjustmentId}/decline')
+  Future<OrderDto> ordersControllerDecline({
+    @Path('id') required String id,
+    @Path('adjustmentId') required String adjustmentId,
+  });
+
   /// For an online order that has not been paid (a failed or abandoned payment): the partner collects the amount at delivery.
   @POST('/v1/orders/{id}/pay-on-delivery')
   Future<OrderDto> ordersControllerPayOnDelivery({
     @Path('id') required String id,
+  });
+
+  /// Moves the pickup and delivery time. Allowed until the clothes are picked up, twice per order. Prices do not change.
+  /// When a partner had accepted the pickup, they are released and the order is offered again for the new time.
+  ///
+  /// [idempotencyKey] - One value per change (a UUID). Retrying the same change with the same key returns the order as it is now, with the Idempotent-Replayed: true header, and does not use up another reschedule.
+  @POST('/v1/orders/{id}/reschedule')
+  Future<OrderDto> ordersControllerReschedule({
+    @Path('id') required String id,
+    @Body() required RescheduleOrderDto body,
+    @Header('Idempotency-Key') String? idempotencyKey,
   });
 
   /// Allowed until the clothes are picked up.

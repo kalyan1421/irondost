@@ -111,6 +111,7 @@ class AccountScreen extends ConsumerWidget {
                 value: unread > 0 ? '$unread new' : null,
                 onTap: () => context.push(Routes.notifications),
               ),
+              IdListRow(icon: LucideIcons.messageSquare, label: 'Your reports', onTap: () => context.push(Routes.issues)),
               IdListRow(
                 icon: LucideIcons.circleQuestionMark,
                 label: 'Help and support',

@@ -6,6 +6,7 @@ import { LoggerModule } from 'nestjs-pino';
 import { AddressesModule } from './addresses/addresses.module.js';
 import { AdminModule } from './admin/admin.module.js';
 import { AppVersionsModule } from './app-versions/app-versions.controller.js';
+import { AreaInterestModule } from './area-interest/area-interest.module.js';
 import { AuditModule } from './audit/audit.service.js';
 import { AuthGuard } from './auth/auth.guard.js';
 import { AuthModule } from './auth/auth.module.js';
@@ -15,7 +16,9 @@ import { APP_ENV, ConfigModule } from './config/config.module.js';
 import type { Env } from './config/env.js';
 import { DriversModule } from './drivers/drivers.module.js';
 import { HealthController } from './health/health.controller.js';
+import { IssuesModule } from './issues/issues.controller.js';
 import { JobsModule } from './jobs/jobs.module.js';
+import { LedgerModule } from './ledger/ledger.module.js';
 import { KeepAliveModule } from './keep-alive/keep-alive.service.js';
 import { NotificationsModule } from './notifications/notifications.module.js';
 import { OrdersModule } from './orders/orders.module.js';
@@ -56,12 +59,15 @@ import { UsersModule } from './users/users.module.js';
     SettingsModule,
     UsersModule,
     AddressesModule,
+    AreaInterestModule,
     CatalogModule,
     PromotionsModule,
     BannersModule,
     AppVersionsModule,
     OrdersModule,
+    IssuesModule,
     PaymentsModule,
+    LedgerModule,
     DriversModule,
     NotificationsModule,
     AdminModule,

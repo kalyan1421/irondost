@@ -1,13 +1,14 @@
 import { Global, Module } from '@nestjs/common';
 import { Clock } from '../common/clock.js';
 import { SchedulingController } from '../scheduling/scheduling.controller.js';
+import { CheckAddressController } from './check-address.controller.js';
 import { PublicConfigController } from './public-config.controller.js';
 import { ServiceAreaController } from './service-area.controller.js';
 import { SettingsService } from './settings.service.js';
 
 @Global()
 @Module({
-  controllers: [SchedulingController, PublicConfigController, ServiceAreaController],
+  controllers: [SchedulingController, PublicConfigController, ServiceAreaController, CheckAddressController],
   providers: [SettingsService, Clock],
   exports: [SettingsService, Clock],
 })

@@ -20,6 +20,11 @@ export const envSchema = z
     NODE_ENV: z.enum(['development', 'test', 'production']).default('development'),
     PORT: z.coerce.number().int().positive().default(4000),
     CORS_ORIGINS: csv,
+    /**
+     * Reverse proxies in front of the API whose X-Forwarded-For we trust (Render's load balancer: 1). With 0 the rate
+     * limiter sees the proxy's address for every caller, so everyone shares one limit. Leave 0 when nothing proxies.
+     */
+    TRUST_PROXY_HOPS: z.coerce.number().int().min(0).max(5).default(0),
     LOG_LEVEL: z.enum(['fatal', 'error', 'warn', 'info', 'debug', 'trace', 'silent']).default('info'),
 
     DATABASE_URL: z.string().min(1, 'DATABASE_URL is required'),

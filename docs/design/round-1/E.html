@@ -1,0 +1,67 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>E</title>
+<style>
+@font-face{font-family:"Ostrich";src:url("fonts/ostrich-sans/OstrichSans-Heavy.otf");font-weight:800}
+@font-face{font-family:"Ostrich";src:url("fonts/ostrich-sans/OstrichSans-Medium.otf");font-weight:500}
+@font-face{font-family:"Rs";src:url("fonts/charis/Charis-Bold.ttf");font-weight:700;unicode-range:U+20B9}
+
+html{background-color:#0E3B2C}
+body{
+  margin:0;
+  color:#F3EFE2;
+  font-family:"Ostrich","Rs",Impact,sans-serif;
+  font-weight:500;
+  padding:clamp(1.5rem,5vh,3.5rem) clamp(1.25rem,5vw,4rem) 6rem;
+  text-transform:uppercase;
+}
+p{margin:0}
+.brand{font-size:1.5rem;letter-spacing:.14em;font-weight:800}
+h1{
+  margin:1.6rem 0 0;
+  font-weight:800;
+  font-size:clamp(4.6rem,27vw,15rem);
+  line-height:.82;
+  letter-spacing:.005em;
+}
+h1 span{display:block}
+
+.rail{display:flex;flex-wrap:wrap;column-gap:clamp(.9rem,2.6vw,1.8rem);row-gap:2.6rem;margin-top:4.5rem;align-items:flex-start}
+.rail p{
+  writing-mode:vertical-rl;
+  text-orientation:mixed;
+  font-size:clamp(1.4rem,5.4vw,2.1rem);
+  line-height:1.05;
+  letter-spacing:.07em;
+}
+.c{color:#F3EFE2}
+.s{color:#F5B93A}
+.k{color:#FF8FA3}
+.go{font-weight:800}
+</style>
+</head>
+<body>
+<main>
+  <p class="brand">IronDost</p>
+  <h1><span>Fresh </span><span>clothes, </span><span>back at </span><span>your </span><span>door.</span></h1>
+
+  <div class="rail">
+    <p class="c">Ironing, washing and dry cleaning, picked up and delivered.</p>
+    <p class="s">Choose your pickup and delivery times.</p>
+    <p class="s">Morning 7 – 11 AM</p>
+    <p class="s">Afternoon 11 AM – 4 PM</p>
+    <p class="s">Evening 4 – 8 PM</p>
+    <p class="s">Your partner arrives within the window you pick.</p>
+    <p class="k">Shirt / T-shirt ₹35 per piece</p>
+    <p class="k">Trousers / Jeans ₹40 per piece</p>
+    <p class="k">Bedsheet (double) ₹70 per piece</p>
+    <p class="k">A rough count is fine. Your partner confirms it at pickup.</p>
+    <p class="k">Pay online or in cash at delivery.</p>
+    <p class="c go">Get started</p>
+  </div>
+</main>
+</body>
+</html>

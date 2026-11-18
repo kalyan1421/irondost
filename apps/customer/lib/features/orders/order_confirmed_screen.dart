@@ -1,3 +1,4 @@
+import '../../core/order_text.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
@@ -165,7 +166,6 @@ class _Summary extends StatelessWidget {
   Widget build(BuildContext context) {
     final c = context.colors;
     final t = context.text;
-    final pieces = order.items.fold<num>(0, (a, i) => a + i.quantity).toInt();
     final where = [
       order.pickupAddress.label,
       order.pickupAddress.area ?? order.pickupAddress.city,
@@ -209,7 +209,7 @@ class _Summary extends StatelessWidget {
           ),
           const SizedBox(height: IdSpace.s3),
           Text(
-            '$pieces ${pieces == 1 ? 'item' : 'items'} · $where',
+            '${piecesLabel(order)} · $where',
             style: t.body.copyWith(color: c.textMuted),
           ),
         ],

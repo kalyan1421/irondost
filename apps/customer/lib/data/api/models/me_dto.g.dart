@@ -9,6 +9,7 @@ part of 'me_dto.dart';
 MeDto _$MeDtoFromJson(Map<String, dynamic> json) => MeDto(
   id: json['id'] as String,
   phone: json['phone'] as String?,
+  phoneVerified: json['phoneVerified'] as bool,
   name: json['name'] as String?,
   email: json['email'] as String?,
   role: Role.fromJson(json['role'] as String),
@@ -23,6 +24,7 @@ MeDto _$MeDtoFromJson(Map<String, dynamic> json) => MeDto(
 Map<String, dynamic> _$MeDtoToJson(MeDto instance) => <String, dynamic>{
   'id': instance.id,
   'phone': instance.phone,
+  'phoneVerified': instance.phoneVerified,
   'name': instance.name,
   'email': instance.email,
   'role': instance.role,

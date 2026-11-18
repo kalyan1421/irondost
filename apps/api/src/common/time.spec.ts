@@ -1,10 +1,15 @@
 import { TimeSlot } from '../generated/prisma/enums.js';
-import { addDays, daysBetween, fromDbDate, isIsoDate, istDate, slotEnd, slotStart, toDbDate } from './time.js';
+import { addDays, daysBetween, fromDbDate, isIsoDate, istDate, istTimestamp, slotEnd, slotStart, toDbDate } from './time.js';
 
 describe('IST time helpers', () => {
   it('reads the IST calendar date, which rolls over at 18:30 UTC', () => {
     expect(istDate(new Date('2026-10-02T18:29:59Z'))).toBe('2026-10-02');
     expect(istDate(new Date('2026-10-02T18:30:00Z'))).toBe('2026-10-03');
+  });
+
+  it('writes an instant as IST wall-clock time', () => {
+    expect(istTimestamp(new Date('2026-10-02T09:15:09.123Z'))).toBe('2026-10-02 14:45:09');
+    expect(istTimestamp(new Date('2026-10-02T18:30:00Z'))).toBe('2026-10-03 00:00:00');
   });
 
   it('places slots at IST wall-clock hours', () => {

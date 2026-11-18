@@ -9,12 +9,15 @@ import 'clients/schedule_client.dart';
 import 'clients/config_client.dart';
 import 'clients/me_client.dart';
 import 'clients/addresses_client.dart';
+import 'clients/area_interest_client.dart';
 import 'clients/catalog_client.dart';
 import 'clients/promotions_client.dart';
 import 'clients/banners_client.dart';
 import 'clients/app_versions_client.dart';
 import 'clients/orders_client.dart';
 import 'clients/payments_client.dart';
+import 'clients/issues_client.dart';
+import 'clients/uploads_client.dart';
 
 /// Laundry API `v1.0`.
 ///
@@ -36,12 +39,15 @@ class IronDostApi {
   ConfigClient? _config;
   MeClient? _me;
   AddressesClient? _addresses;
+  AreaInterestClient? _areaInterest;
   CatalogClient? _catalog;
   PromotionsClient? _promotions;
   BannersClient? _banners;
   AppVersionsClient? _appVersions;
   OrdersClient? _orders;
   PaymentsClient? _payments;
+  IssuesClient? _issues;
+  UploadsClient? _uploads;
 
   AuthClient get auth => _auth ??= AuthClient(_dio, baseUrl: _baseUrl);
 
@@ -52,6 +58,8 @@ class IronDostApi {
   MeClient get me => _me ??= MeClient(_dio, baseUrl: _baseUrl);
 
   AddressesClient get addresses => _addresses ??= AddressesClient(_dio, baseUrl: _baseUrl);
+
+  AreaInterestClient get areaInterest => _areaInterest ??= AreaInterestClient(_dio, baseUrl: _baseUrl);
 
   CatalogClient get catalog => _catalog ??= CatalogClient(_dio, baseUrl: _baseUrl);
 
@@ -64,4 +72,8 @@ class IronDostApi {
   OrdersClient get orders => _orders ??= OrdersClient(_dio, baseUrl: _baseUrl);
 
   PaymentsClient get payments => _payments ??= PaymentsClient(_dio, baseUrl: _baseUrl);
+
+  IssuesClient get issues => _issues ??= IssuesClient(_dio, baseUrl: _baseUrl);
+
+  UploadsClient get uploads => _uploads ??= UploadsClient(_dio, baseUrl: _baseUrl);
 }

@@ -4,6 +4,8 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:go_router/go_router.dart';
+import 'package:irondost_customer/core/slots.dart';
+import 'package:irondost_customer/core/text_wrap.dart';
 import 'package:irondost_customer/app/routes.dart';
 import 'package:irondost_customer/data/api_client.dart';
 import 'package:irondost_customer/design/theme.dart';
@@ -141,10 +143,8 @@ void main() {
       expect(find.text('Ravi K.'), findsOneWidget);
       expect(find.text('Picked up your clothes'), findsOneWidget);
       expect(find.byTooltip('Call Ravi'), findsOneWidget);
-      expect(
-        find.text('₹180 is due. Pay the partner in cash or pay online now.'),
-        findsOneWidget,
-      );
+      expect(find.text('Pay ₹180 online'), findsOneWidget);
+      expect(find.text('Or pay the partner in cash when your clothes come back.'), findsOneWidget);
       expect(
         find.text('Thu 1 Oct, 5:40 PM · 12 items counted'),
         findsOneWidget,
@@ -168,36 +168,27 @@ void main() {
     expect(find.text('Out for delivery'), findsWidgets);
     expect(find.text('Arriving tomorrow, 4\u00A0\u2060–\u2060\u00A08\u00A0PM'), findsOneWidget);
     expect(find.text('Bringing your clothes back'), findsOneWidget);
-    expect(
-      find.text(
-        '₹180 is due. Pay Ravi in cash at the door, or pay online now.',
-      ),
-      findsOneWidget,
-    );
+    expect(find.text('Or pay Ravi in cash at the door.'), findsOneWidget);
   });
 
   group('the status hero and the partner card', () {
-    /// Fill colour of each of the five progress segments, left to right.
-    List<Color?> bar(WidgetTester tester) => [
-      for (final w in tester.widgetList<Container>(
-        find.byWidgetPredicate(
-          (w) =>
-              w is Container &&
-              w.constraints?.minHeight == 4 &&
-              w.constraints?.maxHeight == 4,
-        ),
-      ))
-        (w.decoration! as BoxDecoration).color,
-    ];
-
-    IdColors colors(WidgetTester tester) =>
-        tester.element(find.byType(Scaffold).first).colors;
+    /// The five-segment bar that used to repeat the timeline: any 4 dp tall container.
+    int barSegments(WidgetTester tester) => tester
+        .widgetList<Container>(
+          find.byWidgetPredicate(
+            (w) =>
+                w is Container &&
+                w.constraints?.minHeight == 4 &&
+                w.constraints?.maxHeight == 4,
+          ),
+        )
+        .length;
 
     Finder callButtons() => find.byWidgetPredicate(
       (w) => w is IconButton && (w.tooltip ?? '').startsWith('Call '),
     );
 
-    testWidgets('the bar fills to the current step, in the primary colour while on time', (
+    testWidgets('progress is the words and the timeline, with no second bar, and nothing to call about while on time', (
       tester,
     ) async {
       await pump(
@@ -209,14 +200,13 @@ void main() {
           pickupDriver: ravi,
         ),
       );
-      final c = colors(tester);
 
-      expect(bar(tester), [c.primary, c.primary, c.primary, c.border, c.border]);
-      expect(find.text('Step 3 of 5'), findsOneWidget, reason: 'the words stay');
+      expect(barSegments(tester), 0);
+      expect(find.text('Step 3 of 5'), findsOneWidget);
       expect(find.text('Call us'), findsNothing, reason: 'nothing is late');
     });
 
-    testWidgets('a missed delivery estimate turns the bar amber and offers a call', (
+    testWidgets('a missed delivery estimate is one notice that holds the sentence and the call', (
       tester,
     ) async {
       await pump(
@@ -226,14 +216,18 @@ void main() {
           pickedUpAt: pickedUp,
         ).withPickupDriver(ravi),
       );
-      final c = colors(tester);
 
-      expect(bar(tester), [c.warning, c.warning, c.warning, c.border, c.border]);
+      expect(barSegments(tester), 0);
       expect(find.textContaining('Delivery estimate missed:'), findsOneWidget);
       expect(find.text('Call us'), findsOneWidget);
+      final amber = tester.element(find.byType(Scaffold).first).colors.warningSoft;
+      final panel = find.byWidgetPredicate((w) => w is Container && w.decoration is BoxDecoration && (w.decoration! as BoxDecoration).color == amber);
+      expect(find.descendant(of: panel.first, matching: find.textContaining('Delivery estimate missed:')), findsOneWidget);
+      expect(find.descendant(of: panel.first, matching: find.text('Call us')), findsOneWidget,
+        reason: 'the call is inside the same amber panel as the sentence, not a button floating below it');
     });
 
-    testWidgets('a late pickup has an amber bar and still exactly one Call us', (
+    testWidgets('a late pickup still has exactly one Call us', (
       tester,
     ) async {
       await pump(
@@ -243,9 +237,8 @@ void main() {
           dispatchFailedAt: DateTime.utc(2026, 10, 3, 9, 30),
         ),
       );
-      final c = colors(tester);
 
-      expect(bar(tester), [c.warning, c.border, c.border, c.border, c.border]);
+      expect(barSegments(tester), 0);
       expect(find.text('Call us'), findsOneWidget, reason: 'the notice has it; the hero adds none');
     });
 
@@ -307,12 +300,8 @@ void main() {
         tester,
         testOrder(method: PaymentMethod.online, pickupDate: today),
       );
-      expect(
-        find.text(
-          "₹248 isn't paid yet. Pay online now, or switch to cash on delivery.",
-        ),
-        findsOneWidget,
-      );
+      expect(find.text('Pay ₹248'), findsOneWidget);
+      expect(find.text('Not paid yet. You can also switch to cash on delivery.'), findsOneWidget);
     },
   );
 
@@ -337,8 +326,8 @@ void main() {
       expect(find.text('Delivered'), findsOneWidget);
       expect(find.text('Sat 3 Oct, 5:32 PM · by Ravi K.'), findsOneWidget);
       expect(find.text('Thu 1 Oct, 5:40 PM'), findsOneWidget);
-      expect(find.text('12, ironed'), findsOneWidget);
-      expect(find.text('₹180 in cash'), findsOneWidget);
+      expect(find.text('12 items'), findsOneWidget);
+    expect(find.text('₹180 · Paid in cash'), findsOneWidget);
       expect(find.text('Items and bill'), findsOneWidget);
       expect(find.text('Something wrong with an item?'), findsOneWidget);
       expect(find.text('Book the same again'), findsOneWidget);
@@ -361,17 +350,97 @@ void main() {
     );
 
     expect(find.text('Cancelled'), findsOneWidget);
-    expect(find.text('You cancelled this order'), findsOneWidget);
+    expect(find.text(keepLastWordsTogether('You cancelled this order')), findsOneWidget);
     expect(
       find.text('Fri 2 Oct, 2:14 PM · "I booked by mistake"'),
       findsOneWidget,
     );
     expect(
-      find.textContaining('₹248 is awaiting refund confirmation'),
+      find.textContaining('₹248 has no confirmed refund'),
       findsOneWidget,
     );
-    expect(find.text('₹248 · refund pending'), findsOneWidget);
+    expect(find.text('Paid'), findsOneWidget, reason: 'the line no longer claims a refund state the notice above denies');
+    expect(find.textContaining('refund pending'), findsNothing);
     expect(find.text('Book again'), findsOneWidget);
+  });
+
+  testWidgets('being ironed with no partner on record shows no placeholder to wait for', (tester) async {
+    await pump(tester, testOrder(status: OrderStatus.processing, pickedUpAt: pickedUp));
+    expect(find.text('Your partner'), findsNothing);
+    expect(find.textContaining("You'll see your partner's name"), findsNothing);
+  });
+
+  testWidgets('delivered without a pickup time has no Picked up row with a dash in it', (tester) async {
+    await pump(tester, testOrder(status: OrderStatus.delivered, paymentStatus: PaymentStatus.paid, paidPaise: 24800, deliveredAt: DateTime.utc(2026, 10, 4, 12)));
+    expect(find.text('Picked up'), findsNothing);
+    expect(find.text('—'), findsNothing);
+    expect(find.text('Count'), findsOneWidget);
+  });
+
+  group('cancelled and paid, with refund records', () {
+    RefundDto refund(RefundStatus status, {int amount = 24800}) => RefundDto(id: 'r-$status', amountPaise: amount, method: RefundMethod.razorpay,
+      status: status, note: 'Order cancelled before collection.', createdAt: DateTime.utc(2026, 10, 2, 9), processedAt: null, failureReason: null);
+    OrderDto cancelled(List<RefundDto> refunds) => testOrder(status: OrderStatus.cancelled, method: PaymentMethod.online,
+      paymentStatus: PaymentStatus.paid, paidPaise: 24800, refundedPaise: 24800, refunds: refunds);
+
+    testWidgets('a pending refund is one row with its state, and no second sentence repeats it', (tester) async {
+      await pump(tester, cancelled([refund(RefundStatus.pending)]));
+      expect(find.text('Refund'), findsOneWidget, reason: 'the row says what it is');
+      expect(find.text('Pending'), findsOneWidget);
+      expect(find.text('₹248'), findsNWidgets(2), reason: 'the refund row, and what was paid');
+      expect(find.textContaining('Original online payment'), findsOneWidget);
+      expect(find.text('Order cancelled before collection.'), findsOneWidget);
+      expect(find.textContaining('refund pending'), findsNothing);
+      expect(find.textContaining('has no confirmed refund'), findsNothing);
+    });
+
+    testWidgets('a completed refund says Completed, a failed one says to contact support', (tester) async {
+      await pump(tester, cancelled([refund(RefundStatus.processed)]));
+      expect(find.text('Completed'), findsOneWidget);
+      await pump(tester, cancelled([refund(RefundStatus.failed)]));
+      expect(find.text('Failed'), findsOneWidget);
+      expect(find.text('The refund did not complete. Contact support.'), findsOneWidget);
+    });
+
+    group('with the travel charge kept', () {
+      // Paid ₹248, of which ₹30 is the travel charge staff kept because the partner had already travelled.
+      OrderDto keptCharge({int refundedPaise = 21800, int paidPaise = 24800, bool kept = true}) => testOrder(status: OrderStatus.cancelled,
+        method: PaymentMethod.online, paymentStatus: PaymentStatus.paid, paidPaise: paidPaise, refundedPaise: refundedPaise,
+        deliveryFeePaise: 3000, travelChargeKept: kept, refunds: [if (refundedPaise > 0) refund(RefundStatus.processed, amount: refundedPaise)]);
+
+      testWidgets('says why and how much, and does not call the kept charge a missing refund', (tester) async {
+        await pump(tester, keptCharge());
+        expect(find.text(keepLastWordsTogether('Travel charge kept: partner had already travelled')), findsOneWidget);
+        expect(find.text('Kept for travel'), findsOneWidget);
+        expect(find.text('₹30'), findsOneWidget);
+        expect(find.text('₹218'), findsOneWidget, reason: 'the refund row: everything paid except the charge');
+        expect(find.textContaining('has no confirmed refund'), findsNothing);
+      });
+
+      testWidgets('while the rest is still on its way it calls out only what is owed back', (tester) async {
+        await pump(tester, keptCharge(refundedPaise: 0));
+        expect(find.textContaining('₹218 has no confirmed refund'), findsOneWidget, reason: '₹248 paid less the ₹30 kept');
+        expect(find.text(keepLastWordsTogether('Travel charge kept: partner had already travelled')), findsOneWidget);
+      });
+
+      testWidgets('is silent when the charge was refunded with everything else', (tester) async {
+        await pump(tester, keptCharge(kept: false, refundedPaise: 24800));
+        expect(find.textContaining('Travel charge kept'), findsNothing);
+        expect(find.text('Kept for travel'), findsNothing);
+      });
+
+      testWidgets('is silent when nothing was paid: an unpaid order was not charged', (tester) async {
+        await pump(tester, testOrder(status: OrderStatus.cancelled, deliveryFeePaise: 3000, travelChargeKept: true));
+        expect(find.textContaining('Travel charge kept'), findsNothing);
+        expect(find.textContaining('nothing charged'), findsOneWidget);
+      });
+    });
+
+    testWidgets('money that no refund accounts for is still called out beside the rows', (tester) async {
+      await pump(tester, cancelled([refund(RefundStatus.processed, amount: 10000)]));
+      expect(find.text('Completed'), findsOneWidget);
+      expect(find.textContaining('₹148 has no confirmed refund'), findsOneWidget);
+    });
   });
 
   testWidgets('what the API says now replaces what the list showed', (
@@ -447,7 +516,7 @@ void main() {
         expect(repo.cancelled, [('o-1', 'I booked by mistake')]);
         expect(find.text('Cancel this order?'), findsNothing);
         expect(find.text('Order ID001046 cancelled'), findsOneWidget);
-        expect(find.text('You cancelled this order'), findsOneWidget);
+        expect(find.text(keepLastWordsTogether('You cancelled this order')), findsOneWidget);
         expect(find.text('Book again'), findsOneWidget);
       },
     );
@@ -581,7 +650,7 @@ void main() {
           findsOneWidget,
         );
         expect(
-          find.text('12 items, ironed. Delivery Sun 4 Oct, 4 – 8 PM.'),
+          find.text(keepWindowTogether('12 items. Delivery Sun 4 Oct, 4 – 8 PM.')),
           findsOneWidget,
         );
 
@@ -727,9 +796,11 @@ void main() {
 
         expect(find.text('Items and bill'), findsWidgets);
         expect(find.text('Counted at pickup'), findsOneWidget);
-        expect(find.text('8 × ₹15'), findsOneWidget);
+        expect(find.text('8 × ₹15 per piece'), findsOneWidget);
         expect(find.text('₹120'), findsOneWidget);
         expect(find.text('Items (8)'), findsOneWidget);
+        expect(find.text('Travel charge'), findsOneWidget);
+        expect(find.text('Pickup & delivery'), findsNothing);
         expect(find.text('Free'), findsOneWidget);
         expect(find.text('Total'), findsOneWidget);
         expect(find.text('Paid in cash'), findsOneWidget);
@@ -740,6 +811,47 @@ void main() {
         );
       },
     );
+
+    testWidgets('a small order shows the charge as an amount in the bill', (tester) async {
+      final order = testOrder(
+        status: OrderStatus.delivered,
+        paymentStatus: PaymentStatus.paid,
+        paidPaise: 15000,
+        pieces: 8,
+        totalPaise: 15000,
+        deliveryFeePaise: 3000,
+        pickedUpAt: pickedUp,
+        deliveredAt: DateTime.utc(2026, 10, 3, 12, 2),
+      );
+      final (router, _, _) = await pump(tester, order);
+      unawaited(router.push(Routes.bill(order.id), extra: order));
+      await tester.pumpAndSettle();
+
+      expect(find.text('Travel charge'), findsOneWidget);
+      expect(find.text('₹30'), findsOneWidget);
+      expect(find.text('Free'), findsNothing);
+      expect(find.text('₹120'), findsNWidgets(2), reason: 'the item line and the Items row: the total less the travel charge');
+    });
+
+    testWidgets('a cancelled order says the kept charge was kept because the partner had already travelled', (tester) async {
+      final order = testOrder(
+        status: OrderStatus.cancelled,
+        method: PaymentMethod.online,
+        paymentStatus: PaymentStatus.paid,
+        paidPaise: 15000,
+        refundedPaise: 12000,
+        pieces: 8,
+        totalPaise: 15000,
+        deliveryFeePaise: 3000,
+        travelChargeKept: true,
+      );
+      final (router, _, _) = await pump(tester, order);
+      unawaited(router.push(Routes.bill(order.id), extra: order));
+      await tester.pumpAndSettle();
+
+      expect(find.text('Travel charge'), findsOneWidget);
+      expect(find.text(keepLastWordsTogether('Kept: partner had already travelled')), findsOneWidget);
+    });
   });
 }
 
@@ -792,6 +904,8 @@ extension on OrderDto {
 
   OrderDto withCancelReason(String reason) => OrderDto(
     instructions: instructions,
+    careNote: careNote,
+    carePhotoUrls: carePhotoUrls,
     orderNumber: orderNumber,
     status: status,
     source: source,
@@ -808,6 +922,7 @@ extension on OrderDto {
     subtotalPaise: subtotalPaise,
     discountPaise: discountPaise,
     deliveryFeePaise: deliveryFeePaise,
+    travelChargeKept: travelChargeKept,
     totalPaise: totalPaise,
     paidPaise: paidPaise,
     refundedPaise: refundedPaise,
@@ -825,6 +940,9 @@ extension on OrderDto {
     pickedUpAt: pickedUpAt,
     deliveredAt: deliveredAt,
     cancelledAt: cancelledAt,
+    rescheduleCount: rescheduleCount,
+    reschedulesRemaining: reschedulesRemaining,
+    canReschedule: canReschedule,
     paymentStatus: paymentStatus,
     events: events,
   );

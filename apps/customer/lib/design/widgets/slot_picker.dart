@@ -133,10 +133,19 @@ class SlotTile extends StatelessWidget {
       label: '$name, $detail',
       excludeSemantics: true,
       child: Opacity(
-        opacity: enabled ? 1 : 0.5,
+        opacity: 1,
         child: Material(
-          color: c.surface,
-          shape: Border(bottom: BorderSide(color: c.border)),
+          color: selected ? c.primarySoft : c.surface,
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(IdRadius.md),
+            side: BorderSide(
+              color: selected
+                  ? c.primary
+                  : enabled
+                  ? c.borderStrong
+                  : c.border,
+            ),
+          ),
           child: InkWell(
             borderRadius: BorderRadius.circular(IdRadius.md),
             onTap: enabled ? onTap : null,
@@ -144,8 +153,8 @@ class SlotTile extends StatelessWidget {
               constraints: const BoxConstraints(minHeight: 64),
               child: Padding(
                 padding: const EdgeInsets.symmetric(
-                  horizontal: 0,
-                  vertical: 14,
+                  horizontal: IdSpace.s4,
+                  vertical: IdSpace.s3,
                 ),
                 child: Row(
                   children: [
@@ -157,6 +166,7 @@ class SlotTile extends StatelessWidget {
                             name,
                             style: t.label.copyWith(
                               fontWeight: FontWeight.w600,
+                              color: enabled ? c.text : c.textMuted,
                             ),
                           ),
                           Text(
@@ -211,15 +221,18 @@ class ReasonTile extends StatelessWidget {
       label: label,
       excludeSemantics: true,
       child: Material(
-        color: c.surface,
-        shape: Border(bottom: BorderSide(color: c.border)),
+        color: selected ? c.primarySoft : c.surface,
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(IdRadius.md),
+          side: BorderSide(color: selected ? c.primary : c.borderStrong),
+        ),
         child: InkWell(
           borderRadius: BorderRadius.circular(IdRadius.md),
           onTap: onTap,
           child: ConstrainedBox(
             constraints: const BoxConstraints(minHeight: IdSize.touchTarget),
             child: Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 0, vertical: 12),
+              padding: const EdgeInsets.all(IdSpace.s3),
               child: Row(
                 children: [
                   Expanded(child: Text(label, style: context.text.bodyLg)),

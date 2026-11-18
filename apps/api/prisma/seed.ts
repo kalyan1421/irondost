@@ -60,7 +60,15 @@ async function main(): Promise<void> {
     console.warn(`${phone} already exists with role ${existing.role}; not changed`);
   }
 
-  if ((await prisma.catalogCategory.count()) === 0) {
+  // Never put placeholder prices in front of real customers. The sample catalogue is for a database on this machine;
+  // against any other host (Supabase, Render) load the real catalogue instead (scripts/push-catalogue.sh), or set
+  // SEED_SAMPLE_CATALOGUE=true on purpose.
+  const host = new URL(process.env.DATABASE_URL!).hostname;
+  const localDatabase = ['localhost', '127.0.0.1', '::1', '[::1]'].includes(host) || host.endsWith('.localhost');
+  const sampleAllowed = (localDatabase && process.env.NODE_ENV !== 'production') || process.env.SEED_SAMPLE_CATALOGUE === 'true';
+  if (!sampleAllowed) {
+    console.log('Skipped the sample catalogue (placeholder prices) because this is not a local database. Load the real one with push-catalogue.sh.');
+  } else if ((await prisma.catalogCategory.count()) === 0) {
     for (const [i, cat] of SAMPLE_CATALOGUE.entries()) {
       await prisma.catalogCategory.create({
         data: {

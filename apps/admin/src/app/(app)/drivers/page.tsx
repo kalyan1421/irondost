@@ -2,7 +2,7 @@
 
 import { useQuery } from "@tanstack/react-query";
 import { AlertTriangle, Pencil, Plus } from "lucide-react";
-import { useEffect, useState } from "react";
+import { Suspense, useEffect, useState } from "react";
 import { EmptyState, ErrorState, PageBody, PageHeader, TableSkeleton } from "@/components/page";
 import { ActiveDot } from "@/components/status";
 import { Badge } from "@/components/ui/badge";
@@ -11,6 +11,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { api, unwrap } from "@/lib/api/client";
 import type { Driver } from "@/lib/api/types";
+import { useRouter, useSearchParams } from "next/navigation";
 import { dateTime, phone, relativeTime, telHref } from "@/lib/format";
 import { cn } from "@/lib/utils";
 import { PartnerDialog } from "./_components/partner-dialog";
@@ -44,7 +45,8 @@ function useNow(intervalMs: number): number {
   return now;
 }
 
-export default function DriversPage() {
+function DriversList() {
+  const params = useSearchParams(); const router = useRouter();
   const drivers = useQuery({
     queryKey: ["drivers"],
     queryFn: () => unwrap(api.GET("/v1/admin/drivers")),
@@ -56,7 +58,8 @@ export default function DriversPage() {
   const maxLegs = settings.data?.driverMaxActiveLegs ?? null;
 
   const now = useNow(30_000);
-  const [filter, setFilter] = useState<Filter>("all");
+  const filter = (FILTERS.some((f) => f.key === params.get("filter")) ? params.get("filter") : "all") as Filter;
+  const setFilter = (value: Filter) => router.replace(`/drivers?filter=${value}`, { scroll: false });
   // undefined: closed · null: adding · Driver: editing
   const [dialog, setDialog] = useState<Driver | null | undefined>(undefined);
 
@@ -102,7 +105,7 @@ export default function DriversPage() {
         ) : all.length === 0 ? (
           <EmptyState
             title="No delivery partners yet"
-            description="Add a partner with their mobile number. They sign in to the partner app with a one-time code."
+            description="Add a partner with their mobile number, then assign them from an order. Staff currently manage task updates in this console."
             action={
               <Button onClick={() => setDialog(null)}>
                 <Plus /> Add partner
@@ -114,7 +117,7 @@ export default function DriversPage() {
             title={filter === "online" ? "No partners are online" : "No inactive accounts"}
             description={
               filter === "online"
-                ? "Partners show up here when they go online in the partner app."
+                ? "No partner is marked online. You can still assign active partners manually from an order."
                 : "Partners you deactivate show up here."
             }
           />
@@ -211,3 +214,5 @@ export default function DriversPage() {
     </>
   );
 }
+
+export default function DriversPage() { return <Suspense><DriversList /></Suspense>; }

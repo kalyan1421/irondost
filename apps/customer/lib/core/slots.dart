@@ -2,6 +2,11 @@ import 'package:intl/intl.dart';
 
 import '../data/api/export.dart';
 
+extension SlotAvailability on SlotOptionDto {
+  /// The window is open but has no place left. It is shown, disabled, as "Full" (a closed window is just closed).
+  bool get isFull => reason == SlotUnavailableReason.full;
+}
+
 /// "Morning", "Afternoon", "Evening".
 String slotName(TimeSlot slot) => switch (slot) {
       TimeSlot.morning => 'Morning',

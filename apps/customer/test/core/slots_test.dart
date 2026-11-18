@@ -32,6 +32,7 @@ void main() {
           startsAt: DateTime.utc(2026, 10, 3, h, m).subtract(const Duration(hours: 5, minutes: 30)),
           endsAt: DateTime.utc(2026, 10, 3, endH, endM).subtract(const Duration(hours: 5, minutes: 30)),
           available: true,
+          reason: null,
         );
     expect(slotWindow(at(7, 30, 11, 0)), '7:30 – 11 AM');
     expect(slotWindow(at(11, 0, 12, 30)), '11 AM – 12:30 PM');

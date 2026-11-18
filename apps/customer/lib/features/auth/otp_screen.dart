@@ -15,12 +15,9 @@ import 'auth_repository.dart';
 import 'login_controller.dart';
 import 'session.dart';
 
-/// The 6-digit code screen. With [linking] the code adds a number to a Google customer's account, and the screen pops `true`
-/// once the API has stored it.
+/// The 6-digit code screen that finishes signing in with a mobile number.
 class OtpScreen extends ConsumerStatefulWidget {
-  const OtpScreen({super.key, this.linking = false});
-
-  final bool linking;
+  const OtpScreen({super.key});
 
   @override
   ConsumerState<OtpScreen> createState() => _OtpScreenState();
@@ -64,10 +61,6 @@ class _OtpScreenState extends ConsumerState<OtpScreen> {
     final c = context.colors;
     final t = context.text;
 
-    ref.listen(loginProvider.select((s) => s.linked), (_, linked) {
-      if (linked && widget.linking && mounted) context.pop(true);
-    });
-
     ref.listen(sessionProvider, (_, next) {
       if (next.value is WrongApp) {
         ScaffoldMessenger.of(context).showSnackBar(
@@ -107,8 +100,6 @@ class _OtpScreenState extends ConsumerState<OtpScreen> {
         'That code is incorrect. Check the SMS and try again.',
       AuthFailureKind.codeExpired =>
         'This code has expired. Tap Resend code for a new one.',
-      AuthFailureKind.phoneInUse =>
-        'This number is already linked to another IronDost account. Tap Change and use a different number.',
       AuthFailureKind.network =>
         "You're offline. Check your connection and try again.",
       AuthFailureKind.unknown => "We couldn't check the code. Try again.",
@@ -199,6 +190,8 @@ class _OtpScreenState extends ConsumerState<OtpScreen> {
                   _Hint(
                     AppEnv.devAuth
                         ? 'Dev sign-in: any 6 digits work. 000000 acts like a wrong code.'
+                        : Theme.of(context).platform == TargetPlatform.iOS
+                        ? 'When the SMS arrives, tap the code above your keyboard.'
                         : 'We fill the code in for you when the SMS arrives.',
                   ),
                 ],

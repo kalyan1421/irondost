@@ -11,6 +11,8 @@ import { SettingsService } from '../settings/settings.service.js';
 import { toUserDto, UserDto } from '../users/user.dto.js';
 import { UsersService } from '../users/users.service.js';
 import {
+  AuditPageDto,
+  AuditQuery,
   BusinessSettingsDto,
   CreateCustomerDto,
   CreateStaffDto,
@@ -40,6 +42,13 @@ export class AdminController {
   @Get('dashboard')
   dashboard(): Promise<DashboardDto> {
     return this.admin.dashboard();
+  }
+
+  /** Who changed what in the admin, newest first. Super admins only. */
+  @Roles(Role.SUPER_ADMIN)
+  @Get('audit')
+  auditLog(@Query() q: AuditQuery): Promise<AuditPageDto> {
+    return this.admin.audit(q);
   }
 
   // ── Customers ──

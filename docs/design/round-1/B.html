@@ -1,0 +1,79 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>B</title>
+<style>
+@font-face{font-family:"Neon";src:url("fonts/monaspace/Monaspace-Neon-Var.woff2") format("woff2");font-weight:200 800;font-stretch:100% 125%}
+
+:root{--u:min(5.4vw,3.4rem)}
+html{background-color:#0B1530}
+body{
+  margin:0;
+  color:#F1ECDD;
+  font-family:"Neon",ui-monospace,monospace;
+  font-weight:400;
+  font-size:.95rem;
+  line-height:1.5;
+  padding:clamp(1.75rem,6vh,4rem) clamp(1.25rem,6vw,5rem) 7rem;
+}
+p{margin:0}
+.brand{font-weight:600;letter-spacing:.04em}
+h1{margin:3.2rem 0 1.4rem;font-weight:700;font-size:clamp(1.6rem,6.2vw,3.2rem);line-height:1.08;max-width:15ch;letter-spacing:-.02em}
+.intro{max-width:34ch}
+.intro p+p{margin-top:.9rem}
+
+.win{margin-top:3.4rem}
+.win .w{font-weight:500;font-size:.9rem;letter-spacing:.22em;text-transform:uppercase}
+.win .t{font-weight:700;line-height:.92;letter-spacing:-.03em;margin-top:.5rem}
+.m{color:#F5C25B}
+.m .t{font-size:calc(var(--u)*4)}
+.a{color:#A9DDF5;margin-left:calc(var(--u)*.89)}
+.a .t{font-size:calc(var(--u)*5)}
+.e{color:#FF8F73;margin-left:calc(var(--u)*2)}
+.e .t{font-size:calc(var(--u)*4)}
+
+.after{margin-top:4.2rem;max-width:34ch}
+.after p+p{margin-top:.9rem}
+.items{margin-top:2rem}
+.items p{font-weight:500}
+.go{margin-top:2.4rem;font-weight:700;font-size:1.2rem}
+</style>
+</head>
+<body>
+<main>
+  <p class="brand">IronDost</p>
+  <h1>Fresh clothes, back at your door.</h1>
+  <div class="intro">
+    <p>Ironing, washing and dry cleaning, picked up and delivered.</p>
+    <p>Choose your pickup and delivery times.</p>
+  </div>
+
+  <div class="win m">
+    <p class="w">Morning</p>
+    <p class="t">7 – <br>11 AM</p>
+  </div>
+  <div class="win a">
+    <p class="w">Afternoon</p>
+    <p class="t">11 AM <br>– 4 PM</p>
+  </div>
+  <div class="win e">
+    <p class="w">Evening</p>
+    <p class="t">4 – <br>8 PM</p>
+  </div>
+
+  <div class="after">
+    <p>Your partner arrives within the window you pick.</p>
+    <div class="items">
+      <p>Shirt / T-shirt ₹35 per piece</p>
+      <p>Trousers / Jeans ₹40 per piece</p>
+      <p>Bedsheet (double) ₹70 per piece</p>
+    </div>
+    <p style="margin-top:2rem">A rough count is fine. Your partner confirms it at pickup.</p>
+    <p>Pay online or in cash at delivery.</p>
+    <p class="go">Get started</p>
+  </div>
+</main>
+</body>
+</html>

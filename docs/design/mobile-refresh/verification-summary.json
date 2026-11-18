@@ -1,0 +1,156 @@
+{
+  "date": "2026-11-01",
+  "scope": "Flutter customer app; all mobile screen families",
+  "checks": {
+    "after": {
+      "status": "passed",
+      "cases": 94,
+      "log": "verification/after.log"
+    },
+    "analyze": {
+      "status": "passed",
+      "log": "verification/analyze.log"
+    },
+    "android-build": {
+      "status": "passed",
+      "log": "verification/android-build.log"
+    },
+    "baseline": {
+      "status": "passed",
+      "cases": 94,
+      "log": "verification/baseline.log"
+    },
+    "checkout-captures": {
+      "status": "passed",
+      "cases": 4,
+      "log": "verification/checkout-captures.log"
+    },
+    "checkout-tests": {
+      "status": "passed",
+      "cases": 24,
+      "log": "verification/checkout-tests.log"
+    },
+    "ios-build": {
+      "status": "passed",
+      "log": "verification/ios-build.log"
+    },
+    "ios-launch": {
+      "status": "passed",
+      "log": "verification/ios-launch.log"
+    },
+    "keyboard-large": {
+      "status": "passed",
+      "cases": 16,
+      "log": "verification/keyboard-large.log"
+    },
+    "keyboard": {
+      "status": "passed",
+      "cases": 16,
+      "log": "verification/keyboard.log"
+    },
+    "landscape": {
+      "status": "passed",
+      "cases": 78,
+      "log": "verification/landscape.log"
+    },
+    "states": {
+      "status": "passed",
+      "cases": 24,
+      "log": "verification/states.log"
+    },
+    "stress-CHECKOUT-320": {
+      "status": "passed",
+      "cases": 4,
+      "log": "verification/stress-CHECKOUT-320.log"
+    },
+    "stress-CHECKOUT-390": {
+      "status": "passed",
+      "cases": 4,
+      "log": "verification/stress-CHECKOUT-390.log"
+    },
+    "stress-CHECKOUT-430": {
+      "status": "passed",
+      "cases": 4,
+      "log": "verification/stress-CHECKOUT-430.log"
+    },
+    "stress-EXTRA_STATES-320": {
+      "status": "passed",
+      "cases": 24,
+      "log": "verification/stress-EXTRA_STATES-320.log"
+    },
+    "stress-EXTRA_STATES-390": {
+      "status": "passed",
+      "cases": 24,
+      "log": "verification/stress-EXTRA_STATES-390.log"
+    },
+    "stress-EXTRA_STATES-430": {
+      "status": "passed",
+      "cases": 24,
+      "log": "verification/stress-EXTRA_STATES-430.log"
+    },
+    "stress-KEYBOARD-320": {
+      "status": "passed",
+      "cases": 16,
+      "log": "verification/stress-KEYBOARD-320.log"
+    },
+    "stress-KEYBOARD-390": {
+      "status": "passed",
+      "cases": 16,
+      "log": "verification/stress-KEYBOARD-390.log"
+    },
+    "stress-KEYBOARD-430": {
+      "status": "passed",
+      "cases": 16,
+      "log": "verification/stress-KEYBOARD-430.log"
+    },
+    "stress320": {
+      "status": "passed",
+      "cases": 78,
+      "log": "verification/stress320.log"
+    },
+    "stress375": {
+      "status": "passed",
+      "cases": 78,
+      "log": "verification/stress375.log"
+    },
+    "stress390": {
+      "status": "passed",
+      "cases": 78,
+      "log": "verification/stress390.log"
+    },
+    "stress430": {
+      "status": "passed",
+      "cases": 78,
+      "log": "verification/stress430.log"
+    },
+    "tests": {
+      "status": "passed",
+      "cases": 457,
+      "log": "verification/tests.log"
+    },
+    "type-a": {
+      "status": "passed",
+      "cases": 6,
+      "log": "verification/type-a.log"
+    },
+    "type-f": {
+      "status": "passed",
+      "cases": 6,
+      "log": "verification/type-f.log"
+    }
+  },
+  "capture_counts": {
+    "before": 94,
+    "after": 94,
+    "after/states": 24,
+    "after/keyboard": 16,
+    "after/keyboard-large": 16,
+    "after/checkout": 4
+  },
+  "limitations": [
+    "Fixture data, not current campaigns or prices.",
+    "Native iOS launch shows offline recovery because the local development API is unavailable.",
+    "Real-device screen readers, provider sign-in, Maps and payments remain release checks.",
+    "No user-study outcome or Telugu/Hindi rollout is claimed."
+  ]
+}

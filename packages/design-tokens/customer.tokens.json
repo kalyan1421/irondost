@@ -1,10 +1,10 @@
 {
   "name": "IronDost",
-  "version": 2,
+  "version": 3,
   "meta": {
-    "source": "customer-app local audit",
-    "status": "proposal; not applied to application",
-    "date": "2026-10-05",
+    "source": "clean and friendly mobile refresh",
+    "status": "implemented locally; device review pending",
+    "date": "2026-11-01",
     "basedOn": "packages/design-tokens/tokens.json v1",
     "brandMaster": "packages/brand/scripts/build-svg.py"
   },
@@ -244,7 +244,7 @@
           "light": "#7d8ba3",
           "dark": "#6f82a6"
         },
-        "usage": "Input, checkbox and outline-button borders: ≥3:1 on `surface` and `bg` in both themes."
+        "usage": "Input, checkbox and outline-button borders: \u22653:1 on `surface` and `bg` in both themes."
       },
       {
         "name": "focus-ring",
@@ -252,7 +252,7 @@
           "light": "#1f4fd1",
           "dark": "#3fb8ea"
         },
-        "usage": "2px keyboard and switch-access focus ring, offset 2px; ≥6.5:1 on every surface."
+        "usage": "2px keyboard and switch-access focus ring, offset 2px; \u22656.5:1 on every surface."
       },
       {
         "name": "scrim",
@@ -290,9 +290,19 @@
     ]
   },
   "type": {
-    "fonts": [],
+    "fonts": [
+      {
+        "family": "Junction",
+        "weights": [
+          400,
+          700
+        ],
+        "license": "SIL OFL 1.1",
+        "source": "docs/design/round-1/fonts/junction"
+      }
+    ],
     "families": {
-      "display": "\"Outfit\", system-ui, sans-serif",
+      "display": "\"Junction\", \"Figtree\", system-ui, sans-serif",
       "body": "\"Figtree\", system-ui, sans-serif",
       "mono": "\"Geist Mono\", ui-monospace, monospace",
       "devanagari": "\"Noto Sans Devanagari\", \"Figtree\", sans-serif"
@@ -305,26 +315,27 @@
           {
             "name": "display",
             "fontSize": "30px",
-            "lineHeight": "36px",
-            "fontWeight": 600,
+            "lineHeight": "38px",
+            "fontWeight": 700,
             "letterSpacing": "0em",
-            "sample": "₹1,240",
-            "usage": "Totals and big numbers: the order total, the OTP digits."
+            "sample": "\u20b91,240",
+            "usage": "Important amounts and OTP digits, in the text face for a consistent rupee glyph.",
+            "family": "body"
           },
           {
             "name": "headline",
-            "fontSize": "26px",
-            "lineHeight": "32px",
-            "fontWeight": 600,
+            "fontSize": "28px",
+            "lineHeight": "36px",
+            "fontWeight": 700,
             "letterSpacing": "0em",
             "sample": "Book a pickup",
             "usage": "Main screen heading; never repeated as a heading inside every card."
           },
           {
             "name": "title-lg",
-            "fontSize": "20px",
-            "lineHeight": "26px",
-            "fontWeight": 600,
+            "fontSize": "21px",
+            "lineHeight": "28px",
+            "fontWeight": 700,
             "sample": "Choose a time",
             "usage": "Compact app bar title and section heading.",
             "letterSpacing": "0em"

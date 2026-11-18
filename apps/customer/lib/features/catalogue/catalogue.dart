@@ -1,3 +1,4 @@
+import '../../core/quantities.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../data/api_client.dart';
@@ -31,10 +32,4 @@ List<CatalogCategoryDto> bookable(List<CatalogCategoryDto> all) {
 }
 
 /// "per piece", "per pair", "per set", "per kg".
-String unitLabel(ItemUnit unit) => switch (unit) {
-      ItemUnit.piece => 'per piece',
-      ItemUnit.pair => 'per pair',
-      ItemUnit.valueSet => 'per set',
-      ItemUnit.kg => 'per kg',
-      ItemUnit.$unknown => 'each',
-    };
+String unitLabel(ItemUnit unit) => unitRateLabel(unit);

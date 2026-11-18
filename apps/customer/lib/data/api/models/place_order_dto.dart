@@ -23,6 +23,8 @@ class PlaceOrderDto {
     this.promoCode,
     this.deliveryAddressId,
     this.instructions,
+    this.careNote,
+    this.carePhotoUrls,
   });
   
   factory PlaceOrderDto.fromJson(Map<String, Object?> json) => _$PlaceOrderDtoFromJson(json);
@@ -41,6 +43,12 @@ class PlaceOrderDto {
   final String? deliveryAddressId;
   final PaymentMethod paymentMethod;
   final String? instructions;
+
+  /// What the workshop should know about the clothes (stains, delicate fabric). Separate from instructions, which are for the pickup partner.
+  final String? careNote;
+
+  /// Photos of the clothes: URLs returned by POST /v1/me/uploads/care-photos for this customer, each used once and not yet on an order.
+  final List<String>? carePhotoUrls;
 
   Map<String, Object?> toJson() => _$PlaceOrderDtoToJson(this);
 }

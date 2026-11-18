@@ -1,6 +1,7 @@
 import 'package:dio/dio.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../../core/slots.dart';
 import '../../data/api_client.dart';
 
 /// Pickup and delivery windows from the API. Which are open (not past, far enough ahead, at least
@@ -56,20 +57,58 @@ class ScheduleChoice {
 
 final scheduleChoiceProvider = NotifierProvider<ScheduleChoiceController, ScheduleChoice>(ScheduleChoiceController.new);
 
-class ScheduleChoiceController extends Notifier<ScheduleChoice> {
-  @override
-  ScheduleChoice build() => const ScheduleChoice();
+/// What the picker widgets call when the customer taps. Booking and rescheduling each keep their own state behind it.
+abstract interface class SchedulePicks {
+  void pickDate(String date);
+  void pickPickup(SlotOptionDto option);
+  void pickDelivery(SlotOptionDto option);
+}
 
+abstract class _PicksController extends Notifier<ScheduleChoice> implements SchedulePicks {
   /// Another day: the earliest open window that day is used until one is tapped.
+  @override
   void pickDate(String date) => state = ScheduleChoice(pickupDate: date);
 
   /// Another pickup window; delivery goes back to the earliest after it.
+  @override
   void pickPickup(SlotOptionDto option) => state = ScheduleChoice(pickupDate: option.date, pickup: slotKey(option));
 
+  @override
   void pickDelivery(SlotOptionDto option) => state = ScheduleChoice(pickupDate: state.pickupDate, pickup: state.pickup, delivery: slotKey(option));
+}
+
+class ScheduleChoiceController extends _PicksController {
+  @override
+  ScheduleChoice build() => const ScheduleChoice();
 
   /// After an order is placed.
   void clear() => state = const ScheduleChoice();
+}
+
+/// The order whose time is being changed, and the windows it has now. A record, so the same order gives the same provider.
+typedef RescheduleStart = ({String orderId, SlotKey pickup, SlotKey delivery});
+
+/// Changing one order's time: the picker starts on the windows the order has now, and nothing the customer taps here
+/// touches the booking in progress.
+final rescheduleChoiceProvider = NotifierProvider.autoDispose.family<RescheduleChoiceController, ScheduleChoice, RescheduleStart>(
+  RescheduleChoiceController.new,
+);
+
+class RescheduleChoiceController extends _PicksController {
+  RescheduleChoiceController(this.start);
+  final RescheduleStart start;
+
+  @override
+  ScheduleChoice build() => ScheduleChoice(pickupDate: start.pickup.date, pickup: start.pickup, delivery: start.delivery);
+
+  // The delivery the order has is kept whenever it is still allowed after the pickup that was tapped; when it is not, the
+  // earliest one that is takes its place (see [buildSchedule]). Going back to the order's own day selects its own window.
+
+  @override
+  void pickDate(String date) => state = ScheduleChoice(pickupDate: date, pickup: date == start.pickup.date ? start.pickup : null, delivery: start.delivery);
+
+  @override
+  void pickPickup(SlotOptionDto option) => state = ScheduleChoice(pickupDate: option.date, pickup: slotKey(option), delivery: start.delivery);
 }
 
 /// The pickup and delivery windows on offer, and which are selected.
@@ -115,13 +154,29 @@ class Schedule {
 }
 
 /// The schedule as it stands: the customer's taps over the API's windows, with defaults filled in.
-final scheduleProvider = Provider.autoDispose<AsyncValue<Schedule>>((ref) {
-  final choice = ref.watch(scheduleChoiceProvider);
+final scheduleProvider = Provider.autoDispose<AsyncValue<Schedule>>((ref) => buildSchedule(ref, ref.watch(scheduleChoiceProvider)));
+
+/// The same for one order's time change.
+final rescheduleScheduleProvider = Provider.autoDispose.family<AsyncValue<Schedule>, RescheduleStart>(
+  (ref, start) => buildSchedule(ref, ref.watch(rescheduleChoiceProvider(start)), own: start.pickup),
+);
+
+/// [choice] laid over the API's windows: a window that is closed (or no longer allowed after the pickup) is not kept,
+/// and whatever was not chosen falls back to the earliest open one. [own] is the pickup window an order being moved already
+/// holds: the API counts that order in the window, so it may say "full" for the very window the customer has. It is theirs, so
+/// it stays open to choose again (the API does not count a move that keeps the same pickup window).
+AsyncValue<Schedule> buildSchedule(Ref ref, ScheduleChoice choice, {SlotKey? own}) {
   final slots = ref.watch(pickupSlotsProvider);
   if (!slots.hasValue) {
     return slots.hasError ? AsyncError(slots.error!, slots.stackTrace ?? StackTrace.empty) : const AsyncLoading();
   }
-  final all = slots.requireValue;
+  final all = [
+    for (final s in slots.requireValue)
+      if (own != null && s.isFull && slotKey(s) == own)
+        SlotOptionDto(date: s.date, slot: s.slot, label: s.label, startsAt: s.startsAt, endsAt: s.endsAt, available: true, reason: null)
+      else
+        s,
+  ];
   if (all.isEmpty) return const AsyncData(Schedule(pickupSlots: [], pickupDate: ''));
 
   final date = all.any((s) => s.date == choice.pickupDate) ? choice.pickupDate! : all.first.date;
@@ -146,4 +201,4 @@ final scheduleProvider = Provider.autoDispose<AsyncValue<Schedule>>((ref) {
     delivery ??= options.where((s) => s.available).firstOrNull;
   }
   return AsyncData(Schedule(pickupSlots: all, pickupDate: date, pickup: pickup, deliverySlots: deliverySlots, delivery: delivery));
-});
+}

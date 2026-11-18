@@ -6,6 +6,7 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:go_router/go_router.dart';
 import 'package:irondost_customer/app/routes.dart';
 import 'package:irondost_customer/data/api_client.dart';
+import 'package:irondost_customer/design/widgets/review_row.dart';
 import 'package:irondost_customer/features/addresses/address_repository.dart';
 import 'package:irondost_customer/features/auth/session.dart';
 import 'package:irondost_customer/features/basket/basket.dart';
@@ -24,6 +25,12 @@ class _GoogleSession extends SessionController {
   Future<Session> build() async => const SignedIn(Profile(id: 'g1', name: 'Gina', email: 'gina@example.com', isComplete: true));
 }
 
+/// A Google customer who typed their number at checkout earlier (not verified by an SMS code).
+class _TypedNumberSession extends SessionController {
+  @override
+  Future<Session> build() async => const SignedIn(Profile(id: 'g1', phone: '+919876543210', name: 'Gina', email: 'gina@example.com', isComplete: true));
+}
+
 Future<void> settle(WidgetTester tester) async {
   await tester.pump(quoteDebounce + const Duration(milliseconds: 10));
   await tester.pumpAndSettle();
@@ -39,6 +46,7 @@ void main() {
     FakeOrderRepository? orders,
     FakeScheduleRepository? schedule,
     SessionController Function()? session,
+    QuoteRepository? quotes,
   }) async {
     tester.view
       ..physicalSize = const Size(390 * 3, 1300 * 3)
@@ -67,7 +75,7 @@ void main() {
       themedRouter(
         router,
         overrides: [
-          ...await basketOverrides(saved: saved, session: session),
+          ...await basketOverrides(saved: saved, session: session, quotes: quotes),
           scheduleRepositoryProvider.overrideWithValue(schedule ?? FakeScheduleRepository()),
           orderRepositoryProvider.overrideWithValue(fake),
           addressRepositoryProvider.overrideWithValue(FakeAddressRepository([address ?? testAddress()])),
@@ -87,6 +95,10 @@ void main() {
     await pump(tester);
 
     expect(find.text('Checkout'), findsOneWidget);
+    expect(find.text('Contact number'), findsOneWidget);
+    expect(find.text('+91 98765 43210'), findsOneWidget);
+    expect(tester.getTopLeft(find.text('To pay')).dy,
+        lessThan(tester.getTopLeft(find.text('Pay with')).dy));
     expect(find.text('Home'), findsOneWidget);
     expect(find.textContaining('302, Sai Residency'), findsOneWidget);
     expect(find.text('Pickup'), findsOneWidget);
@@ -103,6 +115,55 @@ void main() {
     expect(find.text('Secure payment by Razorpay'), findsOneWidget);
   });
 
+  testWidgets('shows the travel charge as its own line, with the total, but leaves the add-more nudge to the basket', (tester) async {
+    final quotes = FakeQuoteRepository()
+      ..deliveryFeePaise = 3000
+      ..freeTravelFromPaise = 20000;
+    await pump(tester, quotes: quotes);
+
+    await tester.scrollUntilVisible(find.text('To pay'), 200, scrollable: find.byType(Scrollable).first);
+    await tester.pumpAndSettle();
+    expect(find.text('Travel charge'), findsOneWidget);
+    expect(find.text('Pickup & delivery'), findsNothing);
+    expect(find.text('₹30'), findsOneWidget);
+    expect(find.text('Pay ₹110'), findsOneWidget, reason: '₹80 of clothes and the ₹30 charge');
+    expect(find.textContaining('and travel is free'), findsNothing);
+  });
+
+  testWidgets('says Free for travel when the clothes reach the free amount', (tester) async {
+    final quotes = FakeQuoteRepository()
+      ..deliveryFeePaise = 3000
+      ..freeTravelFromPaise = 8000;
+    await pump(tester, quotes: quotes);
+
+    await tester.scrollUntilVisible(find.text('To pay'), 200, scrollable: find.byType(Scrollable).first);
+    await tester.pumpAndSettle();
+    expect(find.text('Travel charge'), findsOneWidget);
+    expect(find.text('Free'), findsOneWidget);
+    expect(find.text('Pay ₹80'), findsOneWidget);
+  });
+
+  testWidgets('the way to pay is always on screen beside the button, and steps aside for the keyboard', (tester) async {
+    tester.view.physicalSize = const Size(390 * 3, 844 * 3);
+    tester.view.devicePixelRatio = 3;
+    addTearDown(tester.view.reset);
+    await pump(tester);
+
+    final viewHeight = tester.view.physicalSize.height / tester.view.devicePixelRatio;
+    expect(find.text('Pay with'), findsOneWidget);
+    for (final label in ['Pay online', 'Cash on delivery']) {
+      expect(tester.getRect(find.text(label)).bottom, lessThanOrEqualTo(viewHeight), reason: '$label needs no scrolling');
+      expect(tester.getRect(find.text(label)).top, greaterThan(viewHeight / 2), reason: '$label sits with the button at the bottom');
+    }
+    expect(tester.getTopLeft(find.text('Pay with')).dy, lessThan(tester.getTopLeft(find.text('Pay ₹80')).dy));
+
+    tester.view.viewInsets = const FakeViewPadding(bottom: 300 * 3);
+    await tester.pumpAndSettle();
+    expect(find.text('Pay with'), findsNothing, reason: 'the footer shrinks to the button while the note keyboard is up');
+    expect(find.text('Pay ₹80'), findsOneWidget);
+    addTearDown(tester.view.resetViewInsets);
+  });
+
   testWidgets('cash on delivery changes the button and the reassurance line', (tester) async {
     await pump(tester);
     await tester.tap(find.text('Cash on delivery'));
@@ -113,9 +174,22 @@ void main() {
     expect(find.text('Secure payment by Razorpay'), findsNothing);
   });
 
+  // The care note above it has a field too: these tests are about the pickup note.
+  final pickupNoteField = find.descendant(of: find.byKey(const PageStorageKey('pickup-note-input')), matching: find.byType(TextField));
+
+  Future<void> openNote(WidgetTester tester) async {
+    final note = find.text('Note for your pickup (optional)');
+    await tester.scrollUntilVisible(note.hitTestable(), 180, scrollable: find.byType(Scrollable).first);
+    await tester.tap(note.hitTestable());
+    await tester.pumpAndSettle();
+    await tester.ensureVisible(pickupNoteField);
+    await tester.pumpAndSettle();
+  }
+
   group('note for the pickup', () {
     testWidgets('is optional, and says who sees it', (tester) async {
       final (_, orders, _) = await pump(tester);
+      await openNote(tester);
       expect(find.text('Note for your pickup (optional)'), findsOneWidget);
       expect(find.text('IronDost sees this with your order.'), findsOneWidget);
 
@@ -128,7 +202,10 @@ void main() {
     testWidgets('typed text and a quick phrase are sent together, and a phrase is only added once', (tester) async {
       final (_, orders, _) = await pump(tester);
 
-      await tester.enterText(find.byType(TextField), 'Gate code 4321');
+      await openNote(tester);
+      await tester.enterText(pickupNoteField, 'Gate code 4321');
+      await tester.ensureVisible(find.text('Call before arriving'));
+      await tester.pumpAndSettle();
       await tester.tap(find.text('Call before arriving'));
       await tester.pump();
       await tester.tap(find.text('Call before arriving'));
@@ -143,6 +220,7 @@ void main() {
 
     testWidgets('quick phrases are full-size touch targets', (tester) async {
       await pump(tester);
+      await openNote(tester);
       for (final phrase in ['Call before arriving', 'Leave with security', "Don't ring the bell"]) {
         final target = find.ancestor(of: find.text(phrase), matching: find.byType(InkWell)).first;
         expect(tester.getSize(target).height, greaterThanOrEqualTo(48), reason: phrase);
@@ -152,7 +230,8 @@ void main() {
     testWidgets('stops at the API limit of 500 characters', (tester) async {
       final (_, orders, _) = await pump(tester);
 
-      await tester.enterText(find.byType(TextField), 'a' * 600);
+      await openNote(tester);
+      await tester.enterText(pickupNoteField, 'a' * 600);
       await tester.pump();
       await tester.tap(find.text('Pay ₹80'));
       await settle(tester);
@@ -176,7 +255,32 @@ void main() {
   });
 
   group('a customer who signed in with Google', () {
-    testWidgets('is asked for a verified number before the order is placed, then the order goes through', (tester) async {
+    testWidgets('adding contact from the review keeps the basket and does not place an order', (tester) async {
+      final (router, orders, container) = await pump(tester, session: _GoogleSession.new);
+      expect(find.text('Add a number before booking'), findsOneWidget);
+      await tester.tap(find.text('Add number'));
+      await settle(tester);
+      expect(router.state.matchedLocation, Routes.addPhone);
+      expect(orders.placed, isEmpty);
+      router.pop();
+      await settle(tester);
+      expect(router.state.matchedLocation, Routes.checkout);
+      expect(container.read(basketProvider).count, 3);
+      expect(find.text('Pay ₹80'), findsOneWidget);
+    });
+
+    testWidgets('can correct a number they typed earlier from the review', (tester) async {
+      final (router, orders, _) = await pump(tester, session: _TypedNumberSession.new);
+      expect(find.text('+91 98765 43210'), findsOneWidget);
+      expect(find.text('Add a number before booking'), findsNothing);
+      final contactRow = find.ancestor(of: find.text('Contact number'), matching: find.byType(ReviewRow));
+      await tester.tap(find.descendant(of: contactRow, matching: find.text('Change')));
+      await settle(tester);
+      expect(router.state.matchedLocation, Routes.addPhone);
+      expect(orders.placed, isEmpty);
+    });
+
+    testWidgets('is asked for a number before the order is placed, then the order goes through', (tester) async {
       final (router, orders, _) = await pump(tester, session: _GoogleSession.new);
       await tester.tap(find.text('Cash on delivery'));
       await tester.pump();
@@ -277,10 +381,30 @@ void main() {
     expect(container.read(basketProvider).isEmpty, isFalse, reason: 'basket kept');
   });
 
+  testWidgets('a pickup time that filled up explains, keeps the basket, and "Pick another time" goes back to the schedule', (tester) async {
+    final orders = FakeOrderRepository()..failures.add(const ApiFailure(ApiFailureKind.rejected, statusCode: 409, code: 'SLOT_FULL'));
+    final (router, _, container) = await pump(tester, orders: orders);
+    await tester.tap(find.text('Cash on delivery'));
+    await tester.pump();
+
+    await tester.tap(find.text('Place order ₹80'));
+    await settle(tester);
+    expect(find.text('That pickup time just filled up'), findsOneWidget);
+    expect(find.textContaining('Someone else booked the last place'), findsOneWidget);
+    expect(find.textContaining("you haven't been charged"), findsOneWidget);
+    expect(find.text('That time just closed'), findsNothing);
+
+    await tester.tap(find.text('Pick another time'));
+    await settle(tester);
+    expect(find.text('SCHEDULE PAGE'), findsOneWidget);
+    expect(router.state.matchedLocation, '/schedule');
+    expect(container.read(basketProvider).isEmpty, isFalse, reason: 'basket kept');
+  });
+
   testWidgets('an address we do not serve is flagged and blocks placing', (tester) async {
     await pump(tester, address: testAddress(serviceable: false));
 
-    expect(find.textContaining("We don't pick up from Banjara Hills yet"), findsOneWidget);
+    expect(find.textContaining("We're not in Banjara Hills yet"), findsOneWidget);
     expect(tester.widget<FilledButton>(find.widgetWithText(FilledButton, 'Pay ₹80')).onPressed, isNull);
   });
 

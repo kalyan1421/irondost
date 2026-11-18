@@ -7,6 +7,7 @@ import '../../app/routes.dart';
 import '../../data/api_client.dart';
 import '../../design/theme.dart';
 import '../../design/widgets/cart_bar.dart';
+import '../../design/widgets/care_note.dart';
 import '../../design/widgets/surfaces.dart';
 import '../../design/widgets/service_visual.dart';
 import '../basket/basket.dart';
@@ -81,6 +82,7 @@ class _CatalogueScreenState extends ConsumerState<CatalogueScreen> {
         },
       ),
       bottomNavigationBar: CartBar(
+        quantityLabel: ref.watch(basketQuantityLabelProvider),
         count: count,
         totalPaise: estimate,
         onReview: () => context.push(Routes.basket),
@@ -135,16 +137,13 @@ class _ServiceTabs extends StatelessWidget {
                     constraints: const BoxConstraints(
                       minHeight: IdSize.touchTarget,
                     ),
-                    padding: EdgeInsets.zero,
+                    padding: const EdgeInsets.symmetric(horizontal: IdSpace.s3),
                     alignment: Alignment.center,
                     decoration: BoxDecoration(
-                      color: c.surface,
-                      borderRadius: BorderRadius.zero,
-                      border: Border(
-                        bottom: BorderSide(
-                          color: on ? c.primary : c.border,
-                          width: on ? 2 : 1,
-                        ),
+                      color: on ? c.primarySoft : c.surface,
+                      borderRadius: BorderRadius.circular(IdRadius.sm),
+                      border: Border.all(
+                        color: on ? c.primary : c.borderStrong,
                       ),
                     ),
                     child: Row(
@@ -181,8 +180,6 @@ class _Items extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final c = context.colors;
-    final t = context.text;
     return ListView(
       padding: const EdgeInsets.fromLTRB(
         IdSpace.s5,
@@ -191,9 +188,9 @@ class _Items extends StatelessWidget {
         IdSpace.s6,
       ),
       children: [
-        Text(
-          'A rough count is fine. Your partner confirms it at pickup.',
-          style: t.caption.copyWith(color: c.textMuted),
+        const CareNote(
+          title: 'A rough count is fine.',
+          body: 'Your partner confirms it at pickup.',
         ),
         const SizedBox(height: IdSpace.s4),
         IdCard(

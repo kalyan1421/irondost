@@ -8,11 +8,15 @@ import '../basket/basket.dart';
 import '../orders/order_repository.dart';
 import '../orders/orders_list.dart';
 import '../schedule/schedule.dart';
+import 'care_note.dart';
 
 /// Why an order was not placed, in terms of what the customer should do next.
 enum CheckoutProblem {
   /// The pickup or delivery window closed (or moved out of range) while the customer was deciding.
   slotClosed,
+
+  /// The pickup window filled up while the customer was deciding: another time has to be picked.
+  slotFull,
 
   /// The pickup address is outside the service area.
   notServiceable,
@@ -28,6 +32,9 @@ enum CheckoutProblem {
 
   /// The customer signed in with Google and has not added a verified mobile number yet.
   phoneRequired,
+
+  /// The API would not take the care note photos (one was already on another order, say). They were taken off the booking.
+  photosRefused,
 
   /// No connection: nothing was charged, trying again is safe.
   offline,
@@ -94,8 +101,14 @@ class CheckoutController extends Notifier<CheckoutState> {
     }
 
     final note = state.instructions.trim();
+    final care = ref.read(careNoteProvider);
+    // A photo that is still on its way, or waiting to be retried, would be left off the order: the screen holds booking back.
+    if (care.busy) return null;
+    final careNote = care.note.trim();
     final dto = PlaceOrderDto(
       instructions: note.isEmpty ? null : note,
+      careNote: careNote.isEmpty ? null : careNote,
+      carePhotoUrls: care.photos.isEmpty ? null : [...care.photos],
       items: basket.items,
       promoCode: basket.promoCode,
       pickupDate: schedule.pickup!.date,
@@ -129,6 +142,7 @@ class CheckoutController extends Notifier<CheckoutState> {
     ref.read(basketProvider.notifier).clear();
     ref.read(scheduleChoiceProvider.notifier).clear();
     ref.invalidate(ordersListProvider(Scope.active));
+    ref.read(careNoteProvider.notifier).clear();
     _signature = null;
     _key = null;
     state = CheckoutState(method: state.method);
@@ -139,6 +153,10 @@ class CheckoutController extends Notifier<CheckoutState> {
       case 'PICKUP_SLOT_CLOSED' || 'PICKUP_TOO_FAR_AHEAD' || 'DELIVERY_TOO_SOON' || 'DELIVERY_TOO_FAR_AHEAD' || 'INVALID_DATE':
         ref.invalidate(pickupSlotsProvider);
         return CheckoutProblem.slotClosed;
+      case 'SLOT_FULL':
+        // The windows on screen are out of date: the full one must show as Full when the customer goes back.
+        ref.invalidate(pickupSlotsProvider);
+        return CheckoutProblem.slotFull;
       case 'ADDRESS_NOT_SERVICEABLE':
         return CheckoutProblem.notServiceable;
       case 'ITEM_UNAVAILABLE':
@@ -155,6 +173,9 @@ class CheckoutController extends Notifier<CheckoutState> {
         return CheckoutProblem.paused;
       case 'PHONE_REQUIRED':
         return CheckoutProblem.phoneRequired;
+      case 'INVALID_PHOTO' || 'TOO_MANY_PHOTOS':
+        ref.read(careNoteProvider.notifier).photosRefused();
+        return CheckoutProblem.photosRefused;
     }
     return e.isConnectivity ? CheckoutProblem.offline : CheckoutProblem.failed;
   }

@@ -14,6 +14,7 @@ import '../../design/widgets/id_button.dart';
 import '../../design/widgets/service_visual.dart';
 import '../addresses/addresses_controller.dart';
 import '../addresses/addresses_screen.dart';
+import '../area_interest/tell_me_card.dart';
 import '../auth/session.dart';
 import '../catalogue/catalogue.dart';
 import '../catalogue/booking_entry.dart';
@@ -189,6 +190,8 @@ class _OutOfArea extends StatelessWidget {
         label: 'Change address',
         onPressed: () => showAddressPicker(context),
       ),
+      const SizedBox(height: IdSpace.s2),
+      TellMeWhenHere(addressId: address.id, place: address.area ?? address.city),
     ],
   );
 }
@@ -240,26 +243,24 @@ class _ActiveOrder extends ConsumerWidget {
       padding: const EdgeInsets.only(bottom: IdSpace.s6),
       child: DecoratedBox(
         decoration: BoxDecoration(
-          border: Border(
-            left: BorderSide(
-              color: missed ? context.colors.warning : context.colors.primary,
-              width: 3,
-            ),
-          ),
+          color: missed
+              ? context.colors.warningSoft
+              : context.colors.primarySoft,
+          borderRadius: BorderRadius.circular(IdRadius.lg),
         ),
         child: Padding(
-          padding: const EdgeInsets.only(left: IdSpace.s3),
+          padding: const EdgeInsets.all(IdSpace.s4),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               Text(order.status.customerLabel, style: context.text.titleLg),
               const SizedBox(height: IdSpace.s1),
               Text(
-                '${waitingForPickup
+                keepWindowTogether('${waitingForPickup
                     ? 'Pickup'
                     : missed
                     ? 'Delivery estimate missed'
-                    : 'Delivery'} · ${dayLong(waitingForPickup ? order.pickupDate : order.deliveryDate)}, ${windowFromLabel(waitingForPickup ? order.pickupSlotLabel : order.deliverySlotLabel)}',
+                    : 'Delivery'} · ${dayLong(waitingForPickup ? order.pickupDate : order.deliveryDate)}, ${windowFromLabel(waitingForPickup ? order.pickupSlotLabel : order.deliverySlotLabel)}'),
                 style: context.text.body,
               ),
               const SizedBox(height: IdSpace.s1),

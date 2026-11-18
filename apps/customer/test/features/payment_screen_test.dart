@@ -3,6 +3,7 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:go_router/go_router.dart';
+import 'package:irondost_customer/core/slots.dart';
 import 'package:irondost_customer/app/routes.dart';
 import 'package:irondost_customer/data/api_client.dart';
 import 'package:irondost_customer/features/orders/order_repository.dart';
@@ -88,7 +89,7 @@ void main() {
 
     expect(find.text('Payment cancelled'), findsOneWidget);
     expect(find.textContaining('If money was debited, contact support'), findsOneWidget);
-    expect(find.textContaining('Your pickup is still booked for today, 4 – 8 PM. Order ID001046.'), findsOneWidget);
+    expect(find.textContaining(keepWindowTogether('Your pickup is still booked for today, 4 – 8 PM. Order ID001046.')), findsOneWidget);
     expect(find.text('Try again · ₹248'), findsOneWidget);
     expect(find.text('Pay cash at delivery instead'), findsOneWidget);
   });
@@ -303,6 +304,6 @@ class _Receipt extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final state = GoRouterState.of(context);
-    return PaymentReceiptScreen(orderId: state.pathParameters['id']!, initial: state.extra as OrderDto?);
+    return PaymentReceiptScreen(orderId: state.pathParameters['id']!);
   }
 }

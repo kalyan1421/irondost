@@ -44,6 +44,13 @@ class _OtpInputState extends State<OtpInput> {
       old.controller.removeListener(_changed);
       widget.controller.addListener(_changed);
     }
+    // The field is disabled while a code is sent or checked, which drops focus and the keyboard. Take focus
+    // back so iOS can offer the next SMS code above the keyboard after a resend or a wrong code.
+    if (!old.enabled && widget.enabled && widget.autofocus) {
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        if (mounted) _focus.requestFocus();
+      });
+    }
   }
 
   @override

@@ -1,0 +1,224 @@
+{
+ "_about": "Themes for pickup-and-delivery laundry apps. Patterns are Python regexes matched case-insensitively against review text (see ~/.claude/skills/replica-entrepreneur/reviews.py). Written from the category's own words, not from reading these reviews first, so the ranking is not tuned to a conclusion. kind = complaint or request.",
+ "request_patterns": [
+  "\\bi wish\\b",
+  "\\bplease (add|provide|include|fix)\\b",
+  "\\bwould be (nice|great|good|helpful)\\b",
+  "\\bneeds? (a|an|the|to|more)\\b",
+  "\\bno (way|option) to\\b",
+  "\\bthere'?s no (way|option)\\b",
+  "\\b(can'?t|cannot|unable to) (even )?(add|change|edit|set|choose|select|reschedule|cancel|track)\\b",
+  "\\b(missing|lacks|lacking)\\b",
+  "\\bdoesn'?t (have|support|let|allow|show)\\b",
+  "\\bshould (have|show|add|allow|give)\\b",
+  "\\bwhy (can'?t|isn'?t|doesn'?t|is there no)\\b"
+ ],
+ "themes": [
+  {
+   "id": "late",
+   "label": "Late or missed pickup and delivery",
+   "kind": "complaint",
+   "patterns": [
+    "\\b(late|delay(ed|s)?|delayed)\\b",
+    "\\bnever (came|arrived|picked|delivered|showed)\\b",
+    "\\bno.?show\\b",
+    "\\bdidn'?t (come|arrive|pick|deliver|show)\\b",
+    "\\b(days|weeks|month) (later|to (deliver|return|come))\\b",
+    "\\bstill (waiting|not (delivered|picked))\\b",
+    "\\bpick.?up (was )?(missed|cancel|not)",
+    "\\bnot (picked|delivered|received)\\b",
+    "\\bder\\b",
+    "\\bdin (ho|baad|lag)",
+    "\\bdeliver\\w* (nahi|nhi)\\b",
+    "\\b(nahi|nhi) (mila|aaya|aayi|diya|di)\\b",
+    "\\bnot delivered\\b",
+    "\\b\\d+ days?\\b.{0,30}\\b(delay|late|not|still|waiting|didn)"
+   ]
+  },
+  {
+   "id": "resched",
+   "label": "Rescheduled or cancelled by the company without notice",
+   "kind": "complaint",
+   "patterns": [
+    "\\breschedul",
+    "\\bcancel(l?ed)? (my|the|our) (order|pick)",
+    "\\bcancelled by (them|the)",
+    "\\bslot\\b.{0,40}\\b(missed|changed|not (honou?red|followed))"
+   ]
+  },
+  {
+   "id": "quality",
+   "label": "Poor cleaning or ironing quality",
+   "kind": "complaint",
+   "patterns": [
+    "\\bstain",
+    "\\bsmell",
+    "\\bdirty\\b",
+    "\\bunclean\\b",
+    "\\bnot (clean|washed|ironed|pressed)\\b",
+    "\\bwrinkl",
+    "\\bshrunk|shrink",
+    "\\bcolou?r (bleed|fade|run)",
+    "\\bfaded\\b",
+    "\\bquality\\b.{0,30}\\b(bad|poor|worst|terrible|down)",
+    "\\bbad quality\\b",
+    "\\bkharab\\b",
+    "\\bbekar\\b",
+    "\\bbakwas\\b",
+    "\\bgande\\b",
+    "\\bnot properly\\b",
+    "\\bwet cloth\\b"
+   ]
+  },
+  {
+   "id": "damage",
+   "label": "Damaged, lost or swapped garments",
+   "kind": "complaint",
+   "patterns": [
+    "\\bdamag",
+    "\\btorn\\b",
+    "\\bburn(t|ed)\\b",
+    "\\bhole\\b",
+    "\\blost\\b",
+    "\\bmissing\\b",
+    "\\bmisplaced\\b",
+    "\\bwrong (clothes|items|garment)",
+    "\\bnot (returned|received) (my|the|all)",
+    "\\bcompensat"
+   ]
+  },
+  {
+   "id": "price_bill",
+   "label": "Price at billing differs from what was quoted",
+   "kind": "complaint",
+   "patterns": [
+    "\\bquoted\\b",
+    "\\bbill(ed)?\\b",
+    "\\binvoice\\b",
+    "\\bcharged (me )?(more|extra|\\d)",
+    "\\bextra (charge|fee|money|amount)",
+    "\\bhidden\\b",
+    "\\boverchar",
+    "\\bper kg\\b.{0,40}\\b(more|extra|higher|but)",
+    "\\bweigh(t|ed|ing)\\b",
+    "\\bprice (was|is) (not|different|higher|changed)"
+   ]
+  },
+  {
+   "id": "price_high",
+   "label": "Too expensive",
+   "kind": "complaint",
+   "patterns": [
+    "\\bexpensive\\b",
+    "\\boverpriced\\b",
+    "\\bcostly\\b",
+    "\\bhigh (price|rate|cost)",
+    "\\bmore than (local|other|my)",
+    "\\b1\\.5x\\b",
+    "\\bnot worth\\b",
+    "\\bminimum (order|bill|value|amount)\\b"
+   ]
+  },
+  {
+   "id": "refund",
+   "label": "Refunds, cancellations and money not returned",
+   "kind": "complaint",
+   "patterns": [
+    "\\brefund",
+    "\\bmoney (back|not returned|deducted)",
+    "\\bdouble (payment|charge)",
+    "\\bdeducted\\b",
+    "\\bscam\\b",
+    "\\bfraud\\b",
+    "\\bcheat"
+   ]
+  },
+  {
+   "id": "support",
+   "label": "Support that does not answer",
+   "kind": "complaint",
+   "patterns": [
+    "\\bno (response|reply|answer|resolution)\\b",
+    "\\bnever (replied|responded|heard back|answer\\w*|call\\w* back)",
+    "\\b(don'?t|doesn'?t|didn'?t|not|never) (pick|answer|respond|call back|attend|reply)",
+    "\\bhelpline\\b.{0,50}\\b(not|no|never|unreachable|switched)",
+    "\\b(customer (care|service|support)|support)\\b.{0,60}\\b(not|no|never|worst|poor|bad|useless|rude|zero|pathetic|horrible|terrible|unresponsive|ignor\\w*)",
+    "\\bunreachable\\b",
+    "\\bunresponsive\\b",
+    "\\bignor(e|ed|ing)\\b",
+    "\\bcalls? (not|never|go) (answered|unanswered|picked)",
+    "\\b(poor|bad|worst|zero|no|useless|terrible|horrible) (customer (care|service|support)|support|care)\\b"
+   ]
+  },
+  {
+   "id": "app",
+   "label": "App bugs: OTP, address, slots, crashes",
+   "kind": "complaint",
+   "patterns": [
+    "\\botp\\b",
+    "\\bcrash",
+    "\\bbug",
+    "\\bglitch",
+    "\\bnot (working|opening|loading)\\b",
+    "\\b(doesn'?t|does not|stopped|won'?t) (work|open|load)",
+    "\\berror\\b",
+    "\\bstuck\\b",
+    "\\bunable to (book|login|log in|add|place|schedule)",
+    "\\baddress\\b.{0,40}\\b(error|not|wrong|delete)",
+    "\\bapp (is|was)\\b.{0,20}\\b(bad|poor|slow|buggy|worst)"
+   ]
+  },
+  {
+   "id": "serviceability",
+   "label": "Not serviceable or area unclear until after sign-up",
+   "kind": "complaint",
+   "patterns": [
+    "\\bnot serviceable\\b",
+    "\\bserviceable\\b",
+    "\\bnot (available|serving|providing) (in|at|for) (my|our|this)",
+    "\\bout of (service|coverage|area)",
+    "\\bregister(ed)? first\\b",
+    "\\bpin ?code\\b"
+   ]
+  },
+  {
+   "id": "tracking",
+   "label": "No status updates or wrong tracking",
+   "kind": "complaint",
+   "patterns": [
+    "\\btrack(ing)?\\b",
+    "\\bno (update|status|notification|information|info)\\b",
+    "\\bwithout (any )?(notice|update|information|informing|intimation)",
+    "\\bno (intimation|communication)\\b",
+    "\\bstatus\\b"
+   ]
+  },
+  {
+   "id": "staff",
+   "label": "Rude or unprofessional staff or riders",
+   "kind": "complaint",
+   "patterns": [
+    "\\brude\\b",
+    "\\bmisbehav",
+    "\\bbad behaviou?r\\b",
+    "\\bbehaviou?r\\b.{0,30}\\b(bad|poor|rude|worst)",
+    "\\babus(e|ed|ive)\\b",
+    "\\bshout",
+    "\\barrogan"
+   ]
+  },
+  {
+   "id": "offers",
+   "label": "Promo or offer did not apply or mislead",
+   "kind": "complaint",
+   "patterns": [
+    "\\bcoupon\\b",
+    "\\bpromo\\b",
+    "\\bdiscount\\b",
+    "\\boffer\\b.{0,40}\\b(not|didn|fake|false|mislead)",
+    "\\bwallet\\b",
+    "\\bprepaid\\b"
+   ]
+  }
+ ]
+}

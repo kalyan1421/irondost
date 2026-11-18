@@ -13,10 +13,12 @@ class CartBar extends StatelessWidget {
     required this.count,
     required this.totalPaise,
     required this.onReview,
+    this.quantityLabel,
   });
 
   /// Pieces in the basket. Zero hides the bar.
   final int count;
+  final String? quantityLabel;
   final num totalPaise;
   final VoidCallback onReview;
 
@@ -24,6 +26,7 @@ class CartBar extends StatelessWidget {
   Widget build(BuildContext context) {
     final c = context.colors;
     final t = context.text;
+    final countText = quantityLabel ?? '$count ${count == 1 ? 'item' : 'items'}';
     return AnimatedSize(
       duration: MediaQuery.disableAnimationsOf(context)
           ? Duration.zero
@@ -51,14 +54,14 @@ class CartBar extends StatelessWidget {
                       final summary = Semantics(
                         liveRegion: true,
                         label:
-                            '$count ${count == 1 ? 'item' : 'items'}, ${rupees(totalPaise)}',
+                            '$countText, ${rupees(totalPaise)}',
                         excludeSemantics: true,
                         child: Column(
                           crossAxisAlignment: CrossAxisAlignment.start,
                           mainAxisSize: MainAxisSize.min,
                           children: [
                             Text(
-                              '$count ${count == 1 ? 'item' : 'items'}',
+                              countText,
                               style: t.label.copyWith(color: c.textMuted),
                             ),
                             Text(rupees(totalPaise), style: t.titleLg),

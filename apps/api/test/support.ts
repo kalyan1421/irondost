@@ -5,6 +5,7 @@ interface QueuedJob {
   queue: string;
   data: object;
   startAfter?: Date;
+  jobId?: string;
 }
 
 /** In-memory jobs: tests decide when queued work runs, ignoring start times. */
@@ -17,7 +18,8 @@ export class MemoryScheduler extends JobScheduler {
   }
 
   async schedule<T extends object>(queue: string, data: T, options: ScheduleOptions = {}): Promise<void> {
-    this.queued.push({ queue, data, startAfter: options.startAfter });
+    if (options.jobId && this.queued.some((j) => j.queue === queue && j.jobId === options.jobId)) return;
+    this.queued.push({ queue, data, startAfter: options.startAfter, jobId: options.jobId });
   }
 
   has(queue: string, match: (data: Record<string, unknown>) => boolean = () => true): boolean {
@@ -73,6 +75,61 @@ export class FakeRazorpay extends RazorpayGateway {
     this.refunds.push({ id, paymentId, amountPaise, notes });
     return { id, status: outcome };
   }
+}
+
+/** One call to the fake FCM: who it went to and what it said. */
+export interface FakePush {
+  tokens: string[];
+  title: string;
+  body: string;
+  data?: Record<string, string>;
+}
+
+/**
+ * Stands in for Firebase Cloud Messaging. Every token is delivered unless it is listed in `refusals` (token to the
+ * error code FCM gives), and `throwNext` makes the next whole call fail the way a network or credentials error does.
+ */
+export class FakeMessaging {
+  readonly sent: FakePush[] = [];
+  readonly refusals = new Map<string, string>();
+  private readonly thrown: Error[] = [];
+
+  throwNext(code: string): void {
+    this.thrown.push(Object.assign(new Error(`fake FCM failure: ${code}`), { code }));
+  }
+
+  async sendEachForMulticast(message: {
+    tokens: string[];
+    notification?: { title?: string; body?: string };
+    data?: Record<string, string>;
+  }) {
+    const failure = this.thrown.shift();
+    if (failure) throw failure;
+    this.sent.push({
+      tokens: [...message.tokens],
+      title: message.notification?.title ?? '',
+      body: message.notification?.body ?? '',
+      data: message.data,
+    });
+    const responses = message.tokens.map((token, i) => {
+      const code = this.refusals.get(token);
+      return code ? { success: false, error: { code, message: code } } : { success: true, messageId: `fake-${i}` };
+    });
+    const failureCount = responses.filter((r) => !r.success).length;
+    return { successCount: responses.length - failureCount, failureCount, responses };
+  }
+
+  reset(): void {
+    this.sent.length = 0;
+    this.refusals.clear();
+    this.thrown.length = 0;
+  }
+}
+
+/** Stands in for FirebaseService: sign-in stays on the dev bypass, and push is off until `messaging` is set. */
+export class FakeFirebase {
+  auth = null;
+  messaging: FakeMessaging | null = null;
 }
 
 /** Polls until `check` passes (event listeners run after the HTTP response). */

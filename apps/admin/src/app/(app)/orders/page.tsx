@@ -1,7 +1,7 @@
 "use client";
 
 import { keepPreviousData, useQuery } from "@tanstack/react-query";
-import { AlertTriangle, Plus, Search, X } from "lucide-react";
+import { AlertTriangle, Plus, Search, Undo2, X } from "lucide-react";
 import Link from "next/link";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import { Suspense, useEffect, useState } from "react";
@@ -9,6 +9,7 @@ import { EmptyState, ErrorState, PageBody, PageHeader, Pager, TableSkeleton } fr
 import { PaymentBadge, StatusBadge } from "@/components/status";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Label } from "@/components/ui/label";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
@@ -28,11 +29,20 @@ function OrdersBoard() {
   const params = useSearchParams();
 
   const singleStatus = params.get("status") as OrderStatus | null;
-  const tab = singleStatus ? null : (params.get("tab") ?? "active");
+  const refundDue = params.get("refundDue") === "1";
+  const tab = singleStatus || refundDue ? null : (params.get("tab") ?? "active");
   const attention = params.get("attention") === "1";
   const page = Number(params.get("page") ?? "1") || 1;
   const pickupFrom = params.get("from") ?? "";
   const pickupTo = params.get("to") ?? "";
+  const createdFrom = params.get('createdFrom') ?? ''; const createdTo = params.get('createdTo') ?? '';
+  const deliveryFrom = params.get('deliveryFrom') ?? ''; const deliveryTo = params.get('deliveryTo') ?? '';
+  const dateType = params.get('dateType') ?? (createdFrom || createdTo ? 'created' : deliveryFrom || deliveryTo ? 'delivery' : 'pickup');
+  const dateFrom = dateType === 'created' ? createdFrom : dateType === 'delivery' ? deliveryFrom : pickupFrom;
+  const dateTo = dateType === 'created' ? createdTo : dateType === 'delivery' ? deliveryTo : pickupTo;
+  const excludeCancelled = params.get('excludeCancelled') === '1';
+  const approvalPending = params.get('approvalPending') === '1'; const unpaid = params.get('unpaid') === '1';
+  const overdue = ['pickup', 'delivery'].includes(params.get('overdue') ?? '') ? params.get('overdue') as 'pickup' | 'delivery' : undefined;
   const [search, setSearch] = useState(params.get("q") ?? "");
   const q = useDebounced(search.trim(), 300);
 
@@ -61,16 +71,22 @@ function OrdersBoard() {
     ...(statuses.length ? { status: statuses } : {}),
     ...(q ? { search: q } : {}),
     ...(attention ? { dispatchFailed: true } : {}),
+    ...(refundDue ? { refundDue: true } : {}),
     ...(pickupFrom ? { pickupFrom } : {}),
     ...(pickupTo ? { pickupTo } : {}),
+    ...(createdFrom ? { createdFrom } : {}), ...(createdTo ? { createdTo } : {}),
+    ...(deliveryFrom ? { deliveryFrom } : {}), ...(deliveryTo ? { deliveryTo } : {}),
+    ...(excludeCancelled ? { excludeCancelled: true } : {}), ...(approvalPending ? { approvalPending: true } : {}),
+    ...(unpaid ? { unpaid: true } : {}), ...(overdue ? { overdue } : {}),
   };
   const orders = useQuery({
     queryKey: ["orders", query],
     queryFn: () => unwrap(api.GET("/v1/admin/orders", { params: { query } })),
     placeholderData: keepPreviousData,
+    refetchInterval: 30_000,
   });
 
-  const filtered = Boolean(q || attention || pickupFrom || pickupTo || singleStatus);
+  const filtered = Boolean(q || attention || refundDue || pickupFrom || pickupTo || singleStatus || createdFrom || createdTo || deliveryFrom || deliveryTo || excludeCancelled || approvalPending || unpaid || overdue);
 
   return (
     <>
@@ -87,7 +103,7 @@ function OrdersBoard() {
       />
       <PageBody className="gap-4">
         <div className="flex flex-col gap-3">
-          <Tabs value={tab ?? ""} onValueChange={(v) => update({ tab: v, status: null })}>
+          <Tabs value={tab ?? ""} onValueChange={(v) => update({ tab: v, status: null, refundDue: null })}>
             <div className="-mx-4 overflow-x-auto px-4 md:mx-0 md:px-0">
               <TabsList className="w-max">
                 {ORDER_TABS.map((t) => (
@@ -109,13 +125,14 @@ function OrdersBoard() {
                 onChange={(e) => setSearch(e.target.value)}
               />
             </div>
+            <div className="grid gap-1"><Label htmlFor="order-date-type">Date type</Label><Select value={dateType} onValueChange={(v) => update({ dateType: v, from: null, to: null, createdFrom: null, createdTo: null, deliveryFrom: null, deliveryTo: null })}><SelectTrigger id="order-date-type" className="w-40"><SelectValue /></SelectTrigger><SelectContent><SelectItem value="pickup">Pickup date</SelectItem><SelectItem value="delivery">Delivery date</SelectItem><SelectItem value="created">Order placed</SelectItem></SelectContent></Select></div>
             <div className="grid gap-1">
-              <Label htmlFor="from" className="text-xs text-muted-foreground">Pickup from</Label>
-              <Input id="from" type="date" className="w-40" value={pickupFrom} onChange={(e) => update({ from: e.target.value })} />
+              <Label htmlFor="from" className="text-xs text-muted-foreground">From</Label>
+              <Input id="from" type="date" className="w-40" value={dateFrom} onChange={(e) => update({ [dateType === 'created' ? 'createdFrom' : dateType === 'delivery' ? 'deliveryFrom' : 'from']: e.target.value })} />
             </div>
             <div className="grid gap-1">
-              <Label htmlFor="to" className="text-xs text-muted-foreground">Pickup to</Label>
-              <Input id="to" type="date" className="w-40" value={pickupTo} onChange={(e) => update({ to: e.target.value })} />
+              <Label htmlFor="to" className="text-xs text-muted-foreground">To</Label>
+              <Input id="to" type="date" className="w-40" value={dateTo} onChange={(e) => update({ [dateType === 'created' ? 'createdTo' : dateType === 'delivery' ? 'deliveryTo' : 'to']: e.target.value })} />
             </div>
             <Button
               variant={attention ? "default" : "outline"}
@@ -124,6 +141,17 @@ function OrdersBoard() {
             >
               <AlertTriangle /> Needs a partner
             </Button>
+            <Button
+              variant={refundDue ? "default" : "outline"}
+              onClick={() => update({ refundDue: refundDue ? null : "1", tab: null, status: null })}
+              aria-pressed={refundDue}
+            >
+              <Undo2 /> Refund due
+            </Button>
+            <Button variant={approvalPending ? 'default' : 'outline'} aria-pressed={approvalPending} onClick={() => update({ approvalPending: approvalPending ? null : '1', tab: 'all', status: null })}>Price approval pending</Button>
+            <Button variant={unpaid ? 'default' : 'outline'} aria-pressed={unpaid} onClick={() => update({ unpaid: unpaid ? null : '1', excludeCancelled: '1' })}>Balance due</Button>
+            <div className="grid gap-1"><Label htmlFor="order-overdue">Late orders</Label><Select value={overdue ?? 'none'} onValueChange={(v) => update({ overdue: v === 'none' ? null : v, tab: 'all', status: null })}><SelectTrigger id="order-overdue" className="w-40"><SelectValue /></SelectTrigger><SelectContent><SelectItem value="none">All timings</SelectItem><SelectItem value="pickup">Pickup overdue</SelectItem><SelectItem value="delivery">Return overdue</SelectItem></SelectContent></Select></div>
+            {excludeCancelled ? <Button variant="secondary" onClick={() => update({ excludeCancelled: null })}>Cancelled excluded <X /></Button> : null}
             {singleStatus ? (
               <Button variant="secondary" onClick={() => update({ status: null })}>
                 {STATUS[singleStatus]?.label ?? singleStatus} <X />

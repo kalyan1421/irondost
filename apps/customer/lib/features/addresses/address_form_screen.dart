@@ -7,6 +7,7 @@ import 'package:go_router/go_router.dart';
 import 'package:lucide_icons_flutter/lucide_icons.dart';
 
 import '../../app/routes.dart';
+import '../../core/phone.dart';
 import '../../data/api_client.dart';
 import '../../design/theme.dart';
 import '../../design/widgets/address_card.dart';
@@ -14,6 +15,8 @@ import '../../design/widgets/id_button.dart';
 import '../../design/widgets/id_sheet.dart';
 import '../../design/widgets/id_text_field.dart';
 import '../../design/widgets/review_row.dart';
+import '../area_interest/area_interest.dart';
+import '../auth/session.dart';
 import 'address_args.dart';
 import 'addresses_controller.dart';
 import 'place.dart';
@@ -153,6 +156,9 @@ class _AddressFormScreenState extends ConsumerState<AddressFormScreen> {
         c.text.trim().isEmpty ? null : c.text.trim();
 
     setState(() => _saving = true);
+    // Kept for after the save: with first-run setup the router can leave this screen before the request below is answered.
+    final messenger = ScaffoldMessenger.of(context);
+    final container = ProviderScope.containerOf(context, listen: false);
     try {
       final notifier = ref.read(addressesProvider.notifier);
       // Wait for the list: the first address is always the default.
@@ -194,6 +200,24 @@ class _AddressFormScreenState extends ConsumerState<AddressFormScreen> {
           ),
         );
         ref.read(selectedAddressIdProvider.notifier).select(saved.id);
+        if (widget.args.tellMe && !saved.serviceable) {
+          // The customer asked to be told when we reach this address; the consent was on the map screen and above Save.
+          final place = saved.area ?? saved.city;
+          final tellMe = container.read(tellMeProvider(saved.id).notifier);
+          final asked = await tellMe.send();
+          final problem = container.read(tellMeProvider(saved.id)).problem;
+          messenger
+            ..hideCurrentSnackBar()
+            ..showSnackBar(
+              SnackBar(
+                content: Text(
+                  asked
+                      ? "Address saved. We'll get in touch when we start picking up from $place."
+                      : 'Address saved. ${tellMeProblemText(problem ?? TellMeProblem.failed)} You can ask again from Home.',
+                ),
+              ),
+            );
+        }
       }
       if (!mounted) return;
       // First-run setup finishes by itself: with an address saved the router moves on to Home.
@@ -299,6 +323,10 @@ class _AddressFormScreenState extends ConsumerState<AddressFormScreen> {
               ),
               children: [
                 _Summary(draft: _draft, onChange: _changeLocation),
+                if (widget.args.tellMe && !_editing) ...[
+                  const SizedBox(height: IdSpace.s4),
+                  _TellMeNote(place: _draft.area ?? _draft.city ?? 'this area'),
+                ],
                 const SizedBox(height: IdSpace.s5),
                 IdTextField(
                   label: 'Flat or house number',
@@ -489,6 +517,36 @@ class _Summary extends StatelessWidget {
         ],
       ),
       action: TextButton(onPressed: onChange, child: const Text('Change')),
+    );
+  }
+}
+
+/// Above the fields when the customer chose "Tell me when you're here": what saving this address will also do.
+class _TellMeNote extends ConsumerWidget {
+  const _TellMeNote({required this.place});
+  final String place;
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final c = context.colors;
+    final session = ref.watch(sessionProvider).value;
+    final phone = session is SignedIn && session.profile.phone != null ? IndianPhone.display(session.profile.phone!) : null;
+    return Container(
+      padding: const EdgeInsets.all(14),
+      decoration: BoxDecoration(color: c.primarySoft, borderRadius: BorderRadius.circular(IdRadius.md)),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Icon(LucideIcons.bellRing, size: IdSize.iconMd, color: c.onPrimarySoft),
+          const SizedBox(width: 10),
+          Expanded(
+            child: Text(
+              "We're not in $place yet. ${tellMeConsent(place: place, phone: phone)}",
+              style: context.text.body,
+            ),
+          ),
+        ],
+      ),
     );
   }
 }

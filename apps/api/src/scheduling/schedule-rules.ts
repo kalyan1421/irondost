@@ -16,6 +16,10 @@ export interface ScheduleSettings {
   minTurnaroundHours: number;
 }
 
+/** Why a window that is otherwise open cannot be booked. A closed or too-far window has no reason: `available` says it all. */
+export const SLOT_UNAVAILABLE_REASONS = ['FULL'] as const;
+export type SlotUnavailableReason = (typeof SLOT_UNAVAILABLE_REASONS)[number];
+
 export interface SlotOption {
   date: string;
   slot: TimeSlot;
@@ -24,7 +28,12 @@ export interface SlotOption {
   startsAt: Date;
   endsAt: Date;
   available: boolean;
+  /** `FULL` when the window is open but has no place left. Null otherwise. */
+  reason: SlotUnavailableReason | null;
 }
+
+/** A pickup window as one key, "2026-10-05|MORNING". */
+export const windowKey = (date: string, slot: TimeSlot): string => `${date}|${slot}`;
 
 export type ScheduleError =
   | 'INVALID_DATE'
@@ -69,20 +78,29 @@ export function checkDelivery(
   return null;
 }
 
-/** Pickup slots for the next `days` days, starting today (IST). */
-export function pickupOptions(now: Date, s: ScheduleSettings, days: number): SlotOption[] {
+/** Pickup slots for the next `days` days, starting today (IST). `fullWindows` are the open windows with no place left. */
+export function pickupOptions(
+  now: Date,
+  s: ScheduleSettings,
+  days: number,
+  fullWindows: ReadonlySet<string> = new Set(),
+): SlotOption[] {
   const today = istDate(now);
   const out: SlotOption[] = [];
   for (let d = 0; d < Math.min(days, s.maxAdvanceDays + 1); d++) {
     const date = addDays(today, d);
     for (const slot of SLOT_ORDER) {
+      const open = checkPickup(date, slot, now, s) === null;
+      // Only a window that could otherwise be booked is called full: a closed one is simply closed.
+      const full = open && fullWindows.has(windowKey(date, slot));
       out.push({
         date,
         slot,
         label: slotLabel(slot),
         startsAt: slotStart(date, slot),
         endsAt: slotEnd(date, slot),
-        available: checkPickup(date, slot, now, s) === null,
+        available: open && !full,
+        reason: full ? 'FULL' : null,
       });
     }
   }
@@ -107,6 +125,7 @@ export function deliveryOptions(
         startsAt: slotStart(date, slot),
         endsAt: slotEnd(date, slot),
         available: checkDelivery(pickupDate, pickupSlot, date, slot, s) === null,
+        reason: null,
       });
     }
   }

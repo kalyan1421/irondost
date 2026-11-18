@@ -17,12 +17,23 @@ class NameScreen extends ConsumerStatefulWidget {
 
 class _NameScreenState extends ConsumerState<NameScreen> {
   final _name = TextEditingController();
-  final _email = TextEditingController();
+  late final TextEditingController _email;
   String? _nameError;
   String? _emailError;
   bool _saving = false;
 
   static final _emailPattern = RegExp(r'^[^@\s]+@[^@\s]+\.[^@\s]+$');
+
+  @override
+  void initState() {
+    super.initState();
+    // A Google customer already has an email. Showing it keeps a blank field from erasing it on save.
+    final existing = switch (ref.read(sessionProvider).value) {
+      SignedIn(:final profile) => profile.email,
+      _ => null,
+    };
+    _email = TextEditingController(text: existing ?? '');
+  }
 
   @override
   void dispose() {
@@ -157,11 +168,23 @@ class _NameScreenState extends ConsumerState<NameScreen> {
                   IdSpace.s5,
                   IdSpace.s4,
                 ),
-                child: IdButton(
-                  label: 'Continue',
-                  expand: true,
-                  loading: _saving,
-                  onPressed: _save,
+                child: Column(
+                  children: [
+                    IdButton(
+                      label: 'Continue',
+                      expand: true,
+                      loading: _saving,
+                      onPressed: _save,
+                    ),
+                    const SizedBox(height: IdSpace.s2),
+                    IdButton.text(
+                      label: 'Use a different account',
+                      expand: true,
+                      onPressed: _saving
+                          ? null
+                          : () => ref.read(sessionProvider.notifier).signOut(),
+                    ),
+                  ],
                 ),
               ),
             ],

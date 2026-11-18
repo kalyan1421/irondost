@@ -51,7 +51,7 @@ class DefaultFirebaseOptions {
 
   static const FirebaseOptions android = FirebaseOptions(
     apiKey: 'AIzaSyDnJYTA08GGAbbxLoTXpmC_QUe1PocJJxU',
-    appId: '1:264618787416:android:98eb963eae66fd74c7c02d',
+    appId: '1:264618787416:android:ad3c715399093417c7c02d',
     messagingSenderId: '264618787416',
     projectId: 'irondost-app',
     storageBucket: 'irondost-app.firebasestorage.app',
@@ -63,6 +63,7 @@ class DefaultFirebaseOptions {
     messagingSenderId: '264618787416',
     projectId: 'irondost-app',
     storageBucket: 'irondost-app.firebasestorage.app',
+    iosClientId: '264618787416-g3bpe3q3rvsj0um0ulhee1j18cphsn2v.apps.googleusercontent.com',
     iosBundleId: 'com.irondost.customer',
   );
 }

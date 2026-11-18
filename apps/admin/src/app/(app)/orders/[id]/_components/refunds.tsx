@@ -89,6 +89,11 @@ export function RefundDueBanner({ order }: { order: Order }) {
             {rupees(order.refundedPaise)} refunded so far · {rupees(due)} still to refund
           </p>
         ) : null}
+        {order.travelChargeKept && order.deliveryFeePaise > 0 ? (
+          <p className="tabular text-xs text-muted-foreground">
+            {rupees(Math.min(order.deliveryFeePaise, order.paidPaise))} travel charge kept (partner had already travelled), so it is not part of the refund
+          </p>
+        ) : null}
       </div>
       <RefundButton order={order} variant="default" />
     </div>

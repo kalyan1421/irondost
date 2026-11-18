@@ -13,6 +13,7 @@ class UserDto {
   const UserDto({
     required this.id,
     required this.phone,
+    required this.phoneVerified,
     required this.name,
     required this.email,
     required this.role,
@@ -25,8 +26,11 @@ class UserDto {
   
   final String id;
 
-  /// Null for a customer who signed in with Google and has not added a verified number yet.
+  /// The number to call: the sign-in number, or the one typed at checkout. Null until a Google customer adds one.
   final String? phone;
+
+  /// True when the number signs the user in (confirmed by an SMS code); false when a customer typed it at checkout.
+  final bool phoneVerified;
   final String? name;
   final String? email;
   final Role role;

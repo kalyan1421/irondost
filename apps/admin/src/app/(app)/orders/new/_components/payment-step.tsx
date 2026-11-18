@@ -5,6 +5,7 @@ import { Textarea } from "@/components/ui/textarea";
 import type { PaymentMethod } from "@/lib/api/types";
 
 export const INSTRUCTIONS_MAX = 500;
+export const CARE_NOTE_MAX = 500;
 
 const METHODS: { value: PaymentMethod; title: string; hint: string }[] = [
   { value: "COD", title: "Cash on delivery", hint: "The delivery partner collects cash when the clothes are returned." },
@@ -16,11 +17,15 @@ export function PaymentStep({
   onMethod,
   instructions,
   onInstructions,
+  careNote,
+  onCareNote,
 }: {
   method: PaymentMethod;
   onMethod: (m: PaymentMethod) => void;
   instructions: string;
   onInstructions: (v: string) => void;
+  careNote: string;
+  onCareNote: (v: string) => void;
 }) {
   return (
     <div className="grid gap-5">
@@ -63,6 +68,25 @@ export function PaymentStep({
         />
         <p className="tabular text-right text-xs text-muted-foreground">
           {instructions.length}/{INSTRUCTIONS_MAX}
+        </p>
+      </div>
+      <div className="grid gap-1.5">
+        <Label htmlFor="order-care-note">
+          Care note for the workshop <span className="font-normal text-muted-foreground">(optional)</span>
+        </Label>
+        <Textarea
+          id="order-care-note"
+          aria-describedby="order-care-note-help"
+          placeholder="e.g. Red silk saree: stain on the pallu. Colours may run."
+          maxLength={CARE_NOTE_MAX}
+          value={careNote}
+          onChange={(e) => onCareNote(e.target.value)}
+        />
+        <p id="order-care-note-help" className="text-xs text-muted-foreground">
+          Stains, delicate fabric or colours that may run. This is separate from the instructions for the partner. Photos can only be added by the customer in the app.
+        </p>
+        <p className="tabular text-right text-xs text-muted-foreground">
+          {careNote.length}/{CARE_NOTE_MAX}
         </p>
       </div>
     </div>

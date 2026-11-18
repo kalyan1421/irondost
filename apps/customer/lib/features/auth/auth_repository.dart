@@ -19,9 +19,6 @@ enum AuthFailureKind {
   /// Firebase's per-number or per-device limit; the customer has to wait.
   tooManyRequests,
 
-  /// The number being added already belongs to another IronDost account.
-  phoneInUse,
-
   /// The customer closed the Google account picker. Not an error worth a message.
   googleCancelled,
 
@@ -41,22 +38,18 @@ class AuthFailure implements Exception {
 }
 
 /// A code was sent to [phone] (10-digit national number). [autoVerified] means Android
-/// read the SMS itself and the customer is already signed in (or, for [link], the number is already attached).
-///
-/// With [link] the code adds the number to the account that is already signed in (a Google customer) instead of signing in.
+/// read the SMS itself and the customer is already signed in.
 class PhoneChallenge {
   const PhoneChallenge({
     required this.phone,
     required this.verificationId,
     this.resendToken,
     this.autoVerified = false,
-    this.link = false,
   });
   final String phone;
   final String verificationId;
   final int? resendToken;
   final bool autoVerified;
-  final bool link;
 }
 
 /// Phone-number and Google sign-in. The API only ever sees the resulting ID token.
@@ -68,20 +61,13 @@ abstract class AuthRepository {
   Future<String?> token({bool forceRefresh = false});
 
   /// Sends an SMS code. [onAutoVerified] runs if Android verifies the number without the code.
-  /// With [link] the number is verified for the signed-in account instead of signing in.
-  Future<PhoneChallenge> sendCode(String phone, {PhoneChallenge? resendOf, void Function()? onAutoVerified, bool link = false});
+  Future<PhoneChallenge> sendCode(String phone, {PhoneChallenge? resendOf, void Function()? onAutoVerified});
 
-  /// Signs in, or (for a [PhoneChallenge.link] challenge) attaches the number to the signed-in account.
+  /// Signs in with the code.
   Future<void> confirmCode(PhoneChallenge challenge, String code);
 
   /// Signs in with a Google account. Throws [AuthFailure] when cancelled or not set up.
   Future<void> signInWithGoogle();
-
-  /// Whether the signed-in account already has a verified number attached.
-  Future<bool> hasVerifiedPhone();
-
-  /// Detaches the number that was just added, after the API found it belongs to another account, so another can be tried.
-  Future<void> unlinkPhone();
 
   Future<void> signOut();
 }
@@ -101,7 +87,7 @@ class FirebaseAuthRepository implements AuthRepository {
   Future<String?> token({bool forceRefresh = false}) async => _auth.currentUser?.getIdToken(forceRefresh);
 
   @override
-  Future<PhoneChallenge> sendCode(String phone, {PhoneChallenge? resendOf, void Function()? onAutoVerified, bool link = false}) {
+  Future<PhoneChallenge> sendCode(String phone, {PhoneChallenge? resendOf, void Function()? onAutoVerified}) {
     final result = Completer<PhoneChallenge>();
     _auth.verifyPhoneNumber(
       phoneNumber: IndianPhone.e164(phone),
@@ -109,9 +95,9 @@ class FirebaseAuthRepository implements AuthRepository {
       timeout: const Duration(seconds: 60),
       verificationCompleted: (credential) async {
         try {
-          await _useCredential(credential, link: link);
+          await _auth.signInWithCredential(credential);
           if (!result.isCompleted) {
-            result.complete(PhoneChallenge(phone: phone, verificationId: '', autoVerified: true, link: link));
+            result.complete(PhoneChallenge(phone: phone, verificationId: '', autoVerified: true));
           } else {
             onAutoVerified?.call();
           }
@@ -124,7 +110,7 @@ class FirebaseAuthRepository implements AuthRepository {
       },
       codeSent: (verificationId, resendToken) {
         if (!result.isCompleted) {
-          result.complete(PhoneChallenge(phone: phone, verificationId: verificationId, resendToken: resendToken, link: link));
+          result.complete(PhoneChallenge(phone: phone, verificationId: verificationId, resendToken: resendToken));
         }
       },
       codeAutoRetrievalTimeout: (_) {},
@@ -135,40 +121,9 @@ class FirebaseAuthRepository implements AuthRepository {
   @override
   Future<void> confirmCode(PhoneChallenge challenge, String code) async {
     try {
-      await _useCredential(
-        PhoneAuthProvider.credential(verificationId: challenge.verificationId, smsCode: code),
-        link: challenge.link,
-      );
+      await _auth.signInWithCredential(PhoneAuthProvider.credential(verificationId: challenge.verificationId, smsCode: code));
     } on FirebaseAuthException catch (e) {
       throw _map(e);
-    }
-  }
-
-  /// Signs in with the phone credential, or attaches it to the signed-in (Google) account. After attaching, a fresh ID token
-  /// is fetched so the `phone_number` claim is in it when the app next calls the API.
-  Future<void> _useCredential(PhoneAuthCredential credential, {required bool link}) async {
-    if (!link) {
-      await _auth.signInWithCredential(credential);
-      return;
-    }
-    final user = _auth.currentUser;
-    if (user == null) throw const AuthFailure(AuthFailureKind.unknown, 'Not signed in');
-    await user.linkWithCredential(credential);
-    await user.getIdToken(true);
-  }
-
-  @override
-  Future<bool> hasVerifiedPhone() async => (_auth.currentUser?.phoneNumber ?? '').isNotEmpty;
-
-  @override
-  Future<void> unlinkPhone() async {
-    final user = _auth.currentUser;
-    if (user == null) return;
-    try {
-      await user.unlink(PhoneAuthProvider.PROVIDER_ID);
-      await user.getIdToken(true);
-    } on FirebaseAuthException {
-      // Nothing was linked, or it is gone already.
     }
   }
 
@@ -229,22 +184,19 @@ class FirebaseAuthRepository implements AuthRepository {
         'invalid-verification-code' || 'missing-verification-code' => AuthFailure(AuthFailureKind.invalidCode, e.message),
         'session-expired' || 'code-expired' || 'invalid-verification-id' => AuthFailure(AuthFailureKind.codeExpired, e.message),
         'too-many-requests' || 'quota-exceeded' => AuthFailure(AuthFailureKind.tooManyRequests, e.message),
-        'credential-already-in-use' || 'account-exists-with-different-credential' => AuthFailure(AuthFailureKind.phoneInUse, e.message),
         'network-request-failed' => AuthFailure(AuthFailureKind.network, e.message),
         _ => AuthFailure(AuthFailureKind.unknown, e.message ?? e.code),
       };
 }
 
 /// Local development without Firebase: any 6-digit code signs in, except 000000, which
-/// behaves like a wrong code. "Continue with Google" signs in as [googleEmail], and adding a number to that account works
-/// the same way (any code but 000000). The API must run with AUTH_DEV_BYPASS=true.
+/// behaves like a wrong code. "Continue with Google" signs in as [googleEmail]. The API must run with AUTH_DEV_BYPASS=true.
 class DevAuthRepository implements AuthRepository {
   DevAuthRepository([FlutterSecureStorage? storage]) : _storage = storage ?? const FlutterSecureStorage();
 
   final FlutterSecureStorage _storage;
   static const _key = 'dev_auth_phone';
   static const _googleKey = 'dev_auth_google_email';
-  static const _googlePhoneKey = 'dev_auth_google_phone';
   static const wrongCode = '000000';
 
   /// The account "Continue with Google" signs in as in dev mode.
@@ -252,14 +204,12 @@ class DevAuthRepository implements AuthRepository {
 
   String? _phone;
   String? _google;
-  String? _googlePhone;
   bool _loaded = false;
 
   Future<void> _load() async {
     if (_loaded) return;
     _phone = await _storage.read(key: _key);
     _google = await _storage.read(key: _googleKey);
-    _googlePhone = await _storage.read(key: _googlePhoneKey);
     _loaded = true;
   }
 
@@ -272,14 +222,14 @@ class DevAuthRepository implements AuthRepository {
   @override
   Future<String?> token({bool forceRefresh = false}) async {
     await _load();
-    if (_google != null) return _googlePhone == null ? 'dev-google:$_google' : 'dev-google:$_google:$_googlePhone';
+    if (_google != null) return 'dev-google:$_google';
     return _phone == null ? null : 'dev:$_phone';
   }
 
   @override
-  Future<PhoneChallenge> sendCode(String phone, {PhoneChallenge? resendOf, void Function()? onAutoVerified, bool link = false}) async {
+  Future<PhoneChallenge> sendCode(String phone, {PhoneChallenge? resendOf, void Function()? onAutoVerified}) async {
     await Future<void>.delayed(const Duration(milliseconds: 400));
-    return PhoneChallenge(phone: phone, verificationId: 'dev', link: link);
+    return PhoneChallenge(phone: phone, verificationId: 'dev');
   }
 
   @override
@@ -287,16 +237,9 @@ class DevAuthRepository implements AuthRepository {
     await Future<void>.delayed(const Duration(milliseconds: 300));
     if (code == wrongCode) throw const AuthFailure(AuthFailureKind.invalidCode);
     await _load();
-    if (challenge.link) {
-      _googlePhone = challenge.phone;
-      await _storage.write(key: _googlePhoneKey, value: challenge.phone);
-      return;
-    }
     _phone = challenge.phone;
     _google = null;
-    _googlePhone = null;
     await _storage.delete(key: _googleKey);
-    await _storage.delete(key: _googlePhoneKey);
     await _storage.write(key: _key, value: challenge.phone);
   }
 
@@ -311,25 +254,11 @@ class DevAuthRepository implements AuthRepository {
   }
 
   @override
-  Future<bool> hasVerifiedPhone() async {
-    await _load();
-    return _googlePhone != null;
-  }
-
-  @override
-  Future<void> unlinkPhone() async {
-    _googlePhone = null;
-    await _storage.delete(key: _googlePhoneKey);
-  }
-
-  @override
   Future<void> signOut() async {
     _phone = null;
     _google = null;
-    _googlePhone = null;
     _loaded = true;
     await _storage.delete(key: _key);
     await _storage.delete(key: _googleKey);
-    await _storage.delete(key: _googlePhoneKey);
   }
 }

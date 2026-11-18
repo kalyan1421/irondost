@@ -4,7 +4,9 @@ import { Ban } from "lucide-react";
 import { useState } from "react";
 import { ConfirmDialog } from "@/components/confirm-dialog";
 import { Button } from "@/components/ui/button";
+import { Checkbox } from "@/components/ui/checkbox";
 import { Label } from "@/components/ui/label";
+import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { Textarea } from "@/components/ui/textarea";
 import { api, unwrap } from "@/lib/api/client";
 import { useApiMutation } from "@/lib/api/mutation";
@@ -17,7 +19,7 @@ const FORWARD: OrderStatus[] = ["PICKED_UP", "PROCESSING", "READY_FOR_DELIVERY",
 
 export function useChangeStatus(order: Order) {
   return useApiMutation(
-    (vars: { status: OrderStatus; note?: string }) =>
+    (vars: { status: OrderStatus; note?: string; collectedCash?: boolean; keepTravelCharge?: boolean }) =>
       unwrap(api.POST("/v1/admin/orders/{id}/status", { params: { path: { id: order.id } }, body: vars })),
     {
       invalidate: [["order", order.id], ["orders"], ["dashboard"]],
@@ -29,6 +31,10 @@ export function useChangeStatus(order: Order) {
 export function OrderActions({ order }: { order: Order }) {
   const change = useChangeStatus(order);
   const [reason, setReason] = useState("");
+  // Only when the partner had already travelled: the travel charge stays with us instead of going back with the refund.
+  const [keepTravel, setKeepTravel] = useState(false);
+  // Cash on delivery is normally collected at the door; an online order with a balance is not.
+  const [collected, setCollected] = useState<boolean | null>(null);
 
   // READY_FOR_DELIVERY is only a forward step when coming from the workshop.
   const forward = order.allowedNextStatuses.filter(
@@ -36,6 +42,7 @@ export function OrderActions({ order }: { order: Order }) {
   );
   const canCancel = order.allowedNextStatuses.includes("CANCELLED");
   const due = order.amountDuePaise;
+  const travelCharge = order.deliveryFeePaise;
 
   return (
     <>
@@ -44,6 +51,8 @@ export function OrderActions({ order }: { order: Order }) {
           destructive
           title={`Cancel order ${order.orderNumber}?`}
           confirmLabel="Cancel order"
+          cancelLabel="Keep order"
+          onOpen={() => setKeepTravel(false)}
           description={
             <span className="grid gap-3">
               <span>The customer and any assigned partner are notified. This cannot be undone.</span>
@@ -56,6 +65,19 @@ export function OrderActions({ order }: { order: Order }) {
                   onChange={(e) => setReason(e.target.value)}
                 />
               </span>
+              {travelCharge > 0 ? (
+                <span className="grid gap-1 text-foreground">
+                  <span className="flex items-center gap-2">
+                    <Checkbox id="cancel-keep-travel" checked={keepTravel} onCheckedChange={(v) => setKeepTravel(v === true)} />
+                    <Label htmlFor="cancel-keep-travel" className="font-normal">Partner already travelled: keep the travel charge</Label>
+                  </span>
+                  <span className="pl-6 text-xs text-muted-foreground">
+                    {keepTravel
+                      ? `${rupees(travelCharge)} stays with us and is left out of the refund. The customer is told why.`
+                      : `Leave this off to refund everything paid, the ${rupees(travelCharge)} travel charge included.`}
+                  </span>
+                </span>
+              ) : null}
             </span>
           }
           trigger={
@@ -63,7 +85,13 @@ export function OrderActions({ order }: { order: Order }) {
               <Ban /> Cancel
             </Button>
           }
-          onConfirm={() => change.mutateAsync({ status: "CANCELLED", note: reason.trim() || undefined })}
+          onConfirm={() =>
+            change.mutateAsync({
+              status: "CANCELLED",
+              note: reason.trim() || undefined,
+              ...(travelCharge > 0 && keepTravel ? { keepTravelCharge: true } : {}),
+            })
+          }
         />
       ) : null}
       {forward.map((s) =>
@@ -72,13 +100,33 @@ export function OrderActions({ order }: { order: Order }) {
             key={s}
             title="Mark as delivered?"
             confirmLabel="Mark delivered"
+            cancelLabel="Don't mark delivered"
+            onOpen={() => setCollected(null)}
+            confirmDisabled={due > 0 && collected === null}
             description={
-              due > 0
-                ? `${rupees(due)} is still unpaid. Record the payment in the Payments panel once it is collected.`
-                : "The customer will be told their clothes have arrived."
+              due > 0 ? (
+                <span className="grid gap-3">
+                  <span>{rupees(due)} is still unpaid.</span>
+                  {/* asChild: the dialog description is a <p>, so the group must be a span, not Radix's default div. */}
+                  <RadioGroup
+                    asChild
+                    aria-label="Was the balance collected?"
+                    value={collected === null ? "" : collected ? "collected" : "not-collected"}
+                    onValueChange={(v) => setCollected(v === "collected")}
+                  >
+                    <span className="grid gap-3 text-foreground">
+                      <Label htmlFor="cash-collected" className="font-normal"><RadioGroupItem id="cash-collected" value="collected" /> Cash collected: record {rupees(due)} as paid.</Label>
+                      <Label htmlFor="cash-not-collected" className="font-normal"><RadioGroupItem id="cash-not-collected" value="not-collected" /> Not collected: keep {rupees(due)} unpaid.</Label>
+                    </span>
+                  </RadioGroup>
+                  <span>Choose what happened at the door. Record any later payment in the Payments panel.</span>
+                </span>
+              ) : (
+                "The customer will be told their clothes have arrived."
+              )
             }
             trigger={<Button>{ACTION_LABEL[s]}</Button>}
-            onConfirm={() => change.mutateAsync({ status: s })}
+            onConfirm={() => change.mutateAsync({ status: s, ...(due > 0 && collected ? { collectedCash: true } : {}) })}
           />
         ) : (
           <Button key={s} disabled={change.isPending} onClick={() => change.mutate({ status: s })}>

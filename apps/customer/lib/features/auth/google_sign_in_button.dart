@@ -1,3 +1,4 @@
+import 'package:flutter/foundation.dart' show defaultTargetPlatform;
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
@@ -37,6 +38,27 @@ class GoogleSignInButton extends ConsumerWidget {
       expand: true,
       loading: busy,
       onPressed: phoneBusy ? null : () => _signIn(context, ref),
+    );
+  }
+}
+
+/// "or" and "Continue with Google", under the mobile-number sign-in. Left out on iPhone for now: Apple's review rules
+/// (4.8) ask for Sign in with Apple next to any social sign-in, so iOS signs in with a mobile number only until that ships.
+class GoogleSignInOption extends StatelessWidget {
+  const GoogleSignInOption({super.key});
+
+  static bool get offered => defaultTargetPlatform != TargetPlatform.iOS;
+
+  @override
+  Widget build(BuildContext context) {
+    if (!offered) return const SizedBox.shrink();
+    return const Column(
+      children: [
+        SizedBox(height: IdSpace.s3),
+        OrDivider(),
+        SizedBox(height: IdSpace.s3),
+        GoogleSignInButton(),
+      ],
     );
   }
 }

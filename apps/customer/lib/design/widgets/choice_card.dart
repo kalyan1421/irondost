@@ -6,18 +6,22 @@ import '../theme.dart';
 class ChoiceCard extends StatelessWidget {
   const ChoiceCard({
     super.key,
-    required this.icon,
+    this.icon,
     required this.title,
-    required this.description,
+    this.description,
     required this.selected,
     required this.onTap,
+    this.dense = false,
   });
 
-  final IconData icon;
+  final IconData? icon;
   final String title;
-  final String description;
+  final String? description;
   final bool selected;
   final VoidCallback onTap;
+
+  /// Shorter padding and a smaller title, for two options side by side.
+  final bool dense;
 
   @override
   Widget build(BuildContext context) {
@@ -27,32 +31,42 @@ class ChoiceCard extends StatelessWidget {
     return Semantics(
       inMutuallyExclusiveGroup: true,
       checked: selected,
-      label: '$title. $description',
+      label: description == null ? title : '$title. $description',
       excludeSemantics: true,
       child: Material(
-        color: c.surface,
-        shape: Border(bottom: BorderSide(color: c.border)),
+        color: selected ? c.primarySoft : c.surface,
+        shape: RoundedRectangleBorder(
+          borderRadius: radius,
+          side: BorderSide(color: selected ? c.primary : c.borderStrong),
+        ),
         child: InkWell(
           borderRadius: radius,
           onTap: onTap,
           child: Padding(
-            padding: const EdgeInsets.symmetric(
-              horizontal: 0,
-              vertical: 14,
+            padding: EdgeInsets.symmetric(
+              horizontal: dense ? IdSpace.s3 : IdSpace.s4,
+              vertical: dense ? IdSpace.s3 : IdSpace.s4,
             ),
             child: Row(
               children: [
-                Icon(icon, size: IdSize.iconMd, color: c.textMuted),
-                const SizedBox(width: IdSpace.s3),
+                if (icon != null) ...[
+                  Icon(
+                    icon,
+                    size: IdSize.iconMd,
+                    color: selected ? c.primary : c.textMuted,
+                  ),
+                  const SizedBox(width: IdSpace.s3),
+                ],
                 Expanded(
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      Text(title, style: t.title),
-                      Text(
-                        description,
-                        style: t.body.copyWith(color: c.textMuted),
-                      ),
+                      Text(title, style: dense ? t.label : t.title),
+                      if (description != null)
+                        Text(
+                          description!,
+                          style: t.body.copyWith(color: c.textMuted),
+                        ),
                     ],
                   ),
                 ),

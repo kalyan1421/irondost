@@ -7,8 +7,11 @@ export 'tokens.g.dart';
 /// Resolves the locally bundled font families; tests may supply their own resolver.
 typedef FontResolver = TextStyle Function(String family, TextStyle style);
 
-TextStyle plainFont(String family, TextStyle style) =>
-    style.copyWith(fontFamily: family);
+TextStyle plainFont(String family, TextStyle style) => style.copyWith(
+  fontFamily: family,
+  // Junction headings use Figtree for ₹ and other unsupported glyphs.
+  fontFamilyFallback: const ['Figtree'],
+);
 
 /// The design system's named text styles, coloured for the current theme. Read with `context.text`.
 @immutable
@@ -204,7 +207,8 @@ ThemeData buildTheme(Brightness brightness, {FontResolver font = plainFont}) {
       style: TextButton.styleFrom(
         foregroundColor: c.primary,
         minimumSize: const Size(IdSize.touchTarget, IdSize.touchTarget),
-        padding: const EdgeInsets.symmetric(horizontal: IdSpace.s3),
+        // No side padding: a link's label lines up with the page's text edge. The 48 dp tap target comes from minimumSize.
+        padding: EdgeInsets.zero,
         shape: buttonShape,
         textStyle: text.label,
       ),
@@ -236,8 +240,10 @@ ThemeData buildTheme(Brightness brightness, {FontResolver font = plainFont}) {
       height: IdSize.bottomNav,
       backgroundColor: c.surface,
       surfaceTintColor: Colors.transparent,
-      indicatorColor: Colors.transparent,
-      indicatorShape: const RoundedRectangleBorder(),
+      indicatorColor: c.primarySoft,
+      indicatorShape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.all(Radius.circular(IdRadius.md)),
+      ),
       elevation: 0,
       labelBehavior: NavigationDestinationLabelBehavior.alwaysShow,
       labelTextStyle: WidgetStateProperty.resolveWith(

@@ -4,6 +4,7 @@ import 'package:go_router/go_router.dart';
 import 'package:lucide_icons_flutter/lucide_icons.dart';
 
 import '../../data/reachability.dart';
+import '../issues/issues.dart';
 import '../../design/theme.dart';
 import '../push/push_handler.dart';
 import '../push/push_source.dart';
@@ -21,6 +22,7 @@ class AppShell extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     // Live order updates for as long as the tabs are on screen.
     ref.watch(realtimeSyncProvider);
+    ref.watch(issuePhotoRecoveryProvider);
     // Pushes while the tabs are on screen: a banner for one arriving, navigation for one tapped.
     ref
       ..watch(pushHandlerProvider)

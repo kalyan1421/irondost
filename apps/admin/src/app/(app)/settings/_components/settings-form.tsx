@@ -2,7 +2,9 @@
 
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useQueryClient } from "@tanstack/react-query";
-import { useMemo } from "react";
+import { useEffect, useMemo } from "react";
+import { useUnsavedChanges } from "@/hooks/use-unsaved-changes";
+import { useAuth } from "@/lib/auth/auth-provider";
 import { useForm, type UseFormRegister } from "react-hook-form";
 import { z } from "zod";
 import { Button } from "@/components/ui/button";
@@ -56,12 +58,15 @@ const whole = (min: number) =>
     .refine((v) => Number(v) <= MAX_WHOLE, "That number is too large.");
 
 const schema = z.object({
+  adjustmentExpiryHours: whole(1).refine((v) => Number(v) <= 168, "Enter 1 to 168 hours."),
+  issueFirstResponseHours: optionalNumber(/^\d+$/, 1, 168, "Enter 1 to 168 hours, or leave empty."),
   minOrderPaise: money,
   deliveryFeePaise: money,
   freeDeliveryAbovePaise: optionalMoney,
   bookingCutoffMinutes: whole(0),
   maxAdvanceDays: whole(1),
   minTurnaroundHours: whole(1),
+  pickupCapacityPerSlot: optionalNumber(/^\d+$/, 1, 1000, "Enter 1 to 1000, or leave empty for no limit."),
   dispatchLeadMinutes: whole(0),
   dispatchBatchSize: whole(1),
   offerTimeoutSeconds: whole(5),
@@ -98,6 +103,7 @@ type Values = z.input<typeof schema>;
 type Key = keyof Values;
 
 const WHOLE_KEYS = [
+  "adjustmentExpiryHours",
   "bookingCutoffMinutes",
   "maxAdvanceDays",
   "minTurnaroundHours",
@@ -111,9 +117,12 @@ const WHOLE_KEYS = [
 
 function toValues(s: BusinessSettings): Values {
   const values: Values = {
+    adjustmentExpiryHours: String(s.adjustmentExpiryHours),
+    issueFirstResponseHours: s.issueFirstResponseHours?.toString() ?? "",
     minOrderPaise: paiseToInput(s.minOrderPaise),
     deliveryFeePaise: paiseToInput(s.deliveryFeePaise),
     freeDeliveryAbovePaise: paiseToInput(s.freeDeliveryAbovePaise),
+    pickupCapacityPerSlot: s.pickupCapacityPerSlot?.toString() ?? "",
     bookingCutoffMinutes: "",
     maxAdvanceDays: "",
     minTurnaroundHours: "",
@@ -141,12 +150,16 @@ function toPatch(v: Values, s: BusinessSettings): SettingsPatch {
     const paise = toPaise(v[key]);
     if (paise !== null && paise !== s[key]) patch[key] = paise;
   }
+  const replyHours = v.issueFirstResponseHours === "" ? null : Number(v.issueFirstResponseHours);
+  if (replyHours !== s.issueFirstResponseHours) patch.issueFirstResponseHours = replyHours;
   const freeAbove = v.freeDeliveryAbovePaise === "" ? null : toPaise(v.freeDeliveryAbovePaise);
   if (freeAbove !== s.freeDeliveryAbovePaise) patch.freeDeliveryAbovePaise = freeAbove;
   for (const key of WHOLE_KEYS) {
     const n = Number(v[key]);
     if (n !== s[key]) patch[key] = n;
   }
+  const capacity = v.pickupCapacityPerSlot.trim() === "" ? null : Number(v.pickupCapacityPerSlot);
+  if (capacity !== s.pickupCapacityPerSlot) patch.pickupCapacityPerSlot = capacity;
   if (v.supportPhone !== (s.supportPhone ?? "")) patch.supportPhone = v.supportPhone;
   if (v.supportEmail !== (s.supportEmail ?? "")) patch.supportEmail = v.supportEmail;
   for (const key of RADIUS_KEYS) {
@@ -169,6 +182,10 @@ interface FieldDef {
 }
 
 const SECTIONS: { title: string; description: string; fields: FieldDef[] }[] = [
+  { title: "Price approvals and support", description: "Only promise response times the team can staff.", fields: [
+    { name: "adjustmentExpiryHours", label: "Price approval expires after", suffix: "hours", inputMode: "numeric", hint: "Default 12 hours. Unanswered requests expire and the previously accepted bill stays in place. Allowed: 1–168 hours." },
+    { name: "issueFirstResponseHours", label: "Public first response target", suffix: "hours", inputMode: "numeric", placeholder: "Off", hint: "Leave empty until support staffing is confirmed. When set, new reports show this deadline to customers. Existing reports keep their original target." },
+  ] },
   {
     title: "Pricing",
     description: "What customers pay on top of their items. Existing orders keep the prices they were booked with.",
@@ -182,18 +199,18 @@ const SECTIONS: { title: string; description: string; fields: FieldDef[] }[] = [
       },
       {
         name: "deliveryFeePaise",
-        label: "Delivery fee",
+        label: "Travel charge",
         prefix: "₹",
         inputMode: "decimal",
-        hint: "Added to every order that does not get free delivery. Use 0 to never charge it.",
+        hint: "A flat charge added to orders under the free-travel amount. Use 0 to never charge it. Existing orders keep the charge they were booked with.",
       },
       {
         name: "freeDeliveryAbovePaise",
-        label: "Free delivery above",
+        label: "Free travel from (items total before coupons)",
         prefix: "₹",
         inputMode: "decimal",
         placeholder: "Never free",
-        hint: "Orders of this amount or more, after discounts, get free delivery. Leave empty to always charge the fee.",
+        hint: "Orders whose items add up to this much or more, counted before any coupon, pay no travel charge. A coupon never brings a free order back under it. Leave empty to always charge it.",
       },
     ],
   },
@@ -222,12 +239,20 @@ const SECTIONS: { title: string; description: string; fields: FieldDef[] }[] = [
         inputMode: "numeric",
         hint: "The earliest delivery slot starts at least this many hours after the pickup slot starts.",
       },
+      {
+        name: "pickupCapacityPerSlot",
+        label: "Pickups per time window",
+        suffix: "pickups",
+        inputMode: "numeric",
+        placeholder: "No limit",
+        hint: "How many orders still waiting for pickup (new, or with a partner assigned) one window can hold. A full window shows as Full to customers. Staff phone orders can still book into it with a reason. Leave empty for no limit.",
+      },
     ],
   },
   {
     title: "Service area",
     description:
-      "Where customers can book pickups. Customers outside it are told IronDost isn't in their area yet. Staff can still place phone orders anywhere.",
+      "Where customers can book pickups. Customers outside it are told IronDost isn't in their area yet, and can ask to be told when we arrive (see Outside the area). Staff phone orders need a map pin or a served PIN code, and an address outside the area needs a typed reason. Test the edge with Check an address below.",
     fields: [
       {
         name: "serviceCenterLatitude",
@@ -332,6 +357,8 @@ const SECTIONS: { title: string; description: string; fields: FieldDef[] }[] = [
 
 export function SettingsForm({ settings, canEdit }: { settings: BusinessSettings; canEdit: boolean }) {
   const queryClient = useQueryClient();
+  const { user } = useAuth();
+  const draftKey = `irondost.settings.draft.${user?.id}`;
   const values = useMemo(() => toValues(settings), [settings]);
   const form = useForm<Values, unknown, z.output<typeof schema>>({
     resolver: zodResolver(schema),
@@ -342,12 +369,32 @@ export function SettingsForm({ settings, canEdit }: { settings: BusinessSettings
     mode: "onTouched",
   });
   const { errors, isDirty } = form.formState;
+  useUnsavedChanges(canEdit && isDirty);
+  useEffect(() => {
+    if (!canEdit) return;
+    let active = true;
+    void Promise.resolve().then(() => {
+      if (!active) return;
+      try {
+        const changes = JSON.parse(sessionStorage.getItem(draftKey) ?? "{}");
+        const parsed = schema.safeParse({ ...form.getValues(), ...changes });
+        if (parsed.success && Object.keys(changes).length) form.reset(parsed.data, { keepDefaultValues: true, keepDirtyValues: false });
+      } catch { /* Storage can be unavailable; the leave guard still works. */ }
+    });
+    // eslint-disable-next-line react-hooks/incompatible-library -- subscription is isolated from rendered values
+    const watch = form.watch((current) => {
+      const changed = Object.fromEntries(Object.entries(current).filter(([key]) => form.getFieldState(key as Key).isDirty));
+      try { if (Object.keys(changed).length) sessionStorage.setItem(draftKey, JSON.stringify(changed)); else sessionStorage.removeItem(draftKey); } catch {}
+    });
+    return () => { active = false; watch.unsubscribe(); };
+  }, [canEdit, draftKey, form]);
 
   const save = useApiMutation((body: SettingsPatch) => unwrap(api.PATCH("/v1/admin/settings", { body })), {
     success: "Saved",
     onSuccess: (data) => {
       queryClient.setQueryData(["settings"], data);
-      form.reset(toValues(data));
+      form.reset(toValues(data), { keepDirtyValues: false, keepDirty: false });
+      try { sessionStorage.removeItem(draftKey); } catch {}
     },
   });
 
@@ -355,7 +402,7 @@ export function SettingsForm({ settings, canEdit }: { settings: BusinessSettings
     const patch = toPatch(v, settings);
     if (Object.keys(patch).length === 0) {
       // Only whitespace changed.
-      form.reset(values);
+      form.reset(values, { keepDirtyValues: false, keepDirty: false });
       return;
     }
     save.mutate(patch);
@@ -383,9 +430,9 @@ export function SettingsForm({ settings, canEdit }: { settings: BusinessSettings
       {canEdit ? (
         <div className="sticky bottom-0 z-10 -mx-4 -mb-5 flex flex-wrap items-center justify-end gap-3 border-t bg-background/95 px-4 py-3 backdrop-blur md:-mx-6 md:px-6">
           <p className="mr-auto text-sm text-muted-foreground" aria-live="polite">
-            {isDirty ? "You have unsaved changes." : "No unsaved changes."}
+            {isDirty ? "You have unsaved changes. This tab keeps a draft." : "No unsaved changes."}
           </p>
-          <Button type="button" variant="ghost" disabled={!isDirty || save.isPending} onClick={() => form.reset(values)}>
+          <Button type="button" variant="ghost" disabled={!isDirty || save.isPending} onClick={() => { if (window.confirm("Discard your unsaved settings?")) { form.reset(values, { keepDirtyValues: false, keepDirty: false }); try { sessionStorage.removeItem(draftKey); } catch {} } }}>
             Discard changes
           </Button>
           <Button type="submit" disabled={!isDirty || save.isPending}>

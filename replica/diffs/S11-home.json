@@ -1,0 +1,73 @@
+{
+  "mode": "layout",
+  "original": {
+    "width": 720,
+    "height": 1600
+  },
+  "clone": {
+    "width": 780,
+    "height": 1688
+  },
+  "compared_at": {
+    "width": 480,
+    "height": 1039
+  },
+  "height_delta_pct": -2.6,
+  "score": 24.2,
+  "verdict": "different",
+  "regions": [
+    {
+      "x": 0,
+      "y": 0,
+      "w": 720,
+      "h": 1440,
+      "cells": 179,
+      "where": "middle centre"
+    },
+    {
+      "x": 0,
+      "y": 1440,
+      "w": 300,
+      "h": 120,
+      "cells": 8,
+      "where": "bottom left"
+    },
+    {
+      "x": 360,
+      "y": 1440,
+      "w": 360,
+      "h": 120,
+      "cells": 8,
+      "where": "bottom right"
+    },
+    {
+      "x": 0,
+      "y": 240,
+      "w": 60,
+      "h": 120,
+      "cells": 2,
+      "where": "top left"
+    },
+    {
+      "x": 600,
+      "y": 300,
+      "w": 60,
+      "h": 60,
+      "cells": 1,
+      "where": "top right"
+    },
+    {
+      "x": 540,
+      "y": 1080,
+      "w": 60,
+      "h": 60,
+      "cells": 1,
+      "where": "bottom right"
+    }
+  ],
+  "files": {
+    "original": "diffs/ref-png/S11-home.png",
+    "clone": "clone-screens/S11-home.png"
+  },
+  "diff_image": "diffs/S11-home.diff.png"
+}

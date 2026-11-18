@@ -9,6 +9,7 @@ import {
   type OffersClosedEvent,
   type OffersCreatedEvent,
   type OrderCreatedEvent,
+  type OrderRescheduledEvent,
   type OrderStatusChangedEvent,
 } from '../events.js';
 import { Prisma, type BusinessSettings, type DispatchOffer, type Order, type User } from '../generated/prisma/client.js';
@@ -26,6 +27,12 @@ export const QUEUE_EXPIRE = 'dispatch-expire';
 interface RoundJob {
   orderId: string;
   leg: DispatchLeg;
+  /**
+   * The leg's date and slot when the job was queued. A job whose window the customer has since moved does nothing:
+   * rescheduling queues a fresh job for the new window, and the old one must not offer the order early.
+   * Jobs queued before this field existed have none and run as before.
+   */
+  window?: string;
 }
 interface ExpireJob extends RoundJob {
   round: number;
@@ -33,6 +40,13 @@ interface ExpireJob extends RoundJob {
 
 /** A driver who offered recently but did not respond is skipped for this long. */
 const IGNORE_WINDOW_MS = 30 * 60_000;
+
+/** "2026-10-05|MORNING": which window a queued job was made for. */
+function legWindow(order: Order, leg: DispatchLeg): string {
+  return leg === DispatchLeg.PICKUP
+    ? `${fromDbDate(order.pickupDate)}|${order.pickupSlot}`
+    : `${fromDbDate(order.deliveryDate)}|${order.deliverySlot}`;
+}
 
 type RoundOutcome =
   | { kind: 'skip' }
@@ -73,8 +87,8 @@ export class DispatchService implements OnModuleInit {
   ) {}
 
   onModuleInit(): void {
-    this.jobs.register<RoundJob>(QUEUE_ROUND, (j) => this.runRound(j.orderId, j.leg));
-    this.jobs.register<ExpireJob>(QUEUE_EXPIRE, (j) => this.expireRound(j.orderId, j.leg, j.round));
+    this.jobs.register<RoundJob>(QUEUE_ROUND, (j) => this.runRound(j.orderId, j.leg, j.window));
+    this.jobs.register<ExpireJob>(QUEUE_EXPIRE, (j) => this.expireRound(j.orderId, j.leg, j.round, j.window));
   }
 
   // ───────────── Triggers ─────────────
@@ -98,6 +112,14 @@ export class DispatchService implements OnModuleInit {
     }
   }
 
+  /** The customer moved the pickup: queue a first round for the new window (the old window's jobs now do nothing). */
+  @OnEvent(Events.OrderRescheduled, { async: true, suppressErrors: true })
+  async onRescheduled(e: OrderRescheduledEvent): Promise<void> {
+    // A delivery-only move needs nothing here: the delivery leg is queued when the order is ready, from its dates then.
+    if (!e.pickupChanged) return;
+    await this.scheduleLeg(e.orderId, DispatchLeg.PICKUP).catch((err) => this.logger.error(err));
+  }
+
   /** Queue the first round for a leg, `dispatchLeadMinutes` before its slot starts (or now). */
   async scheduleLeg(orderId: string, leg: DispatchLeg, immediately = false): Promise<void> {
     const order = await this.prisma.order.findUnique({ where: { id: orderId } });
@@ -106,12 +128,12 @@ export class DispatchService implements OnModuleInit {
     const now = this.clock.now().getTime();
     const slotAt = this.legSlotStart(order, leg).getTime();
     const startAfter = immediately ? now : Math.max(now, slotAt - settings.dispatchLeadMinutes * 60_000);
-    await this.jobs.schedule<RoundJob>(QUEUE_ROUND, { orderId, leg }, { startAfter: new Date(startAfter) });
+    await this.jobs.schedule<RoundJob>(QUEUE_ROUND, { orderId, leg, window: legWindow(order, leg) }, { startAfter: new Date(startAfter) });
   }
 
   // ───────────── Rounds ─────────────
 
-  async runRound(orderId: string, leg: DispatchLeg): Promise<void> {
+  async runRound(orderId: string, leg: DispatchLeg, window?: string): Promise<void> {
     const settings = await this.settings.get();
     const now = this.clock.now();
 
@@ -121,6 +143,7 @@ export class DispatchService implements OnModuleInit {
 
       const order = await tx.order.findUnique({ where: { id: orderId } });
       if (!order || order.status !== AWAITING_DRIVER[leg]) return { kind: 'skip' };
+      if (window !== undefined && window !== legWindow(order, leg)) return { kind: 'skip' };
       const live = await tx.dispatchOffer.count({
         where: { orderId, leg, status: OfferStatus.PENDING, expiresAt: { gt: now } },
       });
@@ -128,10 +151,13 @@ export class DispatchService implements OnModuleInit {
 
       const last = await tx.dispatchOffer.aggregate({ where: { orderId, leg }, _max: { round: true } });
       const round = (last._max.round ?? 0) + 1;
+      // Offers made before the customer moved the pickup were for another time: they say nothing about drivers now.
+      const since = leg === DispatchLeg.PICKUP ? order.pickupRescheduledAt : null;
       const skip = await tx.dispatchOffer.findMany({
         where: {
           orderId,
           leg,
+          ...(since ? { AND: [{ offeredAt: { gte: since } }] } : {}),
           OR: [{ status: OfferStatus.REJECTED }, { offeredAt: { gt: new Date(now.getTime() - IGNORE_WINDOW_MS) } }],
         },
         select: { driverId: true },
@@ -175,7 +201,7 @@ export class DispatchService implements OnModuleInit {
       }
       const retryAt = now.getTime() + settings.dispatchRetryMinutes * 60_000;
       if (retryAt < this.legSlotEnd(outcome.order, leg).getTime()) {
-        await this.jobs.schedule<RoundJob>(QUEUE_ROUND, { orderId, leg }, { startAfter: new Date(retryAt) });
+        await this.jobs.schedule<RoundJob>(QUEUE_ROUND, { orderId, leg, window: legWindow(outcome.order, leg) }, { startAfter: new Date(retryAt) });
       }
       return;
     }
@@ -188,7 +214,7 @@ export class DispatchService implements OnModuleInit {
     } satisfies OffersCreatedEvent);
     await this.jobs.schedule<ExpireJob>(
       QUEUE_EXPIRE,
-      { orderId, leg, round: outcome.round },
+      { orderId, leg, round: outcome.round, window: legWindow(outcome.order, leg) },
       { startAfter: new Date(outcome.offers[0].expiresAt.getTime() + 1000) },
     );
   }
@@ -227,7 +253,7 @@ export class DispatchService implements OnModuleInit {
       LIMIT ${s.dispatchBatchSize}`;
   }
 
-  async expireRound(orderId: string, leg: DispatchLeg, round: number): Promise<void> {
+  async expireRound(orderId: string, leg: DispatchLeg, round: number, window?: string): Promise<void> {
     const now = this.clock.now();
     const stale = await this.prisma.dispatchOffer.findMany({
       where: { orderId, leg, round, status: OfferStatus.PENDING },
@@ -244,7 +270,7 @@ export class DispatchService implements OnModuleInit {
         driverIds: stale.map((s) => s.driverId),
       } satisfies OffersClosedEvent);
     }
-    await this.runRound(orderId, leg);
+    await this.runRound(orderId, leg, window);
   }
 
   // ───────────── Driver responses ─────────────

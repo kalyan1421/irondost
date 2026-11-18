@@ -30,8 +30,8 @@ Copy `.env.example` to `.env.local`.
 | Variable | Meaning |
 |---|---|
 | `NEXT_PUBLIC_SITE_URL` | The public address. Used for link previews, canonical links and the sitemap. Set it in production. |
-| `NEXT_PUBLIC_PLAY_STORE_URL` | Defaults to the existing `com.cloudironingfactory.customer` Play listing. |
-| `NEXT_PUBLIC_APP_STORE_URL` | Set when the App Store listing is live. Until then the page says "iPhone: coming soon". |
+| `NEXT_PUBLIC_PLAY_STORE_URL` | Defaults to the live `com.irondost.customer` Play listing. |
+| `NEXT_PUBLIC_APP_STORE_URL` | Defaults to the live App Store listing (id 6819166862). Set it to an empty value to show "iPhone: coming soon". |
 
 The phone number, email and company name are in `src/lib/site.ts`.
 

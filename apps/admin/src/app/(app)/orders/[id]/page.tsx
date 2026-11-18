@@ -11,6 +11,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { api, unwrap } from "@/lib/api/client";
 import type { Order, OrderAddress } from "@/lib/api/types";
 import { calendarDate, dateTime, phone, telHref } from "@/lib/format";
+import { CareNoteCard } from "./_components/care-note-card";
 import { ItemsCard } from "./_components/items-card";
 import { OrderActions } from "./_components/order-actions";
 import { PartnersCard } from "./_components/partners-card";
@@ -71,6 +72,7 @@ export default function OrderDetailPage() {
         <div className="grid gap-6 xl:grid-cols-[minmax(0,3fr)_minmax(0,2fr)]">
           <div className="flex min-w-0 flex-col gap-6">
             <ItemsCard order={o} />
+            <CareNoteCard order={o} />
             <ScheduleCard order={o} />
             <Timeline order={o} />
           </div>
@@ -151,6 +153,16 @@ function ScheduleCard({ order }: { order: Order }) {
         {order.instructions ? (
           <Field label="Instructions" className="sm:col-span-2">
             <span className="whitespace-pre-line">{order.instructions}</span>
+          </Field>
+        ) : null}
+        {order.areaOverrideReason ? (
+          <Field label="Booked outside the service area" className="sm:col-span-2">
+            {order.areaOverrideReason}
+          </Field>
+        ) : null}
+        {order.capacityOverrideReason ? (
+          <Field label="Booked into a full window" className="sm:col-span-2">
+            {order.capacityOverrideReason}
           </Field>
         ) : null}
         {order.cancelReason ? (

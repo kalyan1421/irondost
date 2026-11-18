@@ -19,6 +19,10 @@ abstract class OrderRepository {
 
   /// An unpaid online order becomes cash on delivery (after a failed or abandoned payment).
   Future<OrderDto> payOnDelivery(String id);
+
+  /// Moves the pickup and delivery time, until the clothes are picked up and a limited number of times. [idempotencyKey]:
+  /// one value per change; retrying the same change with the same key returns the order as it is now and uses up nothing.
+  Future<OrderDto> reschedule(String id, RescheduleOrderDto dto, {required String idempotencyKey});
 }
 
 class ApiOrderRepository implements OrderRepository {
@@ -41,6 +45,10 @@ class ApiOrderRepository implements OrderRepository {
 
   @override
   Future<OrderDto> payOnDelivery(String id) => _guard(() => _api.orders.ordersControllerPayOnDelivery(id: id));
+
+  @override
+  Future<OrderDto> reschedule(String id, RescheduleOrderDto dto, {required String idempotencyKey}) =>
+      _guard(() => _api.orders.ordersControllerReschedule(id: id, body: dto, idempotencyKey: idempotencyKey));
 
   Future<T> _guard<T>(Future<T> Function() call) async {
     try {

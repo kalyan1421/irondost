@@ -1,0 +1,34 @@
+{
+  "date": "2026-11-14",
+  "timezone": "Asia/Kolkata",
+  "head": "ec96e54",
+  "branch": "ops/launch-gaps",
+  "includes_existing_uncommitted_changes": true,
+  "findings": {
+    "customer": 9,
+    "admin": 18,
+    "priority": {
+      "P1": 9,
+      "P2": 16,
+      "P3": 2
+    }
+  },
+  "feature_entries": {
+    "customer": 21,
+    "admin": 18
+  },
+  "checks": {
+    "flutter_analyze": "pass",
+    "customer_tests": 467,
+    "customer_captures": 94,
+    "stress320_200percent": 78,
+    "admin_lint": "pass",
+    "admin_tsc_noEmit": "pass"
+  },
+  "limitations": [
+    "Admin browser attachment failed; admin findings source-reviewed",
+    "No production mutations",
+    "Customer screenshots use fake repositories",
+    "No native/provider or API integration/e2e execution in this review"
+  ]
+}

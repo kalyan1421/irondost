@@ -103,7 +103,7 @@ class AddressDraft {
 }
 
 class FormArgs {
-  const FormArgs({required this.draft, this.existingId, this.onboarding = false, this.returnTo});
+  const FormArgs({required this.draft, this.existingId, this.onboarding = false, this.returnTo, this.tellMe = false});
 
   final AddressDraft draft;
 
@@ -111,4 +111,8 @@ class FormArgs {
   final String? existingId;
   final bool onboarding;
   final String? returnTo;
+
+  /// The customer chose "Tell me when you're here" for a place outside the service area: once the address is saved, ask to be
+  /// told when IronDost starts serving it.
+  final bool tellMe;
 }

@@ -120,6 +120,23 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/v1/admin/settings/check-address": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Tests an address against the saved service area before customers meet the edge: type a map position, a PIN code, or both. */
+        post: operations["CheckAddressController_check"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/v1/me": {
         parameters: {
             query?: never;
@@ -200,6 +217,60 @@ export interface paths {
         options?: never;
         head?: never;
         patch: operations["AddressesController_update"];
+        trace?: never;
+    };
+    "/v1/me/area-interest": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * "Tell me when you're here": for a saved address outside the service area. Uses the signed-in customer's own number.
+         *     Idempotent: asking again for the same PIN code returns the open request.
+         */
+        post: operations["AreaInterestController_register"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/v1/admin/area-interest": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Who asked to be told when we reach them: counts by PIN code, locality and distance band, and the requests newest first. */
+        get: operations["AdminAreaInterestController_overview"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/v1/admin/area-interest/{id}/told": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Staff have told this customer we now serve them. */
+        post: operations["AdminAreaInterestController_told"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
         trace?: never;
     };
     "/v1/catalog": {
@@ -464,6 +535,38 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/v1/orders/{id}/adjustments/{adjustmentId}/approve": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post: operations["OrdersController_approve"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/v1/orders/{id}/adjustments/{adjustmentId}/decline": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post: operations["OrdersController_decline"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/v1/orders/{id}/pay-on-delivery": {
         parameters: {
             query?: never;
@@ -475,6 +578,26 @@ export interface paths {
         put?: never;
         /** For an online order that has not been paid (a failed or abandoned payment): the partner collects the amount at delivery. */
         post: operations["OrdersController_payOnDelivery"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/v1/orders/{id}/reschedule": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Moves the pickup and delivery time. Allowed until the clothes are picked up, twice per order. Prices do not change.
+         *     When a partner had accepted the pickup, they are released and the order is offered again for the new time.
+         */
+        post: operations["OrdersController_reschedule"];
         delete?: never;
         options?: never;
         head?: never;
@@ -580,6 +703,22 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/v1/admin/orders/{id}/items/quote": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post: operations["AdminOrdersController_previewItems"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/v1/orders/{id}/payments/razorpay": {
         parameters: {
             query?: never;
@@ -659,6 +798,211 @@ export interface paths {
          * @description Errors: NOTHING_TO_REFUND, REFUND_EXCEEDS_PAID and REFUND_EXCEEDS_ONLINE_PAID (409, details.refundablePaise), NO_ONLINE_PAYMENT (409), REFUND_GATEWAY_ERROR (502, with Razorpay's message; nothing is saved).
          */
         post: operations["AdminRefundsController_create"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/v1/orders/{id}/issues": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post: operations["CustomerIssuesController_create"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/v1/me/issues": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["CustomerIssuesController_list"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/v1/me/issues/{id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["CustomerIssuesController_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/v1/me/issues/{id}/messages": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post: operations["CustomerIssuesController_message"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/v1/admin/issues": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["AdminIssuesController_list"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/v1/admin/issues/{id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["AdminIssuesController_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch: operations["AdminIssuesController_update"];
+        trace?: never;
+    };
+    "/v1/admin/issues/{id}/messages": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post: operations["AdminIssuesController_message"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/v1/admin/uploads/images": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Upload an image (max 8 MB). It is cleaned, resized and stored as WebP; use the returned URL in imageUrl. */
+        post: operations["UploadsController_uploadImage"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/v1/me/uploads/images": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post: operations["CustomerUploadsController_upload"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/v1/me/uploads/care-photos": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * A photo of the clothes for a care note, added before the order exists. Same image limits as report photos. It stays free
+         *     until an order is placed with its URL; one photo goes to one order, up to 3 on each order.
+         */
+        post: operations["CustomerUploadsController_uploadCarePhoto"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/v1/admin/ledger": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Payments and refunds as one list, newest first, with totals for everything the filters match
+         * @description Each entry is one payment or one refund, with its order and customer. `status=problem` finds what needs attention: PENDING and FAILED entries. Dates are IST. Never includes gateway payloads.
+         */
+        get: operations["LedgerController_list"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/v1/admin/ledger/export": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * The same list as a CSV download
+         * @description Takes the list's filters. At most 10,000 newest entries; when more matched, the X-Export-Truncated header is "true". Cells that start with =, +, - or @ are prefixed with an apostrophe.
+         */
+        get: operations["LedgerController_download"];
+        put?: never;
+        post?: never;
         delete?: never;
         options?: never;
         head?: never;
@@ -957,6 +1301,57 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/v1/admin/notification-deliveries": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** By default only alerts that did not fully arrive and nobody has followed up on, newest first. */
+        get: operations["NotificationDeliveriesController_list"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/v1/admin/notification-deliveries/{id}/retry": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Sends the same alert once more. Recorded as a new delivery; refused if it already arrived. */
+        post: operations["NotificationDeliveriesController_retry"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/v1/admin/notification-deliveries/{id}/handled": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Marks the alert as followed up, so it leaves the open list and the dashboard count. */
+        post: operations["NotificationDeliveriesController_handled"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/v1/admin/dashboard": {
         parameters: {
             query?: never;
@@ -965,6 +1360,23 @@ export interface paths {
             cookie?: never;
         };
         get: operations["AdminController_dashboard"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/v1/admin/audit": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Who changed what in the admin, newest first. Super admins only. */
+        get: operations["AdminController_auditLog"];
         put?: never;
         post?: never;
         delete?: never;
@@ -1089,23 +1501,6 @@ export interface paths {
         patch: operations["AdminStaffController_update"];
         trace?: never;
     };
-    "/v1/admin/uploads/images": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        get?: never;
-        put?: never;
-        /** Upload an image (max 8 MB). It is cleaned, resized and stored as WebP; use the returned URL in imageUrl. */
-        post: operations["UploadsController_uploadImage"];
-        delete?: never;
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
-    };
 }
 export type webhooks = Record<string, never>;
 export interface components {
@@ -1120,10 +1515,12 @@ export interface components {
         UserDto: {
             id: string;
             /**
-             * @description Null for a customer who signed in with Google and has not added a verified number yet.
+             * @description The number to call: the sign-in number, or the one typed at checkout. Null until a Google customer adds one.
              * @example +919876543210
              */
             phone: string | null;
+            /** @description True when the number signs the user in (confirmed by an SMS code); false when a customer typed it at checkout. */
+            phoneVerified: boolean;
             name: string | null;
             email: string | null;
             role: components["schemas"]["Role"];
@@ -1143,6 +1540,11 @@ export interface components {
         };
         /** @enum {string} */
         TimeSlot: "MORNING" | "NOON" | "EVENING";
+        /**
+         * @description `FULL` when the pickup window is open but has no place left; `available` is false then. Null otherwise.
+         * @enum {string}
+         */
+        SlotUnavailableReason: "FULL";
         SlotOptionDto: {
             /** @example 2026-10-05 */
             date: string;
@@ -1154,6 +1556,8 @@ export interface components {
             /** Format: date-time */
             endsAt: string;
             available: boolean;
+            /** @description `FULL` when the pickup window is open but has no place left; `available` is false then. Null otherwise. */
+            reason: components["schemas"]["SlotUnavailableReason"] | null;
         };
         SlotDefinitionDto: {
             slot: components["schemas"]["TimeSlot"];
@@ -1166,7 +1570,9 @@ export interface components {
             supportPhone: string | null;
             supportEmail: string | null;
             minOrderPaise: number;
+            /** @description The flat travel charge for a small order, in paise. */
             deliveryFeePaise: number;
+            /** @description Travel is free from this items total (before any coupon), in paise. Null = never free. */
             freeDeliveryAbovePaise: number | null;
             minTurnaroundHours: number;
             maxAdvanceDays: number;
@@ -1180,6 +1586,29 @@ export interface components {
             /** @description Distance from the hub when a radius applies */
             distanceKm: number | null;
         };
+        CheckAddressDto: {
+            /**
+             * @description Send with longitude
+             * @example 17.4126
+             */
+            latitude?: number;
+            /**
+             * @description Send with latitude
+             * @example 78.4482
+             */
+            longitude?: number;
+            /** @example 500034 */
+            pincode?: string;
+        };
+        CheckAddressResultDto: {
+            /** @description Whether a pickup can be booked here under the saved settings */
+            served: boolean;
+            reason: components["schemas"]["NotServiceableReason"] | null;
+            /** @description Straight-line km from the centre; null without a centre or a map position */
+            distanceKm: number | null;
+            /** @description Whether the answer rests on a map position or a PIN code on the served list. False means "served" only because there was nothing to check: a phone order needs a map pin or a served PIN code. */
+            verified: boolean;
+        };
         DriverProfileDto: {
             vehicleNumber: string | null;
             licenseNumber: string | null;
@@ -1192,10 +1621,12 @@ export interface components {
         MeDto: {
             id: string;
             /**
-             * @description Null for a customer who signed in with Google and has not added a verified number yet.
+             * @description The number to call: the sign-in number, or the one typed at checkout. Null until a Google customer adds one.
              * @example +919876543210
              */
             phone: string | null;
+            /** @description True when the number signs the user in (confirmed by an SMS code); false when a customer typed it at checkout. */
+            phoneVerified: boolean;
             name: string | null;
             email: string | null;
             role: components["schemas"]["Role"];
@@ -1211,6 +1642,11 @@ export interface components {
             name?: string;
             /** @example priya@example.com */
             email?: string | null;
+            /**
+             * @description Customers only, and only while they have no sign-in number. Any common Indian format; stored as +91XXXXXXXXXX without an SMS code.
+             * @example 9876543210
+             */
+            phone?: string;
         };
         /** @enum {string} */
         DevicePlatform: "ANDROID" | "IOS" | "WEB";
@@ -1299,6 +1735,65 @@ export interface components {
             longitude?: number | null;
             /** @default false */
             isPrimary?: boolean;
+        };
+        RegisterAreaInterestDto: {
+            /** @description One of the signed-in customer's saved addresses. The place is read from the saved address, never from the request. */
+            addressId: string;
+        };
+        AreaInterestDto: {
+            id: string;
+            pincode: string;
+            /** @example Gachibowli */
+            locality: string;
+            /** Format: date-time */
+            createdAt: string;
+        };
+        /** @enum {string} */
+        AreaInterestStatus: "OPEN" | "TOLD" | "ALL";
+        /** @enum {string} */
+        DistanceBand: "UNDER_6" | "KM_6_8" | "KM_8_10" | "KM_10_PLUS" | "UNKNOWN";
+        AreaInterestBandTotalDto: {
+            band: components["schemas"]["DistanceBand"];
+            count: number;
+        };
+        AreaInterestGroupDto: {
+            pincode: string;
+            locality: string;
+            band: components["schemas"]["DistanceBand"];
+            count: number;
+            /** @description Nearest request to the centre, in km */
+            nearestKm: number | null;
+            /** Format: date-time */
+            newestAt: string;
+        };
+        AreaInterestItemDto: {
+            id: string;
+            customerId: string;
+            customerName: string | null;
+            /** @description The number the customer signed in with (or typed at checkout) */
+            customerPhone: string | null;
+            pincode: string;
+            locality: string;
+            distanceKm: number | null;
+            band: components["schemas"]["DistanceBand"];
+            /** Format: date-time */
+            createdAt: string;
+            /** Format: date-time */
+            notifiedAt: string | null;
+        };
+        AreaInterestOverviewDto: {
+            /** @description Requests staff have not told yet */
+            openTotal: number;
+            /** @description Open requests per distance band, nearest first. Bands with none are left out. */
+            bands: components["schemas"]["AreaInterestBandTotalDto"][];
+            /** @description Open requests per PIN code, locality and band, most first */
+            areas: components["schemas"]["AreaInterestGroupDto"][];
+            /** @description The requests matching `status`, newest first */
+            items: components["schemas"]["AreaInterestItemDto"][];
+            page: number;
+            pageSize: number;
+            /** @description Requests matching `status` */
+            total: number;
         };
         /** @enum {string} */
         ItemUnit: "PIECE" | "PAIR" | "SET" | "KG";
@@ -1533,8 +2028,11 @@ export interface components {
             lines: components["schemas"]["QuoteLineDto"][];
             subtotalPaise: number;
             discountPaise: number;
+            /** @description The flat travel charge: 0 once the items total (before any coupon) reaches the free-from amount. */
             deliveryFeePaise: number;
             totalPaise: number;
+            /** @description How much more of clothes (items total before any coupon) makes travel free. Null when travel is already free or there is no threshold. */
+            freeTravelShortfallPaise: number | null;
             promoCode: string | null;
             /**
              * @description Why the promo code was not applied, if it was not.
@@ -1566,6 +2064,41 @@ export interface components {
             paymentMethod: components["schemas"]["PaymentMethod"];
             /** @example Please call before arriving */
             instructions?: string;
+            /**
+             * @description What the workshop should know about the clothes (stains, delicate fabric). Separate from instructions, which are for the pickup partner.
+             * @example Red silk saree: stain on the pallu
+             */
+            careNote?: string;
+            /** @description Photos of the clothes: URLs returned by POST /v1/me/uploads/care-photos for this customer, each used once and not yet on an order. */
+            carePhotoUrls?: string[];
+        };
+        /** @enum {string} */
+        AdjustmentStatus: "PENDING_CUSTOMER" | "APPROVED" | "DECLINED" | "EXPIRED";
+        AdjustmentLineDto: {
+            catalogItemId: string | null;
+            name: string;
+            unit: components["schemas"]["ItemUnit"];
+            unitPricePaise: number;
+            quantity: number;
+            lineTotalPaise: number;
+        };
+        OrderAdjustmentDto: {
+            id: string;
+            status: components["schemas"]["AdjustmentStatus"];
+            reason: string;
+            oldTotalPaise: number;
+            newTotalPaise: number;
+            subtotalPaise: number;
+            discountPaise: number;
+            deliveryFeePaise: number;
+            itemsBefore: components["schemas"]["AdjustmentLineDto"][];
+            itemsAfter: components["schemas"]["AdjustmentLineDto"][];
+            /** Format: date-time */
+            expiresAt: string;
+            /** Format: date-time */
+            decidedAt: string | null;
+            /** Format: date-time */
+            createdAt: string;
         };
         /** @enum {string} */
         OrderStatus: "PENDING" | "PICKUP_ASSIGNED" | "PICKED_UP" | "PROCESSING" | "READY_FOR_DELIVERY" | "DELIVERY_ASSIGNED" | "OUT_FOR_DELIVERY" | "DELIVERED" | "CANCELLED";
@@ -1638,7 +2171,19 @@ export interface components {
             /** @description Staff member who issued it. Admin view only. */
             createdBy?: components["schemas"]["StaffRefDto"] | null;
         };
+        /** @enum {string} */
+        PaymentProvider: "RAZORPAY" | "CASH";
+        OrderPaymentDto: {
+            id: string;
+            provider: components["schemas"]["PaymentProvider"];
+            amountPaise: number;
+            reference: string | null;
+            /** Format: date-time */
+            capturedAt: string;
+        };
         OrderDto: {
+            revision?: number;
+            adjustments?: components["schemas"]["OrderAdjustmentDto"][];
             id: string;
             /** @example LD001042 */
             orderNumber: string;
@@ -1653,6 +2198,10 @@ export interface components {
             pickupAddress: components["schemas"]["OrderAddressDto"];
             deliveryAddress: components["schemas"]["OrderAddressDto"];
             instructions: string | null;
+            /** @description What the customer told the workshop about their clothes. Separate from instructions, which are for the pickup partner. */
+            careNote: string | null;
+            /** @description Photos that came with the care note, oldest first. Full-size URLs. */
+            carePhotoUrls: string[];
             items: components["schemas"]["OrderItemDto"][];
             subtotalPaise: number;
             discountPaise: number;
@@ -1661,8 +2210,10 @@ export interface components {
             paidPaise: number;
             /** @description Sum of PENDING and PROCESSED refunds. */
             refundedPaise: number;
-            /** @description What can still be refunded (paidPaise - refundedPaise). Admin view only. */
+            /** @description What can still be refunded (paidPaise - refundedPaise, less the travel charge when it was kept). Admin view only. */
             refundablePaise?: number;
+            /** @description Staff cancelled after the partner had already travelled, so the travel charge (deliveryFeePaise) was kept, not refunded. */
+            travelChargeKept: boolean;
             amountDuePaise: number;
             promoCode: string | null;
             paymentMethod: components["schemas"]["PaymentMethod"];
@@ -1681,6 +2232,12 @@ export interface components {
             deliveredAt: string | null;
             /** Format: date-time */
             cancelledAt: string | null;
+            /** @description How many times the customer has moved the pickup or delivery time. */
+            rescheduleCount: number;
+            /** @description Moves the customer has left on this order. */
+            reschedulesRemaining: number;
+            /** @description Customer view: the pickup time can be changed now (not yet picked up, and moves remain). Always false for staff and partners. */
+            canReschedule: boolean;
             /** Format: date-time */
             createdAt: string;
             /** Format: date-time */
@@ -1688,12 +2245,32 @@ export interface components {
             events?: components["schemas"]["OrderEventDto"][];
             /** @description Oldest first. Customer and admin views only. */
             refunds?: components["schemas"]["RefundDto"][];
+            /** @description Captured transactions only; excludes raw provider payloads and staff identities. */
+            payments?: components["schemas"]["OrderPaymentDto"][];
+            /** @description Staff view only: why a phone order was placed for an address outside the service area. Null when it was inside. */
+            areaOverrideReason?: string | null;
+            /** @description Staff view only: why a phone order was booked into a pickup window that was already full. Null when there was room. */
+            capacityOverrideReason?: string | null;
         };
         OrderPageDto: {
             items: components["schemas"]["OrderDto"][];
             page: number;
             pageSize: number;
             total: number;
+        };
+        RescheduleOrderDto: {
+            /**
+             * @description New pickup date (IST calendar date)
+             * @example 2026-10-05
+             */
+            pickupDate: string;
+            pickupSlot: components["schemas"]["TimeSlot"];
+            /**
+             * @description Delivery date. Send the current one to keep it; it is accepted only if it still follows the new pickup by the minimum turnaround.
+             * @example 2026-10-06
+             */
+            deliveryDate: string;
+            deliverySlot: components["schemas"]["TimeSlot"];
         };
         CancelOrderDto: {
             /** @example Changed my plans */
@@ -1718,16 +2295,49 @@ export interface components {
             paymentMethod: components["schemas"]["PaymentMethod"];
             /** @example Please call before arriving */
             instructions?: string;
+            /**
+             * @description What the workshop should know about the clothes (stains, delicate fabric). Separate from instructions, which are for the pickup partner.
+             * @example Red silk saree: stain on the pallu
+             */
+            careNote?: string;
             customerId: string;
+            /**
+             * @description Needed when the pickup or delivery address is outside the service area (ADDRESS_NOT_SERVICEABLE). Stored on the order and in the audit log. Ignored when the address is inside.
+             * @example Regular customer, our partner passes that way daily
+             */
+            outsideAreaReason?: string;
+            /**
+             * @description Needed when the pickup window is already full (SLOT_FULL). Stored on the order and in the audit log. Ignored when the window has room.
+             * @example Customer is away on other days
+             */
+            capacityOverrideReason?: string;
         };
         ChangeStatusDto: {
             status: components["schemas"]["OrderStatus"];
             note?: string;
+            /** @description With status DELIVERED: the partner or staff collected the balance in cash, so record it with the delivery. */
+            collectedCash?: boolean;
+            /** @description With status CANCELLED: the partner had already travelled, so keep the travel charge. It is not refunded and the refund due is reduced by it. Without it, everything paid is refunded, the charge included. */
+            keepTravelCharge?: boolean;
         };
         UpdateItemsDto: {
+            /** @description Revision displayed when this edit was started. A stale edit returns ORDER_CHANGED. */
+            expectedRevision?: number;
             items: components["schemas"]["OrderLineInput"][];
             /** @example 2 extra shirts counted at pickup */
             note?: string;
+        };
+        ItemEditPreviewDto: {
+            revision: number;
+            oldTotalPaise: number;
+            newTotalPaise: number;
+            subtotalPaise: number;
+            discountPaise: number;
+            deliveryFeePaise: number;
+            /** @description The travel charge the order has now, so a screen can show it changing. */
+            oldDeliveryFeePaise: number;
+            requiresApproval: boolean;
+            lines: components["schemas"]["QuoteLineDto"][];
         };
         CheckoutPrefillDto: {
             name: string | null;
@@ -1752,8 +2362,6 @@ export interface components {
             paymentStatus: string;
         };
         /** @enum {string} */
-        PaymentProvider: "RAZORPAY" | "CASH";
-        /** @enum {string} */
         PaymentRecordStatus: "CREATED" | "CAPTURED" | "FAILED" | "REFUNDED";
         PaymentDto: {
             id: string;
@@ -1775,6 +2383,133 @@ export interface components {
             method: components["schemas"]["RefundMethod"];
             /** @description Shown to the customer in the app and in their notification */
             note: string;
+        };
+        /** @enum {string} */
+        IssueCategory: "LATE" | "MISSED_PICKUP" | "DAMAGED" | "MISSING_ITEM" | "QUALITY" | "BILLING" | "RIDER" | "OTHER";
+        CreateIssueDto: {
+            category: components["schemas"]["IssueCategory"];
+            description: string;
+            photoUrls?: string[];
+        };
+        /** @enum {string} */
+        IssueStatus: "OPEN" | "ACKNOWLEDGED" | "RESOLVED" | "REJECTED";
+        IssueMessageDto: {
+            id: string;
+            fromStaff: boolean;
+            body: string;
+            /** Format: date-time */
+            createdAt: string;
+        };
+        IssueDto: {
+            id: string;
+            orderId: string;
+            orderNumber: string;
+            category: components["schemas"]["IssueCategory"];
+            status: components["schemas"]["IssueStatus"];
+            description: string;
+            photoUrls: string[];
+            /** Format: date-time */
+            firstResponseDueAt: string | null;
+            /** Format: date-time */
+            acknowledgedAt: string | null;
+            /** Format: date-time */
+            resolvedAt: string | null;
+            resolutionNote: string | null;
+            /** @description Agreed remedy in paise; null until one is recorded. */
+            compensationPaise: number | null;
+            handledById?: string | null;
+            /** @description Staff only. */
+            refundId?: string | null;
+            /** Format: date-time */
+            createdAt: string;
+            /** Format: date-time */
+            updatedAt: string;
+            messages: components["schemas"]["IssueMessageDto"][];
+        };
+        IssuePageDto: {
+            items: components["schemas"]["IssueDto"][];
+            page: number;
+            pageSize: number;
+            total: number;
+        };
+        IssueMessageBodyDto: {
+            body: string;
+        };
+        UpdateIssueDto: {
+            status?: components["schemas"]["IssueStatus"];
+            handledById?: string | null;
+            resolutionNote?: string;
+            /** @description Agreed remedy in paise, with a RESOLVED or REJECTED status. 0 means no money. null clears it. */
+            compensationPaise?: number | null;
+            /** @description A refund made on this order that pays the remedy. null unlinks it. */
+            refundId?: string | null;
+        };
+        ImageUploadDto: {
+            /** @description Public URL to save in imageUrl fields */
+            url: string;
+            width: number;
+            height: number;
+            /** @description Stored size in bytes */
+            bytes: number;
+        };
+        /** @enum {string} */
+        LedgerKind: "PAYMENT" | "REFUND";
+        /** @enum {string} */
+        LedgerStatusFilter: "CREATED" | "CAPTURED" | "FAILED" | "REFUNDED" | "PENDING" | "PROCESSED" | "problem";
+        /** @enum {string} */
+        LedgerMethod: "RAZORPAY" | "CASH" | "BANK_TRANSFER";
+        /** @enum {string} */
+        LedgerStatus: "CREATED" | "CAPTURED" | "FAILED" | "REFUNDED" | "PENDING" | "PROCESSED";
+        LedgerEntryDto: {
+            /** @description Id of the payment or refund record */
+            id: string;
+            kind: components["schemas"]["LedgerKind"];
+            status: components["schemas"]["LedgerStatus"];
+            /** @description Payment provider or refund method */
+            method: components["schemas"]["LedgerMethod"];
+            /** @description Always positive, in paise. `kind` says which way the money moved. */
+            amountPaise: number;
+            orderId: string;
+            orderNumber: string;
+            customerId: string;
+            /** @description Null once the customer has deleted their account */
+            customerName: string | null;
+            /** @description Sign-in number, else the contact number typed at checkout */
+            customerPhone: string | null;
+            /** @description Razorpay payment, order or refund id. Empty for cash and bank transfers. */
+            reference: string | null;
+            /** @description The note shown to the customer on a refund; who collected the cash on a cash payment */
+            note: string | null;
+            /** @description Why a refund failed, when known */
+            failureReason: string | null;
+            /**
+             * Format: date-time
+             * @description When the money moved: confirmed for a captured payment, processed for a refund that went through, otherwise when the record was created
+             */
+            occurredAt: string;
+        };
+        LedgerAmountDto: {
+            count: number;
+            /** @description Sum in paise */
+            amountPaise: number;
+        };
+        LedgerTotalsDto: {
+            /** @description Payments with status CAPTURED */
+            captured: components["schemas"]["LedgerAmountDto"];
+            /** @description Refunds with status PROCESSED */
+            refunded: components["schemas"]["LedgerAmountDto"];
+            /** @description Refunds with status PENDING */
+            refundPending: components["schemas"]["LedgerAmountDto"];
+            /** @description Payments and refunds with status FAILED */
+            failed: components["schemas"]["LedgerAmountDto"];
+        };
+        LedgerPageDto: {
+            items: components["schemas"]["LedgerEntryDto"][];
+            page: number;
+            pageSize: number;
+            /** @description Entries the filters match */
+            total: number;
+            totals: components["schemas"]["LedgerTotalsDto"];
         };
         SetOnlineDto: {
             isOnline: boolean;
@@ -1869,7 +2604,57 @@ export interface components {
             pageSize: number;
             total: number;
         };
+        /** @enum {string} */
+        PushDeliveryStatus: "SENT" | "PARTIAL" | "FAILED" | "NO_DEVICE";
+        /** @enum {string} */
+        DeliveryFollowUp: "OPEN" | "DONE" | "ALL";
+        DeliveryRecipientDto: {
+            id: string;
+            name: string | null;
+            /** @description E.164, e.g. +919876543210 */
+            phone: string | null;
+        };
+        DeliveryDto: {
+            id: string;
+            status: components["schemas"]["PushDeliveryStatus"];
+            app: components["schemas"]["ClientApp"];
+            /** @description Kind of alert, e.g. order_status, payment_received */
+            type: string;
+            /** @description Heading of the alert that was sent */
+            title: string;
+            /** @description Phones the person has registered for this app */
+            deviceCount: number;
+            /** @description How many of those phones refused it */
+            failedCount: number;
+            /** @description Firebase error code of the first failure */
+            errorCode: string | null;
+            /** @description Why it did not arrive, in plain words */
+            reason: string;
+            recipient: components["schemas"]["DeliveryRecipientDto"];
+            orderId: string | null;
+            orderNumber: string | null;
+            /** Format: date-time */
+            createdAt: string;
+            /** Format: date-time */
+            handledAt: string | null;
+            handledByName: string | null;
+            /** @description False once it arrived, was already retried, or the notification is gone */
+            canRetry: boolean;
+            /** @description Why Retry is not offered, in plain words */
+            retryBlockedReason: string | null;
+        };
+        DeliveryPageDto: {
+            items: components["schemas"]["DeliveryDto"][];
+            page: number;
+            pageSize: number;
+            total: number;
+        };
         DashboardDto: {
+            openIssues: number;
+            overdueIssues: number;
+            pendingAdjustments: number;
+            /** @description Alerts from the last 14 days that did not reach the person and nobody has followed up */
+            undeliveredAlerts: number;
             /** @description Count of orders per status */
             byStatus: {
                 [key: string]: number;
@@ -1878,6 +2663,8 @@ export interface components {
             deliveriesToday: number;
             ordersToday: number;
             needsAttention: number;
+            /** @description Orders where the customer is owed money back (cancelled after paying, or overpaid) */
+            refundsDue: number;
             driversOnline: number;
             collectedTodayPaise: number;
             collectedLast7DaysPaise: number;
@@ -1888,13 +2675,32 @@ export interface components {
                 valuePaise: number;
             }[];
         };
+        AuditEntryDto: {
+            id: string;
+            action: string;
+            entity: string;
+            entityId: string | null;
+            actorId: string | null;
+            actorName: string | null;
+            data: Record<string, never> | null;
+            /** Format: date-time */
+            createdAt: string;
+        };
+        AuditPageDto: {
+            items: components["schemas"]["AuditEntryDto"][];
+            page: number;
+            pageSize: number;
+            total: number;
+        };
         CustomerListItemDto: {
             id: string;
             /**
-             * @description Null for a customer who signed in with Google and has not added a verified number yet.
+             * @description The number to call: the sign-in number, or the one typed at checkout. Null until a Google customer adds one.
              * @example +919876543210
              */
             phone: string | null;
+            /** @description True when the number signs the user in (confirmed by an SMS code); false when a customer typed it at checkout. */
+            phoneVerified: boolean;
             name: string | null;
             email: string | null;
             role: components["schemas"]["Role"];
@@ -1929,8 +2735,12 @@ export interface components {
             isActive?: boolean;
         };
         BusinessSettingsDto: {
+            adjustmentExpiryHours: number;
+            issueFirstResponseHours: number | null;
             minOrderPaise: number;
+            /** @description The flat travel charge for a small order, in paise. */
             deliveryFeePaise: number;
+            /** @description Travel is free from this items total (before any coupon), in paise. Null = never free. */
             freeDeliveryAbovePaise: number | null;
             minTurnaroundHours: number;
             bookingCutoffMinutes: number;
@@ -1947,12 +2757,20 @@ export interface components {
             serviceCenterLongitude: number | null;
             serviceRadiusKm: number | null;
             servicePincodes: string[];
+            /** @description Pickups one window can hold; null means no limit. */
+            pickupCapacityPerSlot: number | null;
             /** Format: date-time */
             updatedAt: string;
         };
         UpdateSettingsDto: {
+            /** @description Price-approval expiry, in hours. */
+            adjustmentExpiryHours?: number;
+            /** @description Public first-response target; null keeps the promise off. */
+            issueFirstResponseHours?: number | null;
             minOrderPaise?: number;
+            /** @description The flat travel charge for a small order, in paise (0 = no charge). */
             deliveryFeePaise?: number;
+            /** @description Travel is free when the items total, before any coupon, reaches this many paise. Null = the charge always applies. */
             freeDeliveryAbovePaise?: number | null;
             minTurnaroundHours?: number;
             bookingCutoffMinutes?: number;
@@ -1980,6 +2798,11 @@ export interface components {
              *     ]
              */
             servicePincodes?: string[];
+            /**
+             * @description Pickups one window (a pickup date and slot) can hold. Null means no limit.
+             * @example 8
+             */
+            pickupCapacityPerSlot?: number | null;
         };
         CreateStaffDto: {
             /** @example 9876543210 */
@@ -1993,14 +2816,6 @@ export interface components {
             /** @enum {string} */
             role?: "ADMIN" | "SUPER_ADMIN";
             isActive?: boolean;
-        };
-        ImageUploadDto: {
-            /** @description Public URL to save in imageUrl fields */
-            url: string;
-            width: number;
-            height: number;
-            /** @description Stored size in bytes */
-            bytes: number;
         };
     };
     responses: never;
@@ -2156,6 +2971,29 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["ServiceAreaCheckDto"];
+                };
+            };
+        };
+    };
+    CheckAddressController_check: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["CheckAddressDto"];
+            };
+        };
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["CheckAddressResultDto"];
                 };
             };
         };
@@ -2343,6 +3181,74 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["AddressDto"];
+                };
+            };
+        };
+    };
+    AreaInterestController_register: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["RegisterAreaInterestDto"];
+            };
+        };
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["AreaInterestDto"];
+                };
+            };
+        };
+    };
+    AdminAreaInterestController_overview: {
+        parameters: {
+            query?: {
+                page?: number;
+                pageSize?: number;
+                /** @description OPEN: not told yet. TOLD: staff told the customer. ALL: both. */
+                status?: components["schemas"]["AreaInterestStatus"];
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["AreaInterestOverviewDto"];
+                };
+            };
+        };
+    };
+    AdminAreaInterestController_told: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["AreaInterestItemDto"];
                 };
             };
         };
@@ -2872,6 +3778,50 @@ export interface operations {
             };
         };
     };
+    OrdersController_approve: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+                adjustmentId: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["OrderDto"];
+                };
+            };
+        };
+    };
+    OrdersController_decline: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+                adjustmentId: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["OrderDto"];
+                };
+            };
+        };
+    };
     OrdersController_payOnDelivery: {
         parameters: {
             query?: never;
@@ -2882,6 +3832,34 @@ export interface operations {
             cookie?: never;
         };
         requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["OrderDto"];
+                };
+            };
+        };
+    };
+    OrdersController_reschedule: {
+        parameters: {
+            query?: never;
+            header?: {
+                /** @description One value per change (a UUID). Retrying the same change with the same key returns the order as it is now, with the Idempotent-Replayed: true header, and does not use up another reschedule. */
+                "Idempotency-Key"?: string;
+            };
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["RescheduleOrderDto"];
+            };
+        };
         responses: {
             200: {
                 headers: {
@@ -2923,6 +3901,14 @@ export interface operations {
             query?: {
                 page?: number;
                 pageSize?: number;
+                createdFrom?: string;
+                createdTo?: string;
+                deliveryFrom?: string;
+                deliveryTo?: string;
+                excludeCancelled?: boolean;
+                approvalPending?: boolean;
+                unpaid?: boolean;
+                overdue?: "pickup" | "delivery";
                 status?: components["schemas"]["OrderStatus"][];
                 /** @description Order number, customer phone or name */
                 search?: string;
@@ -2934,6 +3920,8 @@ export interface operations {
                 driverId?: string;
                 /** @description Only orders where automatic dispatch found no driver */
                 dispatchFailed?: boolean;
+                /** @description Only orders where the customer is owed money back (cancelled after paying, or overpaid) */
+                refundDue?: boolean;
             };
             header?: never;
             path?: never;
@@ -2954,7 +3942,10 @@ export interface operations {
     AdminOrdersController_place: {
         parameters: {
             query?: never;
-            header?: never;
+            header?: {
+                /** @description Reuse the same key when retrying one phone-order draft. */
+                "Idempotency-Key"?: string;
+            };
             path?: never;
             cookie?: never;
         };
@@ -3070,6 +4061,31 @@ export interface operations {
             };
         };
     };
+    AdminOrdersController_previewItems: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["UpdateItemsDto"];
+            };
+        };
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ItemEditPreviewDto"];
+                };
+            };
+        };
+    };
     PaymentsController_createRazorpayOrder: {
         parameters: {
             query?: never;
@@ -3179,6 +4195,350 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["OrderDto"];
+                };
+            };
+        };
+    };
+    CustomerIssuesController_create: {
+        parameters: {
+            query?: never;
+            header?: {
+                /** @description Reuse one key to retry the same report after a lost response. */
+                "Idempotency-Key"?: string;
+            };
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["CreateIssueDto"];
+            };
+        };
+        responses: {
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["IssueDto"];
+                };
+            };
+        };
+    };
+    CustomerIssuesController_list: {
+        parameters: {
+            query?: {
+                page?: number;
+                pageSize?: number;
+                status?: components["schemas"]["IssueStatus"];
+                orderId?: string;
+                handledById?: string;
+                search?: string;
+                overdue?: boolean;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["IssuePageDto"];
+                };
+            };
+        };
+    };
+    CustomerIssuesController_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["IssueDto"];
+                };
+            };
+        };
+    };
+    CustomerIssuesController_message: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["IssueMessageBodyDto"];
+            };
+        };
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["IssueDto"];
+                };
+            };
+        };
+    };
+    AdminIssuesController_list: {
+        parameters: {
+            query?: {
+                page?: number;
+                pageSize?: number;
+                status?: components["schemas"]["IssueStatus"];
+                orderId?: string;
+                handledById?: string;
+                search?: string;
+                overdue?: boolean;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["IssuePageDto"];
+                };
+            };
+        };
+    };
+    AdminIssuesController_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["IssueDto"];
+                };
+            };
+        };
+    };
+    AdminIssuesController_update: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["UpdateIssueDto"];
+            };
+        };
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["IssueDto"];
+                };
+            };
+        };
+    };
+    AdminIssuesController_message: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["IssueMessageBodyDto"];
+            };
+        };
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["IssueDto"];
+                };
+            };
+        };
+    };
+    UploadsController_uploadImage: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "multipart/form-data": {
+                    /** Format: binary */
+                    file: string;
+                    /** @enum {string} */
+                    purpose: "catalog" | "promotion" | "banner";
+                };
+            };
+        };
+        responses: {
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ImageUploadDto"];
+                };
+            };
+        };
+    };
+    CustomerUploadsController_upload: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "multipart/form-data": {
+                    /** Format: binary */
+                    file: string;
+                };
+            };
+        };
+        responses: {
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ImageUploadDto"];
+                };
+            };
+        };
+    };
+    CustomerUploadsController_uploadCarePhoto: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "multipart/form-data": {
+                    /** Format: binary */
+                    file: string;
+                };
+            };
+        };
+        responses: {
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ImageUploadDto"];
+                };
+            };
+        };
+    };
+    LedgerController_list: {
+        parameters: {
+            query?: {
+                kind?: components["schemas"]["LedgerKind"];
+                /** @description One status, or `problem` for PENDING or FAILED entries. CREATED (an online checkout that was started and not finished) is not a problem on its own. */
+                status?: components["schemas"]["LedgerStatusFilter"];
+                /** @description Payment provider or refund method */
+                method?: components["schemas"]["LedgerMethod"];
+                /** @description First day to include (IST) */
+                from?: string;
+                /** @description Last day to include (IST, inclusive) */
+                to?: string;
+                /** @description Order number, or the customer's phone (sign-in or contact number) */
+                search?: string;
+                page?: number;
+                pageSize?: number;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["LedgerPageDto"];
+                };
+            };
+        };
+    };
+    LedgerController_download: {
+        parameters: {
+            query?: {
+                kind?: components["schemas"]["LedgerKind"];
+                /** @description One status, or `problem` for PENDING or FAILED entries. CREATED (an online checkout that was started and not finished) is not a problem on its own. */
+                status?: components["schemas"]["LedgerStatusFilter"];
+                /** @description Payment provider or refund method */
+                method?: components["schemas"]["LedgerMethod"];
+                /** @description First day to include (IST) */
+                from?: string;
+                /** @description Last day to include (IST, inclusive) */
+                to?: string;
+                /** @description Order number, or the customer's phone (sign-in or contact number) */
+                search?: string;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description CSV file */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "text/csv": string;
                 };
             };
         };
@@ -3593,6 +4953,82 @@ export interface operations {
             };
         };
     };
+    NotificationDeliveriesController_list: {
+        parameters: {
+            query?: {
+                page?: number;
+                pageSize?: number;
+                /** @description Only this outcome. Without it the list shows every alert that did not fully arrive (everything but SENT). */
+                status?: components["schemas"]["PushDeliveryStatus"];
+                /** @description Which app the alert was for */
+                app?: components["schemas"]["ClientApp"];
+                /** @description First day, YYYY-MM-DD (IST) */
+                from?: string;
+                /** @description Last day, YYYY-MM-DD (IST) */
+                to?: string;
+                /** @description Order number, or part of it */
+                orderNumber?: string;
+                /** @description OPEN: nobody has followed up yet (the default). DONE: followed up or retried. ALL: both. */
+                followUp?: components["schemas"]["DeliveryFollowUp"];
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["DeliveryPageDto"];
+                };
+            };
+        };
+    };
+    NotificationDeliveriesController_retry: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["DeliveryDto"];
+                };
+            };
+        };
+    };
+    NotificationDeliveriesController_handled: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["DeliveryDto"];
+                };
+            };
+        };
+    };
     AdminController_dashboard: {
         parameters: {
             query?: never;
@@ -3608,6 +5044,36 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["DashboardDto"];
+                };
+            };
+        };
+    };
+    AdminController_auditLog: {
+        parameters: {
+            query?: {
+                page?: number;
+                pageSize?: number;
+                actorId?: string;
+                action?: string;
+                from?: string;
+                to?: string;
+                /** @description Only this kind of record, e.g. order, user, app_version */
+                entity?: string;
+                /** @description Only this record, e.g. an order id */
+                entityId?: string;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["AuditPageDto"];
                 };
             };
         };
@@ -3921,34 +5387,6 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["UserDto"];
-                };
-            };
-        };
-    };
-    UploadsController_uploadImage: {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        requestBody: {
-            content: {
-                "multipart/form-data": {
-                    /** Format: binary */
-                    file: string;
-                    /** @enum {string} */
-                    purpose: "catalog" | "promotion" | "banner";
-                };
-            };
-        };
-        responses: {
-            201: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["ImageUploadDto"];
                 };
             };
         };

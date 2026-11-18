@@ -1,0 +1,75 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>G</title>
+<style>
+@font-face{font-family:"Chunk";src:url("fonts/chunk-five/ChunkFive-Regular.otf");font-weight:400}
+@font-face{font-family:"Pagella";src:url("fonts/tex-gyre/texgyrepagella-bold.otf");font-weight:700}
+@font-face{font-family:"Pagella";src:url("fonts/tex-gyre/texgyrepagella-regular.otf");font-weight:400}
+@font-face{font-family:"Rs";src:url("fonts/charis/Charis-Bold.ttf");font-weight:700;unicode-range:U+20B9}
+
+html{background-color:#FFF1B5}
+body{
+  margin:0;
+  color:#1A1408;
+  font-family:"Pagella","Rs",Palatino,Georgia,serif;
+  font-size:1.05rem;
+  line-height:1.4;
+  padding:clamp(1.5rem,5vh,3.5rem) clamp(1.25rem,6vw,5rem) 8rem;
+}
+p{margin:0}
+.brand{font-weight:700;font-size:1.1rem}
+h1{margin:.4rem 0 2.8rem;font-weight:400;font-size:1.1rem;max-width:30ch}
+
+.price{
+  display:grid;
+  grid-template-columns:auto minmax(0,1fr);
+  grid-template-rows:1fr 1fr;
+  grid-template-areas:"fig name" "fig per";
+  column-gap:clamp(.8rem,3vw,2rem);
+  margin-bottom:.4rem;
+}
+.name{grid-area:name;align-self:end;font-weight:700;font-size:1.1rem;line-height:1.25;padding-bottom:.15rem}
+.per{grid-area:per;align-self:start;font-weight:400;font-size:.95rem}
+.fig{
+  grid-area:fig;
+  color:#8C2A0F;
+  font-family:"Chunk","Rs",Georgia,serif;
+  font-size:clamp(5.6rem,35vw,15rem);
+  line-height:.86;
+  letter-spacing:-.02em;
+  white-space:nowrap;
+}
+.cur{font-family:"Pagella","Rs",serif;font-weight:700;font-size:.26em;letter-spacing:0;vertical-align:top;position:relative;top:.45em;margin-right:.08em}
+
+.rest{margin-top:3.2rem;max-width:34ch}
+.rest p+p{margin-top:.8rem}
+.rest .gapb{margin-top:2.6rem}
+.go{margin-top:2.4rem;font-family:"Chunk",Georgia,serif;font-weight:400;font-size:1.9rem;color:#8C2A0F}
+</style>
+</head>
+<body>
+<main>
+  <p class="brand">IronDost</p>
+  <h1>Fresh clothes, back at your door.</h1>
+
+  <p class="price"><span class="name">Shirt / T-shirt</span> <span class="fig"><span class="cur">₹</span>35</span> <span class="per">per piece</span></p>
+  <p class="price"><span class="name">Trousers / Jeans</span> <span class="fig"><span class="cur">₹</span>40</span> <span class="per">per piece</span></p>
+  <p class="price"><span class="name">Bedsheet (double)</span> <span class="fig"><span class="cur">₹</span>70</span> <span class="per">per piece</span></p>
+
+  <div class="rest">
+    <p>A rough count is fine. Your partner confirms it at pickup.</p>
+    <p class="gapb">Ironing, washing and dry cleaning, picked up and delivered.</p>
+    <p>Choose your pickup and delivery times.</p>
+    <p class="gapb">Morning 7 – 11 AM</p>
+    <p>Afternoon 11 AM – 4 PM</p>
+    <p>Evening 4 – 8 PM</p>
+    <p class="gapb">Your partner arrives within the window you pick.</p>
+    <p>Pay online or in cash at delivery.</p>
+    <p class="go">Get started</p>
+  </div>
+</main>
+</body>
+</html>
