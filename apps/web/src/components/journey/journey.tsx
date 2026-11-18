@@ -172,6 +172,9 @@ const scenes: Scene[] = [
         <p className="journey-body">
           Every price is in the app, per piece, before you confirm. The total changes only if the count at your door is different.
         </p>
+        <a href="/prices" className="mt-4 inline-block font-semibold text-royal underline underline-offset-4">
+          See the rate card
+        </a>
         <a href="#book" className="journey-cta">
           Book a pickup
         </a>

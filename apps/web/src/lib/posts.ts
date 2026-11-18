@@ -6,6 +6,12 @@
  * and change; a wrong price on a page is worse than none. Update `updated` whenever a post changes.
  */
 
+import { priceList } from "@/lib/prices";
+
+const shirtItem = priceList.find((c) => c.slug === "ironing")?.items.find((i) => i.name.toLowerCase().startsWith("shirt"));
+const shirtNow = shirtItem ? (shirtItem.offer ?? shirtItem.price) : 0;
+const shirtLine = shirtItem?.offer ? `₹${shirtItem.offer} on the current offer (₹${shirtItem.price} regular)` : `₹${shirtNow}`;
+
 export type PostSection = {
   heading: string;
   paragraphs?: string[];
@@ -207,7 +213,7 @@ export const posts: Post[] = [
     related: ["areas-we-serve-around-lb-nagar", "will-laundry-bill-change-after-pickup", "how-doorstep-ironing-pickup-works"],
     title: "Ironing for PG and hostel residents in Dilsukhnagar and LB Nagar",
     description:
-      "No iron in your PG? IronDost picks up shirts and trousers from PGs and hostels around Dilsukhnagar and LB Nagar, with no minimum order, and returns them pressed.",
+      `No iron in your PG? IronDost irons shirts from ₹${shirtNow} a piece, picked up from PGs and hostels around Dilsukhnagar and LB Nagar, with no minimum order.`,
     published: "2026-11-19",
     updated: "2026-11-19",
     answer:
@@ -216,7 +222,7 @@ export const posts: Post[] = [
       {
         heading: "Why it works for a PG",
         bullets: [
-          "Per-piece prices, shown before you confirm. Five shirts is a normal order.",
+          `Shirt ironing is ${shirtLine} a piece, so five shirts come to ₹${shirtNow * 5}. Every price is shown before you confirm.`,
           "Pickup in the evening window, 4 pm to 8 pm, after college or work.",
           "Pay by UPI in the app or in cash at delivery.",
           "Your order and its status are in your own account, not in a shared notebook.",

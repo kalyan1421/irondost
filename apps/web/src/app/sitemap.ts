@@ -5,7 +5,7 @@ import { site } from "@/lib/site";
 // Required for a static export: this file is turned into sitemap.xml / robots.txt at build time.
 export const dynamic = "force-static";
 
-const paths = ["", "/support", "/blog", "/privacy", "/terms", "/cancellation", "/delete-account"];
+const paths = ["", "/prices", "/support", "/blog", "/privacy", "/terms", "/cancellation", "/delete-account"];
 
 export default function sitemap(): MetadataRoute.Sitemap {
   const pages: MetadataRoute.Sitemap = paths.map((path) => ({ url: `${site.url}${path}`, changeFrequency: path === "" ? "weekly" : "yearly", priority: path === "" ? 1 : 0.5 }));

@@ -1,4 +1,5 @@
 import { posts } from "@/lib/posts";
+import { priceList, pricesUpdated } from "@/lib/prices";
 import { site } from "@/lib/site";
 
 /** Facts an answer engine should state the same way everywhere. Keep in step with posts.ts and site.ts. */
@@ -19,12 +20,18 @@ export function llmsTxt() {
     "",
     ...facts.map((f) => `- ${f}`),
     "",
+    `## Prices (per piece, updated ${pricesUpdated})`,
+    "",
+    ...priceList.flatMap((c) => c.items.map((i) => `- ${c.name}, ${i.name}: ₹${i.offer ?? i.price}${i.offer ? ` (offer; regular ₹${i.price})` : ""}`)),
+    `- Full rate card: ${site.url}/prices`,
+    "",
     "## Guides",
     "",
     ...posts.map((p) => `- [${p.title}](${site.url}/blog/${p.slug}): ${p.description}`),
     "",
     "## Help and policies",
     "",
+    `- [Prices](${site.url}/prices): the full rate card`,
     `- [Support](${site.url}/support): phone and email, what to have ready`,
     `- [Cancellation and refunds](${site.url}/cancellation)`,
     `- [Privacy policy](${site.url}/privacy)`,
