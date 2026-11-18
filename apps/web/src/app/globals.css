@@ -56,3 +56,232 @@ details > summary {
 details > summary::-webkit-details-marker {
   display: none;
 }
+
+/* ---------- Homepage journey (one continuous camera move; see components/journey) ---------- */
+.journey-layer {
+  will-change: opacity;
+}
+.journey-photo {
+  transform: translate3d(var(--x, 0%), var(--y, 0%), 0) scale(var(--scale, 1.02));
+  transform-origin: var(--focus, 55% 50%);
+  will-change: transform;
+}
+/* Scrims sit only where the copy sits (no full-frame dimming). */
+.journey-scrim--left {
+  background: linear-gradient(90deg, rgb(248 246 242 / 0.92) 0%, rgb(248 246 242 / 0.72) 34%, rgb(248 246 242 / 0) 58%);
+}
+.journey-scrim--right {
+  background: linear-gradient(270deg, rgb(248 246 242 / 0.92) 0%, rgb(248 246 242 / 0.72) 34%, rgb(248 246 242 / 0) 58%);
+}
+.journey-scrim--app {
+  background: linear-gradient(90deg, rgb(248 246 242 / 0.9) 0%, rgb(248 246 242 / 0.6) 40%, rgb(248 246 242 / 0.05) 70%);
+}
+.journey-copy {
+  position: absolute;
+  inset: 0;
+  display: grid;
+  align-items: center;
+  padding: 6rem clamp(1.25rem, 5vw, 5rem) 3rem;
+  will-change: opacity, transform;
+}
+.journey-copy--left .journey-text,
+.journey-copy--app .journey-text {
+  max-width: 34rem;
+}
+.journey-copy--right {
+  justify-items: end;
+}
+.journey-copy--right .journey-text {
+  max-width: 32rem;
+}
+.journey-copy--press,
+.journey-copy--app {
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+  gap: clamp(2rem, 5vw, 5rem);
+}
+.journey-board {
+  width: min(100%, 31rem, 62svh);
+  justify-self: center;
+}
+.journey-phones {
+  justify-self: center;
+  display: flex;
+  align-items: flex-end;
+  gap: 1rem;
+  width: min(100%, 30rem);
+}
+.journey-kicker {
+  font-size: 0.875rem;
+  font-weight: 600;
+  letter-spacing: 0.02em;
+  color: var(--color-muted);
+}
+.journey-title {
+  margin-top: 0.75rem;
+  font-family: var(--font-display);
+  font-weight: 700;
+  font-size: clamp(2.4rem, 5.2vw, 4.75rem);
+  line-height: 1.02;
+  letter-spacing: -0.03em;
+  color: var(--color-ink);
+  text-wrap: balance;
+}
+.journey-body {
+  margin-top: 1.25rem;
+  max-width: 30rem;
+  font-size: clamp(1.05rem, 1.4vw, 1.3rem);
+  line-height: 1.55;
+  color: #26334d;
+}
+.journey-cta {
+  display: inline-flex;
+  margin-top: 2rem;
+  min-height: 3.5rem;
+  align-items: center;
+  border-radius: 1rem;
+  background: var(--color-royal);
+  padding: 0 1.75rem;
+  font-size: 1.125rem;
+  font-weight: 700;
+  color: #fff;
+  box-shadow: 0 10px 24px -10px rgb(31 79 209 / 0.6);
+  transition: background-color 0.15s ease-out, transform 0.15s ease-out;
+}
+.journey-cta:hover {
+  background: var(--color-royal-dark);
+  transform: translateY(-1px);
+}
+.journey-rail {
+  position: absolute;
+  right: 1.25rem;
+  top: 50%;
+  height: 7rem;
+  width: 3px;
+  translate: 0 -50%;
+  border-radius: 3px;
+  background: rgb(14 30 61 / 0.12);
+  overflow: hidden;
+}
+.journey-rail__fill {
+  position: absolute;
+  inset: 0;
+  background: var(--color-royal);
+  transform-origin: top;
+  transform: scaleY(0);
+}
+
+/* The press board */
+.press-board {
+  cursor: none;
+  background: #e9e6e1;
+}
+.press-iron {
+  position: absolute;
+  left: -2rem;
+  top: -1.5rem;
+  width: 4rem;
+  height: 3rem;
+  pointer-events: none;
+  opacity: 0;
+  border-radius: 55% 45% 18% 18% / 70% 70% 22% 22%;
+  background: linear-gradient(180deg, #f7f7f7, #c9ced8);
+  box-shadow: 0 8px 18px -6px rgb(14 30 61 / 0.45), inset 0 -4px 0 rgb(14 30 61 / 0.15);
+  transition: opacity 0.15s ease-out;
+}
+.press-board.is-active .press-iron {
+  opacity: 1;
+}
+.press-done {
+  position: absolute;
+  left: 1rem;
+  bottom: 1rem;
+  border-radius: 999px;
+  background: var(--color-sun);
+  padding: 0.4rem 0.9rem;
+  font-weight: 700;
+  color: var(--color-ink);
+  opacity: 0;
+  transform: translateY(6px);
+  transition: opacity 0.3s ease-out, transform 0.3s ease-out;
+}
+.press-board.is-done .press-done {
+  opacity: 1;
+  transform: none;
+}
+
+/* Phones: the copy sits at the bottom over the lower part of the portrait photo. */
+@media (max-width: 767px) {
+  .journey-scrim--left,
+  .journey-scrim--right,
+  .journey-scrim--app {
+    background: linear-gradient(0deg, rgb(248 246 242 / 0.96) 0%, rgb(248 246 242 / 0.85) 38%, rgb(248 246 242 / 0) 64%);
+  }
+  /* The app scene puts its copy at the top, so its scrim runs from the top. */
+  .journey-scrim--app {
+    background: linear-gradient(180deg, rgb(248 246 242 / 0.97) 0%, rgb(248 246 242 / 0.9) 45%, rgb(248 246 242 / 0.35) 75%);
+  }
+  .journey-copy {
+    align-items: end;
+    padding: 5rem 1.25rem 2.25rem;
+  }
+  .journey-copy--right {
+    justify-items: start;
+  }
+  .journey-copy--press,
+  .journey-copy--app {
+    grid-template-columns: 1fr;
+    grid-template-rows: auto 1fr;
+    align-items: start;
+    gap: 1.25rem;
+  }
+  .journey-copy--press .journey-text,
+  .journey-copy--app .journey-text {
+    order: 0;
+  }
+  .journey-board {
+    width: min(100%, 22rem, 46svh);
+  }
+  .journey-phones {
+    width: min(78%, 17rem);
+    align-self: end;
+  }
+  .journey-title {
+    font-size: clamp(2rem, 9vw, 2.6rem);
+  }
+  .journey-body {
+    margin-top: 0.75rem;
+    font-size: 1rem;
+  }
+  .journey-cta {
+    margin-top: 1.25rem;
+  }
+  .journey-rail {
+    display: none;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .journey-photo {
+    transform: none;
+  }
+}
+
+/* ---------- Text reveal on scroll (see components/text-reveal.tsx) ---------- */
+/* Opacity and transform only: a clip-path here would also hide the element from IntersectionObserver. */
+.reveal-ready {
+  opacity: 0;
+  transform: translate3d(0, 1.25em, 0);
+}
+.reveal-ready.is-revealed {
+  opacity: 1;
+  transform: none;
+  transition:
+    opacity 0.6s cubic-bezier(0.2, 0.7, 0.2, 1) var(--reveal-delay, 0ms),
+    transform 0.75s cubic-bezier(0.2, 0.7, 0.2, 1) var(--reveal-delay, 0ms);
+}
+@media (prefers-reduced-motion: reduce) {
+  .reveal-ready {
+    opacity: 1;
+    transform: none;
+  }
+}

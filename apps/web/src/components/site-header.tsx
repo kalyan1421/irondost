@@ -5,7 +5,9 @@ import { BrandLogo } from "./brand-logo";
 const links = [
   { href: "/#how-it-works", label: "How it works" },
   { href: "/#services", label: "Services" },
+  { href: "/#areas", label: "Areas" },
   { href: "/#faq", label: "Questions" },
+  { href: "/blog", label: "Guides" },
   { href: "/support", label: "Support" },
 ];
 
@@ -27,10 +29,10 @@ export function SiteHeader() {
 
         <div className="flex items-center gap-2">
           <Link
-            href="/#download"
+            href="/#book"
             className="rounded-xl bg-royal px-4 py-2.5 font-semibold text-white hover:bg-royal-dark"
           >
-            Get the app
+            Book a pickup
           </Link>
           {/* No JavaScript needed: a details element opens and closes the menu. */}
           <details className="relative md:hidden">

@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import { Figtree, Outfit } from "next/font/google";
 import { SiteFooter } from "@/components/site-footer";
 import { SiteHeader } from "@/components/site-header";
+import { TextReveal } from "@/components/text-reveal";
 import { site } from "@/lib/site";
 import "./globals.css";
 
@@ -37,6 +38,7 @@ export default function RootLayout({ children }: LayoutProps<"/">) {
           {children}
         </main>
         <SiteFooter />
+        <TextReveal />
       </body>
     </html>
   );
