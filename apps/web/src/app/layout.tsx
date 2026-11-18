@@ -21,6 +21,10 @@ export const metadata: Metadata = {
     locale: "en_IN",
   },
   twitter: { card: "summary_large_image" },
+  // Google Search Console ownership (two verification tokens issued for irondost.in, 19 Nov 2026).
+  verification: {
+    google: ["iqO5h0V3_QcAoFY8ITwJ32k0a4QtM0ej7kVWyX_EMxk", "ljB4b5sDZWvBPeJGzZrC0sh20hXUXCMoaGjWw_Inwh0"],
+  },
 };
 
 export default function RootLayout({ children }: LayoutProps<"/">) {
