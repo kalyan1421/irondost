@@ -25,8 +25,12 @@ import { refundCopy, type RefundStage } from './refund-copy.js';
 const CUSTOMER_COPY: Partial<Record<OrderStatus, (n: string) => { title: string; body: string }>> = {
   [OrderStatus.PICKUP_ASSIGNED]: (n) => ({ title: 'Pickup partner assigned', body: `A partner will collect order ${n} in your pickup slot.` }),
   [OrderStatus.PICKED_UP]: (n) => ({ title: 'Clothes picked up', body: `We have your clothes for order ${n}.` }),
-  [OrderStatus.PROCESSING]: (n) => ({ title: 'Being ironed', body: `Order ${n} is being processed.` }),
-  [OrderStatus.READY_FOR_DELIVERY]: (n) => ({ title: 'Ready for delivery', body: `Order ${n} is ready and will be delivered in your slot.` }),
+  [OrderStatus.PROCESSING]: (n) => ({ title: 'Being cleaned', body: `Order ${n} is at our workshop: washing, ironing or dry cleaning.` }),
+  // Moving an order to READY_FOR_DELIVERY is the owner's hand check (the admin button says so), so the customer is told.
+  [OrderStatus.READY_FOR_DELIVERY]: (n) => ({
+    title: 'Checked and ready',
+    body: `Order ${n} has been checked by hand and is ready. We will deliver it in your slot.`,
+  }),
   [OrderStatus.OUT_FOR_DELIVERY]: (n) => ({ title: 'Out for delivery', body: `Order ${n} is on its way.` }),
   [OrderStatus.DELIVERED]: (n) => ({ title: 'Delivered', body: `Order ${n} has been delivered. Thank you!` }),
   [OrderStatus.CANCELLED]: (n) => ({ title: 'Order cancelled', body: `Order ${n} was cancelled.` }),
