@@ -29,7 +29,7 @@ export class PgBossScheduler extends JobScheduler implements OnApplicationBootst
     await boss.start();
     for (const [queue, handler] of this.handlers) {
       await boss.createQueue(queue);
-      await boss.work<object>(queue, { pollingIntervalSeconds: 1 }, async (jobs) => {
+      await boss.work<object>(queue, { pollingIntervalSeconds: this.env.JOBS_POLL_SECONDS }, async (jobs) => {
         for (const job of jobs) await handler(job.data);
       });
     }
