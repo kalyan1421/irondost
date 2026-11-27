@@ -72,6 +72,12 @@ export const envSchema = z
       .enum(['true', 'false'])
       .default('true')
       .transform((v) => v === 'true'),
+    /**
+     * How often each pg-boss queue checks the database for due jobs. Every check is a round trip to Postgres, and on
+     * Render that counts as outbound bandwidth: at 1 second, two queues used about 5 GB a month. The jobs are expiry
+     * timers, so running up to a minute late is fine.
+     */
+    JOBS_POLL_SECONDS: z.coerce.number().int().min(1).default(60),
   })
   .superRefine((env, ctx) => {
     if (env.NODE_ENV === 'production') {

@@ -31,6 +31,10 @@ services:
       # free plan: two always-on services use about 1,490 hours and Render then suspends both until the next month.
       - key: KEEP_ALIVE_INTERVAL_MINUTES
         value: "10"
+      # How often background jobs check the database. Each check is outbound bandwidth: at 1 second the job workers
+      # alone used the free plan's whole 5 GB a month. 60 seconds is about 90 MB a month.
+      - key: JOBS_POLL_SECONDS
+        value: "60"
       - key: APP_NAME
         value: IronDost
       - key: ORDER_NUMBER_PREFIX
