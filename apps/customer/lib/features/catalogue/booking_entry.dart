@@ -5,8 +5,10 @@ import 'package:go_router/go_router.dart';
 import '../../app/routes.dart';
 import '../addresses/addresses_controller.dart';
 import '../addresses/addresses_screen.dart';
+import 'laundry.dart';
 
-/// Retains the serviceability gate and the selected service tab.
+/// Retains the serviceability gate and the selected service tab. With no service named, the price list opens on
+/// Laundry, the main service.
 void startBooking(
   BuildContext context,
   WidgetRef ref, {
@@ -31,6 +33,7 @@ void startBooking(
     showAddressPicker(context);
     return;
   }
+  service ??= search ? null : ref.read(laundrySlugProvider);
   context.push(
     search
         ? Routes.bookSearch

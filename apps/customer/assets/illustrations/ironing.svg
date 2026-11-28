@@ -1,0 +1,12 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="120" height="120" viewBox="0 0 120 120">
+<defs><linearGradient id="shirt" x2=".8" y2="1"><stop stop-color="#FFFFFF"/><stop offset="1" stop-color="#E6EEFF"/></linearGradient><linearGradient id="iron" x2=".7" y2="1"><stop stop-color="#3FB8EA"/><stop offset="1" stop-color="#1F4FD1"/></linearGradient></defs>
+<ellipse cx="60" cy="106" rx="44" ry="5" fill="#14307A" opacity=".1"/>
+<path d="m38 68 13-5h18l13 5 17 13-10 12-10-6v16H37V87l-10 6-10-12Z" fill="url(#shirt)"/>
+<path d="m51 63 9 9 9-9-3 15-6-6-6 6Z" fill="#FFFFFF"/><path d="M60 78v22M39 92h14" fill="none" stroke="#1F4FD1" stroke-width="1" opacity=".22"/><circle cx="63" cy="86" r="1" fill="#1F4FD1"/><circle cx="63" cy="94" r="1" fill="#1F4FD1"/>
+<path d="M35 75c9-18 28-30 53-31l9 34H35Z" fill="url(#iron)"/>
+<path d="M56 54c1-16 10-25 24-25 8 0 12 5 14 13l4 15-9 2-4-15c-1-4-3-6-7-6-7 0-11 5-13 13Z" fill="#14307A"/>
+<path d="M59 48c4-10 9-15 18-15" fill="none" stroke="#3FB8EA" stroke-width="1.5" stroke-linecap="round"/>
+<path d="M33 76h64v7H34c-5 0-6-4-1-7Z" fill="#14307A"/><path d="M36 77h57" stroke="#FFFFFF" stroke-width="1.5" stroke-linecap="round" opacity=".6"/>
+<path d="M44 67c10-11 23-16 39-17" fill="none" stroke="#FFFFFF" stroke-width="1.5" stroke-linecap="round" opacity=".6"/><rect x="77" y="52" width="9" height="5" rx="2.5" fill="#FFC93C"/>
+<g fill="none" stroke="#3FB8EA" stroke-width="1.5" stroke-linecap="round" opacity=".65"><path d="M29 58c-7-6 6-10 0-17"/><path d="M40 47c-7-7 6-12 0-19"/><path d="M50 34c-5-5 4-9 0-14"/></g>
+</svg>

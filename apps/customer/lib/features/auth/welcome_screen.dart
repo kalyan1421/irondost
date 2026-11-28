@@ -35,7 +35,7 @@ class WelcomeScreen extends StatelessWidget {
                 ),
                 const SizedBox(height: IdSpace.s4),
                 Text(
-                  'Ironing, washing and dry cleaning, picked up and delivered.',
+                  'Laundry washed in our own machines, plus ironing and dry cleaning. Picked up and delivered.',
                   style: context.text.bodyLg.copyWith(
                     color: context.colors.textMuted,
                   ),

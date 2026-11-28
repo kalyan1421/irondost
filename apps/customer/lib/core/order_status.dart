@@ -9,8 +9,8 @@ extension OrderStatusCopy on OrderStatus {
         OrderStatus.pending => 'Booked',
         OrderStatus.pickupAssigned => 'Partner assigned',
         OrderStatus.pickedUp => 'Picked up',
-        OrderStatus.processing => 'Being ironed',
-        OrderStatus.readyForDelivery => 'Ready',
+        OrderStatus.processing => 'Being cleaned',
+        OrderStatus.readyForDelivery => 'Checked and ready',
         OrderStatus.deliveryAssigned => 'Out for delivery soon',
         OrderStatus.outForDelivery => 'Out for delivery',
         OrderStatus.delivered => 'Delivered',
@@ -25,7 +25,7 @@ extension OrderStatusCopy on OrderStatus {
         _ => StatusTone.info,
       };
 
-  /// Step 1–5 on the customer timeline: Booked, Picked up, Ironing, Out for delivery, Delivered.
+  /// Step 1–5 on the customer timeline: Booked, Picked up, Cleaning, Out for delivery, Delivered.
   int get timelineStep => switch (this) {
         OrderStatus.pending || OrderStatus.pickupAssigned => 1,
         OrderStatus.pickedUp => 2,

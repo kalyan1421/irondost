@@ -450,7 +450,7 @@ Future<void> bookAgain(
     if (replace != true || !context.mounted) return;
   }
   ref.read(basketProvider.notifier).replaceWith(lines);
-  if (context.mounted) await context.push(Routes.basket);
+  if (context.mounted) context.go(Routes.basket);
 }
 
 /// "Need help with this order?": call or email support, with the order number to quote.

@@ -11,6 +11,8 @@ import '../../data/api_client.dart';
 import '../../design/theme.dart';
 import '../../design/widgets/id_button.dart';
 import '../../design/widgets/item_stepper.dart';
+import '../../design/widgets/screen_backdrop.dart';
+import '../../design/widgets/service_art.dart';
 import '../../design/widgets/surfaces.dart';
 import '../catalogue/catalogue.dart';
 import '../catalogue/item_row.dart';
@@ -32,13 +34,17 @@ class BasketScreen extends ConsumerWidget {
     final loading = quote.isLoading;
     final failed = quote.hasError && !loading;
 
-    return Scaffold(
+    return ScreenBackdrop(
+      child: Scaffold(
+      backgroundColor: Colors.transparent,
       appBar: AppBar(
-        leading: BackButton(
-          onPressed: () =>
-              context.canPop() ? context.pop() : context.go(Routes.home),
-        ),
-        title: Text('Basket', style: context.text.titleLg),
+        backgroundColor: Colors.transparent,
+        automaticallyImplyLeading: false,
+        leading: Navigator.canPop(context) ? const BackButton() : null,
+        centerTitle: false,
+        toolbarHeight: 72,
+        titleSpacing: Navigator.canPop(context) ? 0 : IdSpace.s5,
+        title: Text('Basket', style: context.text.display.copyWith(fontSize: 32, height: 1.2)),
       ),
       body: basket.isEmpty
           ? const _EmptyBasket()
@@ -82,7 +88,7 @@ class BasketScreen extends ConsumerWidget {
       bottomNavigationBar: basket.isEmpty
           ? null
           : _Footer(quote: q, loading: loading),
-    );
+    ));
   }
 }
 
@@ -183,7 +189,7 @@ class _Items extends ConsumerWidget {
     if (rest.isNotEmpty) groups.add((null, rest));
 
     return IdCard(
-      padding: EdgeInsets.zero,
+      padding: const EdgeInsets.symmetric(horizontal: IdSpace.s4),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
@@ -244,13 +250,16 @@ class _BasketRow extends ConsumerWidget {
     final t = context.text;
     return Padding(padding: const EdgeInsets.symmetric(vertical: IdSpace.s4), child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
       Row(crossAxisAlignment: CrossAxisAlignment.start, children: [
+        ServiceArtTile(ServiceArt.match(line.name), size: 52),
+        const SizedBox(width: IdSpace.s3),
         Expanded(child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [Text(line.name, style: t.title), Text('${rupees(line.unitPaise)} ${unitRateLabel(line.unit)}', style: t.caption.copyWith(color: c.textMuted))])),
         const SizedBox(width: IdSpace.s3),
         // Not Flexible: next to the Expanded name it would take half the row and start mid-screen.
         Text(rupees(line.unitPaise * line.quantity), textAlign: TextAlign.end, style: t.label.copyWith(fontFeatures: const [FontFeature.tabularFigures()])),
       ]),
-      const SizedBox(height: IdSpace.s3),
-      ItemStepper(name: line.name, quantity: line.quantity, showAddWhenEmpty: false, canAdd: line.quantity < BasketController.maxPerItem,
+      const SizedBox(height: IdSpace.s2),
+      // The pill stepper sits under the line total, at the row's right edge, as in the design.
+      Align(alignment: Alignment.centerRight, child: ItemStepper(name: line.name, quantity: line.quantity, showAddWhenEmpty: false, canAdd: line.quantity < BasketController.maxPerItem,
         onAdd: () => addToBasket(context, ref, line.id),
         onRemove: () {
           final basket = ref.read(basketProvider.notifier)..remove(line.id);
@@ -258,7 +267,7 @@ class _BasketRow extends ConsumerWidget {
             ScaffoldMessenger.of(context)..hideCurrentSnackBar()..showSnackBar(SnackBar(content: Text('Removed ${line.name}'), action: SnackBarAction(label: 'Undo', onPressed: () => basket.add(line.id))));
           }
         },
-      ),
+      )),
     ]));
   }
 }

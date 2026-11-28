@@ -19,19 +19,38 @@ class IdCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final c = context.colors;
-    final radius = BorderRadius.circular(IdRadius.lg);
+    final radius = BorderRadius.circular(24);
     return DecoratedBox(
-      decoration: BoxDecoration(color: c.surface, borderRadius: radius),
+      decoration: BoxDecoration(
+        color: c.surface,
+        borderRadius: radius,
+        boxShadow: [
+          BoxShadow(
+            color: c.royal.withValues(alpha: 0.07),
+            blurRadius: 16,
+            offset: const Offset(0, 6),
+          ),
+        ],
+      ),
       child: Material(
         type: MaterialType.transparency,
         child: InkWell(
           borderRadius: radius,
           onTap: onTap,
-          child: Padding(padding: padding, child: child),
+          child: Padding(padding: _inset(padding), child: child),
         ),
       ),
     );
   }
+}
+
+/// White cards need their content off the edges: a padding with no sides (the old flat sections) gets the card inset.
+EdgeInsetsGeometry _inset(EdgeInsetsGeometry padding) {
+  if (padding == EdgeInsets.zero) return padding;
+  final p = padding.resolve(TextDirection.ltr);
+  return p.left == 0 && p.right == 0
+      ? p.copyWith(left: IdSpace.s4, right: IdSpace.s4)
+      : padding;
 }
 
 /// A grouped list of [IdListRow]s with dividers, as on the Account screen.
@@ -45,7 +64,7 @@ class IdListGroup extends StatelessWidget {
     return IdCard(
       padding: EdgeInsets.zero,
       child: ClipRRect(
-        borderRadius: BorderRadius.circular(IdRadius.lg),
+        borderRadius: BorderRadius.circular(24),
         child: Column(
           children: [
             for (final (i, child) in children.indexed) ...[
@@ -89,7 +108,7 @@ class IdListRow extends StatelessWidget {
           constraints: const BoxConstraints(minHeight: 56),
           child: Padding(
             padding: const EdgeInsets.symmetric(
-              horizontal: 0,
+              horizontal: IdSpace.s4,
               vertical: IdSpace.s3,
             ),
             child: Builder(
@@ -114,12 +133,20 @@ class IdListRow extends StatelessWidget {
                     MediaQuery.textScalerOf(context).scale(1) > 1.3;
                 return Row(
                   children: [
-                    Icon(
-                      icon,
-                      size: IdSize.iconMd,
-                      color: destructive ? c.danger : c.textMuted,
+                    Container(
+                      width: 36,
+                      height: 36,
+                      decoration: BoxDecoration(
+                        color: destructive ? c.dangerSoft : c.primarySoft,
+                        borderRadius: BorderRadius.circular(12),
+                      ),
+                      child: Icon(
+                        icon,
+                        size: IdSize.iconMd - 2,
+                        color: destructive ? c.danger : c.primary,
+                      ),
                     ),
-                    const SizedBox(width: IdSpace.s4),
+                    const SizedBox(width: IdSpace.s3),
                     Expanded(
                       child: stacked
                           ? Column(

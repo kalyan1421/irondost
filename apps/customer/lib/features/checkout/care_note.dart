@@ -29,8 +29,9 @@ enum CareService { dryCleaning, washing, ironing }
 /// app has no prompts for.
 CareService? careServiceOf(String slug) {
   final s = slug.toLowerCase();
+  // Laundry before dry cleaning: "laundry" contains the letters "dry".
+  if (s.contains('laundry') || s.contains('wash')) return CareService.washing;
   if (s.contains('dry')) return CareService.dryCleaning;
-  if (s.contains('wash')) return CareService.washing;
   if (s.contains('iron')) return CareService.ironing;
   return null;
 }
@@ -43,7 +44,14 @@ const _prompts = {
     'Embroidery or beadwork',
     'Colour may run',
   ],
-  CareService.washing: ['Colours may run', 'Wash separately', 'Heavily soiled'],
+  CareService.washing: [
+    'Colours may run',
+    'Wash separately',
+    'Wash whites separately',
+    'No fabric softener',
+    'Gentle wash',
+    'Heavily soiled',
+  ],
   CareService.ironing: ['Starch', 'Fold, do not hang'],
 };
 

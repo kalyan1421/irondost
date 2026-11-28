@@ -148,7 +148,9 @@ ThemeData buildTheme(Brightness brightness, {FontResolver font = plainFont}) {
     labelSmall: text.caption,
   );
 
-  const buttonShape = RoundedRectangleBorder(
+  // Filled and outlined buttons are pills, as in the app designs; text buttons keep a soft rectangle for their ripple.
+  const buttonShape = StadiumBorder();
+  const linkShape = RoundedRectangleBorder(
     borderRadius: BorderRadius.all(Radius.circular(IdRadius.md)),
   );
   const buttonSize = Size(IdSize.touchTarget, IdSize.buttonHeight);
@@ -163,7 +165,8 @@ ThemeData buildTheme(Brightness brightness, {FontResolver font = plainFont}) {
     useMaterial3: true,
     brightness: brightness,
     colorScheme: scheme,
-    scaffoldBackgroundColor: c.surface,
+    // Light screens sit on a soft sky ground so white cards read as cards; dark keeps the plain surface.
+    scaffoldBackgroundColor: dark ? c.surface : const Color(0xFFF2F6FE),
     canvasColor: c.bg,
     textTheme: textTheme,
     extensions: [c, dark ? IdShadows.dark : IdShadows.light, text],
@@ -171,7 +174,7 @@ ThemeData buildTheme(Brightness brightness, {FontResolver font = plainFont}) {
     materialTapTargetSize: MaterialTapTargetSize.padded,
     splashFactory: InkRipple.splashFactory,
     appBarTheme: AppBarTheme(
-      backgroundColor: c.surface,
+      backgroundColor: dark ? c.surface : const Color(0xFFF2F6FE),
       foregroundColor: c.text,
       surfaceTintColor: Colors.transparent,
       elevation: 0,
@@ -209,7 +212,7 @@ ThemeData buildTheme(Brightness brightness, {FontResolver font = plainFont}) {
         minimumSize: const Size(IdSize.touchTarget, IdSize.touchTarget),
         // No side padding: a link's label lines up with the page's text edge. The 48 dp tap target comes from minimumSize.
         padding: EdgeInsets.zero,
-        shape: buttonShape,
+        shape: linkShape,
         textStyle: text.label,
       ),
     ),

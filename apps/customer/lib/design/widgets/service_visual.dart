@@ -19,7 +19,8 @@ class ServiceVisual extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final slug = category.slug.toLowerCase();
-    final asset = slug.contains('wash')
+    // Laundry first: "laundry" contains the letters "dry".
+    final asset = slug.contains('wash') || slug.contains('laundry')
         ? 'assets/services/wash-and-iron-3d.png'
         : slug.contains('dry')
         ? 'assets/services/dry-cleaning-3d.png'

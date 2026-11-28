@@ -7,6 +7,7 @@ import '../../core/order_text.dart';
 import '../../core/slots.dart';
 import '../../data/api/export.dart';
 import '../theme.dart';
+import 'service_art.dart';
 import 'surfaces.dart';
 
 /// An order in the list. Active orders show pickup and delivery windows and a Track (or Pay now)
@@ -101,6 +102,14 @@ class OrderCard extends StatelessWidget {
           children: [
             Row(
               children: [
+                ServiceArtTile(
+                  ServiceArt.match(
+                    order.items.firstOrNull?.name ?? '',
+                    fallback: ServiceArt.pickupBag,
+                  ),
+                  size: 44,
+                ),
+                const SizedBox(width: IdSpace.s3),
                 Expanded(
                   child: Text(order.status.customerLabel, style: t.titleLg),
                 ),
@@ -115,6 +124,10 @@ class OrderCard extends StatelessWidget {
             ),
             const SizedBox(height: IdSpace.s1),
             Text(summary, style: t.body.copyWith(color: c.textMuted)),
+            if (!_finished) ...[
+              const SizedBox(height: IdSpace.s3),
+              _ProgressSteps(order.status),
+            ],
             if (!_finished) ...[
               const SizedBox(height: IdSpace.s3),
               Container(
@@ -250,6 +263,45 @@ class _PaymentChip extends StatelessWidget {
   }
 }
 
+/// Four short bars under an active order: picked up, cleaning, on the way, delivered. Filled up to where the order is.
+class _ProgressSteps extends StatelessWidget {
+  const _ProgressSteps(this.status);
+
+  final OrderStatus status;
+
+  int get _done => switch (status) {
+    OrderStatus.pending || OrderStatus.pickupAssigned => 1,
+    OrderStatus.pickedUp || OrderStatus.processing => 2,
+    OrderStatus.readyForDelivery || OrderStatus.deliveryAssigned => 3,
+    OrderStatus.outForDelivery => 3,
+    OrderStatus.delivered => 4,
+    _ => 0,
+  };
+
+  @override
+  Widget build(BuildContext context) {
+    final c = context.colors;
+    return ExcludeSemantics(
+      child: Row(
+        children: [
+          for (var i = 0; i < 4; i++) ...[
+            if (i > 0) const SizedBox(width: 6),
+            Expanded(
+              child: Container(
+                height: 6,
+                decoration: BoxDecoration(
+                  color: i < _done ? c.primary : c.mist,
+                  borderRadius: BorderRadius.circular(3),
+                ),
+              ),
+            ),
+          ],
+        ],
+      ),
+    );
+  }
+}
+
 /// The design's two-way switch under a screen title: "Active (2)" / "Past".
 class SegmentedTabs extends StatelessWidget {
   const SegmentedTabs({
@@ -276,8 +328,15 @@ class SegmentedTabs extends StatelessWidget {
       child: Container(
         padding: const EdgeInsets.all(IdSpace.s1),
         decoration: BoxDecoration(
-          color: c.surfaceSoft,
-          borderRadius: BorderRadius.circular(IdRadius.md),
+          color: c.surface,
+          borderRadius: BorderRadius.circular(IdRadius.full),
+          boxShadow: [
+            BoxShadow(
+              color: c.royal.withValues(alpha: 0.08),
+              blurRadius: 16,
+              offset: const Offset(0, 6),
+            ),
+          ],
         ),
         child: Row(
           children: [
@@ -289,7 +348,7 @@ class SegmentedTabs extends StatelessWidget {
                   label: option,
                   excludeSemantics: true,
                   child: InkWell(
-                    borderRadius: BorderRadius.circular(IdRadius.sm),
+                    borderRadius: BorderRadius.circular(IdRadius.full),
                     onTap: () => onSelect(i),
                     child: Container(
                       constraints: const BoxConstraints(
@@ -297,16 +356,13 @@ class SegmentedTabs extends StatelessWidget {
                       ),
                       alignment: Alignment.center,
                       decoration: BoxDecoration(
-                        color: i == selected ? c.surface : Colors.transparent,
-                        border: i == selected
-                            ? Border.all(color: c.primary)
-                            : null,
-                        borderRadius: BorderRadius.circular(IdRadius.sm),
+                        color: i == selected ? c.primary : Colors.transparent,
+                        borderRadius: BorderRadius.circular(IdRadius.full),
                       ),
                       child: Text(
                         option,
                         style: t.label.copyWith(
-                          color: i == selected ? c.primary : c.textMuted,
+                          color: i == selected ? c.onPrimary : c.textMuted,
                         ),
                       ),
                     ),

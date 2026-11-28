@@ -85,7 +85,7 @@ class _CatalogueScreenState extends ConsumerState<CatalogueScreen> {
         quantityLabel: ref.watch(basketQuantityLabelProvider),
         count: count,
         totalPaise: estimate,
-        onReview: () => context.push(Routes.basket),
+        onReview: () => context.go(Routes.basket),
       ),
     );
   }
@@ -107,10 +107,7 @@ class _ServiceTabs extends StatelessWidget {
     final c = context.colors;
     final t = context.text;
     return DecoratedBox(
-      decoration: BoxDecoration(
-        color: c.surface,
-        border: Border(bottom: BorderSide(color: c.border)),
-      ),
+      decoration: const BoxDecoration(),
       child: SizedBox(
         height: 64,
         child: ListView.separated(
@@ -130,7 +127,7 @@ class _ServiceTabs extends StatelessWidget {
               label: category.name,
               excludeSemantics: true,
               child: InkWell(
-                borderRadius: BorderRadius.circular(IdRadius.sm),
+                borderRadius: BorderRadius.circular(IdRadius.full),
                 onTap: () => onSelect(category),
                 child: Center(
                   child: Container(
@@ -140,10 +137,10 @@ class _ServiceTabs extends StatelessWidget {
                     padding: const EdgeInsets.symmetric(horizontal: IdSpace.s3),
                     alignment: Alignment.center,
                     decoration: BoxDecoration(
-                      color: on ? c.primarySoft : c.surface,
-                      borderRadius: BorderRadius.circular(IdRadius.sm),
+                      color: on ? c.primary : c.surface,
+                      borderRadius: BorderRadius.circular(IdRadius.full),
                       border: Border.all(
-                        color: on ? c.primary : c.borderStrong,
+                        color: on ? c.primary : c.border,
                       ),
                     ),
                     child: Row(
@@ -158,7 +155,8 @@ class _ServiceTabs extends StatelessWidget {
                         Text(
                           category.name,
                           style: t.labelSm.copyWith(
-                            color: on ? c.primary : c.textMuted,
+                            color: on ? c.onPrimary : c.text,
+                            fontWeight: FontWeight.w700,
                           ),
                         ),
                       ],
@@ -194,7 +192,7 @@ class _Items extends StatelessWidget {
         ),
         const SizedBox(height: IdSpace.s4),
         IdCard(
-          padding: EdgeInsets.zero,
+          padding: const EdgeInsets.symmetric(horizontal: IdSpace.s4),
           child: Column(
             children: [
               for (final (i, item) in category.items.indexed) ...[

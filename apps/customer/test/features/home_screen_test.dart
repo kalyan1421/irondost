@@ -87,16 +87,12 @@ void main() {
     );
     await tester.pumpAndSettle();
 
-    expect(find.text('Services'), findsOneWidget);
+    expect(find.text('Everything for your clothes'), findsOneWidget);
     expect(find.text('Offers'), findsOneWidget);
     expect(
-      tester.getTopLeft(find.text('Services')).dy,
+      tester.getTopLeft(find.text('Everything for your clothes')).dy,
       lessThan(tester.getTopLeft(find.text('Offers')).dy),
       reason: 'what we sell comes first; the campaign follows',
-    );
-    expect(
-      tester.getTopLeft(find.text('Book a pickup')).dy,
-      lessThan(tester.getTopLeft(find.text('Services')).dy),
     );
   });
   group('Repeat last order', () {
@@ -205,10 +201,12 @@ void main() {
         ),
       );
       await tester.pumpAndSettle();
-      expect(find.text('Being ironed'), findsOneWidget);
+      expect(find.text('Being cleaned'), findsOneWidget);
       expect(find.text('View all 2 active orders'), findsOneWidget);
       expect(repo.listAsked, [(Scope.active, 1)]);
-      await tester.tap(find.text('Track order'));
+      await tester.ensureVisible(find.text('Track'));
+      await tester.pumpAndSettle();
+      await tester.tap(find.text('Track'));
       await tester.pumpAndSettle();
       expect(router.state.matchedLocation, Routes.order('first'));
       expect(find.text('TRACKING'), findsOneWidget);

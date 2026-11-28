@@ -112,7 +112,7 @@ class _SearchScreenState extends ConsumerState<SearchScreen> {
               children: [
                 if (hits.isNotEmpty)
                   IdCard(
-                    padding: EdgeInsets.zero,
+                    padding: const EdgeInsets.symmetric(horizontal: IdSpace.s4),
                     child: Column(
                       children: [
                         for (final (i, (category, item)) in hits.indexed) ...[
@@ -141,7 +141,7 @@ class _SearchScreenState extends ConsumerState<SearchScreen> {
         quantityLabel: ref.watch(basketQuantityLabelProvider),
         count: count,
         totalPaise: estimate,
-        onReview: () => context.push(Routes.basket),
+        onReview: () => context.go(Routes.basket),
       ),
     );
   }

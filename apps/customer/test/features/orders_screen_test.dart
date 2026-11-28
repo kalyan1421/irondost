@@ -82,7 +82,7 @@ void main() {
       );
 
       expect(find.text('ID001042'), findsOneWidget);
-      expect(find.text('Being ironed'), findsOneWidget);
+      expect(find.text('Being cleaned'), findsOneWidget);
       expect(find.text('Picked up'), findsOneWidget);
       expect(find.text('Thu 1 Oct'), findsOneWidget);
       expect(find.text('₹180 due'), findsOneWidget);

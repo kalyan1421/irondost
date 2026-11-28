@@ -24,6 +24,11 @@ void main() {
     FakeQuoteRepository? quotes,
     List<PromotionDto> promotions = const [],
   }) async {
+    // Tall enough that the whole basket is built; the screen scrolls on a real phone.
+    tester.view
+      ..physicalSize = const Size(390 * 2, 1600 * 2)
+      ..devicePixelRatio = 2;
+    addTearDown(tester.view.reset);
     final fake = quotes ?? FakeQuoteRepository();
     await tester.pumpWidget(themed(const BasketScreen(), overrides: await basketOverrides(saved: saved, quotes: fake, promotions: promotions)));
     await settle(tester);
@@ -113,9 +118,10 @@ void main() {
     await pump(tester, saved: {'basket.v1': tenShirtsAndASaree});
     final screen = tester.getSize(find.byType(Scaffold).first).width;
 
-    // Ten shirts at ₹15. The price must end where the content ends (20 dp gutter), whatever the name's length.
+    // Ten shirts at ₹15. The price must end where the card's content ends (20 dp gutter plus the card's 16 dp inset),
+    // whatever the name's length.
     final priceRight = tester.getTopRight(find.text('₹150')).dx;
-    expect(priceRight, closeTo(screen - 20, 1));
+    expect(priceRight, closeTo(screen - 36, 1));
     expect(tester.getTopLeft(find.text('₹150')).dx, greaterThan(screen / 2), reason: 'a short price must not start at the row midpoint');
   });
 

@@ -71,7 +71,8 @@ void main() {
     tester.view.devicePixelRatio = 3;
     addTearDown(tester.view.reset);
     final repo = Decisions()..fail = true;
-    await tester.pumpWidget(themed(Scaffold(body: PriceApprovalCard(order: testOrder(adjustments: [request]))), textScale: 2,
+    // On the order screen the card sits in a scrolling list; at 200% text it is taller than this small screen.
+    await tester.pumpWidget(themed(Scaffold(body: SingleChildScrollView(child: PriceApprovalCard(order: testOrder(adjustments: [request])))), textScale: 2,
       overrides: [adjustmentRepositoryProvider.overrideWithValue(repo)]));
     await tester.ensureVisible(find.text('Review price change'));
     await tester.tap(find.text('Review price change'));

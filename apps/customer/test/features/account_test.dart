@@ -87,7 +87,7 @@ void main() {
   /// The Account tab on a phone, with the pages it opens shown as their paths.
   Future<ProviderContainer> openAccount(WidgetTester tester, {_Session? as}) async {
     tester.view
-      ..physicalSize = const Size(390 * 3, 844 * 3)
+      ..physicalSize = const Size(390 * 3, 1000 * 3)
       ..devicePixelRatio = 3;
     addTearDown(tester.view.reset);
     auth = FakeAuth()..signedIn = true;
@@ -295,7 +295,7 @@ void main() {
   group('edit profile', () {
     Future<void> openEdit(WidgetTester tester, {_Session? as}) async {
       tester.view
-        ..physicalSize = const Size(390 * 3, 844 * 3)
+        ..physicalSize = const Size(390 * 3, 1000 * 3)
         ..devicePixelRatio = 3;
       addTearDown(tester.view.reset);
       session = as ?? _Session(email: 'priya@example.com');

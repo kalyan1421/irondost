@@ -86,7 +86,7 @@ void main() {
       expect(find.text('Booked'), findsWidgets);
       expect(find.text('Pickup today, 4\u00A0\u2060–\u2060\u00A08\u00A0PM'), findsOneWidget);
       expect(find.text('Finding a partner near you'), findsOneWidget);
-      expect(find.text('Ironing'), findsOneWidget);
+      expect(find.text('Cleaning'), findsOneWidget);
       expect(
         find.text(
           "You'll see your partner's name and number here once they accept.",
@@ -137,7 +137,7 @@ void main() {
         ).withPickupDriver(ravi),
       );
 
-      expect(find.text('Being ironed'), findsWidgets);
+      expect(find.text('Being cleaned'), findsWidgets);
       expect(find.text('Step 3 of 5'), findsOneWidget);
       expect(find.textContaining('Delivery estimate missed:'), findsOneWidget);
       expect(find.text('Ravi K.'), findsOneWidget);
@@ -456,7 +456,7 @@ void main() {
         pickupDate: today,
       ),
     );
-    expect(find.text('Being ironed'), findsWidgets);
+    expect(find.text('Being cleaned'), findsWidgets);
     expect(find.text('Step 3 of 5'), findsOneWidget);
   });
 

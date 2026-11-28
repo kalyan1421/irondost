@@ -79,12 +79,20 @@ void main() {
       },
     );
 
-    test('washing asks about colours, washing apart and heavy soil', () {
+    test('washing asks about colours, whites, softener, a gentle wash and heavy soil', () {
       expect(carePromptsFor({CareService.washing}), [
         'Colours may run',
         'Wash separately',
+        'Wash whites separately',
+        'No fabric softener',
+        'Gentle wash',
         'Heavily soiled',
       ]);
+    });
+
+    test('a laundry category asks the washing questions', () {
+      expect(careServiceOf('laundry'), CareService.washing);
+      expect(careServiceOf('laundry-wash-fold'), CareService.washing);
     });
 
     test('ironing asks about starch and folding', () {
@@ -109,6 +117,9 @@ void main() {
             'Embroidery or beadwork',
             'Colours may run',
             'Wash separately',
+            'Wash whites separately',
+            'No fabric softener',
+            'Gentle wash',
             'Heavily soiled',
             'Starch',
             'Fold, do not hang',

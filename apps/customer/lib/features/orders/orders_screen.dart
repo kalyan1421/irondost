@@ -8,6 +8,7 @@ import '../../data/api_client.dart';
 import '../../design/theme.dart';
 import '../../design/widgets/id_button.dart';
 import '../../design/widgets/order_card.dart';
+import '../../design/widgets/screen_backdrop.dart';
 import '../../design/widgets/state_view.dart';
 import '../../design/widgets/surfaces.dart';
 import 'order_detail_screen.dart' show bookAgain;
@@ -28,19 +29,17 @@ class _OrdersScreenState extends ConsumerState<OrdersScreen> {
   @override
   Widget build(BuildContext context) {
     final t = context.text;
-    final c = context.colors;
     final activeTotal = ref.watch(
       ordersListProvider(Scope.active).select((v) => v.value?.total ?? 0),
     );
 
-    return Scaffold(
+    return ScreenBackdrop(
+      child: Scaffold(
+      backgroundColor: Colors.transparent,
       body: Column(
         children: [
           DecoratedBox(
-            decoration: BoxDecoration(
-              color: c.surface,
-              border: Border(bottom: BorderSide(color: c.border)),
-            ),
+            decoration: const BoxDecoration(),
             child: SafeArea(
               bottom: false,
               child: Padding(
@@ -55,7 +54,7 @@ class _OrdersScreenState extends ConsumerState<OrdersScreen> {
                   children: [
                     Semantics(
                       header: true,
-                      child: Text('Orders', style: t.headline),
+                      child: Text('Orders', style: t.display.copyWith(fontSize: 32, height: 1.2)),
                     ),
                     const SizedBox(height: IdSpace.s3),
                     SegmentedTabs(
@@ -79,7 +78,7 @@ class _OrdersScreenState extends ConsumerState<OrdersScreen> {
           ),
         ],
       ),
-    );
+    ));
   }
 }
 

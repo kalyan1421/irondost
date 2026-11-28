@@ -12,7 +12,7 @@ void main() {
   test('a new order: booked is current, the rest wait, and say when they are due', () {
     final steps = buildTimeline(testOrder(pickupDate: testToday, deliveryDate: '2026-10-04'), today: testToday);
 
-    expect(steps.map((s) => s.title), ['Booked', 'Picked up', 'Ironing', 'Out for delivery', 'Delivered']);
+    expect(steps.map((s) => s.title), ['Booked', 'Picked up', 'Cleaning', 'Out for delivery', 'Delivered']);
     expect(states(steps), [ProgressState.current, ProgressState.future, ProgressState.future, ProgressState.future, ProgressState.future]);
     expect(steps[0].meta, 'Finding a partner near you');
     expect(steps[1].meta, 'Today, 4 – 8 PM');
@@ -37,7 +37,7 @@ void main() {
     );
     expect(states(steps), [ProgressState.done, ProgressState.done, ProgressState.current, ProgressState.future, ProgressState.future]);
     expect(steps[1].meta, 'Thu 1 Oct, 5:40 PM · 12 items counted');
-    expect(steps[2].meta, 'Being ironed');
+    expect(steps[2].meta, 'Being cleaned');
   });
 
   test('out for delivery: names who left and when, and when the ironing was ready', () {
@@ -51,7 +51,7 @@ void main() {
       today: testToday,
     );
     expect(states(steps), [ProgressState.done, ProgressState.done, ProgressState.done, ProgressState.current, ProgressState.future]);
-    expect(steps[2].meta, 'Ready Sat 3 Oct, 11:20 AM');
+    expect(steps[2].meta, 'Checked by hand Sat 3 Oct, 11:20 AM');
     expect(steps[3].meta, 'Ravi left at 4:10 PM');
   });
 

@@ -8,6 +8,7 @@ import '../../core/phone.dart';
 import '../../design/theme.dart';
 import '../../design/widgets/id_button.dart';
 import '../../design/widgets/id_sheet.dart';
+import '../../design/widgets/screen_backdrop.dart';
 import '../../design/widgets/surfaces.dart';
 import '../addresses/addresses_controller.dart';
 import '../auth/session.dart';
@@ -31,11 +32,17 @@ class AccountScreen extends ConsumerWidget {
     final version = ref.watch(startupProvider).value?.installedVersion;
     final unread = ref.watch(unreadCountProvider);
 
-    return Scaffold(
+    return ScreenBackdrop(
+      child: Scaffold(
+      backgroundColor: Colors.transparent,
       appBar: AppBar(
+        backgroundColor: Colors.transparent,
+        centerTitle: false,
+        toolbarHeight: 72,
+        titleSpacing: IdSpace.s5,
         title: Semantics(
           header: true,
-          child: Text('Account', style: t.headline),
+          child: Text('Profile', style: t.display.copyWith(fontSize: 32, height: 1.2)),
         ),
       ),
       body: ListView(
@@ -50,18 +57,22 @@ class AccountScreen extends ConsumerWidget {
               child: Row(
                 children: [
                   Container(
-                    width: 48,
-                    height: 48,
+                    width: 56,
+                    height: 56,
                     alignment: Alignment.center,
                     decoration: BoxDecoration(
-                      color: c.primarySoft,
+                      gradient: LinearGradient(
+                        begin: Alignment.topLeft,
+                        end: Alignment.bottomRight,
+                        colors: [c.royal, c.sky],
+                      ),
                       shape: BoxShape.circle,
                     ),
                     child: ExcludeSemantics(
                       child: Text(
                         profile.initials,
                         textScaler: TextScaler.noScaling,
-                        style: t.title.copyWith(color: c.onPrimarySoft),
+                        style: t.title.copyWith(color: Colors.white),
                       ),
                     ),
                   ),
@@ -77,13 +88,9 @@ class AccountScreen extends ConsumerWidget {
                             style: t.body.copyWith(color: c.textMuted),
                           )
                         else
-                          // Signed in with Google: no verified number yet, and bookings need one.
-                          Align(
-                            alignment: Alignment.centerLeft,
-                            child: IdButton.text(
-                              label: 'Add mobile number',
-                              onPressed: () => context.push<bool>(Routes.addPhone),
-                            ),
+                          Text(
+                            profile.email ?? 'No mobile number yet',
+                            style: t.body.copyWith(color: c.textMuted),
                           ),
                       ],
                     ),
@@ -96,6 +103,11 @@ class AccountScreen extends ConsumerWidget {
                 ],
               ),
             ),
+          if (profile != null && profile.phone == null) ...[
+            const SizedBox(height: IdSpace.s4),
+            // Signed in with Google: no verified number yet, and bookings need one.
+            _AddPhoneBanner(onTap: () => context.push<bool>(Routes.addPhone)),
+          ],
           const SizedBox(height: IdSpace.s4),
           IdListGroup(
             children: [
@@ -111,6 +123,7 @@ class AccountScreen extends ConsumerWidget {
                 value: unread > 0 ? '$unread new' : null,
                 onTap: () => context.push(Routes.notifications),
               ),
+              IdListRow(icon: LucideIcons.badgePercent, label: 'Offers and codes', onTap: () => context.push(Routes.offers)),
               IdListRow(icon: LucideIcons.messageSquare, label: 'Your reports', onTap: () => context.push(Routes.issues)),
               IdListRow(
                 icon: LucideIcons.circleQuestionMark,
@@ -156,7 +169,7 @@ class AccountScreen extends ConsumerWidget {
             ),
         ],
       ),
-    );
+    ));
   }
 
   Future<void> _confirmLogOut(BuildContext context, WidgetRef ref) async {
@@ -194,5 +207,61 @@ class AccountScreen extends ConsumerWidget {
       },
     );
     if (confirmed ?? false) await ref.read(sessionProvider.notifier).signOut();
+  }
+}
+
+/// The yellow prompt for a customer with no mobile number: the pickup partner needs one to call.
+class _AddPhoneBanner extends StatelessWidget {
+  const _AddPhoneBanner({required this.onTap});
+
+  final VoidCallback onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    final c = context.colors;
+    final t = context.text;
+    return Semantics(
+      button: true,
+      label: 'Add mobile number. So the pickup partner can call you.',
+      excludeSemantics: true,
+      child: Material(
+        color: c.offerSoft,
+        borderRadius: BorderRadius.circular(22),
+        child: InkWell(
+          borderRadius: BorderRadius.circular(22),
+          onTap: onTap,
+          child: Padding(
+            padding: const EdgeInsets.all(IdSpace.s4),
+            child: Row(
+              children: [
+                Container(
+                  width: 42,
+                  height: 42,
+                  decoration: BoxDecoration(
+                    color: c.surface,
+                    borderRadius: BorderRadius.circular(14),
+                  ),
+                  child: Icon(LucideIcons.phone, size: IdSize.iconMd, color: c.text),
+                ),
+                const SizedBox(width: IdSpace.s3),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text('Add mobile number', style: t.title),
+                      Text(
+                        'So the pickup partner can call you.',
+                        style: t.caption.copyWith(color: c.textMuted),
+                      ),
+                    ],
+                  ),
+                ),
+                Text('Add', style: t.label.copyWith(color: c.primary)),
+              ],
+            ),
+          ),
+        ),
+      ),
+    );
   }
 }

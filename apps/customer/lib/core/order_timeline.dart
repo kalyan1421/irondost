@@ -13,7 +13,7 @@ class TimelineStep {
   final String? meta;
 }
 
-/// The five customer-facing steps for an order that is still moving: Booked, Picked up, Ironing,
+/// The five customer-facing steps for an order that is still moving: Booked, Picked up, Cleaning,
 /// Out for delivery, Delivered. Cancelled orders have no timeline.
 List<TimelineStep> buildTimeline(OrderDto o, {String? today}) {
   final step = o.status.timelineStep;
@@ -44,13 +44,14 @@ List<TimelineStep> buildTimeline(OrderDto o, {String? today}) {
           ? [if (o.pickedUpAt != null) time(o.pickedUpAt!), '${piecesLabel(o)} counted'].join(' · ')
           : '${dayLong(o.pickupDate, today: now)}, ${windowFromLabel(o.pickupSlotLabel)}',
     ),
+    // Washing, ironing or dry cleaning. Leaving it (ready for delivery) is the owner's hand check of every piece.
     TimelineStep(
-      'Ironing',
+      'Cleaning',
       state(3),
       switch (o.status) {
-        OrderStatus.processing => 'Being ironed',
-        OrderStatus.readyForDelivery => 'Ready for delivery',
-        _ => step > 3 && readyAt != null ? 'Ready ${time(readyAt)}' : null,
+        OrderStatus.processing => 'Being cleaned',
+        OrderStatus.readyForDelivery => 'Checked by hand · ready for delivery',
+        _ => step > 3 && readyAt != null ? 'Checked by hand ${time(readyAt)}' : null,
       },
     ),
     TimelineStep(

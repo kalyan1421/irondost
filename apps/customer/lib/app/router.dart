@@ -89,16 +89,12 @@ final routerProvider = Provider<GoRouter>((ref) {
         builder: (_, state) => CatalogueScreen(service: state.uri.queryParameters['service']),
         routes: [GoRoute(path: 'search', builder: (_, _) => const SearchScreen())],
       ),
+      GoRoute(path: Routes.offers, builder: (_, _) => const OffersScreen()),
+      // Choosing a time and paying open over the tabs, full screen, from the Basket tab.
       GoRoute(
-        path: Routes.basket,
-        builder: (_, _) => const BasketScreen(),
-        routes: [
-          GoRoute(
-            path: 'schedule',
-            builder: (_, _) => const ScheduleScreen(),
-            routes: [GoRoute(path: 'checkout', builder: (_, _) => const CheckoutScreen())],
-          ),
-        ],
+        path: Routes.schedule,
+        builder: (_, _) => const ScheduleScreen(),
+        routes: [GoRoute(path: 'checkout', builder: (_, _) => const CheckoutScreen())],
       ),
       GoRoute(
         path: Routes.orderConfirmed,
@@ -145,7 +141,7 @@ final routerProvider = Provider<GoRouter>((ref) {
         branches: [
           StatefulShellBranch(routes: [GoRoute(path: Routes.home, builder: (_, _) => const HomeScreen())]),
           StatefulShellBranch(routes: [GoRoute(path: Routes.orders, builder: (_, _) => const OrdersScreen())]),
-          StatefulShellBranch(routes: [GoRoute(path: Routes.offers, builder: (_, _) => const OffersScreen())]),
+          StatefulShellBranch(routes: [GoRoute(path: Routes.basket, builder: (_, _) => const BasketScreen())]),
           StatefulShellBranch(
             routes: [
               GoRoute(

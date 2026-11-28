@@ -213,7 +213,12 @@ void main() {
         ..devicePixelRatio = 2;
       addTearDown(tester.view.reset);
       await openHome(tester, textScale: 2);
-      // ensureVisible, not scrollUntilVisible: that stops with one edge on screen, and a tap there misses.
+      // The card is further down Home now: scroll the list until it is built, then bring all of it on screen.
+      await tester.scrollUntilVisible(
+        find.text('How it works'),
+        300,
+        scrollable: find.byType(Scrollable).first,
+      );
       await tester.ensureVisible(find.text('How it works'));
       await tester.pumpAndSettle();
       await tester.tap(find.text('How it works'));
