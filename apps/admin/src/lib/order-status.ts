@@ -38,7 +38,7 @@ export const STATUS: Record<OrderStatus, StatusMeta> = {
   },
   PROCESSING: {
     label: "At workshop",
-    hint: "Being ironed",
+    hint: "Being cleaned",
     className: "bg-violet-100 text-violet-900 ring-violet-600/20 dark:bg-violet-400/10 dark:text-violet-300 dark:ring-violet-400/20",
   },
   READY_FOR_DELIVERY: {
@@ -72,7 +72,8 @@ export const STATUS: Record<OrderStatus, StatusMeta> = {
 export const ACTION_LABEL: Partial<Record<OrderStatus, string>> = {
   PICKED_UP: "Mark picked up",
   PROCESSING: "Received at workshop",
-  READY_FOR_DELIVERY: "Ready for delivery",
+  // The owner checks every piece by hand before this; the customer is told it was checked.
+  READY_FOR_DELIVERY: "Checked by hand · ready",
   OUT_FOR_DELIVERY: "Mark out for delivery",
   DELIVERED: "Mark delivered",
   PENDING: "Back to awaiting pickup",
