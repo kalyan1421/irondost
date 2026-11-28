@@ -4,7 +4,11 @@
     "public": "out",
     "cleanUrls": true,
     "trailingSlash": false,
-    "ignore": ["firebase.json", "**/.*", "**/node_modules/**"],
+    "ignore": ["firebase.json", "**/node_modules/**"],
+    "rewrites": [
+      { "source": "/r/**", "destination": "/r.html" },
+      { "source": "/o/**", "destination": "/o.html" }
+    ],
     "headers": [
       {
         "source": "**",
@@ -16,7 +20,14 @@
         ]
       },
       {
-        "source": "{/,/support,/privacy,/terms,/cancellation,/delete-account}",
+        "source": "/.well-known/{assetlinks.json,apple-app-site-association}",
+        "headers": [
+          { "key": "Content-Type", "value": "application/json" },
+          { "key": "Cache-Control", "value": "public, max-age=3600" }
+        ]
+      },
+      {
+        "source": "{/,/get,/offers,/support,/privacy,/terms,/cancellation,/delete-account}",
         "headers": [{ "key": "Cache-Control", "value": "public, max-age=300, s-maxage=600" }]
       },
       {

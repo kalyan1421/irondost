@@ -43,7 +43,7 @@ export type Post = {
 };
 
 const areas =
-  "LB Nagar, Dilsukhnagar, Chaitanyapuri, Saroornagar, Mansoorabad, Nagole, Bandlaguda, Vanasthalipuram, Karmanghat, Champapet, Santosh Nagar and Saidabad";
+  "LB Nagar, Dilsukhnagar, Chaitanyapuri, Saroornagar, Kothapet, HUDA Complex, Mansoorabad, Nagole, Bandlaguda, Vanasthalipuram, Karmanghat, Champapet, Santosh Nagar and Saidabad";
 
 export const posts: Post[] = [
   {
@@ -298,7 +298,7 @@ export const posts: Post[] = [
     related: ["how-doorstep-ironing-pickup-works", "ironing-for-pg-and-hostel-residents-dilsukhnagar"],
     title: "Areas we serve around LB Nagar, with PIN codes",
     description:
-      "IronDost picks up within 6 km of LB Nagar Circle, Hyderabad. See the 12 localities and 7 PIN codes we serve, and what to do if you live just outside.",
+      "IronDost picks up within 6 km of LB Nagar Circle, Hyderabad. See the 14 localities and 7 PIN codes we serve, and what to do if you live just outside.",
     published: "2026-11-19",
     updated: "2026-11-19",
     answer: `IronDost picks up and delivers within 6 km of LB Nagar Circle in Hyderabad, in seven PIN codes: 500074, 500060, 500035, 500068, 500070, 500079 and 500059. That covers ${areas}.`,
@@ -308,7 +308,7 @@ export const posts: Post[] = [
         bullets: [
           "500074: LB Nagar",
           "500060: Dilsukhnagar, Chaitanyapuri",
-          "500035: Saroornagar, HUDA Complex",
+          "500035: Saroornagar, Kothapet, HUDA Complex",
           "500068: Mansoorabad, Nagole, Bandlaguda",
           "500070: Vanasthalipuram",
           "500079: Karmanghat, Champapet",

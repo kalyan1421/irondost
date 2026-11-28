@@ -1,5 +1,6 @@
 import { Mail, Phone } from "lucide-react";
 import Link from "next/link";
+import { areaPages } from "@/lib/areas";
 import { legalPages } from "@/lib/legal";
 import { site } from "@/lib/site";
 import { BrandLogo } from "./brand-logo";
@@ -7,13 +8,26 @@ import { BrandLogo } from "./brand-logo";
 export function SiteFooter() {
   return (
     <footer className="on-dark bg-ink text-white">
-      <div className="mx-auto grid max-w-6xl gap-10 px-4 py-14 sm:px-6 md:grid-cols-[1.4fr_1fr_1fr]">
+      <div className="mx-auto grid max-w-6xl gap-10 px-4 py-14 sm:px-6 md:grid-cols-2 lg:grid-cols-[1.3fr_1.4fr_1fr_1fr]">
         <div>
           <BrandLogo reverse height={36} />
           <p className="mt-4 max-w-xs text-white/80">
             Laundry, ironing and dry cleaning, picked up from and delivered to your door in {site.area}.
           </p>
         </div>
+
+        <nav aria-label="Areas we serve">
+          <h2 className="font-display text-lg font-semibold">Areas we serve</h2>
+          <ul className="mt-4 grid grid-cols-2 gap-x-4 gap-y-2.5">
+            {areaPages.map((a) => (
+              <li key={a.slug}>
+                <Link href={`/laundry/${a.slug}`} className="text-white/80 hover:text-white">
+                  {a.name}
+                </Link>
+              </li>
+            ))}
+          </ul>
+        </nav>
 
         <nav aria-label="Policies and help">
           <h2 className="font-display text-lg font-semibold">Help and policies</h2>

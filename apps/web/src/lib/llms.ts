@@ -1,3 +1,4 @@
+import { areaPages, localities } from "@/lib/areas";
 import { posts } from "@/lib/posts";
 import { priceList, pricesUpdated } from "@/lib/prices";
 import { site } from "@/lib/site";
@@ -7,7 +8,7 @@ const facts = [
   `${site.name} is a doorstep laundry service run by ${site.company}. Laundry (wash and iron) is the main service; ironing and dry cleaning are also offered.`,
   "Laundry is washed in IronDost's own machines, and the owner checks every load by hand before it goes back. It is priced per piece, not by weight.",
   "Wash & Fold (washed and folded, no ironing) is new; its prices are not published yet.",
-  "Service area: within 6 km of LB Nagar Circle, Hyderabad, Telangana, India, in PIN codes 500074, 500060, 500035, 500068, 500070, 500079 and 500059 (LB Nagar, Dilsukhnagar, Chaitanyapuri, Saroornagar, Mansoorabad, Nagole, Bandlaguda, Vanasthalipuram, Karmanghat, Champapet, Santosh Nagar, Saidabad).",
+  `Service area: within 6 km of LB Nagar Circle, Hyderabad, Telangana, India, in PIN codes ${localities.map((l) => l.pin).join(", ")} (${localities.map((l) => `${l.pin}: ${l.names.join(", ")}`).join("; ")}).`,
   "Pickup windows, every day: 7 am to 11 am, 11 am to 4 pm, 4 pm to 8 pm (India time).",
   "Clothes usually come back the next day. Payment online (UPI, card, netbanking) or cash at delivery.",
   "Prices are per piece and shown in the app before the order is confirmed; the total changes only if the count at pickup differs.",
@@ -31,10 +32,15 @@ export function llmsTxt() {
     "",
     ...posts.map((p) => `- [${p.title}](${site.url}/blog/${p.slug}): ${p.description}`),
     "",
+    "## Areas",
+    "",
+    ...areaPages.map((a) => `- [Laundry and ironing pickup in ${a.name}](${site.url}/laundry/${a.slug}): PIN ${a.pin}, prices and pickup windows`),
+    "",
     "## Help and policies",
     "",
     `- [Laundry](${site.url}/laundry): wash and iron, Wash & Fold, how we wash, rate card, areas`,
     `- [Prices](${site.url}/prices): the full rate card`,
+    `- [Get the app](${site.url}/get): store links and the launch offer for new customers`,
     `- [Support](${site.url}/support): phone and email, what to have ready`,
     `- [Cancellation and refunds](${site.url}/cancellation)`,
     `- [Privacy policy](${site.url}/privacy)`,

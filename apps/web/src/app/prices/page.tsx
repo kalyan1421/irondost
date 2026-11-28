@@ -126,7 +126,7 @@ export default function PricesPage() {
           <p className="mt-3 text-lg leading-relaxed">
             Within 6 km of LB Nagar Circle, in PIN codes 500074, 500060, 500035, 500068, 500070, 500079 and 500059.{" "}
             <Link href="/blog/areas-we-serve-around-lb-nagar" className="font-semibold text-royal underline-offset-4 hover:underline">
-              See all 12 localities
+              See all 14 localities
             </Link>
           </p>
         </div>
