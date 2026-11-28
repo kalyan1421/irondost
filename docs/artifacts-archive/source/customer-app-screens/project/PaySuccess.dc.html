@@ -1,0 +1,47 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Payment · received</title>
+<script src="./support.js"></script>
+<link rel="stylesheet" href="ds/irondost/tokens.css">
+<link rel="stylesheet" href="ds/irondost/components/bundle.css">
+<link rel="stylesheet" href="app.css">
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Outfit:wght@600;700&amp;family=Figtree:wght@400;500;600;700&amp;family=Geist+Mono:wght@500&amp;display=swap">
+<style>body{margin:0}</style>
+</helmet>
+<div class="scr" data-theme="{{theme}}" style="background: var(--surface)">
+  <div class="safe-top"></div>
+  <main class="main" style="justify-content: center; align-items: center; gap: 16px; padding: 24px; text-align: center" role="status">
+    <span style="position: relative; width: 120px; height: 120px; display: grid; place-items: center; border-radius: 50%; background: var(--success-soft); color: var(--success)">
+      <svg viewBox="0 0 24 24" width="52" height="52" aria-hidden="true" style="fill: none; stroke: currentColor; stroke-width: 1.75; stroke-linecap: round; stroke-linejoin: round"><circle cx="12" cy="12" r="10"></circle><path d="m9 12 2 2 4-4"></path></svg>
+      <span class="id-bubble" style="width: 24px; height: 24px; right: -4px; top: 6px"></span>
+      <span class="id-bubble" style="width: 12px; height: 12px; right: 24px; top: -8px"></span>
+    </span>
+    <h1 class="headline" style="margin-top: 8px">₹180 paid</h1>
+    <p class="body-lg muted" style="max-width: 300px">Thanks! Order ID001042 is fully paid. Nothing to pay at the door.</p>
+    <div class="id-card" style="display: grid; gap: 8px; width: 100%; margin-top: 8px; text-align: left">
+      <div class="id-bill__row"><span class="muted">Paid with</span><span>UPI</span></div>
+      <div class="id-bill__row"><span class="muted">Payment ID</span><span class="order-id">pay_PZ3k9xT1</span></div>
+      <div class="id-bill__row"><span class="muted">When</span><span>Sat 3 Oct, 4:22 PM</span></div>
+    </div>
+  </main>
+  <div style="flex: none; padding: 12px 16px 0">
+    <a class="id-btn id-btn--primary id-btn--block" href="Track.dc.html">Back to order</a>
+  </div>
+  <div class="safe-bottom"></div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"theme":{"editor":"enum","options":["light","dark"],"default":"light"},"$preview":{"width":390,"height":844}}'>
+class Component extends DCLogic {
+  renderVals() {
+    return { theme: this.props.theme ?? 'light' };
+  }
+}
+</script>
+</body>
+</html>

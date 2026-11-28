@@ -1,0 +1,117 @@
+{
+  "v": 3,
+  "attachments": {},
+  "boards": {
+    "A-Basket.dc.html": {
+      "h": 844,
+      "title": "A2 Basket",
+      "w": 390,
+      "x": 470,
+      "y": 0
+    },
+    "A-Home2.dc.html": {
+      "h": 844,
+      "title": "A1b Home, scrolled",
+      "w": 390,
+      "x": 0,
+      "y": 964
+    },
+    "A-Tracking.dc.html": {
+      "h": 844,
+      "title": "A3 Tracking",
+      "w": 390,
+      "x": 940,
+      "y": 0
+    },
+    "C-Basket.dc.html": {
+      "h": 844,
+      "title": "C3 Basket",
+      "w": 390,
+      "x": 940,
+      "y": 2092
+    },
+    "C-Home.dc.html": {
+      "h": 1549,
+      "title": "C1 Home (full scroll)",
+      "w": 390,
+      "x": 0,
+      "y": 2092
+    },
+    "C-Home2.dc.html": {
+      "h": 844,
+      "title": "C1 Home v2: service tiles",
+      "w": 390,
+      "x": 1880,
+      "y": 2092
+    },
+    "C-Orders.dc.html": {
+      "h": 844,
+      "title": "C2 Orders",
+      "w": 390,
+      "x": 470,
+      "y": 2092
+    },
+    "C-Profile.dc.html": {
+      "h": 844,
+      "title": "C4 Profile",
+      "w": 390,
+      "x": 1410,
+      "y": 2092
+    },
+    "Main.dc.html": {
+      "h": 844,
+      "title": "A1 Home",
+      "w": 390,
+      "x": 0,
+      "y": 0
+    },
+    "Piece-yfo8.dc.html": {
+      "frameless": true,
+      "h": 126,
+      "title": "Box",
+      "w": 628,
+      "x": -780,
+      "y": 2917
+    }
+  },
+  "createdOnFiles": {
+    "at": "2026-11-19T13:30:00Z",
+    "v": 1
+  },
+  "designSystems": [],
+  "launch": {
+    "view": "canvas"
+  },
+  "notes": {
+    "titleA": {
+      "kind": "title1",
+      "maxW": 1330,
+      "text": "Draft A: Light and airy",
+      "w": 240,
+      "x": 0,
+      "y": -223
+    },
+    "titleC": {
+      "kind": "title1",
+      "maxW": 1800,
+      "text": "Four-tab app: Home, Orders, Basket, Profile",
+      "w": 240,
+      "x": 0,
+      "y": 1869
+    }
+  },
+  "order": [
+    "Main.dc.html",
+    "A-Home2.dc.html",
+    "A-Basket.dc.html",
+    "A-Tracking.dc.html",
+    "C-Home.dc.html",
+    "C-Home2.dc.html",
+    "C-Orders.dc.html",
+    "C-Basket.dc.html",
+    "C-Profile.dc.html",
+    "Piece-yfo8.dc.html"
+  ],
+  "pages": [],
+  "title": "IronDost Customer App Drafts"
+}

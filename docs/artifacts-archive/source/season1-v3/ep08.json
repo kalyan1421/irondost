@@ -1,0 +1,93 @@
+{
+ "n": 8, "name": "Express", "en": "Express",
+ "hook_formula": "Countdown + high stakes",
+ "hook_text": "06:00:00",
+ "cliff": "Time saripotunda…?",
+ "caption": "Ep 8/10 · 6 gantallo Express ⚡ double price, kaani tension zero. Call/WhatsApp 79934 34932 #DostUndiGa #IronDost #ExpressLaundry #HyderabadReels #TeluguComedy",
+ "clips": [
+  {
+   "id": "E8-C1", "title": "The slam", "set": "FLAT",
+   "cast": ["BUNTY", "RAVI"], "props": ["lucky_shirt", "saree"], "hook": true,
+   "beats": [
+    ["0–1.5 s", "Frame 1: BUNTY, in his maroon printed shirt, slams his palm on the small dining table. The steel tumbler and the crushed maroon Kanchipuram saree on the table jump. BUNTY leans toward the lens, eyes fierce, phone in his other hand."],
+    ["1.5–4 s", "RAVI, in a grey vest and checked lungi, stands behind the table gripping his head with both hands, panicking."],
+    ["4–7 s", "RAVI lifts the lucky shirt (plain navy checked shirt) off the chair back and holds it up: a big brown biryani stain across the chest. With his other hand he lifts a corner of the crushed saree, its gold zari border creased. His face crumples."],
+    ["7–10 s", "BUNTY raises one finger like a professor and smirks, confident for the first time, then lifts the phone to his ear with its back to the camera."]
+   ],
+   "camera": "Low angle on BUNTY's slamming palm, then one continuous slow push up past BUNTY's shoulder to a medium shot of RAVI with the stained shirt and the saree, ending on a two-shot.",
+   "lines": [
+    {"spk": "BUNTY", "mode": "ON", "at": "0.2–1.8 s", "native": "एक्सप्रेस! छह घंटे में!", "roman": "Express! Chhe ghante mein!", "en": "Express! In six hours!"},
+    {"spk": "RAVI", "mode": "ON", "at": "2–4.5 s", "native": "ఐరనింగ్‌కి రెండు రోజులు, లాండ్రీకి మూడు కదా?", "roman": "Ironing ki rendu rojulu, laundry ki moodu kada?", "en": "Isn't ironing two days, laundry three?"},
+    {"spk": "BUNTY", "mode": "ON", "at": "7–9.5 s", "native": "नॉर्मल में, हौ. लेकिन एक्सप्रेस है!", "roman": "Normal mein, hau. Lekin Express hai!", "en": "Normally, yes. But there's Express!"}
+   ],
+   "sound": "Table slam and tumbler rattle at 0.0 s, a fast clock tick starts at 0.3 s and runs under the clip, fabric rustle at 4 s, RAVI's groan at 6 s. No music.",
+   "first": "BUNTY's palm already hitting the table, the tumbler and the crushed saree mid-jump.",
+   "last": "BUNTY with the phone at his ear and one finger raised, RAVI holding the stained shirt behind him.",
+   "edit_text": "0.2 s: big red countdown '06:00:00' starts ticking (top third, stays through the episode). 7.5 s: 'Express = 6 hours'",
+   "neg_extra": ["a face on any clothing", "creatures or monsters", "the stain looking like blood instead of brown biryani masala", "a visible phone screen", "a drawn clock or countdown numbers in the scene"]
+  },
+  {
+   "id": "E8-C2", "title": "Dost answers", "set": "UNIT",
+   "cast": ["DOST"], "props": ["bag"],
+   "beats": [
+    ["0–2 s", "Inside the IronDost unit: DOST in his royal-blue polo stands at a steam press, smoothing a white shirt, his phone tucked between ear and shoulder with its back to the camera. BUNTY's frantic voice comes through the phone; DOST's eyebrows lift a little."],
+    ["2–4 s", "DOST calmly sets down the press handle. A soft puff of steam rises behind him. He takes the phone in his hand and gives a small, unhurried smile."],
+    ["4–6.5 s", "DOST answers, steady and gentle, nodding once as he speaks."],
+    ["6.5–8.5 s", "DOST gives the pickup time while his free hand lifts a folded plain royal-blue garment bag from a shelf."],
+    ["8.5–10 s", "DOST lowers the phone, slings his black bag over his shoulder and turns toward the door. Steam drifts across the frame."]
+   ],
+   "camera": "Medium shot that slowly arcs from the steam press side around to DOST's face, then follows him a step as he turns to leave. One continuous move.",
+   "lines": [
+    {"spk": "BUNTY", "mode": "OFF", "at": "0.3–2.8 s", "native": "हैलो, आयरनदोस्त? एक्सप्रेस चाहिए, इमरजेंसी है!", "roman": "Hello, IronDost? Express chahiye, emergency hai!", "en": "Hello, IronDost? Need Express, it's an emergency!"},
+    {"spk": "DOST", "mode": "ON", "at": "4–6.5 s", "native": "ఎక్స్‌ప్రెస్ ఆరు గంటల్లో సార్, డబుల్ ప్రైస్.", "roman": "Express aaru gantallo sir, double price.", "en": "Express is six hours, sir, at double the price."},
+    {"spk": "DOST", "mode": "ON", "at": "7–8.8 s", "native": "పన్నెండున్నరకి పికప్.", "roman": "Pannendunnaraki pickup.", "en": "Pickup at 12:30."}
+   ],
+   "sound": "Steam hiss at 0.0 s, BUNTY's voice tinny through the phone, the press handle clunk at 2 s, a soft steam puff at 2.5 s, bag zip rustle at 7 s, footsteps at 9 s. No music.",
+   "first": "DOST at the steam press with the phone on his shoulder, steam already rising.",
+   "last": "DOST turning toward the unit door with the black sling bag and a folded royal-blue garment bag, steam drifting.",
+   "edit_text": "0.5 s: dialled number '79934 34932' pops beside the phone. 4.5 s: 'Express = 6 gantalu · 2× price'. 7.2 s: 'Pickup 12:30'",
+   "neg_extra": ["BUNTY appearing on screen", "a visible phone screen or call screen", "a logo or text on DOST's polo or the garment bag", "the steam press turning into a household iron", "DOST looking stressed or hurried", "a face on any clothing"]
+  },
+  {
+   "id": "E8-C3", "title": "Bunty pays", "set": "FLAT",
+   "cast": ["BUNTY", "RAVI"], "props": ["lucky_shirt"],
+   "beats": [
+    ["0–2 s", "Two-shot at the dining table: BUNTY holds his phone facing away from the camera; a royal-blue glow lights his face. RAVI reaches over to push the phone down and pay himself. The stained lucky shirt hangs on the chair behind them."],
+    ["2–4.5 s", "BUNTY gently pushes RAVI's hand away and speaks, serious for once, looking RAVI in the eye."],
+    ["4.5–6.5 s", "BUNTY taps the phone firmly. The royal-blue glow brightens on both their faces. RAVI stares at him, touched."],
+    ["6.5–8.5 s", "RAVI pulls BUNTY into a tight hug and says his line into BUNTY's shoulder."],
+    ["8.5–10 s", "BUNTY, surprised, laughs and pats RAVI's back; both laugh."]
+   ],
+   "camera": "Medium two-shot with the stained shirt on the chair in the background, a slow push-in that ends on the hug. One continuous move.",
+   "lines": [
+    {"spk": "BUNTY", "mode": "ON", "at": "2.3–4.3 s", "native": "बिल मेरा. ग़लती मेरी थी.", "roman": "Bill mera. Galti meri thi.", "en": "The bill's on me. It was my fault."},
+    {"spk": "RAVI", "mode": "ON", "at": "6.8–8.3 s", "native": "నువ్వు పిచ్చోడివి రా.", "roman": "Nuvvu picchodivi ra.", "en": "You're crazy, man."}
+   ],
+   "sound": "A soft tap at 4.5 s, a light confirmation chime at 4.8 s, a back-slap at 8.8 s, both laughing at 9 s. No music.",
+   "first": "BUNTY's face lit royal blue from the phone, RAVI's hand already reaching toward it.",
+   "last": "RAVI and BUNTY hugging and laughing, the stained shirt on the chair behind them.",
+   "edit_text": "From 4.5 s, edit bill graphic pops in item by item beside the phone: 'Kanchi pattu saree · Pancha · Lucky shirt · Kurta-pyjama' → 'Express = 2× price' → '₹500+ → 10% OFF · DOST10'",
+   "neg_extra": ["a readable phone screen, bill or UPI app", "any light colour other than royal blue from the phone", "cash or a wallet appearing", "a face on any clothing", "creatures or monsters"]
+  },
+  {
+   "id": "E8-C4", "title": "Express pickup", "set": "FLAT",
+   "cast": ["DOST", "RAVI"], "props": ["saree", "lucky_shirt", "bag"],
+   "beats": [
+    ["0–2 s", "At the open flat door, DOST kneels over an open royal-blue garment bag, gently folding white tissue paper over the maroon Kanchipuram saree. RAVI stands beside him holding the stained lucky shirt on a hanger, anxious."],
+    ["2–4.5 s", "DOST smooths the gold zari border flat with his palm and speaks calmly, looking up at RAVI."],
+    ["4.5–7.5 s", "DOST stands, takes the stained shirt from RAVI with both hands, and speaks again with a reassuring nod. RAVI nods back, still tense."],
+    ["7.5–10 s", "DOST lays the shirt into a second royal-blue bag and draws the zip closed. The camera rises past RAVI's shoulder to a round wall clock with plain tick marks and no numbers; the second hand ticks once and freezes."]
+   ],
+   "camera": "Starts on DOST's hands and the tissue, rises to a two-shot of DOST and RAVI, then continues up past RAVI's shoulder to the wall clock. One continuous move.",
+   "lines": [
+    {"spk": "DOST", "mode": "ON", "at": "2–4.5 s", "native": "చీరకి స్టీమ్ ప్రెస్, స్టెయిన్‌కి స్పెషల్ వాష్.", "roman": "Cheeraki steam press, stain ki special wash.", "en": "Steam press for the saree, special wash for the stain."},
+    {"spk": "DOST", "mode": "ON", "at": "5–7.5 s", "native": "ఆరున్నర లోపు ఫంక్షన్ హాల్‌లో ఉంటాయి సార్.", "roman": "Aarunnara lopu function hall lo untayi sir.", "en": "They'll be at the function hall before 6:30, sir."}
+   ],
+   "sound": "Tissue paper crinkle at 0.0 s, soft cloth swish at 4.5 s, long zip at 7.5 s, one loud clock tick at 9.2 s. No music.",
+   "first": "DOST's hands folding white tissue over the maroon saree in the royal-blue bag.",
+   "last": "Close on the round wall clock with plain tick marks, the second hand frozen.",
+   "edit_text": "0.3 s: '12:30 · Express pickup'. 2.2 s: 'Steam press + special wash'. Cliffhanger at 9 s: countdown flips to '05:59:59' then 'Time saripotunda…?' and the end card",
+   "neg_extra": ["any print, logo or text on the garment bags", "numbers or text on the wall clock", "the saree changing colour from maroon or losing its gold border", "DOST handling the clothes roughly", "a face on any clothing", "creatures or monsters"]
+  }
+ ]
+}

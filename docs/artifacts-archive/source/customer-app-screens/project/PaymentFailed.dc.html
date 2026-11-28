@@ -1,0 +1,45 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Payment · failed</title>
+<script src="./support.js"></script>
+<link rel="stylesheet" href="ds/irondost/tokens.css">
+<link rel="stylesheet" href="ds/irondost/components/bundle.css">
+<link rel="stylesheet" href="app.css">
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Outfit:wght@600;700&amp;family=Figtree:wght@400;500;600;700&amp;family=Geist+Mono:wght@500&amp;display=swap">
+<style>body{margin:0}</style>
+</helmet>
+<div class="scr" data-theme="{{theme}}" style="background: var(--surface)">
+  <div class="safe-top"></div>
+  <main class="main" style="justify-content: center; align-items: center; gap: 16px; padding: 24px; text-align: center" role="alert">
+    <span style="width: 120px; height: 120px; display: grid; place-items: center; border-radius: 50%; background: var(--danger-soft); color: var(--danger)">
+      <svg viewBox="0 0 24 24" width="52" height="52" aria-hidden="true" style="fill: none; stroke: currentColor; stroke-width: 1.75; stroke-linecap: round; stroke-linejoin: round"><circle cx="12" cy="12" r="10"></circle><path d="m15 9-6 6"></path><path d="m9 9 6 6"></path></svg>
+    </span>
+    <h1 class="headline" style="margin-top: 8px">Payment didn't go through</h1>
+    <p class="body-lg muted" style="max-width: 310px">Your bank declined it. If any money left your account, your bank returns it automatically.</p>
+    <div class="notice notice--success" style="width: 100%; text-align: left">
+      <svg class="id-icon" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="10"></circle><path d="m9 12 2 2 4-4"></path></svg>
+      <span>Your pickup is still booked for today, 4 – 8 PM. Order <span class="order-id">ID001046</span>.</span>
+    </div>
+  </main>
+  <div style="flex: none; display: grid; gap: 8px; padding: 12px 16px 0">
+    <a class="id-btn id-btn--primary id-btn--block" href="PaymentProcessing.dc.html">Try again · ₹248</a>
+    <a class="id-btn id-btn--outline id-btn--block" href="Confirmed.dc.html">Pay cash at delivery instead</a>
+  </div>
+  <div class="safe-bottom"></div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"theme":{"editor":"enum","options":["light","dark"],"default":"light"},"$preview":{"width":390,"height":844}}'>
+class Component extends DCLogic {
+  renderVals() {
+    return { theme: this.props.theme ?? 'light' };
+  }
+}
+</script>
+</body>
+</html>

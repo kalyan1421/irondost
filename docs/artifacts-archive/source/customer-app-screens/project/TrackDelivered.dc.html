@@ -1,0 +1,53 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Tracking · delivered</title>
+<script src="./support.js"></script>
+<link rel="stylesheet" href="ds/irondost/tokens.css">
+<link rel="stylesheet" href="ds/irondost/components/bundle.css">
+<link rel="stylesheet" href="app.css">
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Outfit:wght@600;700&amp;family=Figtree:wght@400;500;600;700&amp;family=Geist+Mono:wght@500&amp;display=swap">
+<style>body{margin:0}</style>
+</helmet>
+<div class="scr" data-theme="{{theme}}">
+  <div class="safe-top" style="background: var(--surface)"></div>
+  <header class="id-appbar" style="flex: none; box-shadow: inset 0 -1px 0 var(--border)">
+    <a class="id-iconbtn" href="OrdersPast.dc.html" aria-label="Back"><svg class="id-icon lg" viewBox="0 0 24 24" aria-hidden="true"><path d="m12 19-7-7 7-7"></path><path d="M19 12H5"></path></svg></a>
+    <h1 class="id-appbar__title">Order <span style="font-family: var(--font-mono); font-weight: 500">ID001042</span></h1>
+  </header>
+  <main class="main" style="padding-top: 16px; gap: 16px">
+    <section style="position: relative; overflow: hidden; display: flex; align-items: center; gap: 14px; padding: 20px; border-radius: var(--radius-xl); background: var(--success-soft)" aria-label="Status">
+      <span style="flex: none; width: 52px; height: 52px; display: grid; place-items: center; border-radius: 50%; background: var(--surface); color: var(--success)"><svg class="id-icon lg" viewBox="0 0 24 24" aria-hidden="true"><path d="M20 6 9 17l-5-5"></path></svg></span>
+      <span style="display: grid; gap: 2px"><h2 class="headline">Delivered</h2><span class="body">Sat 3 Oct, 5:32 PM · by Ravi K.</span></span>
+      <span class="id-bubble" style="width: 48px; height: 48px; right: -10px; top: -14px"></span>
+    </section>
+    <section class="id-card" style="display: grid; gap: 10px" aria-label="Summary">
+      <div class="id-bill__row"><span class="muted">Picked up</span><span>Thu 1 Oct, 5:40 PM</span></div>
+      <div class="id-bill__row"><span class="muted">Items</span><span>12, ironed</span></div>
+      <div class="id-bill__row"><span class="muted">Paid</span><span class="id-chip id-chip--success" style="height: 26px"><svg class="id-icon sm" viewBox="0 0 24 24" aria-hidden="true"><path d="M20 6 9 17l-5-5"></path></svg>₹180 in cash</span></div>
+    </section>
+    <nav class="id-list" aria-label="Order actions">
+      <a class="id-listrow" href="Bill.dc.html"><svg class="id-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M15 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7Z"></path><path d="M14 2v4a2 2 0 0 0 2 2h4"></path><path d="M10 9H8"></path><path d="M16 13H8"></path><path d="M16 17H8"></path></svg><span class="id-listrow__label">Items and bill</span><svg class="id-icon sm" viewBox="0 0 24 24" aria-hidden="true"><path d="m9 18 6-6-6-6"></path></svg></a>
+      <a class="id-listrow" href="Help.dc.html"><svg class="id-icon" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="10"></circle><path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3"></path><path d="M12 17h.01"></path></svg><span class="id-listrow__label">Something wrong with an item?</span><svg class="id-icon sm" viewBox="0 0 24 24" aria-hidden="true"><path d="m9 18 6-6-6-6"></path></svg></a>
+    </nav>
+  </main>
+  <div class="footer">
+    <a class="id-btn id-btn--primary id-btn--block" href="Cart.dc.html">Book the same again</a>
+    <div class="safe-bottom" style="height: 26px"></div>
+  </div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"theme":{"editor":"enum","options":["light","dark"],"default":"light"},"$preview":{"width":390,"height":844}}'>
+class Component extends DCLogic {
+  renderVals() {
+    return { theme: this.props.theme ?? 'light' };
+  }
+}
+</script>
+</body>
+</html>

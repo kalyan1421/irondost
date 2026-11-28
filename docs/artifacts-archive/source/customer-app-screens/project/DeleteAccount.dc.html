@@ -1,0 +1,46 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Delete account</title>
+<script src="./support.js"></script>
+<link rel="stylesheet" href="ds/irondost/tokens.css">
+<link rel="stylesheet" href="ds/irondost/components/bundle.css">
+<link rel="stylesheet" href="app.css">
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Outfit:wght@600;700&amp;family=Figtree:wght@400;500;600;700&amp;family=Geist+Mono:wght@500&amp;display=swap">
+<style>body{margin:0}</style>
+</helmet>
+<div class="scr" data-theme="{{theme}}">
+  <div class="under" aria-hidden="true">
+    <dc-import name="Account" theme="{{theme}}" hint-size="390px,844px"></dc-import>
+  </div>
+  <a class="scrim" href="Account.dc.html" aria-label="Close"></a>
+  <section class="sheet" role="alertdialog" aria-modal="true" aria-labelledby="del-title" aria-describedby="del-body">
+    <span class="grabber"></span>
+    <span style="width: 56px; height: 56px; display: grid; place-items: center; border-radius: 50%; background: var(--danger-soft); color: var(--danger)"><svg class="id-icon lg" viewBox="0 0 24 24" aria-hidden="true"><path d="M3 6h18"></path><path d="M19 6v14c0 1-1 2-2 2H7c-1 0-2-1-2-2V6"></path><path d="M8 6V4c0-1 1-2 2-2h4c1 0 2 1 2 2v2"></path></svg></span>
+    <div style="display: grid; gap: 8px">
+      <h1 id="del-title" class="headline">Delete your account?</h1>
+      <p id="del-body" class="body-lg muted">This removes your name, phone number and addresses. Past orders stay in our records without your details.</p>
+      <p class="body muted">You'll be signed out on every device. This can't be undone.</p>
+    </div>
+    <div style="display: grid; gap: 8px">
+      <a class="id-btn id-btn--danger id-btn--block" href="Welcome.dc.html">Delete account</a>
+      <a class="id-btn id-btn--outline id-btn--block" href="Account.dc.html">Keep my account</a>
+    </div>
+    <div class="safe-bottom" style="margin-top: -16px"></div>
+  </section>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"theme":{"editor":"enum","options":["light","dark"],"default":"light"},"$preview":{"width":390,"height":844}}'>
+class Component extends DCLogic {
+  renderVals() {
+    return { theme: this.props.theme ?? 'light' };
+  }
+}
+</script>
+</body>
+</html>

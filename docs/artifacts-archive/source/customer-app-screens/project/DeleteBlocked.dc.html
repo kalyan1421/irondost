@@ -1,0 +1,45 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Delete account · orders in progress</title>
+<script src="./support.js"></script>
+<link rel="stylesheet" href="ds/irondost/tokens.css">
+<link rel="stylesheet" href="ds/irondost/components/bundle.css">
+<link rel="stylesheet" href="app.css">
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Outfit:wght@600;700&amp;family=Figtree:wght@400;500;600;700&amp;family=Geist+Mono:wght@500&amp;display=swap">
+<style>body{margin:0}</style>
+</helmet>
+<div class="scr" data-theme="{{theme}}">
+  <div class="under" aria-hidden="true">
+    <dc-import name="Account" theme="{{theme}}" hint-size="390px,844px"></dc-import>
+  </div>
+  <a class="scrim" href="Account.dc.html" aria-label="Close"></a>
+  <section class="sheet" role="alertdialog" aria-modal="true" aria-labelledby="blocked-title" aria-describedby="blocked-body">
+    <span class="grabber"></span>
+    <span style="width: 56px; height: 56px; display: grid; place-items: center; border-radius: 50%; background: var(--warning-soft); color: var(--warning)"><svg class="id-icon lg" viewBox="0 0 24 24" aria-hidden="true"><path d="M11 21.73a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73z"></path><path d="M12 22V12"></path><path d="m3.3 7 7.703 4.734a2 2 0 0 0 1.994 0L20.7 7"></path><path d="m7.5 4.27 9 5.15"></path></svg></span>
+    <div style="display: grid; gap: 8px">
+      <h1 id="blocked-title" class="headline">Finish your orders first</h1>
+      <p id="blocked-body" class="body-lg muted">You have 2 orders in progress. You can delete your account once they're delivered or cancelled.</p>
+    </div>
+    <div style="display: grid; gap: 8px">
+      <a class="id-btn id-btn--primary id-btn--block" href="Orders.dc.html">View orders</a>
+      <a class="id-btn id-btn--outline id-btn--block" href="Account.dc.html">Close</a>
+    </div>
+    <div class="safe-bottom" style="margin-top: -16px"></div>
+  </section>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"theme":{"editor":"enum","options":["light","dark"],"default":"light"},"$preview":{"width":390,"height":844}}'>
+class Component extends DCLogic {
+  renderVals() {
+    return { theme: this.props.theme ?? 'light' };
+  }
+}
+</script>
+</body>
+</html>

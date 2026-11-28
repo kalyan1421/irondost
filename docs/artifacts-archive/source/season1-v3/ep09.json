@@ -1,0 +1,94 @@
+{
+ "n": 9, "name": "Countdown", "en": "Countdown",
+ "hook_formula": "Chaos + ticking clock",
+ "hook_text": "Function 7 ki. Battalu: inka raaledu.",
+ "cliff": "Divya ki em ayyindi…?",
+ "caption": "Ep 9/10 · 6:25 ki delivery, 7 ki function ⏰ Repu finale! #DostUndiGa #IronDost #HyderabadReels #TeluguComedy #AIVideo",
+ "clips": [
+  {
+   "id": "E9-C1", "title": "Hiding behind the pillar", "set": "HALL",
+   "cast": ["RAVI", "BUNTY"], "props": [], "hook": true,
+   "beats": [
+    ["0–2 s", "Frame 1: RAVI, in just a grey vest and checked lungi, is pressed flat against a thick marigold-wrapped pillar in the warmly lit function hall, eyes darting left and right."],
+    ["2–4 s", "AMMA's voice calls from somewhere in the hall. RAVI flinches and squeezes even flatter against the pillar, sucking in his stomach."],
+    ["4–6.5 s", "RAVI leans out a few centimetres to peek toward the hall entrance, sees nothing, and ducks back with a whispered line."],
+    ["6.5–8.5 s", "The camera reveals BUNTY on the other side of the same pillar, also in a white vest, calmly eating a mirchi bajji from a paper plate."],
+    ["8.5–10 s", "BUNTY shrugs and takes another bite. RAVI stares at him in disbelief."]
+   ],
+   "camera": "Medium shot on RAVI against the pillar, then a slow circle around the pillar to reveal BUNTY on the far side. One continuous move.",
+   "lines": [
+    {"spk": "AMMA", "mode": "OFF", "at": "2–3.5 s", "native": "రవి ఎక్కడ?!", "roman": "Ravi ekkada?!", "en": "Where's Ravi?!"},
+    {"spk": "RAVI", "mode": "ON", "at": "5–6.3 s", "native": "రాలేదు రా…", "roman": "Raaledu ra…", "en": "He's not here yet…"},
+    {"spk": "BUNTY", "mode": "ON", "at": "7.5–9.3 s", "native": "आएगा. दोस्त है ना.", "roman": "Aayega. Dost hai na.", "en": "He'll come. Dost is here."}
+   ],
+   "sound": "Nadaswaram blast at 0.0 s from off screen, AMMA's voice echoing in the hall at 2 s, a crunchy bajji bite at 7 s. No music besides the off-screen nadaswaram.",
+   "first": "RAVI in vest and lungi pressed against the marigold pillar, eyes darting.",
+   "last": "RAVI staring at BUNTY, who calmly chews his bajji on the other side of the pillar.",
+   "edit_text": "0.3 s: 'Function 7 ki.' 1.2 s: 'Battalu: inka raaledu.' 2 s: small clock tag '6:15 PM'",
+   "neg_extra": ["AMMA or any relatives on screen", "musicians visible (nadaswaram is only heard)", "a readable wall clock", "RAVI or BUNTY wearing a shirt", "banners or text in the hall decorations", "a face on any clothing"]
+  },
+  {
+   "id": "E9-C2", "title": "On time", "set": "HALL",
+   "cast": ["RAVI", "DOST"], "props": ["bag"],
+   "beats": [
+    ["0–2 s", "At the marigold-decorated entrance arch of the function hall at dusk, RAVI in his vest and lungi checks his phone, which faces away from the camera; a soft royal-blue glow pings on his face."],
+    ["2–4.5 s", "A scooter headlight sweeps through the arch. DOST rides in and stops beside RAVI, plain royal-blue garment bags draped over his shoulder."],
+    ["4.5–7 s", "DOST steps off, glances at his wristwatch and gives his calm smile as he speaks."],
+    ["7–8.5 s", "RAVI exhales with huge relief and grabs DOST's arm with both hands."],
+    ["8.5–10 s", "DOST lifts the garment bags off his shoulder and pats them gently; RAVI looks at the bags, half-laughing with relief."]
+   ],
+   "camera": "Low tracking shot that follows the scooter in through the arch, then settles on a two-shot of DOST and RAVI. One continuous move.",
+   "lines": [
+    {"spk": "DOST", "mode": "ON", "at": "5–7 s", "native": "సార్, చెప్పిన టైమ్ లోపల.", "roman": "Sir, cheppina time lopala.", "en": "Sir, within the promised time."},
+    {"spk": "RAVI", "mode": "ON", "at": "7.3–8.5 s", "native": "దేవుడా…!", "roman": "Devuda…!", "en": "Oh God…! (relief)"}
+   ],
+   "sound": "Notification ping at 0.3 s, scooter engine approaching at 2 s, brake squeak at 4 s, engine off at 4.5 s, bag rustle at 9 s. No music.",
+   "first": "RAVI's face lit royal blue from the phone at the marigold arch, dusk sky behind.",
+   "last": "DOST holding up the royal-blue garment bags, RAVI half-laughing with relief.",
+   "edit_text": "0.3 s: 'Out for delivery' (edit graphic by the phone). 5 s: '6:25 PM'",
+   "neg_extra": ["a visible phone screen", "a logo or text on the scooter, bags or DOST's polo", "a crowd of guests", "a face on any clothing", "creatures or monsters"]
+  },
+  {
+   "id": "E9-C3", "title": "Stain ledu", "set": "HALL",
+   "cast": ["RAVI", "BUNTY"], "props": ["lucky_shirt", "bag"],
+   "beats": [
+    ["0–2 s", "In a small green room of the hall, RAVI unzips a royal-blue garment bag on a table with shaking hands. BUNTY leans in beside him."],
+    ["2–4.5 s", "The lucky shirt is revealed: the plain navy checked shirt, spotless and crisply ironed, the chest where the stain was perfectly clean. RAVI's jaw drops with joy."],
+    ["4.5–6 s", "RAVI lifts the shirt and hugs it to his chest, eyes shut."],
+    ["6–8.5 s", "BUNTY holds up his crisp white kurta-pyjama on a hanger and kisses it dramatically."],
+    ["8.5–10 s", "RAVI slips the shirt on over his vest and does up the top button, standing taller."]
+   ],
+   "camera": "Overhead on the zip opening, then one continuous crane down and back to a medium two-shot of RAVI and BUNTY.",
+   "lines": [
+    {"spk": "RAVI", "mode": "ON", "at": "3–4.5 s", "native": "స్టెయిన్… లేదు!", "roman": "Stain… ledu!", "en": "The stain… is gone!"},
+    {"spk": "BUNTY", "mode": "ON", "at": "6.3–8 s", "native": "या अल्लाह, नया जैसा!", "roman": "Ya Allah, naya jaisa!", "en": "Oh God, like new!"}
+   ],
+   "sound": "Long zip at 0.0 s, crisp fabric rustle at 2.2 s, a loud smooch from BUNTY at 7.8 s, fabric rustle at 8.6 s. No music.",
+   "first": "RAVI's hands on the zip of the royal-blue bag, already pulling it open.",
+   "last": "RAVI wearing the crisp spotless navy checked shirt, BUNTY hugging his kurta.",
+   "edit_text": "3 s: 'Stain: 0' pops beside the shirt. 6.5 s: 'Special wash ✓ Steam press ✓'",
+   "neg_extra": ["any trace of the brown stain", "a face on any clothing", "BUNTY's kurta looking burnt", "a logo or print on the garment bag", "creatures or monsters"]
+  },
+  {
+   "id": "E9-C4", "title": "The saree goes in", "set": "HALL",
+   "cast": ["DOST", "RAVI", "DIVYA"], "props": ["bag", "saree", "lucky_shirt"],
+   "beats": [
+    ["0–2.5 s", "In a corridor of the hall, DOST walks up to a half-open bridal-room door hung with a jasmine garland, carrying a royal-blue garment bag across both arms like something precious. RAVI, now wearing the lucky shirt over his lungi, follows close and knocks softly."],
+    ["2.5–4.5 s", "The door opens a crack. A woman's hand with gold bangles and red-brown mehendi reaches out. DOST places the bag in it and speaks gently. Her face is never seen."],
+    ["4.5–6.5 s", "The hand draws the bag in and the door clicks shut. RAVI and DOST look at each other; RAVI holds his breath."],
+    ["6.5–8.5 s", "From behind the door comes a loud gasp. RAVI's eyes go huge. DOST stays calm with a tiny knowing smile."],
+    ["8.5–10 s", "Slow push toward the closed door; the jasmine garland sways. RAVI's worried profile stays at the edge of frame."]
+   ],
+   "camera": "Follows DOST and RAVI down the corridor from behind, settles on a three-quarter two-shot at the door, then pushes slowly toward the closed door. One continuous move.",
+   "lines": [
+    {"spk": "DOST", "mode": "ON", "at": "3–4.5 s", "native": "దివ్య గారు, మీ చీర.", "roman": "Divya garu, mee cheera.", "en": "Divya garu, your saree."},
+    {"spk": "DIVYA", "mode": "OFF", "at": "6.8–8 s", "native": "హా…!", "roman": "Haaa…!", "en": "(a loud gasp)"}
+   ],
+   "sound": "Soft footsteps from 0.0 s, a gentle knock at 2 s, bangles clinking at 3 s, door click at 5 s, silence at 5.5 s, DIVYA's gasp at 6.8 s, a comedy sting at 8.5 s. No music.",
+   "first": "DOST walking down the corridor with the royal-blue bag across his arms, RAVI right behind him.",
+   "last": "The closed jasmine-garlanded door, RAVI's worried profile at the frame edge.",
+   "edit_text": "Cliffhanger at 8.5 s: 'Divya ki em ayyindi…?' then the end card",
+   "neg_extra": ["DIVYA's face or body visible (only her hand and bangles)", "more than one hand coming through the door", "a nameplate or text on the door", "the garment bag changing colour", "a face on any clothing", "creatures or monsters"]
+  }
+ ]
+}

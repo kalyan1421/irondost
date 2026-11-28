@@ -1,0 +1,70 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Four-tab Orders</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Figtree:wght@400;500;600;700&amp;family=Outfit:wght@500;600;700&amp;display=swap" rel="stylesheet">
+<style>
+body{margin:0}
+</style>
+</helmet>
+<div style="width: 390px; height: 844px; box-sizing: border-box; position: relative; overflow: hidden; font-family: 'Figtree', sans-serif; color: #14307A; background: linear-gradient(180deg, #F6F9FF 0%, #EEF4FD 40%, #E6EFFC 100%); padding: 56px 20px 0; display: flex; flex-direction: column; gap: 14px">
+
+<span style="font-family: 'Outfit', sans-serif; font-weight: 700; font-size: 32px; letter-spacing: -0.01em">Orders</span>
+
+<div style="height: 48px; border-radius: 24px; background: #fff; padding: 4px; display: flex; gap: 4px; box-shadow: 0 6px 16px rgba(31,79,209,0.08)">
+<div style="flex: 1; border-radius: 20px; background: #1F4FD1; color: #fff; display: flex; align-items: center; justify-content: center; font-weight: 700; font-size: 14px">Active</div>
+<div style="flex: 1; border-radius: 20px; color: #4B5F8A; display: flex; align-items: center; justify-content: center; font-weight: 600; font-size: 14px">Past</div>
+</div>
+
+<div style="background: #fff; border-radius: 26px; padding: 16px; display: flex; flex-direction: column; gap: 14px; box-shadow: 0 0 0 2px #1F4FD1, 0 12px 26px rgba(31,79,209,0.16)">
+<div style="display: flex; justify-content: space-between; align-items: center">
+<span style="font-size: 13px; font-weight: 600; color: #4B5F8A">Order #[order number]</span>
+<span style="background: #FFC93C; color: #14307A; font-size: 12px; font-weight: 700; padding: 4px 10px; border-radius: 12px">Picking up</span>
+</div>
+<div style="display: flex; align-items: center; gap: 12px">
+<div style="width: 54px; height: 54px; border-radius: 18px; background: #E6EEFF; display: flex; align-items: center; justify-content: center; flex-shrink: 0"><img src="/_blob/996be36cc7b9b41d866d0049acbca8ca" alt="Laundry bag" style="width: 42px; height: 42px; object-fit: contain"></div>
+<div style="flex-grow: 1; display: flex; flex-direction: column; gap: 2px"><span style="font-family: 'Outfit', sans-serif; font-weight: 700; font-size: 18px">Partner is on the way</span><span style="font-size: 13px; color: #4B5F8A">4 shirts, 2 jeans · Wash &amp; Iron</span></div>
+</div>
+<div style="display: flex; gap: 6px"><div style="flex: 1; height: 6px; border-radius: 3px; background: #1F4FD1"></div><div style="flex: 1; height: 6px; border-radius: 3px; background: #1F4FD1"></div><div style="flex: 1; height: 6px; border-radius: 3px; background: #D5E0F2"></div><div style="flex: 1; height: 6px; border-radius: 3px; background: #D5E0F2"></div></div>
+<div style="display: flex; gap: 10px">
+<div style="flex: 1; height: 46px; border-radius: 23px; background: #1F4FD1; color: #fff; display: flex; align-items: center; justify-content: center; font-weight: 700; font-size: 14px">Track order</div>
+<div style="width: 46px; height: 46px; border-radius: 23px; background: #E6EEFF; display: flex; align-items: center; justify-content: center"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#1F4FD1" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-label="Call partner" role="img"><path d="M5 4h4l2 5-2.5 1.5a11 11 0 0 0 5 5L15 13l5 2v4a2 2 0 0 1-2 2A16 16 0 0 1 3 6a2 2 0 0 1 2-2z"></path></svg></div>
+</div>
+</div>
+
+<span style="font-family: 'Outfit', sans-serif; font-weight: 700; font-size: 21px; color: #4B5F8A; margin-top: 6px">Recent</span>
+
+<div style="background: #fff; border-radius: 24px; padding: 14px 16px; display: flex; flex-direction: column; gap: 10px; box-shadow: 0 6px 16px rgba(31,79,209,0.08)">
+<div style="display: flex; justify-content: space-between; align-items: center"><span style="font-size: 13px; font-weight: 600; color: #4B5F8A">[Date] · #[order number]</span><span style="display: flex; align-items: center; gap: 4px; font-size: 12px; font-weight: 700; color: #1A73B0; background: #D9F4FC; padding: 4px 10px; border-radius: 12px"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#1A73B0" stroke-width="3.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12l5 5 9-10"></path></svg>Delivered</span></div>
+<div style="display: flex; justify-content: space-between; align-items: center"><span style="font-size: 15px; font-weight: 600; display: flex; align-items: center; gap: 10px"><img src="/_blob/24dbef2a9ea51487eff691b5370bd967" alt="Shirt" style="width: 44px; height: 44px; border-radius: 14px; object-fit: contain; background: #fff; box-shadow: 0 4px 10px rgba(31,79,209,0.10)">6 shirts · Iron only</span><span style="font-family: 'Outfit', sans-serif; font-weight: 700; font-size: 17px">₹[amount]</span></div>
+<div style="display: flex; gap: 10px"><div style="flex: 1; height: 40px; border-radius: 20px; border: 1.5px solid #1F4FD1; color: #1F4FD1; display: flex; align-items: center; justify-content: center; font-weight: 700; font-size: 13px; box-sizing: border-box">Order again</div><div style="flex: 1; height: 40px; border-radius: 20px; background: #E6EEFF; color: #14307A; display: flex; align-items: center; justify-content: center; gap: 6px; font-weight: 700; font-size: 13px"><svg width="14" height="14" viewBox="0 0 24 24" fill="#FFC93C" stroke="#14307A" stroke-width="1.6" stroke-linejoin="round" aria-hidden="true"><path d="M12 3l2.8 5.7 6.2.9-4.5 4.4 1.1 6.2L12 17.2 6.4 20.2l1.1-6.2L3 9.6l6.2-.9z"></path></svg>Rate</div></div>
+</div>
+
+<div style="background: #fff; border-radius: 24px; padding: 14px 16px; display: flex; flex-direction: column; gap: 10px; box-shadow: 0 6px 16px rgba(31,79,209,0.08)">
+<div style="display: flex; justify-content: space-between; align-items: center"><span style="font-size: 13px; font-weight: 600; color: #4B5F8A">[Date] · #[order number]</span><span style="display: flex; align-items: center; gap: 4px; font-size: 12px; font-weight: 700; color: #1A73B0; background: #D9F4FC; padding: 4px 10px; border-radius: 12px"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#1A73B0" stroke-width="3.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12l5 5 9-10"></path></svg>Delivered</span></div>
+<div style="display: flex; justify-content: space-between; align-items: center"><span style="font-size: 15px; font-weight: 600; display: flex; align-items: center; gap: 10px"><img src="/_blob/fd6584104c9b538466249e4abd07d2c8" alt="Suit" style="width: 44px; height: 44px; border-radius: 14px; object-fit: contain; background: #fff; box-shadow: 0 4px 10px rgba(31,79,209,0.10)">1 suit, 2 trousers · Dry Clean</span><span style="font-family: 'Outfit', sans-serif; font-weight: 700; font-size: 17px">₹[amount]</span></div>
+</div>
+
+<div style="position: absolute; left: 14px; right: 14px; bottom: 16px; height: 70px; border-radius: 35px; background: #fff; border: 1px solid #E1EAF8; display: flex; align-items: center; padding: 0 8px; gap: 4px; box-shadow: 0 12px 30px rgba(31,79,209,0.18)">
+<div style="flex: 1; display: flex; flex-direction: column; align-items: center; gap: 2px"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#4B5F8A" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 11l9-7 9 7v9a1 1 0 0 1-1 1h-5v-6h-6v6H4a1 1 0 0 1-1-1z"></path></svg><span style="font-size: 12px; font-weight: 600; color: #4B5F8A">Home</span></div>
+<div style="flex: 1.2; height: 54px; border-radius: 27px; background: #E6EEFF; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 2px"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#1F4FD1" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="5" y="3" width="14" height="18" rx="2"></rect><path d="M9 8h6M9 12h6M9 16h3"></path></svg><span style="font-size: 12px; font-weight: 700; color: #1F4FD1">Orders</span></div>
+<div style="flex: 1; display: flex; flex-direction: column; align-items: center; gap: 2px"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#4B5F8A" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 8h14l-1 12H6z"></path><path d="M9 8a3 3 0 0 1 6 0"></path></svg><span style="font-size: 12px; font-weight: 600; color: #4B5F8A">Basket</span></div>
+<div style="flex: 1; display: flex; flex-direction: column; align-items: center; gap: 2px"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#4B5F8A" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="8" r="4"></circle><path d="M4 21c0-4 4-6 8-6s8 2 8 6"></path></svg><span style="font-size: 12px; font-weight: 600; color: #4B5F8A">Profile</span></div>
+</div>
+
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":390,"height":844}}'>
+class Component extends DCLogic {
+  renderVals() { return {}; }
+}
+</script>
+</body>
+</html>

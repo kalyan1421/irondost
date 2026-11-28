@@ -1,0 +1,71 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Orders</title>
+<script src="./support.js"></script>
+<link rel="stylesheet" href="ds/irondost/tokens.css">
+<link rel="stylesheet" href="ds/irondost/components/bundle.css">
+<link rel="stylesheet" href="app.css">
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Outfit:wght@600;700&amp;family=Figtree:wght@400;500;600;700&amp;family=Geist+Mono:wght@500&amp;display=swap">
+<style>body{margin:0}</style>
+</helmet>
+<div class="scr" data-theme="{{theme}}">
+  <div class="safe-top" style="background: var(--surface)"></div>
+  <header style="flex: none; display: grid; gap: 12px; padding: 8px 16px 12px; background: var(--surface); box-shadow: inset 0 -1px 0 var(--border)">
+    <h1 class="headline">Orders</h1>
+    <nav class="seg" aria-label="Order filter">
+      <a class="seg__item is-active" href="Orders.dc.html" aria-current="page">Active (2)</a>
+      <a class="seg__item" href="OrdersPast.dc.html">Past</a>
+    </nav>
+  </header>
+  <main class="main" style="padding-top: 16px; gap: 12px">
+    <article class="id-card">
+      <div class="id-order__head"><span class="order-id">ID001046</span><span class="id-chip id-chip--info">Booked</span></div>
+      <p class="id-order__summary">10 shirts, 4 trousers, 1 saree, 2 bedsheets</p>
+      <div class="id-order__slots">
+        <div><div class="id-kv__k">Pickup</div><div class="id-kv__v">Today, 4 – 8 PM</div></div>
+        <div><div class="id-kv__k">Delivery</div><div class="id-kv__v">Sat 3 Oct, 4 – 8 PM</div></div>
+      </div>
+      <div class="id-order__foot">
+        <span class="id-row" style="gap: 8px"><span class="id-amount">₹248</span><span class="id-chip id-chip--success"><svg class="id-icon sm" viewBox="0 0 24 24" aria-hidden="true"><path d="M20 6 9 17l-5-5"></path></svg>Paid</span></span>
+        <a class="id-btn id-btn--text" href="Track.dc.html" style="padding-right: 0">Track <svg class="id-icon sm" viewBox="0 0 24 24" aria-hidden="true"><path d="m9 18 6-6-6-6"></path></svg></a>
+      </div>
+    </article>
+    <article class="id-card">
+      <div class="id-order__head"><span class="order-id">ID001042</span><span class="id-chip id-chip--info">Being ironed</span></div>
+      <p class="id-order__summary">8 shirts, 2 trousers, 1 kurta, 1 dupatta</p>
+      <div class="id-order__slots">
+        <div><div class="id-kv__k">Picked up</div><div class="id-kv__v">Thu 1 Oct</div></div>
+        <div><div class="id-kv__k">Delivery</div><div class="id-kv__v">Sat 3 Oct, 4 – 8 PM</div></div>
+      </div>
+      <div class="id-order__foot">
+        <span class="id-row" style="gap: 8px"><span class="id-amount">₹180</span><span class="id-chip id-chip--warning">₹180 due</span></span>
+        <a class="id-btn id-btn--text" href="PayDue.dc.html" style="padding-right: 0">Pay now <svg class="id-icon sm" viewBox="0 0 24 24" aria-hidden="true"><path d="m9 18 6-6-6-6"></path></svg></a>
+      </div>
+    </article>
+  </main>
+  <div class="navwrap">
+    <nav class="id-nav" aria-label="Main">
+      <a class="id-nav__item" href="Main.dc.html"><span class="id-nav__pill"><svg class="id-icon lg" viewBox="0 0 24 24" aria-hidden="true"><path d="M15 21v-8a1 1 0 0 0-1-1h-4a1 1 0 0 0-1 1v8"></path><path d="M3 10a2 2 0 0 1 .709-1.528l7-5.999a2 2 0 0 1 2.582 0l7 5.999A2 2 0 0 1 21 10v9a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"></path></svg></span>Home</a>
+      <a class="id-nav__item is-active" href="Orders.dc.html" aria-current="page"><span class="id-nav__pill"><svg class="id-icon lg" viewBox="0 0 24 24" aria-hidden="true"><path d="M11 21.73a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73z"></path><path d="M12 22V12"></path><path d="m3.3 7 7.703 4.734a2 2 0 0 0 1.994 0L20.7 7"></path><path d="m7.5 4.27 9 5.15"></path></svg></span>Orders</a>
+      <a class="id-nav__item" href="Offers.dc.html"><span class="id-nav__pill"><svg class="id-icon lg" viewBox="0 0 24 24" aria-hidden="true"><path d="M3.85 8.62a4 4 0 0 1 4.78-4.77 4 4 0 0 1 6.74 0 4 4 0 0 1 4.78 4.78 4 4 0 0 1 0 6.74 4 4 0 0 1-4.77 4.78 4 4 0 0 1-6.75 0 4 4 0 0 1-4.78-4.77 4 4 0 0 1 0-6.76Z"></path><path d="m15 9-6 6"></path><path d="M9 9h.01"></path><path d="M15 15h.01"></path></svg></span>Offers</a>
+      <a class="id-nav__item" href="Account.dc.html"><span class="id-nav__pill"><svg class="id-icon lg" viewBox="0 0 24 24" aria-hidden="true"><path d="M19 21v-2a4 4 0 0 0-4-4H9a4 4 0 0 0-4 4v2"></path><circle cx="12" cy="7" r="4"></circle></svg></span>Account</a>
+    </nav>
+    <div class="safe-bottom"></div>
+  </div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"theme":{"editor":"enum","options":["light","dark"],"default":"light"},"$preview":{"width":390,"height":844}}'>
+class Component extends DCLogic {
+  renderVals() {
+    return { theme: this.props.theme ?? 'light' };
+  }
+}
+</script>
+</body>
+</html>

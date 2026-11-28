@@ -1,0 +1,90 @@
+{
+ "n": 1, "name": "Kondalu", "en": "The Mountain",
+ "hook_formula": "Pattern interrupt + stakes number",
+ "hook_text": "10 rojullo chelli engagement. Clean battalu: 0",
+ "cliff": "Repu udayam 7 gantalaki…",
+ "caption": "Ep 1/10 — 10 rojullo chelli engagement, almirah lo kondalu 😭 #DostUndiGa #IronDost #Hyderabad #LBNagar #TeluguReels",
+ "clips": [
+  {
+   "id": "E1-C1", "title": "Almirah avalanche", "set": "FLAT",
+   "cast": ["RAVI", "BUNTY"], "props": [], "hook": true,
+   "beats": [
+    ["0–1.5 s", "Camera inside the grey steel almirah looking out: the door is already swinging open on frame 1 and a huge wave of crumpled shirts, sarees, towels and lungis blasts toward the lens in slow motion. Behind the flying clothes RAVI, in a grey vest and checked lungi, flinches with both arms raised and his mouth open."],
+    ["1.5–4 s", "The wave crashes over RAVI and buries him; the camera pushes back with the clothes until only his head and one arm stick out of a waist-high mountain of clothes on the mosaic floor."],
+    ["4–6.5 s", "RAVI blinks and blows a sock off his face; it flops onto his head."],
+    ["6.5–10 s", "On the sofa at the right edge, BUNTY in his maroon printed shirt holds an open foil biryani parcel, laughs and points his spoon at RAVI."]
+   ],
+   "camera": "Starts inside the almirah looking out as the door opens, pulls back with the clothes wave in one move, and settles on a medium-wide shot of the clothes mountain with BUNTY on the sofa at the right.",
+   "lines": [
+    {"spk": "RAVI", "mode": "ON", "at": "1.5–3 s", "native": "అమ్మాఆ…!", "roman": "Ammaaa…!", "en": "Mummyyy…! (muffled, under the clothes)"},
+    {"spk": "BUNTY", "mode": "ON", "at": "7–9.5 s", "native": "क्या रे, कपड़ों का चारमीनार बना दिया क्या?", "roman": "Kya re, kapdon ka Charminar bana diya kya?", "en": "What, did you build a Charminar out of clothes?"}
+   ],
+   "sound": "Door creak and whoosh at 0.0 s, a heavy cloth thud at 2 s, a soft 'phff' as Ravi blows the sock at 4.5 s, Bunty's laugh from 6.5 s",
+   "first": "The almirah door already swinging open, clothes mid-air flying at the lens, RAVI's raised arms behind them.",
+   "last": "RAVI's head and one arm sticking out of the clothes mountain with a sock on his head; BUNTY laughing on the sofa with the biryani parcel.",
+   "edit_text": "0.3 s: '10 rojullo chelli engagement.' 1.2 s: 'Clean battalu: 0' (big, top third)",
+   "neg_extra": ["clothes turning into smoke, liquid or a creature", "a face on any clothing", "RAVI hurt or in pain", "BUNTY standing up or leaving the sofa"]
+  },
+  {
+   "id": "E1-C2", "title": "Amma calls", "set": "FLAT",
+   "cast": ["RAVI"], "props": [],
+   "beats": [
+    ["0–2 s", "Close-up: RAVI, still half-buried in the clothes, pulls a vibrating phone out of the pile and presses it to his ear with both hands. The back of the phone faces the camera."],
+    ["2–5.5 s", "RAVI listens; his eyes go wide with panic and he swallows."],
+    ["5.5–8.5 s", "RAVI forces a huge fake smile and nods hard, as if Amma could see him."],
+    ["8.5–10 s", "The fake smile holds while his eyes slide sideways to the clothes mountain around him in despair."]
+   ],
+   "camera": "Slow push-in from a medium close-up to a tight close-up of RAVI's face.",
+   "lines": [
+    {"spk": "AMMA", "mode": "OFF", "at": "1.5–5 s", "native": "రవీ, దివ్య నిశ్చితార్థానికి ఇంకా పది రోజులే! నీ బట్టలు రెడీ నా?", "roman": "Ravi, Divya nischitartham ki inka padi rojule! Nee battalu ready na?", "en": "Ravi, only ten days to Divya's engagement! Are your clothes ready?"},
+    {"spk": "RAVI", "mode": "ON", "at": "6–8.5 s", "native": "హా… రెడీ అమ్మా, ఫుల్ రెడీ.", "roman": "Ha… ready Amma, full ready.", "en": "Yes… ready Amma, fully ready."}
+   ],
+   "sound": "Phone vibration at 0.0 s, Amma's voice slightly tinny through the phone speaker, soft room tone",
+   "first": "RAVI's hand pulling a buzzing phone out of the clothes pile.",
+   "last": "Tight close-up of RAVI's frozen fake smile, eyes sliding to the clothes around him.",
+   "edit_text": "Kinetic captions for both lines; '10 rojulu' pops in red at 3 s",
+   "neg_extra": ["a visible phone screen or call screen", "AMMA appearing on screen", "RAVI's lips moving while Amma speaks"]
+  },
+  {
+   "id": "E1-C3", "title": "No dhobi, but there's an app", "set": "FLAT",
+   "cast": ["RAVI", "BUNTY"], "props": [],
+   "beats": [
+    ["0–2.5 s", "Medium two-shot. BUNTY, licking biryani off his fingers on the sofa, waves a hand toward the window as if the answer is easy."],
+    ["2.5–5 s", "RAVI, sitting on the clothes pile, shakes his head and slumps."],
+    ["5–7 s", "RAVI's phone pings. He looks down at it; the phone faces away from the camera and a soft royal-blue glow lights his face from below."],
+    ["7–10 s", "RAVI taps the phone with his thumb, the blue glow brightens, and a slow hopeful smile spreads across his face. BUNTY leans over, curious."]
+   ],
+   "camera": "Starts on BUNTY, slow pan left to RAVI, ends on a close-up of RAVI's face lit blue with BUNTY leaning into the edge of frame.",
+   "lines": [
+    {"spk": "BUNTY", "mode": "ON", "at": "0.5–2.5 s", "native": "गली के धोबी को दे दे.", "roman": "Gali ke dhobi ko de de.", "en": "Just give it to the dhobi in the lane."},
+    {"spk": "RAVI", "mode": "ON", "at": "3–5 s", "native": "ధోబీ అన్న ఊరికి వెళ్ళిపోయాడు రా.", "roman": "Dhobi anna ooruki vellipoyadu ra.", "en": "The dhobi went back to his village."},
+    {"spk": "AMMA", "mode": "OFF", "at": "5.5–9 s", "native": "ఈ యాప్ చూడు రా, ఎల్ బి నగర్ లో ఇంటికొచ్చి తీసుకెళ్తారు.", "roman": "Ee app chudu ra, LB Nagar lo intikochi teeskeltaru.", "en": "Look at this app, in LB Nagar they come home and pick up."}
+   ],
+   "sound": "Bunty's finger-lick, a notification ping at 5 s, Amma's voice note through the phone speaker, a soft tap at 7 s",
+   "first": "BUNTY on the sofa with the biryani parcel, waving toward the window.",
+   "last": "RAVI's face lit royal blue from the phone, smiling; BUNTY leaning in at the edge of frame.",
+   "edit_text": "5.5 s: 'Amma ❤️ sent a voice note'; 7.5 s: 'IronDost app → Book pickup' (edit graphic next to the phone)",
+   "neg_extra": ["a readable phone screen, app UI or WhatsApp chat", "any light colour other than royal blue from the phone", "AMMA appearing on screen"]
+  },
+  {
+   "id": "E1-C4", "title": "Naa lucky shirt, jagratta", "set": "FLAT",
+   "cast": ["RAVI", "BUNTY"], "props": ["lucky_shirt", "ring_box"],
+   "beats": [
+    ["0–3 s", "RAVI stands and holds up his navy checked lucky shirt on a hanger in front of him with both hands, very seriously, like something precious."],
+    ["3–5 s", "He tucks a small closed red velvet ring box into the shirt's chest pocket and pats the pocket twice."],
+    ["5–8 s", "BUNTY leans into frame from the right with one sceptical raised eyebrow, still holding his spoon."],
+    ["8–10 s", "RAVI hugs the shirt to his chest and looks worried; the camera drifts in on the pocket with the ring box."]
+   ],
+   "camera": "Medium shot of RAVI with the shirt; BUNTY enters frame right; slow push-in that ends close on the shirt pocket.",
+   "lines": [
+    {"spk": "RAVI", "mode": "ON", "at": "0.5–2.5 s", "native": "ఇది నా లక్కీ షర్ట్. జాగ్రత్త.", "roman": "Idi naa lucky shirt. Jagratta.", "en": "This is my lucky shirt. Careful with it."},
+    {"spk": "BUNTY", "mode": "ON", "at": "5.5–8.5 s", "native": "ऑनलाइन वाले कपड़े गायब कर देते, देख लेना.", "roman": "Online wale kapde gayab kar dete, dekh lena.", "en": "Online people make clothes vanish, you'll see."}
+   ],
+   "sound": "Hanger clink at 0.5 s, two soft pats on the pocket at 4 s, a low suspense swell of room tone at the end (no music)",
+   "first": "RAVI holding the navy checked lucky shirt on a hanger at chest height.",
+   "last": "Close on the shirt pocket with the red ring box inside, RAVI's worried face soft behind it.",
+   "edit_text": "Cliffhanger at 8.5 s: 'Repu udayam 7 gantalaki…' then the end card",
+   "neg_extra": ["the ring box turning into a phone or wallet", "a face on any clothing", "the shirt's check pattern changing", "BUNTY grabbing the shirt"]
+  }
+ ]
+}

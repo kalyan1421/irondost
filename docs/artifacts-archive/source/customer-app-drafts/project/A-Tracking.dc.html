@@ -1,0 +1,83 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Draft A Tracking</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Figtree:wght@400;500;600;700&family=Outfit:wght@500;600;700&display=swap" rel="stylesheet">
+<style>
+body{margin:0}
+</style>
+</helmet>
+<div style="width: 390px; height: 844px; box-sizing: border-box; position: relative; overflow: hidden; font-family: 'Figtree', sans-serif; color: #14307A; background: linear-gradient(180deg, #D6E4FF 0%, #EAF0FA 30%, #F1F4F8 100%); padding: 56px 20px 0; display: flex; flex-direction: column; gap: 14px">
+
+<div style="display: flex; align-items: center; justify-content: space-between">
+<div style="width: 44px; height: 44px; border-radius: 22px; background: #fff; display: flex; align-items: center; justify-content: center; box-shadow: 0 4px 14px rgba(31,79,209,0.10)"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#14307A" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-label="Back" role="img"><path d="M15 5l-7 7 7 7"/></svg></div>
+<span style="font-family: 'Outfit', sans-serif; font-weight: 700; font-size: 20px">Track order</span>
+<div style="width: 44px; height: 44px"></div>
+</div>
+
+<div style="height: 176px; border-radius: 26px; background: linear-gradient(135deg, #1F4FD1 0%, #3FB8EA 100%); color: #fff; padding: 20px; box-sizing: border-box; position: relative; overflow: hidden">
+<div style="display: flex; flex-direction: column; gap: 6px; position: relative; z-index: 1; width: 210px">
+<span style="font-size: 12px; font-weight: 600; opacity: 0.9">Order #[order number]</span>
+<span style="font-family: 'Outfit', sans-serif; font-weight: 700; font-size: 24px; line-height: 1.15">Your clothes are being washed</span>
+<span style="font-size: 13px; opacity: 0.92">Back to you on [day, time]</span>
+</div>
+<div style="position: absolute; left: 20px; right: 20px; bottom: 18px; display: flex; flex-direction: column; gap: 6px">
+<div style="height: 8px; border-radius: 4px; background: rgba(255,255,255,0.28)"><div style="width: 55%; height: 8px; border-radius: 4px; background: #fff"></div></div>
+<span style="font-size: 12px; font-weight: 600">Step 3 of 5</span>
+</div>
+<svg width="140" height="140" viewBox="0 0 130 130" style="position: absolute; right: -24px; top: -16px" aria-hidden="true"><circle cx="65" cy="65" r="62" fill="#fff" fill-opacity="0.18"/><circle cx="65" cy="65" r="46" fill="#fff" fill-opacity="0.92"/><circle cx="65" cy="65" r="36" fill="#BFEAF8"/><path d="M29 72c10-8 20 8 36 0s26 8 36 0v10a36 36 0 0 1-72 0z" fill="#3FB8EA"/></svg>
+</div>
+
+<div style="background: #fff; border-radius: 22px; padding: 16px 18px; display: flex; flex-direction: column; box-shadow: 0 6px 20px rgba(31,79,209,0.10)">
+<div style="display: flex; gap: 14px; align-items: flex-start">
+<div style="display: flex; flex-direction: column; align-items: center"><div style="width: 24px; height: 24px; border-radius: 12px; background: #1F4FD1; display: flex; align-items: center; justify-content: center"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="3.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12l5 5 9-10"/></svg></div><div style="width: 2px; height: 22px; background: #1F4FD1"></div></div>
+<div style="display: flex; flex-direction: column"><span style="font-weight: 700; font-size: 15px">Order placed</span><span style="font-size: 12px; color: #4B5F8A">[time]</span></div>
+</div>
+<div style="display: flex; gap: 14px; align-items: flex-start">
+<div style="display: flex; flex-direction: column; align-items: center"><div style="width: 24px; height: 24px; border-radius: 12px; background: #1F4FD1; display: flex; align-items: center; justify-content: center"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="3.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12l5 5 9-10"/></svg></div><div style="width: 2px; height: 22px; background: #1F4FD1"></div></div>
+<div style="display: flex; flex-direction: column"><span style="font-weight: 700; font-size: 15px">Picked up</span><span style="font-size: 12px; color: #4B5F8A">[time]</span></div>
+</div>
+<div style="display: flex; gap: 14px; align-items: flex-start">
+<div style="display: flex; flex-direction: column; align-items: center"><div style="width: 24px; height: 24px; border-radius: 12px; background: #fff; border: 3px solid #1F4FD1; box-sizing: border-box; box-shadow: 0 0 0 4px #D6E4FF"></div><div style="width: 2px; height: 22px; background: #DCE4EE"></div></div>
+<div style="display: flex; flex-direction: column"><span style="font-weight: 700; font-size: 15px; color: #1F4FD1">Washing and ironing</span><span style="font-size: 12px; color: #4B5F8A">In progress</span></div>
+</div>
+<div style="display: flex; gap: 14px; align-items: flex-start">
+<div style="display: flex; flex-direction: column; align-items: center"><div style="width: 24px; height: 24px; border-radius: 12px; background: #DCE4EE"></div><div style="width: 2px; height: 22px; background: #DCE4EE"></div></div>
+<div style="display: flex; flex-direction: column"><span style="font-weight: 600; font-size: 15px; color: #5B6B85">Out for delivery</span></div>
+</div>
+<div style="display: flex; gap: 14px; align-items: flex-start">
+<div style="display: flex; flex-direction: column; align-items: center"><div style="width: 24px; height: 24px; border-radius: 12px; background: #DCE4EE"></div></div>
+<div style="display: flex; flex-direction: column"><span style="font-weight: 600; font-size: 15px; color: #5B6B85">Delivered</span></div>
+</div>
+</div>
+
+<div style="background: #fff; border-radius: 22px; padding: 14px 16px; display: flex; align-items: center; gap: 12px; box-shadow: 0 6px 20px rgba(31,79,209,0.10)">
+<div style="width: 46px; height: 46px; border-radius: 23px; background: #D9F4FC; color: #1A73B0; display: flex; align-items: center; justify-content: center; font-family: 'Outfit', sans-serif; font-weight: 700; font-size: 16px">P</div>
+<div style="flex-grow: 1; display: flex; flex-direction: column; gap: 2px">
+<span style="font-size: 12px; color: #4B5F8A">Your pickup partner</span>
+<span style="font-family: 'Outfit', sans-serif; font-weight: 700; font-size: 16px">[Partner name]</span>
+</div>
+<div style="width: 44px; height: 44px; border-radius: 22px; background: #1F4FD1; display: flex; align-items: center; justify-content: center"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-label="Call partner" role="img"><path d="M5 4h4l2 5-2.5 1.5a11 11 0 0 0 5 5L15 13l5 2v4a2 2 0 0 1-2 2A16 16 0 0 1 3 6a2 2 0 0 1 2-2z"/></svg></div>
+</div>
+
+<div style="display: flex; gap: 12px">
+<div style="flex: 1; background: #fff; border-radius: 18px; padding: 12px 14px; display: flex; flex-direction: column; gap: 2px; box-shadow: 0 4px 14px rgba(31,79,209,0.08)"><span style="font-size: 12px; color: #4B5F8A">Items</span><span style="font-family: 'Outfit', sans-serif; font-weight: 700; font-size: 17px">7 pieces</span></div>
+<div style="flex: 1; background: #fff; border-radius: 18px; padding: 12px 14px; display: flex; flex-direction: column; gap: 2px; box-shadow: 0 4px 14px rgba(31,79,209,0.08)"><span style="font-size: 12px; color: #4B5F8A">Total</span><span style="font-family: 'Outfit', sans-serif; font-weight: 700; font-size: 17px">₹[amount]</span></div>
+</div>
+
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":390,"height":844}}'>
+class Component extends DCLogic {
+  renderVals() { return {}; }
+}
+</script>
+</body>
+</html>

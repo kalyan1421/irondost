@@ -1,0 +1,53 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Pickup time · change delivery</title>
+<script src="./support.js"></script>
+<link rel="stylesheet" href="ds/irondost/tokens.css">
+<link rel="stylesheet" href="ds/irondost/components/bundle.css">
+<link rel="stylesheet" href="app.css">
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Outfit:wght@600;700&amp;family=Figtree:wght@400;500;600;700&amp;family=Geist+Mono:wght@500&amp;display=swap">
+<style>body{margin:0}</style>
+</helmet>
+<div class="scr" data-theme="{{theme}}">
+  <div class="under" aria-hidden="true">
+    <dc-import name="Schedule" theme="{{theme}}" hint-size="390px,844px"></dc-import>
+  </div>
+  <a class="scrim" href="Schedule.dc.html" aria-label="Close"></a>
+  <section class="sheet" role="dialog" aria-modal="true" aria-labelledby="delivery-title">
+    <span class="grabber"></span>
+    <div style="display: grid; gap: 2px">
+      <h1 id="delivery-title" class="title-lg">Delivery time</h1>
+      <p class="body muted">Ironing takes about 20 hours, so earlier windows aren't available.</p>
+    </div>
+    <div class="id-dates" role="radiogroup" aria-label="Delivery date">
+      <span class="id-date is-selected" role="radio" aria-checked="true"><span class="id-date__dow">Sat</span><span class="id-date__day">3</span></span>
+      <span class="id-date" role="radio" aria-checked="false"><span class="id-date__dow">Sun</span><span class="id-date__day">4</span></span>
+      <span class="id-date" role="radio" aria-checked="false"><span class="id-date__dow">Mon</span><span class="id-date__day">5</span></span>
+      <span class="id-date" role="radio" aria-checked="false"><span class="id-date__dow">Tue</span><span class="id-date__day">6</span></span>
+      <span class="id-date" role="radio" aria-checked="false"><span class="id-date__dow">Wed</span><span class="id-date__day">7</span></span>
+    </div>
+    <div class="id-slots" role="radiogroup" aria-label="Delivery window">
+      <span class="id-slot is-disabled" role="radio" aria-checked="false" aria-disabled="true"><span><span class="id-slot__name" style="display: block">Morning</span><span class="id-slot__time">7 – 11 AM · Too soon</span></span><span class="id-radio"></span></span>
+      <span class="id-slot is-disabled" role="radio" aria-checked="false" aria-disabled="true"><span><span class="id-slot__name" style="display: block">Afternoon</span><span class="id-slot__time">11 AM – 4 PM · Too soon</span></span><span class="id-radio"></span></span>
+      <span class="id-slot is-selected" role="radio" aria-checked="true"><span><span class="id-slot__name" style="display: block">Evening</span><span class="id-slot__time">4 – 8 PM</span></span><span class="id-radio is-on"></span></span>
+    </div>
+    <a class="id-btn id-btn--primary id-btn--block" href="Schedule.dc.html">Done</a>
+    <div class="safe-bottom" style="margin-top: -16px"></div>
+  </section>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"theme":{"editor":"enum","options":["light","dark"],"default":"light"},"$preview":{"width":390,"height":844}}'>
+class Component extends DCLogic {
+  renderVals() {
+    return { theme: this.props.theme ?? 'light' };
+  }
+}
+</script>
+</body>
+</html>

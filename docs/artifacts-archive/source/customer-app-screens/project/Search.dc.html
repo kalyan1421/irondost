@@ -1,0 +1,55 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Search · no results</title>
+<script src="./support.js"></script>
+<link rel="stylesheet" href="ds/irondost/tokens.css">
+<link rel="stylesheet" href="ds/irondost/components/bundle.css">
+<link rel="stylesheet" href="app.css">
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Outfit:wght@600;700&amp;family=Figtree:wght@400;500;600;700&amp;family=Geist+Mono:wght@500&amp;display=swap">
+<style>body{margin:0}</style>
+</helmet>
+<div class="scr" data-theme="{{theme}}">
+  <div class="safe-top" style="background: var(--surface)"></div>
+  <div style="flex: none; display: flex; align-items: center; gap: 8px; padding: 4px 16px 12px; background: var(--surface); box-shadow: inset 0 -1px 0 var(--border)">
+    <a class="id-iconbtn" href="Catalogue.dc.html" aria-label="Back" style="flex: none"><svg class="id-icon lg" viewBox="0 0 24 24" aria-hidden="true"><path d="m12 19-7-7 7-7"></path><path d="M19 12H5"></path></svg></a>
+    <label class="id-field__control is-focus" style="flex: 1">
+      <svg class="id-icon" viewBox="0 0 24 24" aria-hidden="true" style="color: var(--text-muted)"><circle cx="11" cy="11" r="8"></circle><path d="m21 21-4.3-4.3"></path></svg>
+      <input type="search" value="curtain" aria-label="Search items">
+      <svg class="id-icon" viewBox="0 0 24 24" aria-hidden="true" style="color: var(--text-muted)"><path d="M18 6 6 18"></path><path d="m6 6 12 12"></path></svg>
+    </label>
+  </div>
+  <main class="main" style="padding-top: 24px">
+    <div class="id-empty" role="status" style="padding: 24px 8px">
+      <span style="width: 96px; height: 96px; display: grid; place-items: center; margin-bottom: 8px; border-radius: 50%; background: var(--surface-soft); color: var(--text-muted)"><svg viewBox="0 0 24 24" width="44" height="44" aria-hidden="true" style="fill: none; stroke: currentColor; stroke-width: 1.75; stroke-linecap: round; stroke-linejoin: round"><circle cx="11" cy="11" r="8"></circle><path d="m21 21-4.3-4.3"></path></svg></span>
+      <h1 class="id-empty__title">No items match "curtain"</h1>
+      <p class="id-empty__body">Try a different word, like shirt or saree. Need something we don't list? Call us and we'll help.</p>
+      <a class="id-btn id-btn--outline" href="tel:+919063290012" style="margin-top: 8px"><svg class="id-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z"></path></svg>Call +91 90632 90012</a>
+    </div>
+    <section class="sec">
+      <h2 class="label-sm muted">Popular</h2>
+      <div class="id-row" style="gap: 8px">
+        <a class="id-chip pick" href="Catalogue.dc.html">Shirt / T-shirt</a>
+        <a class="id-chip pick" href="Catalogue.dc.html">Saree</a>
+        <a class="id-chip pick" href="Catalogue.dc.html">Bedsheet</a>
+        <a class="id-chip pick" href="Catalogue.dc.html">Suit (2 piece)</a>
+      </div>
+    </section>
+  </main>
+  <div class="safe-bottom"></div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"theme":{"editor":"enum","options":["light","dark"],"default":"light"},"$preview":{"width":390,"height":844}}'>
+class Component extends DCLogic {
+  renderVals() {
+    return { theme: this.props.theme ?? 'light' };
+  }
+}
+</script>
+</body>
+</html>

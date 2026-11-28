@@ -1,0 +1,87 @@
+{
+ "n": 2, "name": "7:02", "en": "7:02 am",
+ "hook_formula": "Flash-forward",
+ "hook_text": "Ee okka pocket… oka engagement ni aapesedi",
+ "cliff": "Adi… Divya engagement ring!",
+ "caption": "Ep 2/10 · Pocket lo engagement ring marchipoyadu 😱 7–11 slot ante 7:02 ki ganta! #DostUndiGa #IronDost #HyderabadReels #TeluguComedy #AIVideo",
+ "clips": [
+  {
+   "id": "E2-C1", "title": "Flash-forward: the ring", "set": "FLAT",
+   "cast": ["DOST", "RAVI"], "props": ["lucky_shirt", "ring_box"], "hook": true,
+   "beats": [
+    ["0–3 s", "Extreme macro on frame 1, already moving: a man's fingers (DOST's, face out of frame) slowly pull a small red velvet ring box out of the chest pocket of a plain navy-blue shirt with thin white checks. Dramatic side light, dark background."],
+    ["3–5 s", "The box clears the pocket and hangs between two fingers. The side light flickers once across the red velvet."],
+    ["5–7.5 s", "The camera rises slowly past the ring box to RAVI standing behind it in a grey vest, a toothbrush in his mouth, his face draining pale."],
+    ["7.5–10 s", "RAVI's jaw slackens and the toothbrush slowly slides out of his mouth and drops out of frame. His eyes stay locked on the ring box, unblinking."]
+   ],
+   "camera": "Starts in extreme macro on the pocket and rises slowly up past the ring box to a tight close-up of RAVI's face. One continuous move.",
+   "lines": [],
+   "sound": "A single heavy heartbeat at 0.0 s, slow heartbeats under the pull, soft velvet rub at 2.5 s, a faint electric flicker at 3.5 s, toothbrush clatter at 9 s, then silence. No music.",
+   "first": "Fingers already halfway into the navy checked pocket, the red velvet edge just showing.",
+   "last": "Tight close-up of RAVI's pale, frozen face, the red ring box soft in the foreground.",
+   "edit_text": "0.2 s: 'Ee okka pocket… oka engagement ni aapesedi' (big, top third); 8.5 s: rewind effect and '15 nimishalu mundu…'",
+   "neg_extra": ["a face on any clothing", "creatures or monsters", "the ring box opening or a ring visible", "the ring box turning into a phone", "DOST's face in frame"]
+  },
+  {
+   "id": "E2-C2", "title": "7:02 at the door", "set": "FLAT",
+   "cast": ["RAVI", "DOST", "BUNTY"], "props": ["bag"],
+   "beats": [
+    ["0–2 s", "The doorbell rings on frame 1. RAVI, in grey vest and checked lungi, hair flattened on one side, toothbrush in his mouth, stumbles into the hallway toward the front door, squinting. On the hallway wall a round clock with a plain white face and no numerals shows its hands at two minutes past seven."],
+    ["2–4 s", "RAVI pulls the door open. In the corridor DOST stands neatly in his royal-blue polo with the black sling bag, folded plain royal-blue garment bags over one arm, and gives a small polite nod and smile."],
+    ["4–6.5 s", "DOST speaks calmly. RAVI freezes, toothbrush stuck mid-scrub, white foam on his lips."],
+    ["6.5–9.5 s", "BUNTY shuffles up behind RAVI with a flowered blanket over his shoulders, hair messy; his jaw drops and he rubs his eyes with one fist as he speaks."],
+    ["9.5–10 s", "DOST keeps his patient smile; RAVI slowly blinks."]
+   ],
+   "camera": "Follows RAVI from behind down the hallway past the clock, then holds over his shoulder on DOST at the door, easing back half a step to fit BUNTY in on the left. One continuous move.",
+   "lines": [
+    {"spk": "RAVI", "mode": "ON", "at": "0.5–2 s", "native": "ఇంత పొద్దున్నే ఎవరు రా?!", "roman": "Intha poddunne evaru ra?!", "en": "Who comes this early?!"},
+    {"spk": "DOST", "mode": "ON", "at": "4–6.5 s", "native": "నమస్కారం సార్, ఐరన్‌దోస్త్ నుంచి. 7 టు 11 స్లాట్.", "roman": "Namaskaram sir, IronDost nunchi. 7 to 11 slot.", "en": "Hello sir, from IronDost. Your 7–11 slot."},
+    {"spk": "BUNTY", "mode": "ON", "at": "7–9.5 s", "native": "टाइम पे आए? हैदराबाद में?", "roman": "Time pe aaye? Hyderabad mein?", "en": "On time? In Hyderabad?"}
+   ],
+   "sound": "Two-tone doorbell twice at 0.0 s, bare feet slapping the floor, door latch click at 2 s, toothbrush scrub stopping at 4.5 s, Bunty's slippers shuffling at 6.5 s. No music.",
+   "first": "RAVI mid-stumble into the hallway as the doorbell rings, the clock on the wall.",
+   "last": "Three-shot: DOST smiling in the corridor, RAVI frozen with the toothbrush, BUNTY open-mouthed behind him.",
+   "edit_text": "At 1 s: '7:02 AM' tag pinned next to the clock; at 5 s: 'Slot: 7–11 ✓'",
+   "neg_extra": ["a face on any clothing", "numbers or text on the clock face", "any logo, name or writing on DOST's polo or bags", "DOST stepping inside the flat", "foam on DOST's face"]
+  },
+  {
+   "id": "E2-C3", "title": "Every item counted, loose button noted", "set": "FLAT",
+   "cast": ["DOST", "RAVI"], "props": ["lucky_shirt", "bag"],
+   "beats": [
+    ["0–2.5 s", "Living-room floor. DOST kneels beside a heap of clothes and lays shirts onto neat stacks (shirts, pants, bedsheets), touching each stack with one finger as he counts. RAVI stands behind him with the toothbrush, watching, impressed."],
+    ["2.5–4.5 s", "DOST picks up the navy checked shirt and holds it up. RAVI straightens, suddenly protective, and leans in."],
+    ["4.5–7 s", "Close on the shirt: DOST's thumb finds a loose button hanging by a thread and gently wiggles it. DOST glances up at RAVI as he speaks."],
+    ["7–10 s", "DOST takes out his phone, its back to the camera, and taps it; a soft royal-blue glow lights his face. RAVI nods slowly, quietly relieved, and lowers the toothbrush."]
+   ],
+   "camera": "High three-quarter angle drifting slowly down from the stacks to a close two-shot of DOST's hands with the shirt and RAVI's face behind. One continuous move.",
+   "lines": [
+    {"spk": "DOST", "mode": "ON", "at": "0.5–3 s", "native": "పద్దెనిమిది షర్ట్స్, నాలుగు ప్యాంట్స్…", "roman": "Paddenimidi shirts, naalugu pants…", "en": "Eighteen shirts, four pants…"},
+    {"spk": "DOST", "mode": "ON", "at": "5–7.5 s", "native": "సార్, ఈ బటన్ లూజ్ ఉంది. నోట్ చేస్తాను.", "roman": "Sir, ee button loose undi. Note chestanu.", "en": "Sir, this button is loose. I'll note it."}
+   ],
+   "sound": "Soft fabric flaps as each shirt lands from 0.0 s, the button's tiny click at 5 s, phone tap and soft ping at 8 s. No music.",
+   "first": "DOST mid-motion laying a shirt on a stack, counting finger out.",
+   "last": "DOST's face lit royal blue from the phone, the navy checked shirt in his other hand, RAVI nodding behind.",
+   "edit_text": "At 1 s: tally '18 shirts · 4 pants · 2 bedsheets'; at 8 s: 'Care note: button loose ✓' card floating by the phone",
+   "neg_extra": ["a face on any clothing", "creatures or monsters", "a readable phone screen or note text", "the loose button on any shirt other than the navy checked one"]
+  },
+  {
+   "id": "E2-C4", "title": "Pocket check: the ring", "set": "FLAT",
+   "cast": ["DOST", "RAVI"], "props": ["lucky_shirt", "ring_box"],
+   "beats": [
+    ["0–2.5 s", "DOST, kneeling, slips two fingers into the chest pocket of the navy checked shirt as routine. Behind him in soft focus RAVI brushes his teeth, unaware."],
+    ["2.5–4.5 s", "DOST's fingers stop on something small and hard. His eyebrows lift slightly."],
+    ["4.5–7 s", "DOST looks up toward RAVI and speaks quietly. RAVI's brushing slows."],
+    ["7–10 s", "DOST draws out a small red velvet ring box and holds it up in the foreground. Focus shifts to RAVI: his face goes pale, the toothbrush hanging from his mouth, eyes wide."]
+   ],
+   "camera": "Slow push-in from DOST's hand at the pocket, racking focus at 7 s past the raised ring box to RAVI's face. One continuous move.",
+   "lines": [
+    {"spk": "DOST", "mode": "ON", "at": "4.5–7 s", "native": "సార్… పాకెట్ లో ఏదో ఉంది.", "roman": "Sir… pocket lo edo undi.", "en": "Sir… there's something in the pocket."}
+   ],
+   "sound": "Fabric rustle at 0.0 s, steady toothbrush scrubbing, a faint hollow 'tock' at 2.5 s, the scrubbing stopping dead at 7.5 s, a sharp sting at 8.5 s, then silence. No music.",
+   "first": "DOST's two fingers already sliding into the navy checked pocket.",
+   "last": "RAVI pale and frozen with the toothbrush in his mouth, the red ring box soft in the foreground.",
+   "edit_text": "Cliffhanger at 8.5 s: 'Adi… Divya engagement ring!' then the end card",
+   "neg_extra": ["a face on any clothing", "creatures or monsters", "the ring box opening or a ring visible", "the ring box turning into a phone", "RAVI's face distorting when focus racks"]
+  }
+ ]
+}

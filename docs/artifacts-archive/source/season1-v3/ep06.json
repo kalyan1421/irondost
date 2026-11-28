@@ -1,0 +1,88 @@
+{
+ "n": 6, "name": "Dhuvvam", "en": "Smoke",
+ "hook_formula": "Disaster reveal",
+ "hook_text": "Silk ni intlo iron chesthe…",
+ "cliff": "Lucky shirt… missing.",
+ "caption": "Ep 6/10 — Silk intlo iron cheyyakandi 🔥😭 Bunty em chesadu?? #DostUndiGa #IronDost #DryCleaning #Hyderabad",
+ "clips": [
+  {
+   "id": "E6-C1", "title": "The burnt kurta", "set": "FLAT",
+   "cast": ["BUNTY", "RAVI"], "props": ["kurta"], "hook": true,
+   "beats": [
+    ["0–2 s", "Frame 1 in motion: close-up of a plain household electric iron lifting off BUNTY's cream silk Eid kurta on an ironing board, revealing a black iron-shaped burnt hole with grey smoke curling up from it."],
+    ["2–4.5 s", "Through the smoke, BUNTY's horrified face behind the board, the iron frozen in mid-air in his hand, eyes huge, as he cries out."],
+    ["4.5–7 s", "A smoke alarm starts beeping. RAVI, in a grey vest and checked lungi, runs in from the doorway fanning the smoke away with a folded hand towel."],
+    ["7–10 s", "RAVI stops at the board, stares at the hole, then at BUNTY, and shouts. BUNTY stays frozen, still holding the iron up like a guilty kid."]
+   ],
+   "camera": "Starts tight on the iron lifting and the smoking hole, tilts up through the smoke to BUNTY's face, then eases back to a medium two-shot as RAVI rushes in. One continuous move.",
+   "lines": [
+    {"spk": "BUNTY", "mode": "ON", "at": "2.3–4.3 s", "native": "या अल्लाह! बैंगन!", "roman": "Ya Allah! Baigan!", "en": "Oh God! Damn!"},
+    {"spk": "RAVI", "mode": "ON", "at": "7.2–9.4 s", "native": "సిల్క్ ని ఇంట్లో ఐరన్ చేస్తారా రా?!", "roman": "Silk ni intlo iron chestara ra?!", "en": "Who irons silk at home?!"}
+   ],
+   "sound": "Sharp sizzle at 0.0 s, smoke hiss, smoke alarm beeping from 4.5 s, towel whooshes from 5 s. No music.",
+   "first": "The iron already lifting off the cream silk, the iron-shaped burnt hole and first curl of smoke revealed.",
+   "last": "RAVI glaring at BUNTY across the ironing board, BUNTY frozen with the iron held up, smoke thinning.",
+   "edit_text": "0.3 s: 'Silk ni intlo iron chesthe…' (big, top third). Smoke alarm 'BEEP' sticker at 4.5 s",
+   "neg_extra": ["a face on any clothing", "creatures or monsters", "flames on the kurta (only smoke and the burnt hole)", "a brand name or logo on the iron", "BUNTY's hand burnt or injured"]
+  },
+  {
+   "id": "E6-C2", "title": "The hole and the explanation", "set": "FLAT",
+   "cast": ["BUNTY", "RAVI"], "props": ["kurta"],
+   "beats": [
+    ["0–2.5 s", "Close-up: BUNTY holds the burnt cream silk kurta up in front of his face, one sad eye visible through the iron-shaped hole."],
+    ["2.5–4.5 s", "BUNTY lowers the kurta slowly, lip trembling, and speaks softly."],
+    ["4.5–7 s", "RAVI steps in beside him and holds his phone out toward BUNTY, explaining patiently. The phone faces BUNTY, away from the camera, and a royal-blue glow spills onto BUNTY's face."],
+    ["7–10 s", "RAVI taps the air with one finger like a teacher as he adds the rest. BUNTY looks from the phone to the hole and back, sniffing."]
+   ],
+   "camera": "Starts tight on the eye in the hole, slowly pulls back as the kurta lowers, then widens to a two-shot of RAVI holding out the blue-glowing phone. One continuous move.",
+   "lines": [
+    {"spk": "BUNTY", "mode": "ON", "at": "2.5–4.5 s", "native": "अम्मी ने ईद पे दिया था…", "roman": "Ammi ne Eid pe diya tha…", "en": "Mum gave it to me for Eid…"},
+    {"spk": "RAVI", "mode": "ON", "at": "4.8–7.2 s", "native": "సిల్క్, పట్టు ఇవి డ్రై క్లీనింగ్ కి ఇవ్వాలి.", "roman": "Silk, pattu ivi dry cleaning ki ivvali.", "en": "Silk and pattu go for dry cleaning."},
+    {"spk": "RAVI", "mode": "ON", "at": "7.5–9.3 s", "native": "పెద్ద మెషీన్లు, కరెక్ట్ హీట్.", "roman": "Pedda machines, correct heat.", "en": "Big machines, the correct heat."}
+   ],
+   "sound": "Soft fabric rustle at 0.0 s, BUNTY's shaky breath at 2.5 s, a soft app chime at 4.8 s, BUNTY's sniff at 9.5 s. No music.",
+   "first": "BUNTY's sad eye framed by the iron-shaped hole in the cream silk.",
+   "last": "RAVI explaining with the phone held out, BUNTY's blue-lit face looking down at the hole.",
+   "edit_text": "5 s: 'Silk & pattu → Dry Cleaning' card floating beside the phone, with the dry-cleaning price from the app as edit text. 7.5 s: 'Big machines · Correct heat'",
+   "neg_extra": ["a face on any clothing", "creatures or monsters", "a readable phone screen or catalogue", "the hole shaped like anything other than an iron", "AMMI appearing"]
+  },
+  {
+   "id": "E6-C3", "title": "Sulk", "set": "FLAT",
+   "cast": ["BUNTY", "RAVI"], "props": ["kurta", "lucky_shirt"],
+   "beats": [
+    ["0–2.5 s", "BUNTY slumps onto the sofa hugging the burnt kurta to his chest and pouts. RAVI stands beside the sofa, arms folded."],
+    ["2.5–5 s", "BUNTY sighs dramatically and mutters, staring at the ceiling."],
+    ["5–7.5 s", "RAVI shakes his head and walks out of frame. BUNTY sinks deeper into the cushions."],
+    ["7.5–10 s", "BUNTY's eyes slowly slide toward the open almirah across the room, where the crisp navy checked lucky shirt hangs. He stops pouting and goes very still, thinking."]
+   ],
+   "camera": "Medium shot of the sofa with a slow push-in to a close-up of BUNTY, the almirah and the shirt soft in the background. One continuous move.",
+   "lines": [
+    {"spk": "BUNTY", "mode": "ON", "at": "2.8–4.6 s", "native": "अब बोलके क्या फ़ायदा.", "roman": "Ab bolke kya faida.", "en": "No point telling me now."}
+   ],
+   "sound": "Sofa cushion squish at 0.0 s, BUNTY's long dramatic sigh at 2.5 s, RAVI's footsteps leaving at 5 s, a single low pluck at 8 s. No music.",
+   "first": "BUNTY dropping onto the sofa with the burnt kurta, RAVI standing with folded arms.",
+   "last": "Close on BUNTY's still face looking off toward the almirah, the navy checked shirt soft behind.",
+   "edit_text": "Kinetic caption for the line; a small 😤 sticker at 3 s",
+   "neg_extra": ["a face on any clothing", "creatures or monsters", "BUNTY smiling evilly", "the shirt moving on its own"]
+  },
+  {
+   "id": "E6-C4", "title": "Night theft", "set": "FLAT",
+   "cast": ["BUNTY", "RAVI"], "props": ["lucky_shirt"],
+   "beats": [
+    ["0–2.5 s", "Night, blue moonlight through the window grills. RAVI asleep on the bed in the background. BUNTY at the almirah lifts the navy checked lucky shirt off its hanger, leaving the empty hanger on the rail."],
+    ["2.5–4.5 s", "BUNTY tiptoes toward the camera in exaggerated slow steps, the shirt bundled against his chest."],
+    ["4.5–7 s", "BUNTY stops, puts a finger on his lips, and looks straight into the lens as he whispers. RAVI snores and rolls over behind him."],
+    ["7–10 s", "BUNTY slips out of frame. The view drifts past him back to the almirah: the empty hanger swings gently in the dim blue light, and the almirah door slowly swings shut on it with a click."]
+   ],
+   "camera": "Medium shot of BUNTY at the almirah with RAVI asleep behind, BUNTY walks into a close-up, then the camera drifts past him and pushes in to the empty hanger as the door closes. One continuous move.",
+   "lines": [
+    {"spk": "BUNTY", "mode": "ON", "at": "4.8–7 s", "native": "सिर्फ़ एक दिन, भाई… सॉरी.", "roman": "Sirf ek din, bhai… sorry.", "en": "Just one day, bro… sorry."}
+   ],
+   "sound": "Hanger scrape at 0.0 s, cartoon tiptoe steps from 2.5 s, RAVI's snore at 6 s, hanger squeak as it swings at 7.5 s, almirah door click at 9.3 s. No music.",
+   "first": "BUNTY in moonlight lifting the navy checked shirt off its hanger, RAVI asleep behind.",
+   "last": "The almirah door closing on the empty hanger in dim blue light.",
+   "edit_text": "Cliffhanger at 9 s: 'Lucky shirt… missing.' then the end card",
+   "neg_extra": ["a face on any clothing", "creatures or monsters", "RAVI waking up", "a bright room light switched on", "BUNTY looking villainous or threatening"]
+  }
+ ]
+}

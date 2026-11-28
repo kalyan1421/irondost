@@ -1,0 +1,839 @@
+<title>IronDost Marketing Board</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Outfit:wght@500;600;700;800&family=Figtree:wght@400;500;600;700&display=swap">
+<style>
+/* Layout: brand-blue masthead band, sticky tab rail, one readable column per tab; tables scroll inside their own box */
+:root{
+  --bg:#F5F8FC; --surface:#FFFFFF; --panel:#E6EEF8; --ink:#0E1E3D; --muted:#4A5A78; --line:#D3DEEC;
+  --royal:#1F4FD1; --royal-ink:#FFFFFF; --sky:#1A73B0; --sun:#FFC93C; --sun-ink:#0E1E3D;
+  --ok:#1E7A4C; --ok-bg:#E2F4EA; --warn:#8A5A00; --warn-bg:#FFF2CC; --bad:#B3261E; --bad-bg:#FBE4E2;
+  --band:#1F4FD1; --band-ink:#FFFFFF; --band-muted:#CFDCFF;
+  --display:"Outfit",ui-sans-serif,system-ui,sans-serif; --body:"Figtree",ui-sans-serif,system-ui,-apple-system,"Segoe UI",sans-serif;
+  --mono:ui-monospace,"SF Mono",Menlo,Consolas,monospace;
+}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){
+  --bg:#0A1426; --surface:#111E36; --panel:#16264A; --ink:#E8EEF8; --muted:#9FB0CC; --line:#24365C;
+  --royal:#7D9BFF; --royal-ink:#0A1426; --sky:#3FB8EA; --sun:#FFC93C; --sun-ink:#0E1E3D;
+  --ok:#6FD39E; --ok-bg:#12352A; --warn:#F2C35B; --warn-bg:#3A2E0E; --bad:#FF8A80; --bad-bg:#3D1A1A;
+  --band:#13285E; --band-ink:#FFFFFF; --band-muted:#A9BCF0; color-scheme:dark}}
+:root[data-theme="dark"]{
+  --bg:#0A1426; --surface:#111E36; --panel:#16264A; --ink:#E8EEF8; --muted:#9FB0CC; --line:#24365C;
+  --royal:#7D9BFF; --royal-ink:#0A1426; --sky:#3FB8EA; --sun:#FFC93C; --sun-ink:#0E1E3D;
+  --ok:#6FD39E; --ok-bg:#12352A; --warn:#F2C35B; --warn-bg:#3A2E0E; --bad:#FF8A80; --bad-bg:#3D1A1A;
+  --band:#13285E; --band-ink:#FFFFFF; --band-muted:#A9BCF0; color-scheme:dark}
+
+*{box-sizing:border-box}
+body{background:var(--bg);color:var(--ink);font-family:var(--body);font-size:15px;line-height:1.55}
+body::before{content:"";position:fixed;inset:0 0 auto;height:env(safe-area-inset-top,0px);z-index:10;background:var(--surface)}
+.wrap{max-width:1080px;margin:0 auto;padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px))}
+h1,h2,h3{font-family:var(--display);text-wrap:balance;line-height:1.15;margin:0}
+h2{font-size:1.6rem;font-weight:700}
+h3{font-size:1.1rem;font-weight:600}
+p{margin:0}
+a{color:var(--royal)}
+:focus-visible{outline:3px solid var(--sky);outline-offset:2px;border-radius:4px}
+
+/* masthead */
+.mast{background:var(--band);color:var(--band-ink)}
+.mast .wrap{padding-block:28px 24px;display:flex;flex-direction:column;gap:14px}
+.brandrow{display:flex;align-items:center;gap:12px}
+.brandrow img{width:44px;height:44px;border-radius:10px;background:#fff;padding:4px}
+.brandrow .word{font-family:var(--display);font-weight:800;font-size:1.35rem;letter-spacing:.01em}
+.mast h1{font-size:clamp(1.8rem,4.5vw,2.7rem);font-weight:800}
+.mast .sub{color:var(--band-muted);max-width:68ch}
+.chips{display:flex;flex-wrap:wrap;gap:8px}
+.chip{font-size:.8rem;font-weight:600;padding:4px 10px;border-radius:999px;background:rgba(255,255,255,.14);color:var(--band-ink)}
+.chip.sun{background:var(--sun);color:var(--sun-ink)}
+
+/* tabs */
+.tabs{position:sticky;top:env(safe-area-inset-top,0px);z-index:5;background:var(--surface);border-bottom:1px solid var(--line)}
+.tabs .wrap{display:flex;gap:4px;overflow-x:auto;scrollbar-width:none}
+.tabs a{flex:none;text-decoration:none;color:var(--muted);font-weight:600;padding:14px 12px;border-bottom:3px solid transparent;font-size:.95rem}
+.tabs a[aria-current="page"]{color:var(--royal);border-bottom-color:var(--royal)}
+.tabs a:hover{color:var(--ink)}
+
+main .wrap{padding-block:28px 64px;display:flex;flex-direction:column;gap:36px}
+section.view{display:flex;flex-direction:column;gap:32px}
+.block{display:flex;flex-direction:column;gap:14px;min-width:0}
+.lede{color:var(--muted);max-width:70ch}
+.eyebrow{font-size:.75rem;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:var(--sky)}
+.src{font-size:.8rem;color:var(--muted)}
+.src code{font-family:var(--mono);font-size:.78rem}
+
+/* grids */
+.grid{display:grid;gap:14px;grid-template-columns:repeat(auto-fit,minmax(240px,1fr))}
+.card{background:var(--surface);border:1px solid var(--line);border-radius:12px;padding:16px;display:flex;flex-direction:column;gap:8px;min-width:0}
+.card .k{font-family:var(--display);font-size:1.9rem;font-weight:700;color:var(--royal);font-variant-numeric:tabular-nums;line-height:1}
+.card .t{font-weight:600}
+.card .d{color:var(--muted);font-size:.92rem}
+
+/* tables */
+.tbl{overflow-x:auto;border:1px solid var(--line);border-radius:12px;background:var(--surface)}
+table{border-collapse:collapse;width:100%;font-size:.9rem;min-width:640px}
+th,td{text-align:left;vertical-align:top;padding:10px 12px;border-bottom:1px solid var(--line)}
+th{font-weight:700;font-size:.78rem;text-transform:uppercase;letter-spacing:.05em;color:var(--muted);background:var(--panel)}
+tr:last-child td{border-bottom:0}
+td.num{font-variant-numeric:tabular-nums;white-space:nowrap}
+tr.past td{opacity:.55}
+tr.today td{background:var(--warn-bg)}
+tr.today td:first-child{box-shadow:inset 4px 0 0 var(--sun)}
+
+.pill{display:inline-block;font-size:.72rem;font-weight:700;padding:2px 8px;border-radius:999px;white-space:nowrap;letter-spacing:.02em}
+.p-now{background:var(--ok-bg);color:var(--ok)}
+.p-later{background:var(--panel);color:var(--muted)}
+.p-block{background:var(--bad-bg);color:var(--bad)}
+.p-wait{background:var(--warn-bg);color:var(--warn)}
+.p-reel{background:var(--royal);color:var(--royal-ink)}
+.p-car{background:var(--panel);color:var(--royal)}
+.p-post{background:var(--sun);color:var(--sun-ink)}
+
+/* checklists */
+.checks{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:2px;background:var(--surface);border:1px solid var(--line);border-radius:12px}
+.checks li{display:flex;gap:12px;align-items:flex-start;padding:12px 14px;border-bottom:1px solid var(--line)}
+.checks li:last-child{border-bottom:0}
+.checks input{width:18px;height:18px;margin-top:3px;accent-color:var(--royal);flex:none}
+.checks label{cursor:pointer;min-width:0}
+.checks label b{display:block}
+.checks label span{color:var(--muted);font-size:.9rem}
+.checks input:checked + label b{text-decoration:line-through;color:var(--muted)}
+.progress{font-size:.85rem;color:var(--muted);font-variant-numeric:tabular-nums}
+
+/* copy blocks */
+.copy{position:relative;background:var(--panel);border-radius:10px;padding:14px 14px 14px;white-space:pre-wrap;font-size:.92rem;min-width:0;overflow-wrap:anywhere}
+.copybtn{font:inherit;font-size:.78rem;font-weight:700;border:1px solid var(--line);background:var(--surface);color:var(--royal);border-radius:8px;padding:4px 10px;cursor:pointer;align-self:flex-start}
+.copybtn:hover{border-color:var(--royal)}
+.caprow{display:flex;flex-direction:column;gap:6px}
+
+/* media */
+.reels{display:grid;gap:18px;grid-template-columns:repeat(auto-fill,minmax(220px,1fr))}
+.reel{background:var(--surface);border:1px solid var(--line);border-radius:14px;overflow:hidden;display:flex;flex-direction:column}
+.reel video{width:100%;aspect-ratio:9/16;background:#000;display:block;max-width:100%}
+.reel .body{padding:12px 14px 14px;display:flex;flex-direction:column;gap:8px}
+.reel .meta{display:flex;flex-wrap:wrap;gap:6px;align-items:center;font-size:.8rem;color:var(--muted)}
+.gallery{display:grid;gap:12px;grid-template-columns:repeat(auto-fill,minmax(150px,1fr))}
+.gallery figure{margin:0;display:flex;flex-direction:column;gap:6px}
+.gallery img{width:100%;border-radius:8px;border:1px solid var(--line);background:var(--panel);display:block}
+.gallery figcaption{font-size:.78rem;color:var(--muted);font-family:var(--mono);overflow-wrap:anywhere}
+.strip{display:flex;gap:10px;overflow-x:auto;padding-bottom:6px}
+.strip img{height:260px;width:auto;border-radius:8px;border:1px solid var(--line);flex:none}
+
+.note{border-left:4px solid var(--sun);background:var(--surface);padding:12px 14px;border-radius:0 10px 10px 0;font-size:.92rem}
+.note.bad{border-left-color:var(--bad)}
+.two{display:grid;gap:18px;grid-template-columns:repeat(auto-fit,minmax(300px,1fr))}
+ol.steps{margin:0;padding-left:1.3em;display:flex;flex-direction:column;gap:8px}
+ol.steps li::marker{font-weight:700;color:var(--royal)}
+.calendar{font-family:var(--mono);font-size:.82rem;white-space:pre;overflow-x:auto;background:var(--panel);border-radius:10px;padding:14px;line-height:1.6}
+footer{color:var(--muted);font-size:.82rem;border-top:1px solid var(--line);padding-top:18px}
+@media (prefers-reduced-motion:reduce){*{scroll-behavior:auto!important}}
+</style>
+
+<header class="mast">
+  <div class="wrap">
+    <div class="brandrow"><img src="assets/irondost-mark.png" alt="IronDost mark"><span class="word">IronDost</span></div>
+    <h1>Marketing, SEO, Google Business Profile and reels plan</h1>
+    <p class="sub">Doorstep ironing and laundry, 6 km around LB Nagar Circle. One board for every plan in <code>docs/marketing</code>, with the ready-made posters, carousels and reels attached. Nothing here has been posted, scheduled or submitted.</p>
+    <div class="chips">
+      <span class="chip sun">North star: delivered orders per week inside the 7 PIN codes</span>
+      <span class="chip">Board made 21 Nov 2026</span>
+      <span class="chip">Main 79934 34932 · Second 70329 90632</span>
+    </div>
+  </div>
+</header>
+
+<nav class="tabs" aria-label="Plan sections">
+  <div class="wrap">
+    <a href="#overview">Overview</a>
+    <a href="#marketing">Marketing</a>
+    <a href="#seo">SEO</a>
+    <a href="#gmb">Google Business</a>
+    <a href="#reels">Reels &amp; Instagram</a>
+    <a href="#assets">Asset library</a>
+  </div>
+</nav>
+
+<main><div class="wrap">
+
+<!-- ============ OVERVIEW ============ -->
+<section class="view" id="v-overview" data-view="overview">
+  <div class="block">
+    <span class="eyebrow">How the four tracks fit</span>
+    <h2>Win one neighbourhood at a time, sell the price, make the second order automatic</h2>
+    <p class="lede">Optimise for delivered first orders in the served PIN codes and a second order from the same home within 14 days. Not installs, not followers. Phase: before the first 100 customers, so trust and proof matter more than reach.</p>
+  </div>
+
+  <div class="grid">
+    <div class="card"><span class="eyebrow">Marketing</span><div class="t">Apartments, PGs, WhatsApp</div><div class="d">15 apartment communities and 10 PGs with coded posters before more ad spend. One ₹250/day click-to-WhatsApp test.</div></div>
+    <div class="card"><span class="eyebrow">SEO</span><div class="t">irondost.in, made local</div><div class="d">Move off <code>web.app</code>, name LB Nagar and the 12 localities, publish 5 guides plus /prices and /areas, connect Search Console.</div></div>
+    <div class="card"><span class="eyebrow">Google Business</span><div class="t">The one fix for "near me"</div><div class="d">Service-area profile, category Laundry service, real photos, weekly posts, an honest review ask after every delivery.</div></div>
+    <div class="card"><span class="eyebrow">Reels</span><div class="t">5 reels ready, real footage next</div><div class="d">Price, pile, how, wedding and PG reels are rendered. Film 6 real clips so the "proof" slots can run.</div></div>
+  </div>
+
+  <div class="block">
+    <div style="display:flex;justify-content:space-between;gap:12px;flex-wrap:wrap;align-items:baseline">
+      <h3>Six blockers to clear before spending</h3><span class="progress" data-progress="blockers"></span>
+    </div>
+    <ul class="checks" data-group="blockers">
+      <li><input type="checkbox" id="b1"><label for="b1"><b>Support phone and email in production admin settings</b><span>Production has neither. Add 79934 34932 and a support email.</span></label></li>
+      <li><input type="checkbox" id="b2"><label for="b2"><b>Deploy the travel-charge and service-area release</b><span>Then set ₹30 and ₹200 in admin. Until then no creative mentions a travel charge.</span></label></li>
+      <li><input type="checkbox" id="b3"><label for="b3"><b>Create or claim the Google Business Profile</b><span>Service-area business. Ready-to-paste fields are on the Google Business tab.</span></label></li>
+      <li><input type="checkbox" id="b4"><label for="b4"><b>Confirm Instagram and Facebook handles, bio link, WhatsApp quick replies</b><span>Bio copy is on the Reels tab. Confirm WhatsApp is active on 79934 34932.</span></label></li>
+      <li><input type="checkbox" id="b5"><label for="b5"><b>Decide the first-order offer</b><span>Recommendation: keep the ₹15 shirt offer as the hook until 30 orders show whether price or trust is the barrier.</span></label></li>
+      <li><input type="checkbox" id="b6"><label for="b6"><b>Decide how orders are traced to a source</b><span>Ask "where did you hear about us?" on every first order, and log it in a tracking sheet with the building code.</span></label></li>
+    </ul>
+    <p class="src">Ticks are saved in this browser only.</p>
+  </div>
+
+  <div class="block">
+    <h3>90-day roadmap, 19 Nov 2026 to 16 Feb 2027</h3>
+    <div class="tbl"><table>
+      <thead><tr><th>Phase</th><th>Dates</th><th>Marketing</th><th>SEO and Google</th><th>Reels and social</th></tr></thead>
+      <tbody>
+        <tr><td><b>1. Unblock</b></td><td class="num">19 Nov – 2 Dec</td><td>Six blockers. First 5 buildings, 5 PGs with coded posters. Ad test 23–29 Nov</td><td>Deploy irondost.in, 301 the other domains, Search Console. Create the profile</td><td>Post the pack daily (11 posts in 12 days). Film the 6 real clips</td></tr>
+        <tr><td><b>2. Foundation</b></td><td class="num">3 – 16 Dec</td><td>10 buildings and 5 PGs reached. After-delivery and day-6 messages running</td><td>Weekly profile post. 10+ real photos. /prices, /areas live</td><td>Wedding-wear and PG weeks. First real-footage reel</td></tr>
+        <tr><td><b>3. Velocity</b></td><td class="num">17 Dec – 13 Jan</td><td>Referral code to every second-order customer. Tailor and boutique counters. Second ad round with the winner</td><td>Citations: JustDial, Sulekha, Bing Places, Apple Business Connect. 2 guides a month</td><td>Christmas, New Year, Sankranti. First review reel (with permission)</td></tr>
+        <tr><td><b>4. Compound</b></td><td class="num">14 Jan – 16 Feb</td><td>Building pickup days. One creator trial. Drop channels that did not pay back</td><td>3×3 Maps rank grid one month after verification</td><td>Repeat the winning reel formats with real footage</td></tr>
+      </tbody>
+    </table></div>
+  </div>
+
+  <div class="two">
+    <div class="block">
+      <h3>Monday scorecard</h3>
+      <div class="tbl"><table style="min-width:0">
+        <thead><tr><th>Stage</th><th>Measure</th></tr></thead>
+        <tbody>
+          <tr><td>Acquisition</td><td>Serviceable enquiries by source (building code, ad, Maps, Instagram, referral)</td></tr>
+          <tr><td>Activation</td><td>Quotes sent, first orders booked, first orders delivered</td></tr>
+          <tr><td>Retention</td><td>Repeat orders; share ordering again within 14 days (target 35%)</td></tr>
+          <tr><td>Referral</td><td>Codes used, Google reviews received</td></tr>
+          <tr><td>Revenue</td><td>Average order value, share of orders under ₹200</td></tr>
+          <tr><td>Service</td><td>On-time pickups and returns, complaints, bill changes</td></tr>
+          <tr><td>Spend</td><td>Rupees by channel; cost per delivered first order</td></tr>
+        </tbody>
+      </table></div>
+    </div>
+    <div class="block">
+      <h3>Open decisions for the owner</h3>
+      <ol class="steps">
+        <li>Monthly budget (₹5,000 / ₹10,000 tiers) and who answers WhatsApp, in which hours</li>
+        <li>First-order offer: none, ₹50 off above ₹250, or the ₹15 shirt</li>
+        <li>When the ₹30-under-₹200 travel charge goes live</li>
+        <li>The return time you will state publicly (the app allows 20 h at the earliest)</li>
+        <li>Referral credit (suggested ₹50 each side) and champion rewards</li>
+        <li>What actually went out in October and early November, and the results</li>
+        <li>Instagram and Facebook handles</li>
+        <li>Is WhatsApp active on 79934 34932?</li>
+      </ol>
+    </div>
+  </div>
+  <p class="src">From <code>irondost-growth-plan-2026-27.md</code> and <code>irondost-november-19-30-plan.md</code>.</p>
+</section>
+
+<!-- ============ MARKETING ============ -->
+<section class="view" id="v-marketing" data-view="marketing" hidden>
+  <div class="block">
+    <span class="eyebrow">Marketing</span>
+    <h2>Channels ranked by expected cost per delivered order</h2>
+    <p class="lede">The ranking is a judgement for a 6 km service. Your own numbers after four weeks replace it. Capacity is the ceiling: 8 pickups per window, 3 windows, 24 a day. Pause ads on any day two windows show Full.</p>
+  </div>
+  <div class="tbl"><table>
+    <thead><tr><th>#</th><th>Channel</th><th>First 90 days</th><th>12 months</th><th>When</th></tr></thead>
+    <tbody>
+      <tr><td class="num">1</td><td><b>Apartment communities</b></td><td>5 buildings a week: association or manager, lift poster with a building code (APT01…), one shared pickup window</td><td>60+ buildings with a weekly pickup day</td><td><span class="pill p-now">Now</span></td></tr>
+      <tr><td class="num">2</td><td><b>PGs and hostels</b> (Dilsukhnagar, Chaitanyapuri)</td><td>10 PGs: notice-board poster, one weekly pickup day per PG</td><td>Monthly account per PG</td><td><span class="pill p-now">Now</span></td></tr>
+      <tr><td class="num">3</td><td><b>Google Business Profile and Maps</b></td><td>Create, real photos, weekly post, honest review ask</td><td>50+ reviews; rank for "ironing near me"</td><td><span class="pill p-now">Now</span></td></tr>
+      <tr><td class="num">4</td><td><b>Instagram and Facebook, organic</b></td><td>The December pack; real footage as soon as it exists</td><td>A library of proof reels</td><td><span class="pill p-now">Now</span></td></tr>
+      <tr><td class="num">5</td><td><b>Click-to-WhatsApp ads</b></td><td>One campaign, 6 km pin, ₹200–300/day, two creatives</td><td>Scale only the cheapest creative per delivered order</td><td><span class="pill p-now">Now, small</span></td></tr>
+      <tr><td class="num">6</td><td><b>WhatsApp status and broadcast</b> (opted-in)</td><td>Weekly: slots open, festival reminders</td><td>Core repeat channel</td><td><span class="pill p-now">Now</span></td></tr>
+      <tr><td class="num">7</td><td><b>Flyers with a QR code</b></td><td>1,000 A5 newspaper inserts in two colonies, one code each</td><td>Repeat only where the code was used</td><td><span class="pill p-wait">Test once</span></td></tr>
+      <tr><td class="num">8</td><td><b>Tailors, boutiques, saree shops</b></td><td>5 counters with a standee and a code</td><td>Referral credit per partner</td><td><span class="pill p-later">Weeks 5–8</span></td></tr>
+      <tr><td class="num">9</td><td><b>Local creators</b> (5k–50k, east Hyderabad)</td><td>One paid, disclosed trial with a code</td><td>Repeat only if orders came</td><td><span class="pill p-later">Weeks 9–12</span></td></tr>
+      <tr><td class="num">10</td><td><b>Schools</b> (uniform ironing)</td><td>Two parent groups through someone you know</td><td>Uniform bundle in June</td><td><span class="pill p-later">Q3 2027</span></td></tr>
+      <tr><td class="num">11</td><td><b>Google Search ads</b></td><td>Skip</td><td>"laundry pickup near me" at ₹150/day once reviews exist</td><td><span class="pill p-later">Q2 2027</span></td></tr>
+      <tr><td class="num">—</td><td>Citywide ads, newspaper, radio, hoardings, app-install campaigns</td><td colspan="2">Skip. Not for a 6 km service</td><td><span class="pill p-block">Skip</span></td></tr>
+    </tbody>
+  </table></div>
+
+  <div class="block">
+    <h3>19 – 30 November, day by day</h3>
+    <p class="lede">11 posts in 12 days: 5 reels, 3 carousels, 3 posters. Today's row is highlighted; past days are faded. Post evenings after work; the first two seconds of a reel matter more than the hour.</p>
+    <div class="tbl"><table id="daytable">
+      <thead><tr><th>Date</th><th>Post</th><th>Stories</th><th>Field and ads</th></tr></thead>
+      <tbody>
+        <tr data-date="2026-11-19"><td class="num"><b>Thu 19</b></td><td><span class="pill p-reel">Reel</span> 7:30 pm · reel-01-price</td><td>Share reel · poll "Who irons at your home?"</td><td>Film 6 real clips. Visit 2 apartment offices</td></tr>
+        <tr data-date="2026-11-20"><td class="num"><b>Fri 20</b></td><td><span class="pill p-car">Carousel</span> 7:30 pm · carousel-rate-card (pin it)</td><td>One price per frame · "DM your area"</td><td>5 lift posters with codes. Finish filming</td></tr>
+        <tr data-date="2026-11-21"><td class="num"><b>Sat 21</b></td><td><span class="pill p-post">Poster</span> 11:00 am · poster-areas</td><td>"Slots open today" with real availability</td><td>3 more apartments. 2 PGs with poster-pg printed</td></tr>
+        <tr data-date="2026-11-22"><td class="num"><b>Sun 22</b></td><td><span class="pill p-reel">Reel</span> 6:00 pm · reel-02-pile</td><td>Question box "What do you want to know before you hand over clothes?"</td><td>Rest day. Answer every question the same evening</td></tr>
+        <tr data-date="2026-11-23"><td class="num"><b>Mon 23</b></td><td>No post. Engage 20 min</td><td>Answer 3 questions, save to FAQ highlight</td><td><b>Start ad test</b>: ₹250/day, reel-01 and reel-02, 7 days</td></tr>
+        <tr data-date="2026-11-24"><td class="num"><b>Tue 24</b></td><td><span class="pill p-car">Carousel</span> 7:30 pm · carousel-how-it-works</td><td>App screen recording, 3 frames</td><td>3 apartments. "Did everything come back right?" to first customers</td></tr>
+        <tr data-date="2026-11-25"><td class="num"><b>Wed 25</b></td><td><span class="pill p-reel">Reel</span> 7:30 pm · reel-03-how</td><td>"Slots open today"</td><td>3 PGs. Check how many ad chats are inside the area</td></tr>
+        <tr data-date="2026-11-26"><td class="num"><b>Thu 26</b></td><td><span class="pill p-post">Poster</span> 7:30 pm · poster-office-week</td><td>"5 shirts + 5 trousers ₹175" · DM "PICKUP"</td><td>Create or claim the Google Business Profile, add 5 real photos</td></tr>
+        <tr data-date="2026-11-27"><td class="num"><b>Fri 27</b></td><td><span class="pill p-reel">Reel</span> 7:30 pm · real footage: one order counted, pressed, packed</td><td>Behind the scenes, 3 frames</td><td>3 apartments. Stop the weaker creative if ₹600 spent with no serviceable chat</td></tr>
+        <tr data-date="2026-11-28"><td class="num"><b>Sat 28</b></td><td><span class="pill p-reel">Reel</span> 11:00 am · reel-04-wedding</td><td>poster-wedding story</td><td>3 tailors or boutiques with a counter card and code</td></tr>
+        <tr data-date="2026-11-29"><td class="num"><b>Sun 29</b></td><td><span class="pill p-car">Carousel</span> 6:00 pm · carousel-saree-care</td><td>Question box "Which saree are you worried about?"</td><td>Ask delivered customers (who said yes) for a Google review</td></tr>
+        <tr data-date="2026-11-30"><td class="num"><b>Mon 30</b></td><td><span class="pill p-post">Poster</span> 7:30 pm · poster-doorstep + thank-you caption</td><td>"December slots are open"</td><td><b>Review the month.</b> Ad test ends; decide December spend</td></tr>
+      </tbody>
+    </table></div>
+  </div>
+
+  <div class="two">
+    <div class="block">
+      <h3>The ad test</h3>
+      <div class="tbl"><table style="min-width:0"><tbody>
+        <tr><td><b>Objective</b></td><td>Messages to WhatsApp</td></tr>
+        <tr><td><b>Location</b></td><td>Pin on LB Nagar Circle, smallest radius covering the 7 PINs, "people living in this location"</td></tr>
+        <tr><td><b>Creatives</b></td><td>A: reel-01-price · B: reel-02-pile, same text</td></tr>
+        <tr><td><b>Budget</b></td><td>₹250/day × 7 = ₹1,750. Stop a creative at ₹600 with no serviceable chat</td></tr>
+        <tr><td><b>Judge on</b></td><td>Cost per delivered first order, share of chats inside the served PINs. Not clicks</td></tr>
+      </tbody></table></div>
+      <div class="caprow"><div class="copy" id="adtext">LB Nagar, ironing piling up? IronDost picks up from your door. Shirt ironing from ₹15. See the price and the return slot before you confirm.
+
+Headline: Laundry pickup near you
+Button: Send WhatsApp message</div><button class="copybtn" data-copy="adtext">Copy ad text</button></div>
+    </div>
+    <div class="block">
+      <h3>WhatsApp quick replies</h3>
+      <div class="caprow"><div class="copy" id="wa1">Hi! Thanks for contacting IronDost. Which area are you in, and what do you need: ironing, wash and iron, or dry cleaning?</div><button class="copybtn" data-copy="wa1">Copy first reply</button></div>
+      <div class="caprow"><div class="copy" id="wa2">We pick up there. Shirt ironing is ₹15, trousers ₹15. Shall I send the full rate card? You can book in the app, or tell me the clothes and I will book it for you.</div><button class="copybtn" data-copy="wa2">Copy area yes</button></div>
+      <div class="caprow"><div class="copy" id="wa3">Sorry, we are not in that area yet. If you enter your address in the app and tap 'Tell me when you're here', we will let you know when we reach you.</div><button class="copybtn" data-copy="wa3">Copy area no</button></div>
+      <div class="caprow"><div class="copy" id="wa4">Did everything come back right? If anything is off, tell me and we will fix it today.</div><button class="copybtn" data-copy="wa4">Copy after delivery</button></div>
+    </div>
+  </div>
+
+  <div class="block">
+    <h3>Retention and referral loop</h3>
+    <div class="tbl"><table>
+      <thead><tr><th>Move</th><th>When</th><th>How</th></tr></thead>
+      <tbody>
+        <tr><td>"Did everything come back right?"</td><td class="num">2 h after delivery</td><td>WhatsApp, personal. Fix anything the same day</td></tr>
+        <tr><td>Honest review request</td><td class="num">Next day</td><td>Only if they said yes above. Google review link, no reward</td></tr>
+        <tr><td>"Same time next week?"</td><td class="num">Day 6</td><td>One message, only to customers who agreed to reminders</td></tr>
+        <tr><td>Building pickup day</td><td class="num">From 5 customers</td><td>"Every Tuesday evening at {building}"</td></tr>
+        <tr><td>Neighbour code</td><td class="num">After 2nd order</td><td>Suggested ₹50 credit both sides on a friend's first order of ₹200+. Run by hand with coupons until built</td></tr>
+        <tr><td>Lapsed win-back</td><td class="num">30 days quiet</td><td>One message; ask what went wrong before offering anything</td></tr>
+      </tbody>
+    </table></div>
+  </div>
+
+  <div class="two">
+    <div class="block">
+      <h3>Budget tiers</h3>
+      <div class="grid">
+        <div class="card"><div class="k">₹5,000</div><div class="d">Print ₹1,500 · ads ₹3,000 · reserve ₹500</div></div>
+        <div class="card"><div class="k">₹10,000</div><div class="d">Print ₹2,000 · ads ₹6,000 · creator or partner credits ₹1,500 · reserve ₹500</div></div>
+        <div class="card"><div class="k">₹25,000</div><div class="d">Only after a channel shows cost per delivered customer below 3-month contribution</div></div>
+      </div>
+    </div>
+    <div class="block">
+      <h3>30 November targets</h3>
+      <div class="tbl"><table style="min-width:0">
+        <thead><tr><th>Measure</th><th>Target to test</th></tr></thead>
+        <tbody>
+          <tr><td>Serviceable enquiries</td><td class="num">80</td></tr>
+          <tr><td>First orders delivered</td><td class="num">30</td></tr>
+          <tr><td>Second orders from those</td><td class="num">10</td></tr>
+          <tr><td>Buildings / PGs with a poster</td><td class="num">15 / 5</td></tr>
+          <tr><td>Ad spend</td><td class="num">₹1,750</td></tr>
+          <tr><td>On-time pickups and returns</td><td class="num">9 in 10</td></tr>
+          <tr><td>Google reviews</td><td class="num">5</td></tr>
+        </tbody>
+      </table></div>
+    </div>
+  </div>
+  <div class="note"><b>Voice rules.</b> Helpful, local, direct. Say "clear price", "pickup slot", "return window". Never "cheapest", "fastest", "same-day", "guaranteed", "premium", "live tracking". Never name a competitor. Telugu lines only after a Telugu speaker checks them.</div>
+</section>
+
+<!-- ============ SEO ============ -->
+<section class="view" id="v-seo" data-view="seo" hidden>
+  <div class="block">
+    <span class="eyebrow">SEO</span>
+    <h2>Strong technical base, wrong about the business</h2>
+    <p class="lede">The live site at <code>irondost-app.web.app</code> is fast, HTTPS, with schema and a sitemap. But it says "across Hyderabad", never says "LB Nagar", and lives on an address that will not build authority. Nobody ranks for "IronDost" yet. Search demand below is judgement, not measured volume: no SEO tool was connected.</p>
+  </div>
+
+  <div class="block">
+    <div style="display:flex;justify-content:space-between;gap:12px;flex-wrap:wrap;align-items:baseline">
+      <h3>Quick wins, in order</h3><span class="progress" data-progress="seo"></span>
+    </div>
+    <ul class="checks" data-group="seo">
+      <li><input type="checkbox" id="s1"><label for="s1"><b>Deploy the site on irondost.in</b><span>Build with <code>NEXT_PUBLIC_SITE_URL=https://irondost.in</code>. Carries the new phone, store links and 5 guides. DNS at Hostinger.</span></label></li>
+      <li><input type="checkbox" id="s2"><label for="s2"><b>301 every other host to irondost.in</b><span>www, irondost.com, irondost.shop, and <code>web.app</code> once the store listing URLs move.</span></label></li>
+      <li><input type="checkbox" id="s3"><label for="s3"><b>Make the home page local</b><span>Title, meta, an "around LB Nagar" H2, the 12 localities, schema <code>areaServed</code> plus a 6 km <code>GeoCircle</code>.</span></label></li>
+      <li><input type="checkbox" id="s4"><label for="s4"><b>Search Console</b><span>Verify by DNS TXT, submit the sitemap, request indexing for home, /blog and the 5 guides.</span></label></li>
+      <li><input type="checkbox" id="s5"><label for="s5"><b>Google Business Profile</b><span>Biggest lever for "near me". See the Google Business tab.</span></label></li>
+    </ul>
+  </div>
+
+  <div class="two">
+    <div class="block"><h3>New home title (54 chars)</h3><div class="caprow"><div class="copy" id="seotitle">Ironing &amp; Laundry Pickup in LB Nagar, Hyderabad, IronDost</div><button class="copybtn" data-copy="seotitle">Copy title</button></div></div>
+    <div class="block"><h3>New meta description</h3><div class="caprow"><div class="copy" id="seometa">Doorstep ironing, wash &amp; iron and dry cleaning around LB Nagar, Dilsukhnagar, Nagole and Vanasthalipuram. Book in the app or WhatsApp 79934 34932.</div><button class="copybtn" data-copy="seometa">Copy meta</button></div></div>
+  </div>
+
+  <div class="block">
+    <h3>Keyword targets</h3>
+    <div class="tbl"><table>
+      <thead><tr><th>Keyword</th><th>Difficulty</th><th>Opportunity</th><th>Intent</th><th>Page that wins it</th></tr></thead>
+      <tbody>
+        <tr><td>ironing service LB Nagar</td><td>Easy–moderate</td><td><span class="pill p-now">High</span></td><td>Transactional</td><td>Home H2 + Business Profile</td></tr>
+        <tr><td>laundry pickup LB Nagar</td><td>Easy–moderate</td><td><span class="pill p-now">High</span></td><td>Transactional</td><td>Home + /areas</td></tr>
+        <tr><td>ironing service near me</td><td>Moderate (Maps)</td><td><span class="pill p-now">High</span></td><td>Transactional</td><td>Business Profile</td></tr>
+        <tr><td>dry cleaning LB Nagar</td><td>Moderate</td><td><span class="pill p-now">High</span></td><td>Transactional</td><td>/services/dry-cleaning</td></tr>
+        <tr><td>saree dry cleaning Hyderabad</td><td>Moderate</td><td><span class="pill p-now">High</span></td><td>Commercial</td><td>Saree guide + services</td></tr>
+        <tr><td>ironing price per shirt Hyderabad</td><td>Easy</td><td><span class="pill p-now">High</span></td><td>Commercial</td><td>/prices</td></tr>
+        <tr><td>laundry service Dilsukhnagar</td><td>Moderate</td><td><span class="pill p-wait">Medium</span></td><td>Transactional</td><td>/areas section</td></tr>
+        <tr><td>ironing for PG Dilsukhnagar</td><td>Easy</td><td><span class="pill p-wait">Medium</span></td><td>Transactional</td><td>PG guide</td></tr>
+        <tr><td>laundry pickup Vanasthalipuram / Nagole / Saroornagar</td><td>Easy</td><td><span class="pill p-wait">Medium</span></td><td>Transactional</td><td>/areas</td></tr>
+        <tr><td>wash and iron service LB Nagar</td><td>Easy</td><td><span class="pill p-wait">Medium</span></td><td>Transactional</td><td>Services page</td></tr>
+        <tr><td>will laundry bill change after pickup</td><td>Easy</td><td><span class="pill p-wait">Medium</span></td><td>Informational</td><td>Billing guide</td></tr>
+        <tr><td>wedding saree and sherwani dry cleaning</td><td>Easy</td><td><span class="pill p-wait">Seasonal</span></td><td>Commercial</td><td>Seasonal guide (Dec–Feb)</td></tr>
+        <tr><td>IronDost</td><td>Easy</td><td><span class="pill p-now">Brand</span></td><td>Navigational</td><td>Domain + profile + listings</td></tr>
+      </tbody>
+    </table></div>
+  </div>
+
+  <div class="two">
+    <div class="block">
+      <h3>Five guides written, waiting on deploy</h3>
+      <div class="tbl"><table style="min-width:0">
+        <thead><tr><th>URL</th><th>Answers</th></tr></thead>
+        <tbody>
+          <tr><td><code>/blog/how-doorstep-ironing-pickup-works</code></td><td>What happens after I book?</td></tr>
+          <tr><td><code>/blog/areas-we-serve-around-lb-nagar</code></td><td>Do you pick up in my area?</td></tr>
+          <tr><td><code>/blog/silk-saree-dry-cleaning-what-to-tell-us</code></td><td>How do I get a silk saree cleaned safely?</td></tr>
+          <tr><td><code>/blog/ironing-for-pg-and-hostel-residents-dilsukhnagar</code></td><td>Shirts ironed near my PG?</td></tr>
+          <tr><td><code>/blog/will-laundry-bill-change-after-pickup</code></td><td>Will the bill change?</td></tr>
+        </tbody>
+      </table></div>
+    </div>
+    <div class="block">
+      <h3>Content to add this quarter</h3>
+      <ol class="steps">
+        <li><b>/prices</b>: dated rate-card table (top commercial question)</li>
+        <li><b>/areas</b>: 7 PIN codes and a PIN checker</li>
+        <li><b>Three service pages</b>: ironing, wash and iron, dry cleaning</li>
+        <li><b>Our work</b> gallery with real before/after photos, reused on the profile</li>
+        <li><b>Citations</b>: JustDial, Sulekha, IndiaMART, Bing Places, identical name, phone, website</li>
+        <li><b>Two guides a month</b>, each answering one question in its first sentence</li>
+        <li><b>Links</b>: local Hyderabad blogs, apartment newsletters, PG directories</li>
+      </ol>
+    </div>
+  </div>
+
+  <div class="block">
+    <h3>Domains</h3>
+    <div class="tbl"><table>
+      <thead><tr><th>Address</th><th>Serves</th><th>Where</th></tr></thead>
+      <tbody>
+        <tr><td><b>irondost.in</b></td><td>Website (<code>apps/web</code>)</td><td>Main address on posters, stores and the profile</td></tr>
+        <tr><td>www, irondost.com, irondost.shop</td><td>301 to irondost.in, path kept</td><td>Protect the name; never serve their own copy</td></tr>
+        <tr><td>admin.irondost.in</td><td>Admin</td><td>Vercel</td></tr>
+        <tr><td>api.irondost.in</td><td>API</td><td>Render custom domain</td></tr>
+      </tbody>
+    </table></div>
+  </div>
+  <p class="src">From <code>seo/seo-audit-2026-11-19.md</code>, <code>irondost-domains-website-seo-instagram-plan-2026-11-19.md</code>, <code>blog-and-search-plan.md</code>.</p>
+</section>
+
+<!-- ============ GMB ============ -->
+<section class="view" id="v-gmb" data-view="gmb" hidden>
+  <div class="block">
+    <span class="eyebrow">Google Business Profile</span>
+    <h2>Without a profile, IronDost cannot appear in the Maps pack at all</h2>
+    <p class="lede">"Ironing near me" and "laundry pickup LB Nagar" are decided in Maps. No profile, no JustDial or Sulekha listing, no brand result exists today. Create it as a service-area business with the address hidden.</p>
+  </div>
+
+  <div class="block">
+    <h3>Setup steps</h3>
+    <ol class="steps">
+      <li><b>Deploy irondost.in first.</b> The profile's website link should never point at a parked page; leave it empty until then.</li>
+      <li><b>Create the profile</b> with the owner's Google account plus a second manager. Check first that none exists under Cloud Ironing Factory; claim it if so.</li>
+      <li><b>Verify by live video</b> in one continuous take: the street and a landmark, the pressing table and packed orders, something branded, and proof of management. Use the real work address. 79934 34932 must answer.</li>
+      <li><b>Fill every field</b> below, add 10+ real photos (no generated images), then 2–3 new photos a week for a month.</li>
+      <li><b>Post weekly</b> and <b>ask every delivered customer</b> for an honest review. Reply to every review within two days.</li>
+      <li><b>Measure after 30 days</b>: a 3×3 rank grid around LB Nagar Circle for "laundry service" and "ironing service", plus calls and website clicks.</li>
+    </ol>
+  </div>
+
+  <div class="block">
+    <h3>Profile fields</h3>
+    <div class="tbl"><table>
+      <thead><tr><th>Field</th><th>Value</th></tr></thead>
+      <tbody>
+        <tr><td><b>Business name</b></td><td>IronDost. No keywords in the name; that gets profiles suspended. Must match signage</td></tr>
+        <tr><td><b>Type</b></td><td>Service-area business (untick "location customers can visit")</td></tr>
+        <tr><td><b>Primary category</b></td><td>Laundry service</td></tr>
+        <tr><td><b>Extra categories</b></td><td>Dry cleaner, Ironing service (or Laundry)</td></tr>
+        <tr><td><b>Service area</b></td><td>LB Nagar, Dilsukhnagar, Chaitanyapuri, Saroornagar, Mansoorabad, Nagole, Bandlaguda, Vanasthalipuram, Karmanghat, Champapet, Santosh Nagar, Saidabad</td></tr>
+        <tr><td><b>Phones</b></td><td>+91 79934 34932 (primary), +91 70329 90632</td></tr>
+        <tr><td><b>Website</b></td><td><code>https://irondost.in/?utm_source=google&amp;utm_medium=organic&amp;utm_campaign=gbp</code></td></tr>
+        <tr><td><b>Booking link</b></td><td>Play Store listing, or <code>wa.me/917993434932</code> with a prefilled message</td></tr>
+        <tr><td><b>Hours</b></td><td>Pickup 7 am – 8 pm daily. <span class="pill p-wait">Confirm calls are answered in these hours</span></td></tr>
+        <tr><td><b>Attributes</b></td><td>Online appointments; UPI, cards, cash</td></tr>
+      </tbody>
+    </table></div>
+  </div>
+
+  <div class="block">
+    <h3>Description (736 of 750 characters)</h3>
+    <div class="caprow"><div class="copy" id="gmbdesc">IronDost picks up your clothes from your door, irons, washes or dry-cleans them, and brings them back pressed and packed, usually the next day. We serve homes, PGs and offices within about 6 km of LB Nagar Circle: LB Nagar, Dilsukhnagar, Chaitanyapuri, Saroornagar, Mansoorabad, Nagole, Bandlaguda, Vanasthalipuram, Karmanghat, Champapet, Santosh Nagar and Saidabad. Book in the IronDost app on Android or iPhone, or by phone or WhatsApp. Choose a pickup window between 7 am and 8 pm, any day. You see every price and the total before you confirm, and the amount only changes if the count at pickup is different. Pay by UPI, card or cash at delivery. Tell us about stains, zari or delicate work before pickup and we handle it with care.</div><button class="copybtn" data-copy="gmbdesc">Copy description</button></div>
+  </div>
+
+  <div class="block">
+    <h3>Services and prices</h3>
+    <div class="tbl"><table>
+      <thead><tr><th>Service</th><th>Description</th><th>Price</th></tr></thead>
+      <tbody>
+        <tr><td><b>Ironing</b></td><td>Shirts, trousers, kurtas steam-pressed and folded or hung</td><td class="num">From ₹15 (shirt offer; ₹20 regular)</td></tr>
+        <tr><td><b>Saree ironing</b></td><td>Cotton and silk, care for zari and borders</td><td class="num">₹50</td></tr>
+        <tr><td><b>Wash and iron</b></td><td>Washed, dried, pressed and packed</td><td class="num">From ₹35 (shirt), trousers ₹40</td></tr>
+        <tr><td><b>Dry cleaning: suits, blazers</b></td><td>Cleaned and pressed</td><td class="num">Blazer ₹200, 2-piece suit ₹350</td></tr>
+        <tr><td><b>Dry cleaning: silk sarees</b></td><td>Tell us about stains and zari before pickup</td><td class="num">₹250</td></tr>
+        <tr><td><b>Bedsheets</b></td><td>Ironing single; wash and iron double</td><td class="num">₹25 / ₹70</td></tr>
+        <tr><td><b>Doorstep pickup</b></td><td>7–11 am, 11 am–4 pm, 4–8 pm</td><td class="num">Free <span class="pill p-wait">confirm</span></td></tr>
+      </tbody>
+    </table></div>
+  </div>
+
+  <div class="block">
+    <h3>First four weekly posts</h3>
+    <p class="lede">Google rejects post text with phone numbers, so use the Call button. Upload at 1200 × 900 or 1080 × 1080 and keep text away from the edges.</p>
+    <div class="grid">
+      <div class="card"><img src="posters/poster-doorstep.jpg" alt="Doorstep poster" loading="lazy" style="border-radius:8px"><span class="eyebrow">Week 1 · Call now</span><div class="copy" id="gp1">Doorstep ironing and laundry pickup is now live around LB Nagar. Pick a window between 7 am and 8 pm, see the total before you confirm, and get your clothes back pressed.</div><button class="copybtn" data-copy="gp1">Copy post</button></div>
+      <div class="card"><img src="posters/poster-areas.jpg" alt="Areas poster" loading="lazy" style="border-radius:8px"><span class="eyebrow">Week 2 · Learn more</span><div class="copy" id="gp2">Do we pick up from your street? We cover LB Nagar, Dilsukhnagar, Chaitanyapuri, Saroornagar, Nagole, Vanasthalipuram and six more localities around LB Nagar Circle.</div><button class="copybtn" data-copy="gp2">Copy post</button></div>
+      <div class="card"><img src="posters/poster-wedding.jpg" alt="Wedding poster" loading="lazy" style="border-radius:8px"><span class="eyebrow">Week 3 · Book</span><div class="copy" id="gp3">Wedding season: sarees, suits and blazers cleaned and pressed before the function. Tell us about stains and zari when you book.</div><button class="copybtn" data-copy="gp3">Copy post</button></div>
+      <div class="card"><img src="posters/poster-pg.jpg" alt="PG poster" loading="lazy" style="border-radius:8px"><span class="eyebrow">Week 4 · Book</span><div class="copy" id="gp4">No iron in your PG? Book a weekly pickup of shirts and trousers around Dilsukhnagar and LB Nagar, with no minimum order.</div><button class="copybtn" data-copy="gp4">Copy post</button></div>
+    </div>
+  </div>
+
+  <div class="two">
+    <div class="block">
+      <h3>Q&amp;A to seed</h3>
+      <ol class="steps">
+        <li><b>Which areas?</b> About 6 km of LB Nagar Circle: the 12 localities.</li>
+        <li><b>How do I book?</b> The app on Android or iPhone, or call or WhatsApp. Pick a window 7 am – 8 pm.</li>
+        <li><b>Will the price change?</b> Only if the count at pickup differs. You see the total first.</li>
+        <li><b>How long?</b> Ironing usually next day. Dry cleaning longer; ask when booking for a function.</li>
+        <li><b>Every stain out?</b> We try but cannot promise. Show us the stain at pickup.</li>
+      </ol>
+    </div>
+    <div class="block">
+      <h3>Review request (never offer anything for it)</h3>
+      <div class="caprow"><div class="copy" id="review">Hi {name}, your IronDost order {order no.} was delivered today. If everything came back right, would you leave an honest review on Google? It helps neighbours find us. {review link}
+If anything was wrong, just reply here and we will fix it.</div><button class="copybtn" data-copy="review">Copy message</button></div>
+    </div>
+  </div>
+
+  <div class="block">
+    <h3>Photo shot list (real photos only)</h3>
+    <div class="tbl"><table>
+      <thead><tr><th>Slot</th><th>What to shoot</th></tr></thead>
+      <tbody>
+        <tr><td>Logo 720×720</td><td>Brand mark from <code>packages/brand</code></td></tr>
+        <tr><td>Cover 1080×608</td><td>Pressed shirts on hangers, IronDost bag in front</td></tr>
+        <tr><td>1–4</td><td>Pressing table with iron working · clothes counted · sarees folded with zari visible · packed, sealed order with label</td></tr>
+        <tr><td>5–6</td><td>Handover at a door (hands and bag only) · partner on the scooter with the bag (no plate)</td></tr>
+        <tr><td>7–10</td><td>Before and after shirt · suit on a hanger · team at work (with consent) · app basket on a phone</td></tr>
+        <tr><td>Video 10–30 s</td><td>Count, press, fold, pack in one clip</td></tr>
+      </tbody>
+    </table></div>
+  </div>
+
+  <div class="block">
+    <div style="display:flex;justify-content:space-between;gap:12px;flex-wrap:wrap;align-items:baseline">
+      <h3>Waiting on the owner</h3><span class="progress" data-progress="gmb"></span>
+    </div>
+    <ul class="checks" data-group="gmb">
+      <li><input type="checkbox" id="g1"><label for="g1"><b>Name on signage</b><span>"IronDost" or "Cloud Ironing Factory Pvt Ltd"?</span></label></li>
+      <li><input type="checkbox" id="g2"><label for="g2"><b>Real work address</b><span>Where clothes are processed. Signage? Walk-ins?</span></label></li>
+      <li><input type="checkbox" id="g3"><label for="g3"><b>Hours calls are answered</b><span>And closed days, if any</span></label></li>
+      <li><input type="checkbox" id="g4"><label for="g4"><b>Owner Google account + second manager</b><span></span></label></li>
+      <li><input type="checkbox" id="g5"><label for="g5"><b>Opening date</b><span>Month and year of the first real order</span></label></li>
+      <li><input type="checkbox" id="g6"><label for="g6"><b>WhatsApp on 79934 34932; does 70329 90632 answer?</b><span></span></label></li>
+      <li><input type="checkbox" id="g7"><label for="g7"><b>Real photos and a short video</b><span>Shot list above</span></label></li>
+      <li><input type="checkbox" id="g8"><label for="g8"><b>Business email</b><span>hello@irondost.in, to replace the personal Gmail</span></label></li>
+      <li><input type="checkbox" id="g9"><label for="g9"><b>GST or shop licence</b><span>Optional; helps if verification asks</span></label></li>
+      <li><input type="checkbox" id="g10"><label for="g10"><b>Social profile URLs</b><span>For the profile and website schema</span></label></li>
+    </ul>
+  </div>
+  <p class="src">From <code>seo/gmb-profile-pack.md</code> and <code>seo/local-seo-2026-11-19.md</code>.</p>
+</section>
+
+<!-- ============ REELS ============ -->
+<section class="view" id="v-reels" data-view="reels" hidden>
+  <div class="block">
+    <span class="eyebrow">Reels and Instagram</span>
+    <h2>Five reels rendered, 1080 × 1920 with music</h2>
+    <p class="lede">Each reel ends on the logo, both numbers and the store QR codes. The ₹15 shirt and ₹75 PG prices rely on the shirt offer; drop them if it ends. Post the price reels only while the live rate card matches.</p>
+  </div>
+
+  <div class="reels">
+    <article class="reel">
+      <video src="reels/reel-01-price.mp4" controls preload="metadata" playsinline></video>
+      <div class="body">
+        <div class="meta"><span class="pill p-reel">13 s</span><span>Hook 4 · Specificity</span><span>Thu 19 Nov · ad creative A</span></div>
+        <h3>Price first</h3>
+        <div class="copy" id="c1">Shirt ironing ₹15. Trousers ₹15. Saree ₹50.
+You see every price and the total before you confirm, and we pick up from your door around LB Nagar.
+Call or WhatsApp 79934 34932, or search "IronDost" on the Play Store or App Store.
+#IronDost #LBNagar #Dilsukhnagar #Hyderabad #IroningService</div>
+        <button class="copybtn" data-copy="c1">Copy caption</button>
+      </div>
+    </article>
+    <article class="reel">
+      <video src="reels/reel-02-pile.mp4" controls preload="metadata" playsinline></video>
+      <div class="body">
+        <div class="meta"><span class="pill p-reel">14 s</span><span>Hooks 6 → 9</span><span>Sun 22 Nov · ad creative B</span></div>
+        <h3>The chair pile</h3>
+        <div class="copy" id="c2">Every home has the chair. 🪑
+Hand the pile over at your door and get it back pressed. Shirt ironing ₹15.
+Call or WhatsApp 79934 34932.
+#IronDost #LBNagar #SundayMood #Hyderabad</div>
+        <button class="copybtn" data-copy="c2">Copy caption</button>
+      </div>
+    </article>
+    <article class="reel">
+      <video src="reels/reel-03-how.mp4" controls preload="metadata" playsinline></video>
+      <div class="body">
+        <div class="meta"><span class="pill p-reel">15 s</span><span>Hook 10 · Simplicity</span><span>Wed 25 Nov</span></div>
+        <h3>Book in three steps</h3>
+        <div class="copy" id="c3">Ironing pickup in three steps, and the price is on screen at every one.
+Get the app: search "IronDost". Or call 79934 34932.
+#IronDost #LBNagar #Hyderabad</div>
+        <button class="copybtn" data-copy="c3">Copy caption</button>
+      </div>
+    </article>
+    <article class="reel">
+      <video src="reels/reel-04-wedding.mp4" controls preload="metadata" playsinline></video>
+      <div class="body">
+        <div class="meta"><span class="pill p-reel">11 s</span><span>Callout</span><span>Sat 28 Nov</span></div>
+        <h3>Wedding wear</h3>
+        <div class="copy" id="c4">Wedding this month? Saree ironing ₹50, silk saree dry cleaning ₹250, suit ₹350, blazer ₹200.
+Tell us about stains and zari when you book. We will try to remove stains but cannot promise it.
+Call or WhatsApp 79934 34932.
+#IronDost #LBNagar #WeddingSeason #SareeCare</div>
+        <button class="copybtn" data-copy="c4">Copy caption</button>
+      </div>
+    </article>
+    <article class="reel">
+      <video src="reels/reel-05-pg.mp4" controls preload="metadata" playsinline></video>
+      <div class="body">
+        <div class="meta"><span class="pill p-reel">12 s</span><span>Callout</span><span>Thu 10 Dec</span></div>
+        <h3>No iron in your PG?</h3>
+        <div class="copy" id="c5">No iron in your PG? 5 shirts ironed for ₹75, picked up from your door around Dilsukhnagar and LB Nagar.
+Call or WhatsApp 79934 34932.
+#IronDost #Dilsukhnagar #PGLife #Hyderabad</div>
+        <button class="copybtn" data-copy="c5">Copy caption</button>
+      </div>
+    </article>
+  </div>
+  <p class="src">The PG caption is drafted here from the reel's offer; the other four are from the 19–30 November plan.</p>
+
+  <div class="block">
+    <h3>Six-week Instagram calendar</h3>
+    <p class="lede">4–5 posts a week, at least 3 reels. "REAL" slots need the filmed footage; without it, reuse a pack reel with a new first frame.</p>
+<div class="calendar">WEEK 1 · 19–25 Nov · "See the price first"
+  Thu 19  REEL      reel-01-price
+  Sat 21  CAROUSEL  carousel-rate-card (save it)
+  Sun 22  REEL      reel-02-pile
+  Tue 24  POSTER    poster-areas
+  Wed 25  REEL      reel-03-how
+
+WEEK 2 · 26 Nov–2 Dec · "How it works"
+  Fri 27  CAROUSEL  carousel-how-it-works
+  Sat 28  REEL      REAL: one order counted, pressed, packed
+  Sun 29  POSTER    poster-office-week (5 shirts + 5 trousers ₹175)
+  Tue 1   REEL      "You do not need to spend Sunday ironing" (founder to camera)
+
+WEEK 3 · 3–9 Dec · Wedding wear          → ad test runs this week if not done
+  Thu 3   REEL      reel-04-wedding
+  Sat 5   CAROUSEL  carousel-saree-care
+  Sun 6   POSTER    poster-wedding
+  Tue 8   REEL      REAL: "our first N orders" (only if true)
+
+WEEK 4 · 10–16 Dec · PGs and students
+  Thu 10  REEL      reel-05-pg
+  Sat 12  POSTER    poster-pg
+  Sun 13  CAROUSEL  carousel-faq ("Will the price change after pickup?")
+  Tue 15  REEL      REAL: a first-week story (late pickup, how it was fixed)
+
+WEEK 5 · 17–23 Dec · Christmas and year-end
+  Thu 17  POSTER    poster-christmas
+  Sat 19  REEL      REAL: folding a shirt so it stays crisp
+  Sun 20  REEL      reel-01-price, new first frame
+  Tue 22  POSTER    a real review (with permission) or poster-areas
+
+WEEK 6 · 24–31 Dec · New Year, set up Sankranti
+  Fri 25  POSTER    poster-christmas greeting
+  Sat 26  REEL      REAL: after-party pile to pressed
+  Sun 27  CAROUSEL  carousel-rate-card again
+  Tue 29  POSTER    poster-new-year
+  Wed 30  REEL      reel-03-how again</div>
+  </div>
+
+  <div class="two">
+    <div class="block">
+      <h3>Ten hooks</h3>
+      <ol class="steps">
+        <li><b>Curiosity</b>: one screen most laundry services would rather you never saw: the total, before anyone touches your clothes.</li>
+        <li><b>Loss</b>: if ironing takes you two hours every Sunday, that is more than four full days a year.</li>
+        <li><b>Contrast</b>: most people expect the bill after the clothes are gone. Here it comes before.</li>
+        <li><b>Specificity</b> (strongest): Shirt ₹15. Trousers ₹15. Saree ₹50. Windows 7–11, 11–4, 4–8.</li>
+        <li><b>Controversy</b>: ironing your own shirts is not a virtue.</li>
+        <li><b>Pattern interrupt</b>: …and that is the chair. The one with all the clothes on it.</li>
+        <li><b>Identity</b>: for the LB Nagar parent still ironing uniforms at 10 pm.</li>
+        <li><b>Social proof</b>: an ironing cart you trust, at your door with a printed price.</li>
+        <li><b>Future pace</b>: Monday, 8 am. The shirt is already pressed.</li>
+        <li><b>Simplicity</b>: We pick up. We press. We bring it back.</li>
+      </ol>
+    </div>
+    <div class="block">
+      <h3>Real footage to film first</h3>
+      <ol class="steps">
+        <li>Bag handed over at a door (no faces, no door number)</li>
+        <li>Clothes counted on a clean table</li>
+        <li>A shirt pressed, close-up, 10 seconds</li>
+        <li>A saree folded</li>
+        <li>The packed order, sealed</li>
+        <li>The app: basket with prices, then the slot picker</li>
+      </ol>
+      <h3 style="margin-top:12px">Instagram bio</h3>
+      <div class="caprow"><div class="copy" id="bio">Name: IronDost | Ironing &amp; Laundry LB Nagar
+
+Ironing, laundry &amp; dry cleaning pickup 🧺
+LB Nagar · Dilsukhnagar · Nagole · Vanasthalipuram
+7am–8pm daily · Call/WhatsApp 79934 34932</div><button class="copybtn" data-copy="bio">Copy bio</button></div>
+      <p class="src">Highlights, in order: Book · Our work · Areas · Prices · FAQ · Reviews (empty until the first real one).</p>
+    </div>
+  </div>
+
+  <div class="block">
+    <h3>Daily engagement round (20 minutes, before posting)</h3>
+    <div class="grid">
+      <div class="card"><div class="k">5</div><div class="t">Reach</div><div class="d">East-Hyderabad community and food pages. Comment early and usefully.</div></div>
+      <div class="card"><div class="k">3</div><div class="t">Peers</div><div class="d">Local tailors, boutiques, salons. They reciprocate and can become partner counters.</div></div>
+      <div class="card"><div class="k">2</div><div class="t">Buyers</div><div class="d">Apartment-association and PG pages. Comment for weeks before any message; never pitch in a comment.</div></div>
+    </div>
+  </div>
+  <p class="src">From <code>instagram/plan.md</code>, <code>december-2026-pack/hooks.md</code>, <code>irondost-november-19-30-plan.md</code>. Reels rebuild from <code>videos/irondost-reels/</code>.</p>
+</section>
+
+<!-- ============ ASSETS ============ -->
+<section class="view" id="v-assets" data-view="assets" hidden>
+  <div class="block">
+    <span class="eyebrow">Asset library</span>
+    <h2>Everything in the December pack</h2>
+    <p class="lede">Rebuilt from the live catalogue on 18 Nov. The photo-style images are generated, so they suit posts but never the Google profile's photos. Right-click or long-press an image to save it.</p>
+  </div>
+
+  <div class="block"><h3>Feed posters · 1080 × 1350</h3>
+    <div class="gallery">
+      <figure><img src="posters/poster-price.jpg" alt="Price poster" loading="lazy"><figcaption>poster-price</figcaption></figure>
+      <figure><img src="posters/poster-doorstep.jpg" alt="Doorstep poster" loading="lazy"><figcaption>poster-doorstep</figcaption></figure>
+      <figure><img src="posters/poster-office-week.jpg" alt="Office week poster" loading="lazy"><figcaption>poster-office-week</figcaption></figure>
+      <figure><img src="posters/poster-wedding.jpg" alt="Wedding poster" loading="lazy"><figcaption>poster-wedding</figcaption></figure>
+      <figure><img src="posters/poster-pg.jpg" alt="PG poster" loading="lazy"><figcaption>poster-pg</figcaption></figure>
+      <figure><img src="posters/poster-areas.jpg" alt="Areas poster" loading="lazy"><figcaption>poster-areas</figcaption></figure>
+      <figure><img src="posters/poster-christmas.jpg" alt="Christmas poster" loading="lazy"><figcaption>poster-christmas</figcaption></figure>
+      <figure><img src="posters/poster-new-year.jpg" alt="New Year poster" loading="lazy"><figcaption>poster-new-year</figcaption></figure>
+    </div>
+  </div>
+
+  <div class="block"><h3>Stories · 1080 × 1920</h3>
+    <div class="gallery">
+      <figure><img src="stories/poster-price-story.jpg" alt="Price story" loading="lazy"><figcaption>price-story</figcaption></figure>
+      <figure><img src="stories/poster-doorstep-story.jpg" alt="Doorstep story" loading="lazy"><figcaption>doorstep-story</figcaption></figure>
+      <figure><img src="stories/poster-office-week-story.jpg" alt="Office week story" loading="lazy"><figcaption>office-week-story</figcaption></figure>
+      <figure><img src="stories/poster-wedding-story.jpg" alt="Wedding story" loading="lazy"><figcaption>wedding-story</figcaption></figure>
+      <figure><img src="stories/poster-pg-story.jpg" alt="PG story" loading="lazy"><figcaption>pg-story</figcaption></figure>
+      <figure><img src="stories/poster-areas-story.jpg" alt="Areas story" loading="lazy"><figcaption>areas-story</figcaption></figure>
+      <figure><img src="stories/poster-christmas-story.jpg" alt="Christmas story" loading="lazy"><figcaption>christmas-story</figcaption></figure>
+      <figure><img src="stories/poster-new-year-story.jpg" alt="New Year story" loading="lazy"><figcaption>new-year-story</figcaption></figure>
+    </div>
+  </div>
+
+  <div class="block"><h3>Carousels · 1080 × 1350</h3>
+    <div class="block"><span class="eyebrow">carousel-rate-card · 5 slides</span><div class="strip" id="car-rate-card"></div></div>
+    <div class="block"><span class="eyebrow">carousel-how-it-works · 6 slides</span><div class="strip" id="car-how-it-works"></div></div>
+    <div class="block"><span class="eyebrow">carousel-saree-care · 6 slides</span><div class="strip" id="car-saree-care"></div></div>
+    <div class="block"><span class="eyebrow">carousel-faq · 6 slides</span><div class="strip" id="car-faq"></div></div>
+  </div>
+
+  <div class="two">
+    <div class="block"><h3>Print · A4 lift poster</h3>
+      <div class="gallery" style="grid-template-columns:minmax(0,260px)"><figure><img src="print/print-lift-poster-a4.png" alt="A4 lift poster" loading="lazy"><figcaption>print-lift-poster-a4 · write a building code in the box</figcaption></figure></div>
+    </div>
+    <div class="block"><h3>QR codes</h3>
+      <div class="gallery" style="grid-template-columns:repeat(3,minmax(0,120px))">
+        <figure><img src="qr/play-store.png" alt="Play Store QR" loading="lazy" style="background:#fff"><figcaption>play-store</figcaption></figure>
+        <figure><img src="qr/app-store.png" alt="App Store QR" loading="lazy" style="background:#fff"><figcaption>app-store</figcaption></figure>
+        <figure><img src="qr/whatsapp.png" alt="WhatsApp QR" loading="lazy" style="background:#fff"><figcaption>whatsapp</figcaption></figure>
+      </div>
+    </div>
+  </div>
+  <p class="src">Source: <code>docs/marketing/december-2026-pack/</code>. Rebuild stills with <code>generate.py</code>, reels with <code>videos/irondost-reels/build.py</code>.</p>
+</section>
+
+<footer>Built from the IronDost repository's <code>docs/marketing</code> folder on 21 November 2026. Targets are tests, not forecasts; there is no order data yet. Search difficulty is judgement, not measured volume.</footer>
+</div></main>
+
+<script>
+(function(){
+  var views=["overview","marketing","seo","gmb","reels","assets"];
+  function show(){
+    var h=(location.hash||"").slice(1); if(views.indexOf(h)<0) h="overview";
+    document.querySelectorAll("section.view").forEach(function(s){s.hidden=s.dataset.view!==h;});
+    document.querySelectorAll(".tabs a").forEach(function(a){
+      if(a.getAttribute("href")==="#"+h) a.setAttribute("aria-current","page"); else a.removeAttribute("aria-current");
+    });
+    document.querySelectorAll("video").forEach(function(v){ if(v.closest("section").hidden) v.pause(); });
+  }
+  window.addEventListener("hashchange",function(){show();window.scrollTo(0,0);});
+  show();
+
+  // carousels
+  var cars={"rate-card":5,"how-it-works":6,"saree-care":6,"faq":6};
+  Object.keys(cars).forEach(function(k){
+    var el=document.getElementById("car-"+k);
+    for(var i=1;i<=cars[k];i++){
+      var img=document.createElement("img"); var n=("0"+i).slice(-2);
+      img.src="carousels/carousel-"+k+"/carousel-"+k+"-"+n+".jpg"; img.alt=k+" slide "+i; img.loading="lazy";
+      el.appendChild(img);
+    }
+  });
+
+  // today highlight
+  var t=new Date(); var iso=t.getFullYear()+"-"+("0"+(t.getMonth()+1)).slice(-2)+"-"+("0"+t.getDate()).slice(-2);
+  document.querySelectorAll("#daytable tr[data-date]").forEach(function(r){
+    if(r.dataset.date===iso) r.classList.add("today"); else if(r.dataset.date<iso) r.classList.add("past");
+  });
+
+  // copy
+  document.querySelectorAll(".copybtn").forEach(function(b){
+    b.addEventListener("click",function(){
+      var el=document.getElementById(b.dataset.copy); var txt=el.innerText; var old=b.textContent;
+      function done(m){b.textContent=m;setTimeout(function(){b.textContent=old;},1600);}
+      try{
+        navigator.clipboard.writeText(txt).then(function(){done("Copied");},function(){sel(el);done("Selected, press copy");});
+      }catch(e){sel(el);done("Selected, press copy");}
+    });
+  });
+  function sel(el){var r=document.createRange();r.selectNodeContents(el);var s=window.getSelection();s.removeAllRanges();s.addRange(r);}
+
+  // checklists (per browser)
+  var KEY="irondost-board-checks";
+  var state={}; try{state=JSON.parse(localStorage.getItem(KEY)||"{}");}catch(e){}
+  function prog(){
+    document.querySelectorAll("[data-progress]").forEach(function(p){
+      var g=document.querySelector('[data-group="'+p.dataset.progress+'"]'); if(!g) return;
+      var all=g.querySelectorAll("input"), on=g.querySelectorAll("input:checked");
+      p.textContent=on.length+" of "+all.length+" done";
+    });
+  }
+  document.querySelectorAll(".checks input").forEach(function(i){
+    if(state[i.id]) i.checked=true;
+    i.addEventListener("change",function(){state[i.id]=i.checked;try{localStorage.setItem(KEY,JSON.stringify(state));}catch(e){}prog();});
+  });
+  prog();
+})();
+</script>

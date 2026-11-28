@@ -1,0 +1,48 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Sign in · mobile number</title>
+<script src="./support.js"></script>
+<link rel="stylesheet" href="ds/irondost/tokens.css">
+<link rel="stylesheet" href="ds/irondost/components/bundle.css">
+<link rel="stylesheet" href="app.css">
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Outfit:wght@600;700&amp;family=Figtree:wght@400;500;600;700&amp;family=Geist+Mono:wght@500&amp;display=swap">
+<style>body{margin:0}</style>
+</helmet>
+<div class="scr" data-theme="{{theme}}" style="background: var(--surface)">
+  <div class="safe-top"></div>
+  <header class="id-appbar" style="flex: none">
+    <a class="id-iconbtn" href="Welcome.dc.html" aria-label="Back"><svg class="id-icon lg" viewBox="0 0 24 24" aria-hidden="true"><path d="m12 19-7-7 7-7"></path><path d="M19 12H5"></path></svg></a>
+  </header>
+  <main class="main" style="padding: 24px 16px; gap: 32px">
+    <div style="display: grid; gap: 8px">
+      <h1 class="headline">Enter your mobile number</h1>
+      <p class="body-lg muted">We'll send a 6-digit code to verify it.</p>
+    </div>
+    <label class="id-field">
+      <span class="id-field__label">Mobile number</span>
+      <span class="id-field__control is-focus"><span class="id-field__prefix">+91</span><input type="tel" inputmode="numeric" autocomplete="tel-national" value="98765 43210"></span>
+      <span class="id-field__help">Your pickup partner will call this number if needed.</span>
+    </label>
+  </main>
+  <div style="flex: none; display: grid; gap: 12px; padding: 12px 16px 0">
+    <a class="id-btn id-btn--primary id-btn--block" href="Otp.dc.html">Get OTP</a>
+    <p class="caption muted" style="text-align: center">By continuing you agree to our <a href="Legal.dc.html">Terms</a> and <a href="Legal.dc.html">Privacy Policy</a>.</p>
+  </div>
+  <div class="safe-bottom"></div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"theme":{"editor":"enum","options":["light","dark"],"default":"light"},"$preview":{"width":390,"height":844}}'>
+class Component extends DCLogic {
+  renderVals() {
+    return { theme: this.props.theme ?? 'light' };
+  }
+}
+</script>
+</body>
+</html>

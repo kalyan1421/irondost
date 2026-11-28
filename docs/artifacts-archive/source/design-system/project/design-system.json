@@ -1,0 +1,130 @@
+{
+  "v": 3,
+  "assetGroups": {
+    "App~20icons": {
+      "files": {
+        "app-icon-1024.png": {
+          "blob": "781fd984f62e713ec56b690787539918",
+          "name": "app-icon-1024.png",
+          "size": 48810,
+          "type": "image/png"
+        },
+        "notification-icon-96.png": {
+          "blob": "f6e76a9810d95cb925f4da903c1feeae",
+          "name": "notification-icon-96.png",
+          "size": 1753,
+          "type": "image/png"
+        },
+        "play-store-512.png": {
+          "blob": "237964fe9cec11eb461b60971f9bb0fe",
+          "name": "play-store-512.png",
+          "size": 22421,
+          "type": "image/png"
+        }
+      },
+      "name": "App icons",
+      "order": [
+        "app-icon-1024.png",
+        "play-store-512.png",
+        "notification-icon-96.png"
+      ]
+    },
+    "Logos": {
+      "files": {
+        "irondost-logo-mono-ink.svg": {
+          "blob": "f40f525c24735d22c19bc2dad7e36000",
+          "name": "irondost-logo-mono-ink.svg",
+          "size": 6969,
+          "type": "image/svg+xml"
+        },
+        "irondost-logo-mono-white.svg": {
+          "blob": "8544fac24c8d785b9402d58afcb48dbe",
+          "name": "irondost-logo-mono-white.svg",
+          "size": 6973,
+          "type": "image/svg+xml"
+        },
+        "irondost-logo-reverse.svg": {
+          "blob": "b441c6f3f8e88af0c24bceec5c7253e4",
+          "name": "irondost-logo-reverse.svg",
+          "size": 6963,
+          "type": "image/svg+xml"
+        },
+        "irondost-logo-stacked.svg": {
+          "blob": "bb7310a4876dff7e904122df24497dbe",
+          "name": "irondost-logo-stacked.svg",
+          "size": 10779,
+          "type": "image/svg+xml"
+        },
+        "irondost-logo-tagline.svg": {
+          "blob": "fed9a1e9460432a699297e36f0bae112",
+          "name": "irondost-logo-tagline.svg",
+          "size": 10852,
+          "type": "image/svg+xml"
+        },
+        "irondost-logo.svg": {
+          "blob": "903898970892f53c739fc5a39c49c765",
+          "name": "irondost-logo.svg",
+          "size": 6963,
+          "type": "image/svg+xml"
+        },
+        "irondost-mark-small.svg": {
+          "blob": "7786c03ae209ec1440244abc90b1fab9",
+          "name": "irondost-mark-small.svg",
+          "size": 1774,
+          "type": "image/svg+xml"
+        },
+        "irondost-mark.svg": {
+          "blob": "018fc159119550cfdcc8a7bb0de54a82",
+          "name": "irondost-mark.svg",
+          "size": 3636,
+          "type": "image/svg+xml"
+        },
+        "irondost-wordmark.svg": {
+          "blob": "5d9389fe33a7dc219e2a97d70a421131",
+          "name": "irondost-wordmark.svg",
+          "size": 3475,
+          "type": "image/svg+xml"
+        }
+      },
+      "name": "Logos",
+      "order": [
+        "irondost-logo.svg",
+        "irondost-logo-reverse.svg",
+        "irondost-logo-tagline.svg",
+        "irondost-logo-stacked.svg",
+        "irondost-mark.svg",
+        "irondost-mark-small.svg",
+        "irondost-wordmark.svg",
+        "irondost-logo-mono-ink.svg",
+        "irondost-logo-mono-white.svg"
+      ],
+      "tile": "l"
+    }
+  },
+  "blobs": {},
+  "createdOnFiles": {
+    "at": "2026-10-02T12:27:43Z",
+    "v": 1
+  },
+  "docs": {
+    "readme": "project/README.md",
+    "sections": [
+      "project/Order status.md"
+    ]
+  },
+  "groups": [
+    "Logos",
+    "App~20icons"
+  ],
+  "lastChange": {
+    "at": "2026-10-02T12:27:43Z",
+    "by": "Kalyan",
+    "note": "IronDost design system: tokens, brand book, order status vocabulary, 19 customer-app components, logos and app icons.",
+    "via": "Claude Code"
+  },
+  "layout": "files",
+  "libraries": [],
+  "namespace": "IronDost",
+  "sections": {},
+  "title": "IronDost"
+}

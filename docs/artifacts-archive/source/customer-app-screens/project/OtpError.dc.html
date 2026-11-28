@@ -1,0 +1,55 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Sign in · wrong code</title>
+<script src="./support.js"></script>
+<link rel="stylesheet" href="ds/irondost/tokens.css">
+<link rel="stylesheet" href="ds/irondost/components/bundle.css">
+<link rel="stylesheet" href="app.css">
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Outfit:wght@600;700&amp;family=Figtree:wght@400;500;600;700&amp;family=Geist+Mono:wght@500&amp;display=swap">
+<style>body{margin:0}</style>
+</helmet>
+<div class="scr" data-theme="{{theme}}" style="background: var(--surface)">
+  <div class="safe-top"></div>
+  <header class="id-appbar" style="flex: none">
+    <a class="id-iconbtn" href="Login.dc.html" aria-label="Back"><svg class="id-icon lg" viewBox="0 0 24 24" aria-hidden="true"><path d="m12 19-7-7 7-7"></path><path d="M19 12H5"></path></svg></a>
+  </header>
+  <main class="main" style="padding: 24px 16px; gap: 28px">
+    <div style="display: grid; gap: 8px">
+      <h1 class="headline">Enter the code</h1>
+      <p class="body-lg muted">Sent by SMS to +91 98765 43210. <a class="label" href="Login.dc.html">Change</a></p>
+    </div>
+    <div style="display: grid; gap: 12px">
+      <span class="id-field__label">6-digit code</span>
+      <div class="id-otp" role="group" aria-label="Verification code, 6 digits" aria-invalid="true" aria-describedby="otp-error" style="gap: 10px">
+        <span class="id-otp__box" style="box-shadow: inset 0 0 0 2px var(--danger)">4</span>
+        <span class="id-otp__box" style="box-shadow: inset 0 0 0 2px var(--danger)">8</span>
+        <span class="id-otp__box" style="box-shadow: inset 0 0 0 2px var(--danger)">2</span>
+        <span class="id-otp__box" style="box-shadow: inset 0 0 0 2px var(--danger)">9</span>
+        <span class="id-otp__box" style="box-shadow: inset 0 0 0 2px var(--danger)">1</span>
+        <span class="id-otp__box" style="box-shadow: inset 0 0 0 2px var(--danger)">7</span>
+      </div>
+      <p id="otp-error" class="id-field__error" role="alert"><svg class="id-icon sm" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="10"></circle><line x1="12" x2="12" y1="8" y2="12"></line><line x1="12" x2="12.01" y1="16" y2="16"></line></svg>That code is incorrect. Check the SMS and try again.</p>
+      <div class="id-row" style="gap: 4px"><span class="body muted">Didn't get it?</span><a class="id-btn id-btn--text" href="Otp.dc.html" style="padding: 0 8px">Resend code</a></div>
+    </div>
+  </main>
+  <div style="flex: none; padding: 12px 16px 0">
+    <a class="id-btn id-btn--primary id-btn--block" href="Otp.dc.html">Try again</a>
+  </div>
+  <div class="safe-bottom"></div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"theme":{"editor":"enum","options":["light","dark"],"default":"light"},"$preview":{"width":390,"height":844}}'>
+class Component extends DCLogic {
+  renderVals() {
+    return { theme: this.props.theme ?? 'light' };
+  }
+}
+</script>
+</body>
+</html>

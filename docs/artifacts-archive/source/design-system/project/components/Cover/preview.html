@@ -1,0 +1,47 @@
+<!-- @dsCard height=288 -->
+<!doctype html>
+<html>
+<head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><title>Cover — preview</title></head>
+<body>
+<div style="position:relative;width:960px;height:288px;overflow:hidden;background:var(--bg)">
+  <svg width="960" height="288" viewBox="0 0 960 288" style="position:absolute;inset:0" aria-hidden="true">
+    <!--
+      Blocks: royal 368×224 (radius-xl), sky pill 200×96 (rx 48 = half), sun disc ⌀80, surface-inverse 152×96 (radius-lg); about 36% of the cover.
+      Arrangement: one royal slab bleeding off the top-right, satellites staggered down-left beneath it, sun rising off the slab's lower edge.
+      Pattern: discs. The README names soap bubbles as the recurring motif, so illo-foam discs with ink rims rise across the slab.
+      Scales: sides and gaps in space-2 / space-6 multiples (8, 24, 48, 96); bubble radii = radius-sm 8, radius-md 12, radius-lg 16, radius-xl 24.
+    -->
+    <style>
+      body { margin: 0; padding: 0; }
+      .royal { fill: var(--royal); }
+      .sky { fill: var(--sky); }
+      .sun { fill: var(--sun); }
+      .inverse { fill: var(--surface-inverse); }
+      .bubble { fill: var(--illo-foam); stroke: var(--ink); stroke-width: 2.5; }
+      .r-xl { rx: var(--radius-xl); }
+      .r-lg { rx: var(--radius-lg); }
+    </style>
+    <rect class="royal r-xl" x="616" y="-24" width="368" height="224"/>
+    <rect class="sky" x="504" y="152" width="200" height="96" rx="48"/>
+    <circle class="sun" cx="768" cy="240" r="40"/>
+    <rect class="inverse r-lg" x="832" y="216" width="152" height="96"/>
+    <circle class="bubble" cx="668" cy="128" r="24"/>
+    <circle class="bubble" cx="716" cy="84" r="12"/>
+    <circle class="bubble" cx="744" cy="140" r="8"/>
+    <circle class="bubble" cx="780" cy="52" r="16"/>
+    <circle class="bubble" cx="812" cy="112" r="12"/>
+    <circle class="bubble" cx="850" cy="28" r="8"/>
+    <circle class="bubble" cx="880" cy="88" r="24"/>
+    <circle class="bubble" cx="924" cy="148" r="12"/>
+    <circle class="bubble" cx="924" cy="36" r="8"/>
+    <circle class="bubble" cx="700" cy="32" r="8"/>
+    <circle class="bubble" cx="836" cy="168" r="8"/>
+    <circle class="bubble" cx="548" cy="120" r="8"/>
+  </svg>
+  <div style="position:absolute;left:40px;bottom:40px;max-width:440px">
+    <div style="font:700 88px/0.92 var(--font-display);letter-spacing:-0.01em;color:var(--text)">IronDost</div>
+    <div style="margin-top:12px;font:500 14px/20px var(--font-body);color:var(--text-muted)">Wash · Iron · Deliver. Fresh clothes, back at your door.</div>
+  </div>
+</div>
+</body>
+</html>

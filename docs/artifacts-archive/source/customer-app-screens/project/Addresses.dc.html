@@ -1,0 +1,47 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Saved addresses</title>
+<script src="./support.js"></script>
+<link rel="stylesheet" href="ds/irondost/tokens.css">
+<link rel="stylesheet" href="ds/irondost/components/bundle.css">
+<link rel="stylesheet" href="app.css">
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Outfit:wght@600;700&amp;family=Figtree:wght@400;500;600;700&amp;family=Geist+Mono:wght@500&amp;display=swap">
+<style>body{margin:0}</style>
+</helmet>
+<div class="scr" data-theme="{{theme}}">
+  <div class="safe-top" style="background: var(--surface)"></div>
+  <header class="id-appbar" style="flex: none; box-shadow: inset 0 -1px 0 var(--border)">
+    <a class="id-iconbtn" href="Account.dc.html" aria-label="Back"><svg class="id-icon lg" viewBox="0 0 24 24" aria-hidden="true"><path d="m12 19-7-7 7-7"></path><path d="M19 12H5"></path></svg></a>
+    <h1 class="id-appbar__title">Saved addresses</h1>
+  </header>
+  <main class="main" style="padding-top: 16px; gap: 12px">
+    <article class="id-addr">
+      <span class="id-addr__icon"><svg class="id-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M15 21v-8a1 1 0 0 0-1-1h-4a1 1 0 0 0-1 1v8"></path><path d="M3 10a2 2 0 0 1 .709-1.528l7-5.999a2 2 0 0 1 2.582 0l7 5.999A2 2 0 0 1 21 10v9a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"></path></svg></span>
+      <span style="flex: 1; display: grid; gap: 2px"><span class="id-addr__label">Home <span class="id-chip id-chip--info" style="height: 24px">Default</span></span><span class="id-addr__text">302, Sai Residency, Road No. 12, Banjara Hills, Hyderabad 500034 · Near KBR Park gate</span></span>
+      <a class="id-iconbtn" href="AddressForm.dc.html" aria-label="Edit Home address" style="margin: -12px -12px 0 0"><svg class="id-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M21.174 6.812a1 1 0 0 0-3.986-3.987L3.842 16.174a2 2 0 0 0-.5.83l-1.321 4.352a.5.5 0 0 0 .623.622l4.353-1.32a2 2 0 0 0 .83-.497z"></path><path d="m15 5 4 4"></path></svg></a>
+    </article>
+    <article class="id-addr">
+      <span class="id-addr__icon"><svg class="id-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M16 20V4a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v16"></path><rect width="20" height="14" x="2" y="6" rx="2"></rect></svg></span>
+      <span style="flex: 1; display: grid; gap: 2px"><span class="id-addr__label">Work</span><span class="id-addr__text">4th floor, Cyber Towers, HITEC City, Hyderabad 500081 · Gate 2 reception</span></span>
+      <a class="id-iconbtn" href="AddressForm.dc.html" aria-label="Edit Work address" style="margin: -12px -12px 0 0"><svg class="id-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M21.174 6.812a1 1 0 0 0-3.986-3.987L3.842 16.174a2 2 0 0 0-.5.83l-1.321 4.352a.5.5 0 0 0 .623.622l4.353-1.32a2 2 0 0 0 .83-.497z"></path><path d="m15 5 4 4"></path></svg></a>
+    </article>
+    <a class="id-btn id-btn--tonal id-btn--block" href="MapPin.dc.html" style="margin-top: 4px"><svg class="id-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M5 12h14"></path><path d="M12 5v14"></path></svg>Add new address</a>
+  </main>
+  <div class="safe-bottom"></div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"theme":{"editor":"enum","options":["light","dark"],"default":"light"},"$preview":{"width":390,"height":844}}'>
+class Component extends DCLogic {
+  renderVals() {
+    return { theme: this.props.theme ?? 'light' };
+  }
+}
+</script>
+</body>
+</html>

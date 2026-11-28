@@ -1,0 +1,439 @@
+<title>Dost Undi Ga! Season 1</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,600;12..96,800&family=Inter:wght@400;500;600&family=JetBrains+Mono:wght@400;500&display=swap">
+<style>
+/* Layout: a production bible — sticky episode rail on top, one long column of clip cards, each card = keyframe prompt + motion prompt + audio. */
+:root{
+  --bg:#f3f5fb; --surface:#ffffff; --ink:#141a2e; --muted:#5a6280; --line:#dde2f0;
+  --royal:#1F4FD1; --royal-soft:#e6ecfd; --hook:#d9480f; --hook-soft:#fff0e8; --real:#0b7a55; --real-soft:#e3f5ee;
+  --code:#f6f7fc;
+  --f-display:"Bricolage Grotesque", "Inter", system-ui, sans-serif;
+  --f-body:"Inter", system-ui, -apple-system, "Segoe UI", sans-serif;
+  --f-mono:"JetBrains Mono", ui-monospace, "SF Mono", Menlo, monospace;
+}
+@media (prefers-color-scheme: dark){:root:not([data-theme="light"]){
+  --bg:#0d1020; --surface:#151a2e; --ink:#e8ebf7; --muted:#9aa3c4; --line:#262d4a;
+  --royal:#7FA2FF; --royal-soft:#1b2550; --hook:#ff8a4c; --hook-soft:#3a1f12; --real:#4fd1a0; --real-soft:#0f2e24; --code:#10142a; color-scheme:dark}}
+:root[data-theme="dark"]{
+  --bg:#0d1020; --surface:#151a2e; --ink:#e8ebf7; --muted:#9aa3c4; --line:#262d4a;
+  --royal:#7FA2FF; --royal-soft:#1b2550; --hook:#ff8a4c; --hook-soft:#3a1f12; --real:#4fd1a0; --real-soft:#0f2e24; --code:#10142a; color-scheme:dark}
+*{box-sizing:border-box}
+body{background:var(--bg);color:var(--ink);font-family:var(--f-body);font-size:15px;line-height:1.55}
+body::before{content:"";position:fixed;inset:0 0 auto;height:env(safe-area-inset-top,0px);z-index:10;background:var(--surface)}
+.wrap{max-width:980px;margin:0 auto;padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px));padding-block:0 64px}
+h1,h2,h3{font-family:var(--f-display);text-wrap:balance;line-height:1.15;margin:0}
+h1{font-size:clamp(2rem,6vw,3.4rem);font-weight:800;letter-spacing:-.02em}
+h2{font-size:1.6rem;font-weight:800;margin-top:8px}
+h3{font-size:1.1rem;font-weight:600}
+p{margin:0;max-width:68ch}
+.lbl{font-size:.72rem;text-transform:uppercase;letter-spacing:.08em;font-weight:600;color:var(--muted)}
+header.top{padding-block:40px 24px;display:grid;gap:12px}
+header.top .tag{font-family:var(--f-display);font-size:1.25rem;color:var(--royal);font-weight:600}
+.facts{display:flex;flex-wrap:wrap;gap:8px;margin-top:6px}
+.chip{font-size:.8rem;padding:4px 10px;border-radius:999px;background:var(--royal-soft);color:var(--ink);border:1px solid var(--line)}
+nav.rail{position:sticky;top:env(safe-area-inset-top,0px);z-index:5;background:var(--surface);border-bottom:1px solid var(--line);margin-inline:calc(-1 * max(16px,env(safe-area-inset-left,0px)));padding:10px max(16px,env(safe-area-inset-left,0px));display:flex;gap:6px;overflow-x:auto;scrollbar-width:thin}
+nav.rail a{flex:none;font-size:.82rem;font-weight:600;text-decoration:none;color:var(--ink);padding:6px 10px;border-radius:8px;border:1px solid var(--line);background:var(--bg)}
+nav.rail a:hover,nav.rail a:focus-visible{border-color:var(--royal);color:var(--royal);outline:none}
+section{padding-top:40px;display:grid;gap:16px;scroll-margin-top:60px}
+.grid2{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,300px),1fr));gap:14px}
+.panel{background:var(--surface);border:1px solid var(--line);border-radius:12px;padding:16px;display:grid;gap:10px;min-width:0}
+.prompt{font-family:var(--f-mono);font-size:.8rem;line-height:1.55;background:var(--code);border:1px solid var(--line);border-radius:8px;padding:10px 12px;white-space:pre-wrap;word-break:break-word;margin:0}
+.prow{display:grid;gap:6px;min-width:0}
+.prow .head{display:flex;align-items:center;justify-content:space-between;gap:8px;flex-wrap:wrap}
+button.copy{font:600 .75rem var(--f-body);color:var(--royal);background:transparent;border:1px solid var(--royal);border-radius:6px;padding:3px 9px;cursor:pointer}
+button.copy:hover{background:var(--royal-soft)}
+button.copy:focus-visible{outline:2px solid var(--royal);outline-offset:2px}
+button.copy.done{color:var(--real);border-color:var(--real)}
+ul.clean{margin:0;padding-left:18px;display:grid;gap:4px}
+table{border-collapse:collapse;width:100%;font-size:.88rem}
+th,td{text-align:left;padding:8px 10px;border-bottom:1px solid var(--line);vertical-align:top}
+th{font-size:.72rem;text-transform:uppercase;letter-spacing:.06em;color:var(--muted)}
+.tbl{overflow-x:auto;background:var(--surface);border:1px solid var(--line);border-radius:12px}
+.ep-head{display:grid;gap:8px;padding:18px;border-radius:14px;background:var(--surface);border:1px solid var(--line)}
+.ep-head .row{display:flex;flex-wrap:wrap;gap:8px;align-items:center;justify-content:space-between}
+.ep-num{font-family:var(--f-display);font-weight:800;color:var(--royal);font-size:.95rem}
+.hookbox{background:var(--hook-soft);border-left:4px solid var(--hook);border-radius:8px;padding:10px 12px;display:grid;gap:4px}
+.hookbox b{color:var(--hook)}
+.clip{background:var(--surface);border:1px solid var(--line);border-radius:12px;padding:14px;display:grid;gap:10px;min-width:0}
+.clip.hook{border-color:var(--hook);box-shadow:0 0 0 1px var(--hook) inset}
+.clip.real{background:var(--real-soft)}
+.clip .ch{display:flex;flex-wrap:wrap;gap:8px;align-items:baseline}
+.clip .id{font-family:var(--f-mono);font-weight:500;font-size:.8rem;color:var(--muted)}
+.clip .title{font-weight:600}
+.pill{font-size:.7rem;font-weight:600;text-transform:uppercase;letter-spacing:.06em;padding:2px 8px;border-radius:999px}
+.pill.h{background:var(--hook);color:#fff}
+.pill.r{background:var(--real);color:#fff}
+.pill.t{background:var(--royal-soft);color:var(--royal)}
+.audio{display:grid;gap:4px;font-size:.9rem}
+.audio .en{color:var(--muted);font-style:italic}
+.ost{font-size:.85rem}
+.ost b{font-weight:600}
+.clips{display:grid;gap:10px}
+.note{font-size:.88rem;color:var(--muted)}
+footer{padding-top:40px;font-size:.82rem;color:var(--muted);display:grid;gap:6px}
+a{color:var(--royal)}
+@media (prefers-reduced-motion:reduce){*{scroll-behavior:auto!important}}
+html{scroll-behavior:smooth}
+</style>
+
+<div class="wrap">
+<header class="top">
+  <span class="lbl">IronDost · Reel series · Season 1 · Production bible</span>
+  <h1>Dost Undi Ga!</h1>
+  <p class="tag">Battala tension? IronDost undi ga! · Kapdon ki tension? Dost hai na!</p>
+  <p>Ten daily episodes of 40–45 seconds for Instagram, YouTube Shorts, Facebook and WhatsApp. Every clip below has a full <b>keyframe (image) prompt</b> and a <b>motion (video) prompt</b>, ready to copy. Clips marked <span class="pill r">Real</span> are screen recordings of the real app or edit graphics, so no AI is needed for them.</p>
+  <div class="facts">
+    <span class="chip">Laundry 3 days</span><span class="chip">Ironing 2 days</span><span class="chip">Express 6 hrs · 2× price</span><span class="chip">₹500+ → 10% off · DOST10</span><span class="chip">Call / WhatsApp 79934 34932 · 70329 90632</span><span class="chip">Post daily 7:30 pm IST</span>
+  </div>
+</header>
+
+<nav class="rail" aria-label="Sections" id="rail"></nav>
+
+<section id="how">
+  <span class="lbl">Start here</span>
+  <h2>How to make one clip</h2>
+  <div class="grid2">
+    <div class="panel"><h3>1 · Keyframe</h3><p>Paste the <b>keyframe prompt</b> into the image tool <b>with the character reference images attached</b> (the ones named in the prompt). One image per clip. Keep the image only if the face matches the reference.</p></div>
+    <div class="panel"><h3>2 · Motion</h3><p>Upload that keyframe to the image-to-video tool and paste the <b>motion prompt</b>. Generate 2–3 takes, keep the best. Movement stays small, because big actions break faces.</p></div>
+    <div class="panel"><h3>3 · Voice</h3><p>Record the dialogue with real people on a phone (Telugu and Hyderabadi accents sound fake from AI). Lip-sync, or keep the speaker off-face where the script says so.</p></div>
+    <div class="panel"><h3>4 · Edit</h3><p>Cut in CapCut: on-screen text from each clip, English subtitles, SFX, music, logo on Dost's polo and bags, then the end card. Turn on the AI-content label when posting.</p></div>
+  </div>
+  <div class="panel">
+    <h3>Rules that stop clips going missing or breaking</h3>
+    <ul class="clean">
+      <li>Make every clip in the list, in order. Clip IDs (E3-C5) match the edit timeline, so a missing ID is easy to spot.</li>
+      <li>Generate all keyframes of one episode in the same session with the same references, before animating any of them.</li>
+      <li>Never let the AI draw text, phone screens or the logo. Those are added in the edit (the prompts already say "no text").</li>
+      <li>The navy-blue checked "lucky shirt", red velvet ring box and maroon Kanchi pattu saree are story props. Generate the prop sheet once and attach it whenever a prop appears.</li>
+      <li>Ep 4 machines must look like <b>your</b> unit: attach 3–4 photos of your real washers, dryers and steam press as references.</li>
+    </ul>
+  </div>
+</section>
+
+<section id="hooks">
+  <span class="lbl">The first 3 seconds</span>
+  <h2>Hook rules for every episode</h2>
+  <div class="grid2">
+    <div class="panel"><h3>Frame 1 already moves</h3><p>No logo, no "Episode 3", no slow fade. The very first frame is mid-action: an avalanche, a falling ring, a burning iron.</p></div>
+    <div class="panel"><h3>Sound hits at 0.0 s</h3><p>A doorbell, a slam, a sizzle or a scream on the first frame. Many people scroll with the sound on low, and a hit makes them stop.</p></div>
+    <div class="panel"><h3>Text on screen by 0.5 s</h3><p>A short, bold line with a number or stakes ("10 rojullo engagement. Clean battalu: 0"). Big, centred in the top third, two lines max.</p></div>
+    <div class="panel"><h3>Open a question</h3><p>Every hook raises a question that only the rest of the reel answers. Every ending raises the next one. The hook formula used is named on each episode.</p></div>
+  </div>
+</section>
+
+<section id="cast">
+  <span class="lbl">AI actors</span>
+  <h2>Character reference sheets</h2>
+  <p class="note">Generate each sheet once, pick the best, and save it as RAVI_REF, BUNTY_REF and DOST_REF. Attach it to every keyframe that names that character.</p>
+  <div class="grid2" id="castGrid"></div>
+</section>
+
+<section id="sets">
+  <span class="lbl">Locations and props</span>
+  <h2>Set and prop references</h2>
+  <p class="note">Generate once, save with the name shown, and attach whenever a clip uses that set or prop.</p>
+  <div class="grid2" id="setGrid"></div>
+</section>
+
+<div id="episodes"></div>
+
+<section id="endcard">
+  <span class="lbl">Same on every episode</span>
+  <h2>End card (6 seconds, two layouts)</h2>
+  <p class="note">One QR for the app: an iPhone lands straight in the App Store and an Android phone in Google Play. The QR holds <b>irondost.in/app</b>, which redirects before the page draws, so people only see the store. <b>Layout B is the chosen end card</b>; A is kept as a backup.</p>
+  <div class="grid2">
+    <div class="panel" style="justify-items:center">
+      <h3>Layout A · everything on one screen</h3>
+      <video src="endcard-a.mp4" controls muted playsinline loop style="width:100%;max-width:300px;border-radius:12px;border:1px solid var(--line)"></video>
+      <p class="note">Services, offer, both numbers, app QR and WhatsApp QR together.</p>
+    </div>
+    <div class="panel" style="justify-items:center">
+      <h3>Layout B · two big screens</h3>
+      <video src="endcard-b.mp4" controls muted playsinline loop style="width:100%;max-width:300px;border-radius:12px;border:1px solid var(--line)"></video>
+      <p class="note">Screen 1: services and 10% offer. Screen 2: one large app QR, then WhatsApp. Easier to read and to scan.</p>
+    </div>
+  </div>
+  <div class="panel">
+    <ul class="clean">
+      <li>Royal-blue background (#1F4FD1), the IronDost logo large in the top half</li>
+      <li>"Laundry 3 days · Ironing 2 days · Express 6 hrs"</li>
+      <li>"₹500+ orders 10% OFF · code DOST10"</li>
+      <li>"Call / WhatsApp 79934 34932 · 70329 90632"</li>
+      <li>Play Store and App Store QR codes side by side</li>
+      <li>"Free pickup: LB Nagar · Dilsukhnagar · Nagole · Vanasthalipuram +"</li>
+      <li>"Prati roju 7:30 PM ki next episode" and small "AI-made story"</li>
+    </ul>
+    <div class="prow"><div class="head"><span class="lbl">Optional AI background for the end card</span><button class="copy" type="button" data-copy="endbg">Copy</button></div>
+    <pre class="prompt" id="endbg">Vertical 9:16 background plate, a neat stack of crisply ironed folded shirts and a royal-blue garment bag on a clean white shelf, soft studio light, shallow depth of field, large empty royal-blue (#1F4FD1) area in the top half for a logo, photorealistic, no text, no logo, no people.</pre></div>
+  </div>
+</section>
+
+<section id="posting">
+  <span class="lbl">Distribution</span>
+  <h2>When and where to post</h2>
+  <div class="tbl"><table>
+    <thead><tr><th>Platform</th><th>Time (IST)</th><th>How (free)</th></tr></thead>
+    <tbody>
+      <tr><td>Instagram Reel</td><td>Every day 7:30 pm</td><td>Schedule in Meta Business Suite; turn on the AI info label</td></tr>
+      <tr><td>Facebook Reel</td><td>7:30 pm</td><td>Cross-post from Meta Business Suite</td></tr>
+      <tr><td>YouTube Short</td><td>8:00 pm</td><td>Schedule in YouTube Studio; tick "altered or synthetic content"; add to playlist "Dost Undi Ga — Season 1"</td></tr>
+      <tr><td>WhatsApp Status</td><td>Next morning 8:00 am</td><td>Post from the business number</td></tr>
+      <tr><td>WhatsApp Channel / broadcast</td><td>Next morning 8:30 am</td><td>One line + YouTube link so people can start from Ep 1</td></tr>
+    </tbody>
+  </table></div>
+  <p class="note">Studies disagree, but weekday evenings around 7:30–8:30 pm IST come up most often for India. Start on a Monday, only once Episodes 1–5 are finished. After 14 days, check Instagram Insights ("Most active times") and YouTube Studio ("When your viewers are on YouTube"), and move the slot if your audience peaks elsewhere.</p>
+  <div class="panel">
+    <h3>Free reach boosters</h3>
+    <ul class="clean">
+      <li>Pin Ep 1 to the top of Instagram and Facebook; bio line "▶️ Ep 1 here".</li>
+      <li>Reply to every comment in the first hour. Use the comment questions in the story (Ep 7 asks, Ep 8 answers).</li>
+      <li>Invite 1–2 local Hyderabad / LB Nagar pages as Instagram collaborators on Ep 1 and Ep 10.</li>
+      <li>Location-tag LB Nagar, Dilsukhnagar or Nagole on every reel.</li>
+      <li>Ask existing customers to share the WhatsApp Status.</li>
+    </ul>
+  </div>
+</section>
+
+<section id="checklist">
+  <span class="lbl">Before Ep 1 goes live</span>
+  <h2>Checklist</h2>
+  <div class="panel"><ul class="clean">
+    <li>Create promo code DOST10 in the admin (Percent 10, minimum order ₹500) and decide if it applies to Express</li>
+    <li>Express is booked by call / WhatsApp (it is not in the app yet)</li>
+    <li>Three character sheets, six sets and the prop sheet approved</li>
+    <li>Photos of the real machines, steam press and shelves taken for Ep 4</li>
+    <li>Dialogue for Ep 1–5 recorded with real voices</li>
+    <li>Real app screen recordings: booking with pickup slot, order detail with care note, timeline, bill and pay, dry-cleaning catalogue, out for delivery</li>
+    <li>End card made once</li>
+    <li>Episodes 1–5 fully edited, then keep 5 episodes ahead</li>
+  </ul></div>
+</section>
+
+<footer>
+  <span>Posting-time sources: <a href="https://recurpost.com/blog/how-often-should-you-post-on-instagram">RecurPost</a> · <a href="https://www.wscubetech.com/blog/?p=15209">WsCube Tech</a> · <a href="https://www.socialpilot.co/insights/best-time-to-post-reels-on-instagram">SocialPilot</a> · <a href="https://blog.wask.co/?p=14055">Wask</a> · <a href="https://fluxnote.io/guides/best-time-to-post-youtube-shorts-india-2026">FluxNote</a> · <a href="https://www.demandsage.com/?p=6533">DemandSage</a> · <a href="https://buffer.com/best-time-to-post">Buffer</a></span>
+  <span>Prices on screen come from the live rate card of 19 Nov 2026. Written 23 Nov 2026.</span>
+</footer>
+</div>
+
+<script>
+const STYLE = "Photorealistic cinematic film still, vertical 9:16, Hyderabad India, natural light, warm cinematic colour grade, 35mm film look, shallow depth of field, slight handheld feel, realistic skin texture.";
+const NEG = "Avoid: any text, captions, letters, watermarks, logos drawn by AI, phone screen UI, extra fingers, distorted hands, extra people not described, face changes from the reference.";
+const MOTION_TAIL = "Keep every face, outfit, prop and the set exactly as in the keyframe. No new people. No text. Natural physics, realistic motion, no morphing.";
+
+const CHARS = {
+  RAVI: {name:"Ravi", ref:"RAVI_REF", role:"The hero · speaks Telugu", short:"Ravi (match RAVI_REF): 28-year-old South Indian Telugu man, medium-brown skin, short neat black hair, light stubble, slim build, friendly tired eyes",
+    sheet:"Photorealistic character reference sheet of one person: a 28-year-old South Indian Telugu man from Hyderabad, medium-brown skin, short neat black hair, light stubble, friendly tired eyes, slim build, height 5'8\". Show front view, three-quarter view, side view and one full-body view, side by side on a plain light-grey background. Wearing a plain grey cotton vest and a white-and-blue checked lungi. Soft even studio light, 50mm lens, realistic skin texture, no makeup. Exactly the same face in every view. No text."},
+  BUNTY: {name:"Bunty", ref:"BUNTY_REF", role:"Roommate and doubter · speaks Hyderabadi Hindi", short:"Bunty (match BUNTY_REF): 27-year-old Hyderabadi man, warm brown skin, round cheerful face, thick side-parted black hair, short trimmed beard, slightly chubby build",
+    sheet:"Photorealistic character reference sheet of one person: a 27-year-old Hyderabadi man, warm brown skin, round cheerful face, thick black hair with a side part, short trimmed beard, slightly chubby build, height 5'7\". Show front view, three-quarter view, side view and one full-body view, side by side on a plain light-grey background. Wearing a loose maroon printed half-sleeve shirt and black track pants. Soft even studio light, 50mm lens, realistic skin texture. Exactly the same face in every view. No text."},
+  DOST: {name:"Dost (Srinu)", ref:"DOST_REF", role:"IronDost pickup person · gentle Telugu", short:"Dost (match DOST_REF): 30-year-old South Indian Telugu man, medium-dark skin, neat moustache, short side-parted hair, calm kind smile, fit build, wearing a plain royal-blue (#1F4FD1) polo T-shirt, dark grey trousers and a black sling bag",
+    sheet:"Photorealistic character reference sheet of one person: a 30-year-old South Indian Telugu man, medium-dark skin, clean-shaven with a neat moustache, short side-parted black hair, calm kind smile, fit build, height 5'9\". Show front view, three-quarter view, side view and one full-body view, side by side on a plain light-grey background. Wearing a plain royal-blue (#1F4FD1) polo T-shirt with a blank chest (logo added later), dark grey trousers, black sling bag over one shoulder, holding two plain royal-blue garment bags. Soft even studio light, 50mm lens, realistic skin texture. Exactly the same face in every view. No text."}
+};
+const SETS = {
+  FLAT:{ref:"SET_FLAT", name:"The flat (Nagole 2BHK)", prompt:"Photorealistic interior reference, vertical 9:16, a small lived-in Hyderabad 2BHK flat: grey steel almirah with a mirror, ceiling fan, white tube light, a window with iron grills looking out at an elevated metro line, a plastic chair piled with clothes, a small dining table with a foil biryani parcel, mosaic floor, pale green walls, afternoon light. No people. No text."},
+  UNIT:{ref:"SET_UNIT", name:"IronDost unit (use your real photos)", prompt:"Photorealistic interior reference, vertical 9:16, a clean small commercial laundry unit in Hyderabad: a row of large stainless-steel front-loading industrial washer-extractors and tumble dryers, a big industrial steam press table, metal shelves with numbered royal-blue garment bags, bright white LED lighting, tiled floor. No people. No text. Match the attached photos of the real machines exactly."},
+  HALL:{ref:"SET_HALL", name:"Function hall (nischitartham)", prompt:"Photorealistic interior reference, vertical 9:16, a South Indian engagement (nischitartham) function hall in Hyderabad at evening: stage with marigold and jasmine garlands, banana leaf arches, brass oil lamps, warm fairy lights, rows of plastic chairs, pillars wrapped with marigolds. No people. No text."},
+  OFFICE:{ref:"SET_OFFICE", name:"IT office desk", prompt:"Photorealistic interior reference, vertical 9:16, an open-plan IT office in Hyderabad's HITEC City: rows of desks with dual monitors, glass meeting rooms in the background, cool daylight. No people. No text."},
+  RESTO:{ref:"SET_RESTO", name:"Biryani restaurant", prompt:"Photorealistic interior reference, vertical 9:16, a busy Hyderabadi biryani restaurant at night: warm yellow lights, steel plates, a table for two with a copper handi of biryani and a bowl of red mirchi ka salan. No people. No text."},
+  BUS:{ref:"SET_BUS", name:"Bus on the highway", prompt:"Photorealistic exterior reference, vertical 9:16, a red-and-white state transport bus on a wet highway near Hyderabad in light rain, a cardboard parcel tied with plastic rope on the roof carrier, grey sky. No readable text or logos."},
+  PROPS:{ref:"PROPS_REF", name:"Prop sheet", prompt:"Photorealistic product reference sheet on a plain light-grey background, three items laid out separately: (1) a navy-blue cotton men's shirt with thin white checks, collar and one chest pocket, on a hanger; (2) a small red velvet ring box, closed; (3) a folded maroon Kanchipuram pattu silk saree with a wide gold zari border, beside a folded cream silk pancha (dhoti) with a thin gold border. Soft studio light. No text."}
+};
+
+/* clip: id-suffix, d=seconds, t=title, hook, real, c=[chars], s=set, p=[props], img=scene, mov=motion, a=[[line, english]], ost=on-screen text, sfx */
+const EPS = [
+{n:1, name:"Kondalu", en:"The Mountain", formula:"Pattern interrupt + stakes number", hook:"A cupboard explodes with clothes straight at the lens and buries Ravi.", hookText:"10 rojullo chelli engagement. Clean battalu: 0", cliff:"Repu udayam 7 gantalaki…", caption:"Ep 1/10 — 10 rojullo chelli engagement, almirah lo kondalu 😭 #DostUndiGa #IronDost #Hyderabad #LBNagar #TeluguReels", clips:[
+ {d:3,t:"Almirah avalanche",hook:1,c:["RAVI"],s:"FLAT",img:"Camera placed inside a grey steel almirah looking out at the opening door. A huge mass of crumpled shirts, sarees, towels and lungis is bursting out toward the lens, frozen mid-air. Behind the flying clothes, Ravi in a grey vest and white-and-blue checked lungi, mouth open in shock, arms raised.",mov:"The almirah door swings open fast and the clothes avalanche flies toward the lens in slow motion, then Ravi disappears under the pile. Quick push-in toward Ravi. 3 seconds.",a:[["Ammaaa…! (muffled)","Mummyyy…!"]],ost:"10 rojullo chelli engagement. Clean battalu: 0",sfx:"Door creak, whoosh, heavy thud at 0.0 s"},
+ {d:4,t:"Clothes mountain",c:["RAVI","BUNTY"],s:"FLAT",img:"Wide shot of the flat: only Ravi's head and one arm stick out of a waist-high mountain of crumpled clothes on the floor. Bunty in a maroon printed half-sleeve shirt and black track pants sits on the sofa behind, holding an open foil biryani parcel, laughing.",mov:"Bunty laughs and points at Ravi with his spoon; Ravi blinks and blows a sock off his face. Slow dolly-in. 4 seconds.",a:[["Kya re, kapdon ka Charminar bana diya kya?","What, did you build a Charminar of clothes?"]],sfx:"Bunty laugh"},
+ {d:4,t:"Amma calls",c:["RAVI"],s:"FLAT",img:"Close-up of Ravi still half-buried in clothes, holding a phone to his ear with both hands, eyes wide with panic. Phone screen faces away from the camera.",mov:"Ravi presses the phone to his ear and his eyes widen as he listens. Very slow push-in. 4 seconds.",a:[["(Amma, voice) Ravi, Divya nischitartham ki inka padi rojule! Nee battalu ready na?","Ravi, only ten days to Divya's engagement! Are your clothes ready?"]],ost:"Add phone caller ID 'Amma ❤️' in edit",sfx:"Ringtone"},
+ {d:3,t:"Fake smile",c:["RAVI"],s:"FLAT",img:"Tight close-up of Ravi's face forcing a big fake smile while sweating, phone at his ear, clothes around his shoulders.",mov:"Ravi forces a wide smile, then gulps nervously. Static camera. 3 seconds.",a:[["Ha… ready Amma, full ready.","Yes… ready, Mummy, fully ready."]],sfx:"Gulp"},
+ {d:3,t:"Bunty's advice",c:["BUNTY"],s:"FLAT",img:"Medium close-up of Bunty on the sofa, cheeks full of biryani, holding up a chicken leg piece like a pointer.",mov:"Bunty chews and waves the chicken piece while talking. Static. 3 seconds.",a:[["Gali ke dhobi ko de de.","Give it to the street dhobi."]]},
+ {d:4,t:"Dhobi stall closed",c:[],s:"",img:"Daytime street in an LB Nagar colony: a small roadside ironing stall with a coal iron on a wooden table, its blue rolling shutter pulled down and locked with a padlock, a blank white paper taped on the shutter.",mov:"Slow pan from the coal iron to the locked shutter and the paper. 4 seconds.",a:[["(Ravi, off-screen) Dhobi anna ooruki vellipoyadu ra.","The dhobi went to his village."]],ost:"Write on the paper in edit: 'Ooruki vellanu — 15 days'"},
+ {d:4,t:"Amma's WhatsApp",real:1,c:[],s:"",img:"REAL / EDIT: phone screen mock-up of a WhatsApp chat from 'Amma ❤️' forwarding the IronDost poster, plus a voice-note bubble.",mov:"Screen recording or CapCut mock-up; the poster pops in with a ping.",a:[["(Amma, voice note) Ee app chudu ra, LB Nagar lo intikochi teeskeltaru.","Look at this app, they pick up from home in LB Nagar."]],sfx:"WhatsApp ping"},
+ {d:5,t:"Booking in the app",real:1,c:[],s:"",img:"REAL: screen-record the live IronDost app on a phone: home → add shirts and pants → choose pickup slot 'Tomorrow 7–11 am' → Confirm.",mov:"Real screen recording, sped up 2×, with a finger tap overlay.",a:[],ost:"Pickup slots: 7–11 · 11–4 · 4–8",sfx:"Soft ping on Confirm"},
+ {d:4,t:"Lucky shirt",c:["RAVI"],s:"FLAT",p:1,img:"Ravi kneels on the floor stuffing clothes into a big laundry bag; he holds up a navy-blue cotton shirt with thin white checks and kisses it gently.",mov:"Ravi lifts the navy checked shirt, kisses it and places it carefully on top of the bag. Slow push-in. 4 seconds.",a:[["Idi naa lucky shirt. Jagratta.","This is my lucky shirt. Careful."]]},
+ {d:4,t:"Cliffhanger",c:["BUNTY","RAVI"],s:"FLAT",p:1,img:"Bunty leans into the frame from the left in close-up, eyes narrowed and suspicious; behind him, out of focus, Ravi holds the navy checked shirt with a worried face.",mov:"Bunty leans in slowly and narrows his eyes; focus racks from Bunty to Ravi's worried face, then the frame freezes. 4 seconds.",a:[["Online wale kapde gayab kar dete, dekh lena.","Online people make clothes disappear, you'll see."]],ost:"Repu udayam 7 gantalaki…",sfx:"Suspense sting on freeze"}
+]},
+{n:2, name:"7:02", en:"7:02 am", formula:"Flash-forward", hook:"Open on the ring box being pulled out of the pocket, then jump back 15 minutes.", hookText:"Ee okka pocket… oka engagement ni aapesedi", cliff:"Adi… Divya engagement ring!", caption:"Ep 2/10 — Pocket lo engagement ring marchipoyadu 😱 #DostUndiGa #IronDost #Hyderabad", clips:[
+ {d:3,t:"Flash-forward: the ring",hook:1,c:[],s:"FLAT",p:1,img:"Extreme macro close-up: a man's fingers slowly pulling a small red velvet ring box out of the chest pocket of a navy-blue shirt with thin white checks. Dramatic side light, dark background.",mov:"The fingers pull the red ring box out of the pocket very slowly; the light flickers. 3 seconds.",a:[],ost:"Ee okka pocket… oka engagement ni aapesedi. → '15 nimishalu mundu…'",sfx:"Heartbeat, music cuts out"},
+ {d:3,t:"7:02 doorbell",c:["RAVI"],s:"FLAT",img:"Ravi asleep face-down on a bed in a grey vest, blanket half off; a round wall clock above shows 7:02. Early morning light.",mov:"Ravi's eyes snap open and he lifts his head in shock. Static. 3 seconds.",a:[["Intha poddunne evaru ra?!","Who comes this early?!"]],sfx:"Doorbell twice at 0.0 s"},
+ {d:4,t:"Dost at the door",c:["RAVI","DOST"],s:"FLAT",img:"Ravi opens the flat's front door in a grey vest and checked lungi, toothbrush in mouth with white foam. Dost stands in the corridor smiling politely, holding folded royal-blue garment bags.",mov:"Dost gives a small polite nod and smile; Ravi freezes with the toothbrush. Slow push past Ravi's shoulder. 4 seconds.",a:[["(Dost) Namaskaram sir, IronDost nunchi. 7 to 11 slot.","Hello sir, from IronDost. Your 7–11 slot."]]},
+ {d:3,t:"Bunty shocked",c:["BUNTY"],s:"FLAT",img:"Bunty behind Ravi in the hallway, a blanket wrapped over his shoulders, hair messy, mouth open in disbelief.",mov:"Bunty's jaw drops and he rubs his eyes. Static. 3 seconds.",a:[["Time pe aaye? Hyderabad mein?","On time? In Hyderabad?"]]},
+ {d:5,t:"Counting every item",c:["DOST","RAVI"],s:"FLAT",img:"Dost kneels on the floor sorting clothes into neat counted stacks (shirts, pants, bedsheets) while Ravi stands watching. Top-down three-quarter angle.",mov:"Dost places each shirt on a stack, counting with his finger. Slow overhead drift. 5 seconds.",a:[["(Dost) Paddenimidi shirts, naalugu pants, rendu bedsheets…","Eighteen shirts, four pants, two bedsheets…"]]},
+ {d:4,t:"Loose button",c:["DOST"],s:"FLAT",p:1,img:"Close-up of Dost's hands holding the navy checked shirt, his thumb pointing to a loose hanging button.",mov:"Dost's thumb gently wiggles the loose button. Static macro. 4 seconds.",a:[["(Dost) Sir, ee button loose undi. Note chestanu.","Sir, this button is loose. I'll note it."]]},
+ {d:4,t:"Order detail + care note",real:1,c:[],s:"",img:"REAL: screen-record the order detail screen showing the itemised list and the care note 'button loose'.",mov:"Real screen recording, slow scroll.",a:[],sfx:"Soft ping"},
+ {d:4,t:"Pocket check",c:["DOST","RAVI"],s:"FLAT",p:1,img:"Dost slips two fingers into the chest pocket of the navy checked shirt and frowns slightly; Ravi in the background, unaware, brushing teeth.",mov:"Dost's fingers feel something inside the pocket; his eyebrows lift. Slow push-in. 4 seconds.",a:[["(Dost) Sir… pocket lo edo undi.","Sir… there's something in the pocket."]]},
+ {d:3,t:"Cliffhanger",c:["RAVI"],s:"FLAT",p:1,img:"Tight close-up of Ravi's face going pale, toothbrush hanging from his mouth, staring at a small red velvet ring box held up in the foreground (out of focus).",mov:"Ravi's toothbrush slowly drops out of his mouth; freeze frame. 3 seconds.",a:[],ost:"Adi… Divya engagement ring!",sfx:"Music stops dead, then a sting"}
+]},
+{n:3, name:"Pocket", en:"The Pocket", formula:"Slow-motion action", hook:"The ring box flies through the air and Ravi dives for it like a cricket fielder.", hookText:"Chelli engagement ring. 1 second.", cliff:"Amma parcel… daarilo undi.", caption:"Ep 3/10 — Every pocket checked ✅ Amma parcel vastundi 😅 #DostUndiGa #IronDost #Hyderabad", clips:[
+ {d:3,t:"The dive",hook:1,c:["RAVI"],s:"FLAT",p:1,img:"Ravi in a grey vest and checked lungi, fully horizontal mid-air in a cricket-fielder dive across the flat's hallway, one hand stretched toward a small red velvet ring box tumbling in the air.",mov:"Super slow motion: the ring box tumbles, Ravi stretches and catches it just before it hits the floor. 3 seconds.",a:[["Pattukooo!","Catch it!"]],ost:"Chelli engagement ring. 1 second.",sfx:"Whoosh, slow-mo bass hit"},
+ {d:3,t:"Saved",c:["RAVI"],s:"FLAT",p:1,img:"Ravi lying flat on his back on the mosaic floor, clutching the red ring box to his chest, breathing hard, eyes closed in relief.",mov:"Ravi's chest heaves, he exhales and laughs weakly. Top-down static. 3 seconds.",a:[["Amma champestundi…","Mummy would have killed me…"]]},
+ {d:5,t:"Every pocket",c:["DOST","RAVI"],s:"FLAT",img:"Dost kneels calmly beside Ravi on the floor, one hand on his own chest, sincere expression.",mov:"Dost speaks calmly and gives a small reassuring nod. Slow push-in on Dost. 5 seconds.",a:[["(Dost) Memu prathi pocket check chestam sir. Mee vasthuvulu mee daggare undali.","We check every pocket, sir. Your things should stay with you."]]},
+ {d:3,t:"Bunty impressed",c:["BUNTY"],s:"FLAT",img:"Bunty leaning on the doorframe with arms folded and the blanket still on his shoulders, slowly nodding, impressed.",mov:"Bunty nods slowly and raises his eyebrows. Static. 3 seconds.",a:[["Bhai… ye bande sachche hain.","Bro… these people are honest."]]},
+ {d:4,t:"Turnaround",c:["DOST"],s:"FLAT",img:"Dost at the open front door lifting two full royal-blue laundry bags onto his shoulder, turning back to speak.",mov:"Dost lifts the bags and turns to smile back. Static. 4 seconds.",a:[["(Dost) Ironing rendu rojullo, laundry moodu rojullo, sir.","Ironing in two days, laundry in three, sir."]],ost:"Ironing: 2 days · Laundry: 3 days"},
+ {d:4,t:"Timeline: picked up",real:1,c:[],s:"",img:"REAL: screen-record the order timeline with 'Picked up ✓'.",mov:"Real screen recording.",a:[],sfx:"Ping"},
+ {d:4,t:"Amma's new demand",c:["RAVI"],s:"FLAT",img:"Ravi standing by the window grills with his phone to his ear, face falling as he listens.",mov:"Ravi's smile fades into worry as he listens. Slow push-in. 4 seconds.",a:[["(Amma) Ravi, naa pattu cheeralu, naanna pancha bus lo pamputunna. Avi kooda ready cheyyi!","Ravi, I'm sending my silk sarees and Dad's dhoti on the bus. Get them ready too!"]]},
+ {d:3,t:"Bunty's line",c:["BUNTY","RAVI"],s:"FLAT",img:"Two-shot: Ravi looks helplessly at Bunty, who shrugs with both palms up.",mov:"Bunty shrugs and grins. Static. 3 seconds.",a:[["Ab toh Dost hi bachayega.","Now only Dost can save you."]]},
+ {d:4,t:"Cliffhanger: the bus",c:[],s:"BUS",img:"A red-and-white state transport bus driving on a wet highway in light rain, a cardboard parcel tied with plastic rope bouncing on the roof carrier.",mov:"Tracking shot alongside the bus; the parcel bounces as rain falls; freeze on the parcel. 4 seconds.",a:[],ost:"Amma parcel… daarilo undi.",sfx:"Rain, bus horn"}
+]},
+{n:4, name:"Lopala", en:"Inside", formula:"Impossible POV + curiosity question", hook:"POV from inside a giant washing-machine drum as clothes tumble at the lens.", hookText:"Mee battalu ekkadiki veltayi?", cliff:"Bunty em chestunnadu…?", caption:"Ep 4/10 — IronDost lopala ela untundo chudandi 👀 Pedda machines, owner check #DostUndiGa #IronDost #Laundry #Hyderabad", clips:[
+ {d:3,t:"Inside the drum",hook:1,c:[],s:"UNIT",img:"Point of view from inside a large stainless-steel industrial washing machine drum: white and blue shirts and foamy water tumbling toward the lens, light coming through the round glass door.",mov:"The drum spins, clothes and water rush at the lens, then a hard cut to black. 3 seconds.",a:[],ost:"Mee battalu ekkadiki veltayi?",sfx:"Deep machine rumble, water splash at 0.0 s"},
+ {d:3,t:"Ravi at the office",c:["RAVI"],s:"OFFICE",img:"Ravi in a light-blue formal shirt at an office desk with dual monitors, secretly looking at his phone under the desk.",mov:"Ravi glances around, then back at his phone under the desk. Static. 3 seconds.",a:[["Naa shirts em chestunnayo…","What are my shirts up to…"]]},
+ {d:4,t:"The machines",c:[],s:"UNIT",img:"Wide shot of the IronDost unit: a row of large stainless-steel front-loading industrial washer-extractors and tumble dryers all running, shelves of numbered royal-blue garment bags on the side.",mov:"Slow dolly along the row of running machines. 4 seconds.",a:[["(Dost, VO) Ide maa unit. Pedda machines…","This is our unit. Big machines…"]],sfx:"Machine hum"},
+ {d:4,t:"Owner's hand check",c:[],s:"UNIT",img:"Close-up of an older man's hands under a bright white LED light turning the collar of a freshly washed white shirt, inspecting it carefully.",mov:"The hands turn the collar and smooth the fabric. Slow push-in. 4 seconds.",a:[["(Dost, VO) …prathi load ni owner chetto check chestaru.","…the owner checks every load by hand."]]},
+ {d:4,t:"Steam press",c:[],s:"UNIT",img:"A worker in a royal-blue polo pressing a white cotton shirt on a large industrial steam press table, a big burst of steam rising.",mov:"The press comes down and a burst of steam rises; the shirt goes from crushed to sharp. 4 seconds.",a:[],sfx:"Loud steam hiss"},
+ {d:3,t:"Button stitched",c:[],s:"UNIT",p:1,img:"Macro shot of a needle and white thread stitching a button back onto a navy-blue shirt with thin white checks.",mov:"The needle pulls the thread through and the button sits tight. 3 seconds.",a:[["(Dost, VO) Mee note chadivam sir.","We read your note, sir."]]},
+ {d:4,t:"Timeline moves",real:1,c:[],s:"",img:"REAL: screen-record the timeline moving from Washing to Ironing.",mov:"Real screen recording.",a:[],sfx:"Ping"},
+ {d:3,t:"Caught",c:["RAVI"],s:"OFFICE",img:"Ravi smiling at his phone at his desk; behind him the blurred silhouette of a manager standing with hands on hips.",mov:"Ravi's smile freezes as he senses the manager; he slowly turns. 3 seconds.",a:[["(Manager, off-screen) Ravi! Phone kinda pettu!","Ravi! Phone down!"]]},
+ {d:3,t:"Cliffhanger",c:["BUNTY"],s:"FLAT",img:"Dim evening light in the flat: Bunty's hand slowly opening Ravi's grey steel almirah, his face half in shadow.",mov:"The almirah door creaks open slowly; push-in on Bunty's sneaky eyes; freeze. 3 seconds.",a:[],ost:"Bunty em chestunnadu…?",sfx:"Creak, suspense sting"}
+]},
+{n:5, name:"Delivery", en:"Delivery Day", formula:"Before / after transformation", hook:"A crumpled shirt in a fist whips into a crisp shirt snapping open in sunlight.", hookText:"2 rojula mundu vs ippudu", cliff:"Kal Bunty ka date… aur shirt?", caption:"Ep 5/10 — Promise chesina rojuke delivery ✅ Kaani Bunty plan enti? 🤨 #DostUndiGa #IronDost #Hyderabad", clips:[
+ {d:2,t:"Before",hook:1,c:[],s:"FLAT",p:1,img:"Extreme close-up of a fist crushing a badly crumpled navy-blue shirt with thin white checks, harsh dull light.",mov:"The fist squeezes the shirt, then a fast whip-pan to the right (transition). 2 seconds.",a:[],ost:"2 rojula mundu…",sfx:"Fabric crunch at 0.0 s, whoosh"},
+ {d:2,t:"After",hook:1,c:["RAVI"],s:"FLAT",p:1,img:"The same navy checked shirt, now perfectly ironed with a sharp collar, on a hanger held up by Ravi in front of a sunny window, a soft puff of steam around it.",mov:"Continue the whip-pan into the crisp shirt snapping open on the hanger in slow motion, sunlight flaring behind it. 2 seconds.",a:[["Ahaaa…","Ahhh…"]],ost:"…ippudu",sfx:"Fabric snap, choir 'aah'"},
+ {d:4,t:"Delivery",c:["DOST","RAVI"],s:"FLAT",img:"Dost at the flat door holding a neat stack of royal-blue garment bags and folded white bedsheets, Ravi opening the door in a formal shirt.",mov:"Dost hands over the bags with a smile. Static. 4 seconds.",a:[["(Dost) Ironing order, rendu rojullo, cheppinattu.","Ironing order, in two days, as promised."]],sfx:"Doorbell"},
+ {d:4,t:"Showroom shirts",c:["RAVI"],s:"FLAT",img:"Ravi unzipping a royal-blue garment bag on the bed, revealing a row of crisp ironed shirts on hangers with sharp collars.",mov:"The zip opens and Ravi's face lights up. Slow push-in. 4 seconds.",a:[["Ivi naa shirts aa? Showroom laga unnayi!","These are my shirts? They look like a showroom!"]]},
+ {d:3,t:"Button fixed",c:["RAVI"],s:"FLAT",p:1,img:"Macro close-up of Ravi's finger touching a freshly stitched button on the navy checked shirt.",mov:"Ravi's finger taps the firm button. 3 seconds.",a:[["Button kooda?!","Even the button?!"]]},
+ {d:4,t:"Bill and pay",real:1,c:[],s:"",img:"REAL: screen-record order bill → pay in app → 'Delivered ✓'.",mov:"Real screen recording.",a:[],sfx:"Ping"},
+ {d:3,t:"Bunty feels the fabric",c:["BUNTY"],s:"FLAT",p:1,img:"Bunty secretly rubbing the sleeve of the navy checked shirt between his fingers, looking sideways guiltily.",mov:"Bunty rubs the fabric and glances around. 3 seconds.",a:[["Hau… mast hai.","Yeah… it's nice."]]},
+ {d:3,t:"Date message",real:1,c:[],s:"",img:"EDIT: phone notification mock-up 'Ayesha 💕: Kal 7 baje, Paradise?' over a shot of Bunty's surprised face (use clip E5-C7 frame).",mov:"Notification slides down in CapCut.",a:[],sfx:"Notification ding"},
+ {d:3,t:"Baigan",c:["BUNTY"],s:"FLAT",img:"Bunty looking at a plastic chair piled with his own crumpled shirts, face falling.",mov:"Bunty's face drops. Static. 3 seconds.",a:[["Baigan…","Damn…"]]},
+ {d:3,t:"Cliffhanger",c:["BUNTY"],s:"FLAT",p:1,img:"Over-the-shoulder from Bunty toward the open almirah where the crisp navy checked shirt hangs alone in a beam of light.",mov:"Slow push-in toward the shirt as Bunty's eyes slide to it; freeze. 3 seconds.",a:[],ost:"Kal Bunty ka date… aur shirt?",sfx:"Sneaky pizzicato"}
+]},
+{n:6, name:"Dhuvvam", en:"Smoke", formula:"Disaster reveal", hook:"An iron lifts off a silk kurta and reveals a smoking iron-shaped hole.", hookText:"Silk ni intlo iron chesthe…", cliff:"Lucky shirt… missing.", caption:"Ep 6/10 — Silk intlo iron cheyyakandi 🔥😭 Bunty em chesadu?? #DostUndiGa #IronDost #DryCleaning #Hyderabad", clips:[
+ {d:3,t:"Burnt kurta",hook:1,c:["BUNTY"],s:"FLAT",img:"Close-up of a household electric iron lifting off a cream silk kurta on an ironing board, revealing a black iron-shaped burnt hole with smoke curling up; Bunty's horrified face behind.",mov:"The iron lifts, smoke rises from the hole, Bunty's eyes go wide. 3 seconds.",a:[["Ya Allah! Baigan!","Oh God! Damn!"]],ost:"Silk ni intlo iron chesthe…",sfx:"Sizzle at 0.0 s, smoke alarm beep"},
+ {d:3,t:"Ravi rushes in",c:["RAVI","BUNTY"],s:"FLAT",img:"Ravi running into the room fanning smoke away with a folded newspaper, Bunty frozen holding the iron.",mov:"Ravi fans the smoke frantically. 3 seconds.",a:[["Silk ni intlo iron chestara ra?!","Who irons silk at home?!"]]},
+ {d:4,t:"The hole",c:["BUNTY"],s:"FLAT",img:"Bunty holding the burnt cream silk kurta up in front of his face, one sad eye visible through the iron-shaped hole.",mov:"Bunty lowers the kurta slowly, lip trembling. 4 seconds.",a:[["Ammi ne Eid pe diya tha…","Mum gave it to me for Eid…"]]},
+ {d:4,t:"Ravi explains",c:["RAVI","BUNTY"],s:"FLAT",img:"Ravi holding his phone out toward Bunty, explaining patiently; Bunty sulking.",mov:"Ravi points at the phone screen (screen faces away from camera). 4 seconds.",a:[["Silk, pattu — ivi dry cleaning ki ivvali. Pedda machines, correct heat.","Silk and pattu go for dry cleaning. Big machines, correct heat."]]},
+ {d:4,t:"Dry cleaning in the app",real:1,c:[],s:"",img:"REAL: screen-record catalogue → Dry Cleaning, with 'Silk saree ₹250' visible.",mov:"Real screen recording.",a:[]},
+ {d:3,t:"Sulk",c:["BUNTY"],s:"FLAT",img:"Bunty slumped on the sofa hugging the burnt kurta, pouting.",mov:"Bunty sighs dramatically. 3 seconds.",a:[["Ab bolke kya faida.","No point telling me now."]]},
+ {d:4,t:"Night theft",c:["BUNTY","RAVI"],s:"FLAT",p:1,img:"Night, blue moonlight through the window grills: Ravi asleep on the bed in the background; Bunty tiptoeing from the almirah holding the navy checked shirt, finger on his lips, looking straight at the camera.",mov:"Bunty tiptoes forward and puts a finger on his lips to the camera. 4 seconds.",a:[["Sirf ek din, bhai… sorry.","Just one day, bro… sorry."]],sfx:"Cartoon tiptoe"},
+ {d:3,t:"Cliffhanger",c:[],s:"FLAT",img:"Inside the almirah: an empty hanger gently swinging where a shirt used to be, in dim blue light.",mov:"The empty hanger swings; the almirah door closes on it; freeze. 3 seconds.",a:[],ost:"Lucky shirt… missing.",sfx:"Door click, sting"}
+]},
+{n:7, name:"Biryani", en:"Biryani", formula:"Slow-motion disaster", hook:"A spoon of red salan falls in slow motion onto the lucky shirt.", hookText:"Lucky shirt. Biryani. Date night.", cliff:"Bunty ki idea vachindi…", caption:"Ep 7/10 — Lucky shirt pai biryani 😭 Engagement ki 2 rojule! Comment: Bunty ni kshaminchala? 👇 #DostUndiGa #IronDost #Hyderabad", clips:[
+ {d:3,t:"The drop",hook:1,c:["BUNTY"],s:"RESTO",p:1,img:"Ultra macro slow motion: a spoonful of red-orange mirchi ka salan gravy falling toward the chest of a navy-blue shirt with thin white checks worn by Bunty; restaurant lights blurred behind.",mov:"The gravy falls in super slow motion and splashes onto the shirt. 3 seconds.",a:[["Nakkooo…!","Nooo…!"]],ost:"Lucky shirt. Biryani. Date night.",sfx:"Total silence, then splat"},
+ {d:4,t:"It's a design",c:["BUNTY"],s:"RESTO",p:1,img:"Bunty at a restaurant table for two wearing the navy checked shirt with a big orange stain on the chest, forcing a smile and covering it with a paper napkin.",mov:"Bunty dabs the stain and grins awkwardly at someone off-camera. 4 seconds.",a:[["Ye… design hai.","This is… a design."]]},
+ {d:4,t:"Ravi finds it",c:["RAVI"],s:"FLAT",p:1,img:"Next morning: Ravi holding the stained navy checked shirt up against the window light, furious, veins on his forehead.",mov:"Ravi lifts the shirt and his face turns red. 4 seconds.",a:[["Ra Buntyyy!!","Buntyyy!!"]],sfx:"Dramatic zoom sound"},
+ {d:3,t:"Sorry",c:["BUNTY"],s:"FLAT",img:"Bunty on his knees on the floor with hands joined in apology, big puppy eyes.",mov:"Bunty shuffles forward on his knees. 3 seconds.",a:[["Bhai, maaf kar. Ek dum dil se.","Bro, forgive me. From my heart."]]},
+ {d:4,t:"Amma calls",c:["RAVI"],s:"FLAT",img:"Ravi on the phone, stained shirt in his other hand, eyes wide.",mov:"Ravi listens and slowly sits down. 4 seconds.",a:[["(Amma) Parcel vachinda? Engagement ellundi! Naa pattu cheera, naanna pancha, nee lucky shirt — anni ready na?","Did the parcel come? The engagement is the day after tomorrow! My silk saree, Dad's dhoti, your lucky shirt — all ready?"]]},
+ {d:4,t:"Amma's parcel",c:["RAVI"],s:"FLAT",p:1,img:"Ravi opening a wet cardboard parcel on the floor: a maroon Kanchipuram pattu saree with a gold zari border and a cream silk pancha, both badly crushed with water marks.",mov:"The flaps open to reveal the crushed silks; Ravi's face falls. 4 seconds.",a:[],sfx:"Low cello note"},
+ {d:3,t:"Defeated",c:["RAVI"],s:"FLAT",img:"Ravi sitting on the floor among the clothes, head in his hands.",mov:"Ravi drops his head into his hands. Slow pull-back. 3 seconds.",a:[["Ellundi… anni ellundi…","The day after tomorrow… everything by then…"]]},
+ {d:3,t:"Cliffhanger",c:["BUNTY"],s:"FLAT",img:"Bunty slowly raising his phone in the foreground, screen glow lighting his determined face, Ravi blurred behind.",mov:"Bunty raises the phone and a small smile appears; freeze. 3 seconds.",a:[],ost:"Bunty ki idea vachindi…",sfx:"Idea 'ding'"}
+]},
+{n:8, name:"Express", en:"Express", formula:"Countdown + high stakes", hook:"Bunty slams the table and a red 06:00:00 countdown starts.", hookText:"06:00:00", cliff:"Time saripotunda…?", caption:"Ep 8/10 — 6 gantallo Express ⚡ double price, kaani tension zero. Call/WhatsApp 79934 34932 #DostUndiGa #IronDost #ExpressLaundry #Hyderabad", clips:[
+ {d:3,t:"The slam",hook:1,c:["BUNTY"],s:"FLAT",img:"Bunty slamming his palm on the dining table, phone in his other hand, intense determined face, low angle.",mov:"Bunty's palm hits the table, things jump, he leans into the lens. 3 seconds.",a:[["Express! 6 ghante mein!","Express! In 6 hours!"]],ost:"Big red countdown 06:00:00 (add in edit)",sfx:"Table slam at 0.0 s, clock ticking starts"},
+ {d:3,t:"Ravi panics",c:["RAVI"],s:"FLAT",img:"Ravi in panic, hands on his head, surrounded by the crushed silk saree and stained shirt.",mov:"Ravi grips his head. 3 seconds.",a:[["Ironing ki rendu rojulu, laundry ki moodu kada?","Isn't ironing two days, laundry three?"]]},
+ {d:4,t:"Bunty explains",c:["BUNTY"],s:"FLAT",img:"Bunty, confident for the first time, raising one finger like a professor.",mov:"Bunty raises his finger and smirks. 4 seconds.",a:[["Normal mein, hau. Lekin Express hai — 6 ghante.","Normally, yes. But there's Express — 6 hours."]],ost:"Express = 6 hours"},
+ {d:4,t:"The call",c:["BUNTY"],s:"FLAT",img:"Bunty holding the phone to his ear, pacing, urgent expression.",mov:"Bunty paces and talks fast. 4 seconds.",a:[["Hello, IronDost? Express chahiye, emergency hai!","Hello, IronDost? Need Express, it's an emergency!"]],ost:"Show dialled number 79934 34932 in edit",sfx:"Dial tone"},
+ {d:4,t:"Dost answers",c:["DOST"],s:"UNIT",img:"Dost at the IronDost unit on the phone, calm, a steam press puffing behind him.",mov:"Dost speaks calmly, steam rises behind. 4 seconds.",a:[["(Dost) Express — 6 gantallo, double price sir. 12:30 ki pickup.","Express — in 6 hours, double the price, sir. Pickup at 12:30."]]},
+ {d:5,t:"The honest bill",real:1,c:[],s:"",img:"EDIT GRAPHIC: list — Kanchi pattu saree, pancha, lucky shirt, kurta-pyjama → 'Express = 2× price' → '₹500+ → 10% OFF (DOST10)'.",mov:"Items pop in one by one in CapCut.",a:[],ost:"Express = 2× price · ₹500+ → 10% OFF · DOST10",sfx:"Pop pop pop"},
+ {d:3,t:"Bunty pays",c:["BUNTY","RAVI"],s:"FLAT",img:"Bunty pressing his wallet into Ravi's hand, serious face.",mov:"Bunty pushes the wallet into Ravi's palm and closes his fingers over it. 3 seconds.",a:[["Bill mera. Galti meri thi.","The bill's on me. It was my fault."]]},
+ {d:3,t:"The hug",c:["RAVI","BUNTY"],s:"FLAT",img:"Ravi hugging Bunty tightly, Bunty surprised, both laughing.",mov:"Ravi pulls Bunty into a hug. 3 seconds.",a:[["Nuvvu pichhodivi ra.","You're crazy."]]},
+ {d:4,t:"Express pickup",c:["DOST"],s:"FLAT",p:1,img:"Dost at the door folding the maroon Kanchi pattu saree carefully in white tissue paper into a royal-blue garment bag; wall clock behind shows 12:30.",mov:"Dost folds the tissue over the saree gently. 4 seconds.",a:[["(Dost) Saree kosam steam press, stain kosam special wash. 6:30 lopu meeru function hall lo.","Steam press for the saree, special wash for the stain. You'll have them at the function hall before 6:30."]]},
+ {d:3,t:"Cliffhanger",c:[],s:"FLAT",img:"Close-up of the round wall clock reading 12:31.",mov:"The second hand ticks; freeze. 3 seconds.",a:[],ost:"05:59:59 — Time saripotunda…?",sfx:"Loud tick"}
+]},
+{n:9, name:"Countdown", en:"Countdown", formula:"Chaos + ticking clock", hook:"Ravi hides behind a marigold pillar in just a vest while Amma shouts his name.", hookText:"Function 7 ki. Battalu: inka raaledu.", cliff:"Divya ki em ayyindi…?", caption:"Ep 9/10 — 6:25 ki delivery, 7 ki function ⏰ Repu finale! #DostUndiGa #IronDost #Hyderabad", clips:[
+ {d:3,t:"Hiding",hook:1,c:["RAVI"],s:"HALL",img:"Ravi in just a grey vest and white-and-blue checked lungi hiding behind a marigold-wrapped pillar in a decorated function hall, nadaswaram musicians blurred behind, a wall clock showing 6:15.",mov:"Ravi presses himself against the pillar as a voice calls; his eyes dart left and right. 3 seconds.",a:[["(Amma, off-screen) Ravi ekkada?!","Where's Ravi?!"]],ost:"Function 7 ki. Battalu: inka raaledu.",sfx:"Nadaswaram blast at 0.0 s"},
+ {d:3,t:"Peeking",c:["RAVI"],s:"HALL",img:"Ravi peeking out from behind the pillar at relatives in silk sarees and veshtis.",mov:"Ravi leans out, sees the crowd, ducks back. 3 seconds.",a:[["Raaledu ra…","He's not here yet…"]]},
+ {d:3,t:"Bunty's calm",c:["BUNTY"],s:"HALL",img:"Bunty also in a white vest behind the same pillar, calmly eating mirchi bajji from a paper plate.",mov:"Bunty bites a bajji and shrugs. 3 seconds.",a:[["Aayega. Dost hai na.","He'll come. Dost is here."]]},
+ {d:4,t:"Out for delivery",real:1,c:[],s:"",img:"REAL: screen-record the order timeline showing 'Out for delivery'.",mov:"Real screen recording.",a:[],sfx:"Ping"},
+ {d:4,t:"The arrival",c:["DOST"],s:"HALL",img:"Dost riding a scooter through a marigold-decorated entrance arch of the function hall at dusk, royal-blue garment bags over his shoulder.",mov:"The scooter pulls in and stops; music builds. Low tracking shot. 4 seconds.",a:[],sfx:"Scooter, music swell"},
+ {d:4,t:"On time",c:["DOST"],s:"HALL",img:"Dost walking in with garment bags, glancing at his wristwatch, calm smile.",mov:"Dost checks his watch and smiles. 4 seconds.",a:[["(Dost) Sir, cheppina time lopala.","Sir, within the promised time."]],ost:"6:25 PM"},
+ {d:4,t:"Stain gone",c:["RAVI"],s:"HALL",p:1,img:"Ravi unzipping a royal-blue garment bag to reveal the navy checked shirt perfectly clean and ironed.",mov:"The zip opens; Ravi's jaw drops with joy. 4 seconds.",a:[["Stain… ledu!","The stain… is gone!"]]},
+ {d:3,t:"Like new",c:["BUNTY"],s:"HALL",img:"Bunty holding up a crisp white kurta-pyjama on a hanger and kissing it.",mov:"Bunty kisses the kurta dramatically. 3 seconds.",a:[["Ya Allah, naya jaisa!","Oh God, like new!"]]},
+ {d:3,t:"Saree handed in",c:["DOST"],s:"HALL",img:"Dost handing a royal-blue garment bag through a half-open door to a woman's hand with gold bangles and mehendi.",mov:"The hand takes the bag and the door closes. 3 seconds.",a:[]},
+ {d:2,t:"Cliffhanger",c:[],s:"HALL",img:"The closed door of the bridal room decorated with a jasmine garland.",mov:"Hold on the door; freeze. 2 seconds.",a:[["(Divya, off-screen) Haaa…!","(a loud gasp)"]],ost:"Divya ki em ayyindi…?",sfx:"Gasp, sting"}
+]},
+{n:10, name:"Nischitartham", en:"The Engagement", formula:"Hero slow-motion payoff", hook:"Ravi and Bunty walk toward the camera in slow motion through falling jasmine.", hookText:"FINALE", cliff:"Bhai… Season 2.", caption:"Ep 10/10 FINALE 🎉 Divya engagement, Bunty sorry, Dost hero. Season 2 kavala? Comment 'S2' 👇 Call/WhatsApp 79934 34932 #DostUndiGa #IronDost #Hyderabad #Telugu", clips:[
+ {d:4,t:"Hero walk",hook:1,c:["RAVI","BUNTY"],s:"HALL",p:1,img:"Ravi in a cream silk pancha with a gold border and the crisp navy checked shirt, Bunty beside him in a crisp white kurta-pyjama, walking toward the camera in the function hall, jasmine petals falling, warm fairy lights.",mov:"Slow-motion walk toward the lens, petals falling, slight low angle. 4 seconds.",a:[["(Bunty) Bhai… hero lag rahe hum.","Bro… we look like heroes."]],ost:"FINALE",sfx:"Big beat drop at 0.0 s"},
+ {d:4,t:"The saree",c:[],s:"HALL",p:1,img:"Wide shot from behind of a young bride (Divya) in a maroon Kanchipuram pattu saree with a shining gold zari border, perfect pleats, standing at a mirror (her face soft and out of focus).",mov:"She turns slightly and the zari catches the light. 4 seconds.",a:[["(Divya) Amma! Kotha cheera laga undi!","Mummy! It looks like a new saree!"]]},
+ {d:4,t:"Amma's blessing",c:["RAVI"],s:"HALL",img:"Over-the-shoulder from an older woman in a silk saree (only her shoulder and bun with jasmine visible) toward Ravi, who smiles shyly.",mov:"Ravi smiles shyly and looks down. 4 seconds.",a:[["(Amma) Baga chesav ra.","You did well, dear."]]},
+ {d:3,t:"Credit",c:["RAVI","BUNTY"],s:"HALL",img:"Ravi pointing at Bunty beside him, Bunty looking embarrassed.",mov:"Ravi points, Bunty scratches his head. 3 seconds.",a:[["Kaadu Amma, Bunty and Dost.","Not me, Mummy — Bunty and Dost."]]},
+ {d:3,t:"Bunty's apology",c:["BUNTY"],s:"HALL",img:"Bunty bending to touch the feet of an older woman in a silk saree (framed from the waist down).",mov:"Bunty bends and touches her feet; her hand rests on his head. 3 seconds.",a:[["Aunty, galti meri thi, Dost ne bacha liya.","Aunty, the mistake was mine, Dost saved us."]]},
+ {d:3,t:"Stay for food",c:["DOST"],s:"HALL",img:"Dost walking quietly toward the hall exit with folded empty garment bags.",mov:"Dost stops and turns back, surprised. 3 seconds.",a:[["(Amma, off-screen) Babu! Bhojanam chesi vellu.","Son! Eat before you go."]]},
+ {d:4,t:"Banana-leaf meal",c:["DOST","RAVI","BUNTY"],s:"HALL",img:"Dost, Ravi and Bunty sitting together at a long table eating a South Indian meal on banana leaves, laughing.",mov:"All three laugh as Bunty serves Dost more rice. 4 seconds.",a:[],sfx:"Music swells"},
+ {d:3,t:"The ring",c:[],s:"HALL",p:1,img:"Close-up on the stage: hands opening the small red velvet ring box from Ep 2, a gold ring sparkling under warm lights.",mov:"The box opens and the ring sparkles. 3 seconds.",a:[],sfx:"Applause"},
+ {d:3,t:"Ravi's tagline",c:["RAVI"],s:"HALL",img:"Ravi in the pancha and lucky shirt looking straight into the camera with a big confident smile.",mov:"Ravi smiles and winks at the lens. 3 seconds.",a:[["Battala tension? IronDost undi ga!","Clothes tension? IronDost is here!"]]},
+ {d:3,t:"Bunty's tagline",c:["BUNTY","RAVI"],s:"HALL",img:"Bunty pushing into the frame beside Ravi, cheek to cheek, grinning at the camera.",mov:"Bunty squeezes into frame and grins. 3 seconds.",a:[["Kapdon ki tension? Dost hai na!","Clothes tension? Dost is here!"]]},
+ {d:2,t:"Season 2 tease (after end card)",c:["BUNTY"],s:"HALL",img:"Bunty looking down at his phone, then up at the camera with a nervous grin.",mov:"Bunty looks up from the phone at the lens. 2 seconds.",a:[["Bhai… Season 2.","Bro… Season 2."]],ost:"Phone mock-up: 'Ayesha 💕: Ammi-Abba ko milna hai. Sunday.'",sfx:"Comedy sting"}
+]}
+];
+
+/* ---------- render ---------- */
+const esc = s => String(s).replace(/[&<>"]/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));
+let uid = 0;
+function promptBlock(label, text){
+  const id = "p" + (++uid);
+  return `<div class="prow"><div class="head"><span class="lbl">${esc(label)}</span><button class="copy" type="button" data-copy="${id}">Copy</button></div><pre class="prompt" id="${id}">${esc(text)}</pre></div>`;
+}
+function attachList(c){
+  const refs = c.c.map(k => CHARS[k].ref);
+  if (c.s && SETS[c.s]) refs.push(SETS[c.s].ref);
+  if (c.p) refs.push("PROPS_REF");
+  return refs;
+}
+function keyframe(c){
+  const chars = c.c.map(k => CHARS[k].short).join("; ");
+  const set = c.s && SETS[c.s] ? ` Location: ${SETS[c.s].name} (match ${SETS[c.s].ref}).` : "";
+  const props = c.p ? " Props must match PROPS_REF exactly." : "";
+  return `${STYLE}\nScene: ${c.img}${chars ? `\nCharacters: ${chars}.` : ""}${set}${props}\n${NEG}`;
+}
+function motion(c){ return `Image-to-video from this keyframe. ${c.mov}\n${MOTION_TAIL}`; }
+
+// cast and sets
+document.getElementById("castGrid").innerHTML = Object.values(CHARS).map(ch =>
+  `<div class="panel"><div><h3>${esc(ch.name)}</h3><p class="note">${esc(ch.role)} · save as <b>${ch.ref}</b></p></div>${promptBlock("Reference sheet prompt", ch.sheet)}</div>`).join("");
+document.getElementById("setGrid").innerHTML = Object.values(SETS).map(s =>
+  `<div class="panel"><div><h3>${esc(s.name)}</h3><p class="note">Save as <b>${s.ref}</b></p></div>${promptBlock("Reference prompt", s.prompt)}</div>`).join("");
+
+// episodes
+const epHtml = EPS.map(ep => {
+  let t = 0;
+  const clips = ep.clips.map((c, i) => {
+    const id = `E${ep.n}-C${i+1}`;
+    const start = t; t += c.d;
+    const time = `${start}–${t}s`;
+    const pills = (c.hook ? '<span class="pill h">Hook</span>' : "") + (c.real ? '<span class="pill r">Real</span>' : '<span class="pill t">AI</span>');
+    const attach = c.real ? "" : `<p class="note">Attach: <b>${attachList(c).join(", ") || "no reference"}</b></p>`;
+    const body = c.real
+      ? `<p><b>Make it:</b> ${esc(c.img.replace(/^(REAL|EDIT|REAL \/ EDIT|EDIT GRAPHIC):\s*/,""))}</p><p class="note">${esc(c.mov)}</p>`
+      : promptBlock("Keyframe prompt (image)", keyframe(c)) + promptBlock("Motion prompt (video)", motion(c));
+    const audio = (c.a && c.a.length) ? `<div class="audio">${c.a.map(l => `<span>🎙 ${esc(l[0])}</span><span class="en">${esc(l[1])}</span>`).join("")}</div>` : "";
+    const ost = (c.ost || c.sfx) ? `<div class="ost">${c.ost ? `<div><b>On screen:</b> ${esc(c.ost)}</div>` : ""}${c.sfx ? `<div><b>Sound:</b> ${esc(c.sfx)}</div>` : ""}</div>` : "";
+    return `<article class="clip${c.hook ? " hook" : ""}${c.real ? " real" : ""}"><div class="ch"><span class="id">${id} · ${time}</span>${pills}<span class="title">${esc(c.t)}</span></div>${attach}${body}${audio}${ost}</article>`;
+  }).join("");
+  const total = t + 5;
+  return `<section id="ep${ep.n}">
+    <div class="ep-head">
+      <div class="row"><span class="ep-num">Episode ${ep.n} / 10 · ${ep.clips.length} clips · ${total}s with end card</span><button class="copy" type="button" data-ep="${ep.n}">Copy all prompts</button></div>
+      <h2>${esc(ep.name)} <span class="note" style="font-family:var(--f-body);font-weight:400;font-size:1rem">(${esc(ep.en)})</span></h2>
+      <div class="hookbox"><span><b>Hook · ${esc(ep.formula)}</b></span><span>${esc(ep.hook)}</span><span>On-screen hook text: <b>${esc(ep.hookText)}</b></span></div>
+      <p class="note"><b>Cliffhanger:</b> ${esc(ep.cliff)} · <b>Caption:</b> ${esc(ep.caption)}</p>
+    </div>
+    <div class="clips">${clips}</div>
+  </section>`;
+}).join("");
+document.getElementById("episodes").innerHTML = epHtml;
+
+// nav
+const navItems = [["how","How to"],["hooks","Hooks"],["cast","Characters"],["sets","Sets"],...EPS.map(e => ["ep"+e.n, "Ep "+e.n]),["endcard","End card"],["posting","Posting"],["checklist","Checklist"]];
+document.getElementById("rail").innerHTML = navItems.map(([id,l]) => `<a href="#${id}">${l}</a>`).join("");
+
+// copy
+function flash(btn){ btn.classList.add("done"); const o = btn.textContent; btn.textContent = "Copied"; setTimeout(() => { btn.classList.remove("done"); btn.textContent = o; }, 1400); }
+function selectText(el){ const r = document.createRange(); r.selectNodeContents(el); const s = getSelection(); s.removeAllRanges(); s.addRange(r); }
+document.addEventListener("click", e => {
+  const btn = e.target.closest("button.copy"); if (!btn) return;
+  let text = "", el = null;
+  if (btn.dataset.copy) { el = document.getElementById(btn.dataset.copy); text = el.textContent; }
+  else if (btn.dataset.ep) {
+    const ep = EPS.find(x => String(x.n) === btn.dataset.ep);
+    text = ep.clips.map((c, i) => {
+      const id = `E${ep.n}-C${i+1}`;
+      if (c.real) return `${id} — ${c.t} [REAL / EDIT]\n${c.img}`;
+      return `${id} — ${c.t}\nATTACH: ${attachList(c).join(", ")}\nKEYFRAME:\n${keyframe(c)}\nMOTION:\n${motion(c)}`;
+    }).join("\n\n");
+  }
+  const done = () => flash(btn);
+  try { navigator.clipboard.writeText(text).then(done, () => { if (el) selectText(el); }); }
+  catch (_) { if (el) selectText(el); }
+});
+</script>

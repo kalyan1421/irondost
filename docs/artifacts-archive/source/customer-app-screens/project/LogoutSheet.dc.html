@@ -1,0 +1,44 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Log out</title>
+<script src="./support.js"></script>
+<link rel="stylesheet" href="ds/irondost/tokens.css">
+<link rel="stylesheet" href="ds/irondost/components/bundle.css">
+<link rel="stylesheet" href="app.css">
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Outfit:wght@600;700&amp;family=Figtree:wght@400;500;600;700&amp;family=Geist+Mono:wght@500&amp;display=swap">
+<style>body{margin:0}</style>
+</helmet>
+<div class="scr" data-theme="{{theme}}">
+  <div class="under" aria-hidden="true">
+    <dc-import name="Account" theme="{{theme}}" hint-size="390px,844px"></dc-import>
+  </div>
+  <a class="scrim" href="Account.dc.html" aria-label="Close"></a>
+  <section class="sheet" role="dialog" aria-modal="true" aria-labelledby="logout-title" aria-describedby="logout-body">
+    <span class="grabber"></span>
+    <div style="display: grid; gap: 8px">
+      <h1 id="logout-title" class="headline">Log out of IronDost?</h1>
+      <p id="logout-body" class="body-lg muted">Your basket stays on this phone. You'll need a code by SMS to sign in again, and this phone stops getting order updates.</p>
+    </div>
+    <div style="display: grid; gap: 8px">
+      <a class="id-btn id-btn--primary id-btn--block" href="Welcome.dc.html">Log out</a>
+      <a class="id-btn id-btn--outline id-btn--block" href="Account.dc.html">Stay signed in</a>
+    </div>
+    <div class="safe-bottom" style="margin-top: -16px"></div>
+  </section>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"theme":{"editor":"enum","options":["light","dark"],"default":"light"},"$preview":{"width":390,"height":844}}'>
+class Component extends DCLogic {
+  renderVals() {
+    return { theme: this.props.theme ?? 'light' };
+  }
+}
+</script>
+</body>
+</html>

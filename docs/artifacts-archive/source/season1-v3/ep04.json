@@ -1,0 +1,88 @@
+{
+ "n": 4, "name": "Lopala", "en": "Inside",
+ "hook_formula": "Impossible POV + curiosity question",
+ "hook_text": "Mee battalu ekkadiki veltayi?",
+ "cliff": "Bunty em chestunnadu…?",
+ "caption": "Ep 4/10 · IronDost lopala ela untundo chudandi 👀 Pedda machines, owner check #DostUndiGa #IronDost #Laundry #HyderabadReels #TeluguComedy",
+ "clips": [
+  {
+   "id": "E4-C1", "title": "Inside the drum, the machines", "set": "UNIT",
+   "cast": ["DOST"], "props": ["bag"], "hook": true,
+   "beats": [
+    ["0–2.5 s", "POV from inside a large stainless-steel industrial washing-machine drum on frame 1: white and blue shirts and foamy water tumble toward the lens, light coming through the round glass door."],
+    ["2.5–4.5 s", "The camera passes out through the glass door into the bright IronDost unit and starts gliding along a row of big front-loading washer-extractors and tumble dryers, all running."],
+    ["4.5–7 s", "The dolly continues past shelves of plain royal-blue garment bags stacked neatly by the machines, drums spinning behind round glass doors."],
+    ["7–10 s", "At the end of the row DOST, seen from behind in his royal-blue polo, lifts a royal-blue bag off a shelf and carries it toward a work table, walking away from camera."]
+   ],
+   "camera": "Starts inside the drum, pulls back through the glass door and glides in one slow dolly along the row of running machines to DOST's back at the end of the aisle. One continuous move.",
+   "lines": [
+    {"spk": "DOST", "mode": "OFF", "at": "3–5.5 s", "native": "ఇదే మా యూనిట్. పెద్ద మెషిన్లు…", "roman": "Ide maa unit. Pedda machines…", "en": "This is our unit. Big machines…"}
+   ],
+   "sound": "Deep drum rumble and water splash at 0.0 s, machine hum swelling from 2.5 s, the rhythmic thump of tumble dryers, a bag rustle at 7.5 s. No music.",
+   "first": "Clothes and foam already tumbling at the lens inside the drum.",
+   "last": "DOST from behind carrying a royal-blue bag toward a work table, machines running along the left.",
+   "edit_text": "0.3 s: 'Mee battalu ekkadiki veltayi?' (big, top third); no labels on machines",
+   "neg_extra": ["a face on any clothing", "creatures or monsters", "writing, numbers or logos on machines, shelves or bags", "DOST's lips moving with the voice-over", "water leaking out of the drum"]
+  },
+  {
+   "id": "E4-C2", "title": "Owner's hands, button, steam", "set": "UNIT",
+   "cast": ["DOST", "OWNER"], "props": ["lucky_shirt"],
+   "beats": [
+    ["0–3 s", "Close-up under a bright white LED lamp on a long finishing table: an older man's weathered hands (the owner, face out of frame) turn the collar of a freshly washed white shirt and smooth the fabric, inspecting it carefully."],
+    ["3–6 s", "The camera slides along the table to the navy checked shirt lying flat. Macro: the same hands draw a needle with navy thread through, stitching the loose button tight, then snip the thread and press the button flat with a thumb."],
+    ["6–8 s", "The camera keeps sliding to the end of the table where DOST lays the navy checked shirt on a large industrial steam press, smoothing it with both palms, calm and focused."],
+    ["8–10 s", "DOST brings the press down: a big, satisfying burst of white steam billows up, and when he lifts it the shirt is crisp and sharp. DOST gives a small satisfied nod."]
+   ],
+   "camera": "Slow lateral dolly along the finishing table from the owner's hands to the button macro to DOST at the steam press. One continuous move.",
+   "lines": [
+    {"spk": "DOST", "mode": "OFF", "at": "0.5–3 s", "native": "ప్రతి లోడ్ ని ఓనర్ చేత్తో చెక్ చేస్తారు.", "roman": "Prathi load ni owner chetto check chestaru.", "en": "The owner checks every load by hand."},
+    {"spk": "DOST", "mode": "OFF", "at": "4–6 s", "native": "మీ నోట్ చదివాం సార్.", "roman": "Mee note chadivam sir.", "en": "We read your note, sir."}
+   ],
+   "sound": "Crisp fabric rustle and LED lamp hum at 0.0 s, thread pulling through cloth at 3.5 s, scissors snip at 5 s, press clunk at 8 s, loud steam hiss at 8.2 s. No music.",
+   "first": "The owner's hands already turning the white shirt's collar under the lamp.",
+   "last": "The steam clearing over the crisp navy checked shirt on the press, DOST nodding.",
+   "edit_text": "At 1 s: 'Owner hand-check ✓'; at 4.5 s: 'Care note: button loose → stitched ✓'; at 8.5 s: 'Steam press'",
+   "neg_extra": ["a face on any clothing", "creatures or monsters", "the owner's face visible", "DOST's lips moving with the voice-over", "fire or smoke instead of white steam", "writing on any tag, label or note"]
+  },
+  {
+   "id": "E4-C3", "title": "Caught at the office", "set": "OFFICE",
+   "cast": ["RAVI", "MANAGER"], "props": [],
+   "beats": [
+    ["0–2.5 s", "HITEC City office, open-plan desks. RAVI in a light-blue formal shirt sits at his desk, glances left and right, then lowers his phone under the desk, its back to the camera; a royal-blue glow lights his face."],
+    ["2.5–5 s", "The phone pings and the glow brightens. RAVI breaks into a goofy proud smile and murmurs to himself."],
+    ["5–6.5 s", "A shadow falls across RAVI's desk from behind the camera. His smile freezes."],
+    ["6.5–8.5 s", "The MANAGER's voice snaps from off screen. RAVI jolts and drops the phone into his lap."],
+    ["8.5–10 s", "RAVI spins to his keyboard and types fast with fake focus, eyes wide, a nervous smile stuck on his face."]
+   ],
+   "camera": "Slow push-in from a medium shot over the monitors to a close-up of RAVI's face, with no reverse to the MANAGER. One continuous move.",
+   "lines": [
+    {"spk": "RAVI", "mode": "ON", "at": "2.5–4.5 s", "native": "నా షర్ట్స్ ఏం చేస్తున్నాయో…", "roman": "Naa shirts em chestunnayo…", "en": "What are my shirts up to…"},
+    {"spk": "MANAGER", "mode": "OFF", "at": "6.5–8 s", "native": "రవీ! ఫోన్ కింద పెట్టు!", "roman": "Ravi! Phone kinda pettu!", "en": "Ravi! Phone down!"}
+   ],
+   "sound": "Office keyboard clatter and AC hum at 0.0 s, notification ping at 2.5 s, a single heavy footstep at 5 s, the manager's sharp voice at 6.5 s, phone thump into lap at 7.5 s, frantic typing at 8.5 s. No music.",
+   "first": "RAVI mid-glance over his shoulder, the phone already sliding under the desk.",
+   "last": "Close-up of RAVI typing with frozen fake focus and a nervous smile.",
+   "edit_text": "At 3 s: 'Washing → Ironing ✓' edit graphic by the phone",
+   "neg_extra": ["a face on any clothing", "the MANAGER's face or body visible (voice and shadow only)", "readable text on the monitors (screens soft and angled away)", "a visible phone screen"]
+  },
+  {
+   "id": "E4-C4", "title": "Bunty at the almirah", "set": "FLAT",
+   "cast": ["BUNTY"], "props": [],
+   "beats": [
+    ["0–2.5 s", "Dim evening light in the empty flat. BUNTY tiptoes into the bedroom, glancing back toward the front door."],
+    ["2.5–5 s", "BUNTY stops at RAVI's grey steel almirah and whispers to himself with a sly smile."],
+    ["5–7.5 s", "BUNTY's hand slowly pulls the almirah door open; it creaks. Warm light from the window falls across his face, half in shadow."],
+    ["7.5–10 s", "BUNTY peers into the almirah, his eyes narrowing, a sneaky grin spreading slowly as he looks at RAVI's hanging shirts."]
+   ],
+   "camera": "Follows BUNTY from behind to the almirah, then slowly pushes in to a close-up of his sneaky eyes. One continuous move.",
+   "lines": [
+    {"spk": "BUNTY", "mode": "ON", "at": "2.5–4.5 s", "native": "रवि अभी ऑफिस में है…", "roman": "Ravi abhi office mein hai…", "en": "Ravi's at the office right now…"}
+   ],
+   "sound": "Soft barefoot steps at 0.0 s, a distant traffic hum, a long almirah creak at 5 s, a low suspense sting at 8.5 s. No music.",
+   "first": "BUNTY mid-tiptoe into the dim bedroom, looking back over his shoulder.",
+   "last": "Close-up of BUNTY's sneaky eyes and grin, half in shadow, the almirah door open.",
+   "edit_text": "Cliffhanger at 8.5 s: 'Bunty em chestunnadu…?' then the end card",
+   "neg_extra": ["a face on any clothing", "creatures or monsters, or glowing eyes in the almirah", "clothes falling out of the almirah", "BUNTY taking anything out yet"]
+  }
+ ]
+}

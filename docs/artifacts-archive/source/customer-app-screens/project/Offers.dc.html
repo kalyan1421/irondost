@@ -1,0 +1,73 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Offers</title>
+<script src="./support.js"></script>
+<link rel="stylesheet" href="ds/irondost/tokens.css">
+<link rel="stylesheet" href="ds/irondost/components/bundle.css">
+<link rel="stylesheet" href="app.css">
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Outfit:wght@600;700&amp;family=Figtree:wght@400;500;600;700&amp;family=Geist+Mono:wght@500&amp;display=swap">
+<style>body{margin:0}</style>
+</helmet>
+<div class="scr" data-theme="{{theme}}">
+  <div class="safe-top" style="background: var(--surface)"></div>
+  <header style="flex: none; padding: 8px 16px 12px; background: var(--surface); box-shadow: inset 0 -1px 0 var(--border)">
+    <h1 class="headline">Offers</h1>
+  </header>
+  <main class="main" style="padding-top: 16px; gap: 12px">
+    <section class="id-promo" aria-label="WELCOME20">
+      <span class="id-bubble" style="width: 120px; height: 120px; right: -34px; top: -30px"></span>
+      <span class="id-bubble" style="width: 48px; height: 48px; right: 60px; bottom: -14px"></span>
+      <span class="id-bubble" style="width: 20px; height: 20px; right: 40px; top: 80px"></span>
+      <span class="id-chip id-chip--offer" style="width: fit-content">New here</span>
+      <p class="id-promo__title">20% off your first order</p>
+      <p class="body muted">Up to ₹100 · Min. order ₹299 · Once per customer</p>
+      <button class="id-promo__code" aria-label="Copy code WELCOME20">WELCOME20 <svg class="id-icon sm" viewBox="0 0 24 24" aria-hidden="true"><rect width="14" height="14" x="8" y="8" rx="2" ry="2"></rect><path d="M4 16c-1.1 0-2-.9-2-2V4c0-1.1.9-2 2-2h10c1.1 0 2 .9 2 2"></path></svg></button>
+    </section>
+    <article class="id-card" style="display: grid; gap: 8px">
+      <span class="id-chip id-chip--offer" style="width: fit-content">15% off</span>
+      <h2 class="title">15% off orders above ₹500</h2>
+      <p class="body muted">Up to ₹150 · Valid till 31 Oct</p>
+      <div class="id-row" style="justify-content: space-between">
+        <span class="id-promo__code">FRESH15</span>
+        <button class="id-btn id-btn--text" style="padding-right: 0">Copy code</button>
+      </div>
+    </article>
+    <article class="id-card" style="display: grid; gap: 8px">
+      <span class="id-chip id-chip--offer" style="width: fit-content">₹50 off</span>
+      <h2 class="title">₹50 off orders above ₹400</h2>
+      <p class="body muted">Twice per customer · Valid till 15 Oct</p>
+      <div class="id-row" style="justify-content: space-between">
+        <span class="id-promo__code">FLAT50</span>
+        <button class="id-btn id-btn--text" style="padding-right: 0">Copy code</button>
+      </div>
+    </article>
+  </main>
+  <div class="id-snack" role="status" style="position: absolute; left: 16px; right: 16px; bottom: 110px; max-width: none">
+    <span class="id-snack__text">Code WELCOME20 copied. Apply it in your basket.</span>
+  </div>
+  <div class="navwrap">
+    <nav class="id-nav" aria-label="Main">
+      <a class="id-nav__item" href="Main.dc.html"><span class="id-nav__pill"><svg class="id-icon lg" viewBox="0 0 24 24" aria-hidden="true"><path d="M15 21v-8a1 1 0 0 0-1-1h-4a1 1 0 0 0-1 1v8"></path><path d="M3 10a2 2 0 0 1 .709-1.528l7-5.999a2 2 0 0 1 2.582 0l7 5.999A2 2 0 0 1 21 10v9a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"></path></svg></span>Home</a>
+      <a class="id-nav__item" href="Orders.dc.html"><span class="id-nav__pill"><svg class="id-icon lg" viewBox="0 0 24 24" aria-hidden="true"><path d="M11 21.73a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73z"></path><path d="M12 22V12"></path><path d="m3.3 7 7.703 4.734a2 2 0 0 0 1.994 0L20.7 7"></path><path d="m7.5 4.27 9 5.15"></path></svg></span>Orders</a>
+      <a class="id-nav__item is-active" href="Offers.dc.html" aria-current="page"><span class="id-nav__pill"><svg class="id-icon lg" viewBox="0 0 24 24" aria-hidden="true"><path d="M3.85 8.62a4 4 0 0 1 4.78-4.77 4 4 0 0 1 6.74 0 4 4 0 0 1 4.78 4.78 4 4 0 0 1 0 6.74 4 4 0 0 1-4.77 4.78 4 4 0 0 1-6.75 0 4 4 0 0 1-4.78-4.77 4 4 0 0 1 0-6.76Z"></path><path d="m15 9-6 6"></path><path d="M9 9h.01"></path><path d="M15 15h.01"></path></svg></span>Offers</a>
+      <a class="id-nav__item" href="Account.dc.html"><span class="id-nav__pill"><svg class="id-icon lg" viewBox="0 0 24 24" aria-hidden="true"><path d="M19 21v-2a4 4 0 0 0-4-4H9a4 4 0 0 0-4 4v2"></path><circle cx="12" cy="7" r="4"></circle></svg></span>Account</a>
+    </nav>
+    <div class="safe-bottom"></div>
+  </div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"theme":{"editor":"enum","options":["light","dark"],"default":"light"},"$preview":{"width":390,"height":844}}'>
+class Component extends DCLogic {
+  renderVals() {
+    return { theme: this.props.theme ?? 'light' };
+  }
+}
+</script>
+</body>
+</html>

@@ -1,0 +1,52 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Set up · name</title>
+<script src="./support.js"></script>
+<link rel="stylesheet" href="ds/irondost/tokens.css">
+<link rel="stylesheet" href="ds/irondost/components/bundle.css">
+<link rel="stylesheet" href="app.css">
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Outfit:wght@600;700&amp;family=Figtree:wght@400;500;600;700&amp;family=Geist+Mono:wght@500&amp;display=swap">
+<style>body{margin:0}</style>
+</helmet>
+<div class="scr" data-theme="{{theme}}" style="background: var(--surface)">
+  <div class="safe-top"></div>
+  <div style="flex: none; height: 56px; display: flex; align-items: center; gap: 12px; padding: 0 16px">
+    <span class="caption muted" style="flex: none">Step 1 of 2</span>
+    <span style="flex: 1; height: 4px; border-radius: 2px; background: var(--surface-soft)"><span style="display: block; width: 50%; height: 4px; border-radius: 2px; background: var(--primary)"></span></span>
+  </div>
+  <main class="main" style="padding: 24px 16px; gap: 28px">
+    <div style="display: grid; gap: 8px">
+      <h1 class="headline">What should we call you?</h1>
+      <p class="body-lg muted">Your partner uses your name at pickup.</p>
+    </div>
+    <label class="id-field">
+      <span class="id-field__label">Full name</span>
+      <span class="id-field__control is-focus"><input type="text" autocomplete="name" value="Priya Sharma"></span>
+    </label>
+    <label class="id-field">
+      <span class="id-field__label">Email (optional)</span>
+      <span class="id-field__control"><input type="email" autocomplete="email" placeholder="you@example.com"></span>
+      <span class="id-field__help">For receipts. We never send marketing without asking.</span>
+    </label>
+  </main>
+  <div style="flex: none; padding: 12px 16px 0">
+    <a class="id-btn id-btn--primary id-btn--block" href="MapPin.dc.html">Continue</a>
+  </div>
+  <div class="safe-bottom"></div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"theme":{"editor":"enum","options":["light","dark"],"default":"light"},"$preview":{"width":390,"height":844}}'>
+class Component extends DCLogic {
+  renderVals() {
+    return { theme: this.props.theme ?? 'light' };
+  }
+}
+</script>
+</body>
+</html>

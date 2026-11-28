@@ -1,0 +1,74 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Checkout</title>
+<script src="./support.js"></script>
+<link rel="stylesheet" href="ds/irondost/tokens.css">
+<link rel="stylesheet" href="ds/irondost/components/bundle.css">
+<link rel="stylesheet" href="app.css">
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Outfit:wght@600;700&amp;family=Figtree:wght@400;500;600;700&amp;family=Geist+Mono:wght@500&amp;display=swap">
+<style>body{margin:0}</style>
+</helmet>
+<div class="scr" data-theme="{{theme}}">
+  <div class="safe-top" style="background: var(--surface)"></div>
+  <header class="id-appbar" style="flex: none; box-shadow: inset 0 -1px 0 var(--border)">
+    <a class="id-iconbtn" href="Schedule.dc.html" aria-label="Back"><svg class="id-icon lg" viewBox="0 0 24 24" aria-hidden="true"><path d="m12 19-7-7 7-7"></path><path d="M19 12H5"></path></svg></a>
+    <h1 class="id-appbar__title">Checkout</h1>
+  </header>
+  <main class="main" style="padding-top: 16px; gap: 20px">
+    <section class="id-card" style="display: grid; gap: 12px" aria-label="Pickup and delivery">
+      <div style="display: flex; gap: 12px">
+        <span class="tile40"><svg class="id-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M15 21v-8a1 1 0 0 0-1-1h-4a1 1 0 0 0-1 1v8"></path><path d="M3 10a2 2 0 0 1 .709-1.528l7-5.999a2 2 0 0 1 2.582 0l7 5.999A2 2 0 0 1 21 10v9a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"></path></svg></span>
+        <span style="flex: 1; display: grid; gap: 2px"><span class="title">Home</span><span class="body muted">302, Sai Residency, Road No. 12, Banjara Hills · Near KBR Park gate</span></span>
+        <a class="label" href="Addresses.dc.html">Change</a>
+      </div>
+      <div class="id-order__slots" style="margin: 0">
+        <div><div class="id-kv__k">Pickup</div><div class="id-kv__v">Today, 4 – 8 PM</div></div>
+        <div><div class="id-kv__k">Delivery</div><div class="id-kv__v">Sat 3 Oct, 4 – 8 PM</div></div>
+      </div>
+    </section>
+    <section class="sec" aria-label="Payment method">
+      <h2 class="title-lg">Pay with</h2>
+      <div class="id-stack" role="radiogroup" aria-label="Payment method" style="gap: 8px">
+        <span class="id-choice is-selected" role="radio" aria-checked="true" style="padding: 14px 16px">
+          <span class="id-choice__icon"><svg class="id-icon" viewBox="0 0 24 24" aria-hidden="true"><rect width="14" height="20" x="5" y="2" rx="2" ry="2"></rect><path d="M12 18h.01"></path></svg></span>
+          <span style="flex: 1"><span class="id-choice__title" style="display: block">Pay online</span><span class="id-choice__desc">UPI, cards and netbanking</span></span>
+          <span class="id-radio is-on"></span>
+        </span>
+        <span class="id-choice" role="radio" aria-checked="false" style="padding: 14px 16px">
+          <span class="id-choice__icon"><svg class="id-icon" viewBox="0 0 24 24" aria-hidden="true"><rect width="20" height="12" x="2" y="6" rx="2"></rect><circle cx="12" cy="12" r="2"></circle><path d="M6 12h.01M18 12h.01"></path></svg></span>
+          <span style="flex: 1"><span class="id-choice__title" style="display: block">Cash on delivery</span><span class="id-choice__desc">Pay the partner when your clothes come back</span></span>
+          <span class="id-radio"></span>
+        </span>
+      </div>
+    </section>
+    <section class="id-card" aria-label="Bill">
+      <div class="id-bill">
+        <div class="id-bill__row"><span>Items (17)</span><span>₹310</span></div>
+        <div class="id-bill__row id-bill__row--saving"><span>WELCOME20</span><span>−₹62</span></div>
+        <div class="id-bill__row id-bill__row--muted"><span>Pickup &amp; delivery</span><span>Free</span></div>
+        <div class="id-bill__total"><span>To pay</span><span>₹248</span></div>
+      </div>
+    </section>
+  </main>
+  <div class="footer">
+    <a class="id-btn id-btn--primary id-btn--block" href="Confirmed.dc.html">Pay ₹248</a>
+    <p class="caption muted" style="display: flex; align-items: center; justify-content: center; gap: 6px"><svg class="id-icon sm" viewBox="0 0 24 24" aria-hidden="true"><path d="M20 13c0 5-3.5 7.5-7.66 8.95a1 1 0 0 1-.67-.01C7.5 20.5 4 18 4 13V6a1 1 0 0 1 1-1c2 0 4.5-1.2 6.24-2.72a1.17 1.17 0 0 1 1.52 0C14.51 3.81 17 5 19 5a1 1 0 0 1 1 1z"></path></svg>Secure payment by Razorpay</p>
+    <div class="safe-bottom" style="height: 18px"></div>
+  </div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"theme":{"editor":"enum","options":["light","dark"],"default":"light"},"$preview":{"width":390,"height":844}}'>
+class Component extends DCLogic {
+  renderVals() {
+    return { theme: this.props.theme ?? 'light' };
+  }
+}
+</script>
+</body>
+</html>

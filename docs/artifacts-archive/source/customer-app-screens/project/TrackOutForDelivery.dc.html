@@ -1,0 +1,64 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Tracking · out for delivery</title>
+<script src="./support.js"></script>
+<link rel="stylesheet" href="ds/irondost/tokens.css">
+<link rel="stylesheet" href="ds/irondost/components/bundle.css">
+<link rel="stylesheet" href="app.css">
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Outfit:wght@600;700&amp;family=Figtree:wght@400;500;600;700&amp;family=Geist+Mono:wght@500&amp;display=swap">
+<style>body{margin:0}</style>
+</helmet>
+<div class="scr" data-theme="{{theme}}">
+  <div class="safe-top" style="background: var(--surface)"></div>
+  <header class="id-appbar" style="flex: none; box-shadow: inset 0 -1px 0 var(--border)">
+    <a class="id-iconbtn" href="Orders.dc.html" aria-label="Back"><svg class="id-icon lg" viewBox="0 0 24 24" aria-hidden="true"><path d="m12 19-7-7 7-7"></path><path d="M19 12H5"></path></svg></a>
+    <h1 class="id-appbar__title">Order <span style="font-family: var(--font-mono); font-weight: 500">ID001042</span></h1>
+    <a class="id-iconbtn" href="Help.dc.html" aria-label="Get help with this order"><svg class="id-icon lg" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="10"></circle><path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3"></path><path d="M12 17h.01"></path></svg></a>
+  </header>
+  <main class="main" style="padding-top: 16px; gap: 16px">
+    <section style="position: relative; overflow: hidden; display: grid; gap: 4px; padding: 20px; border-radius: var(--radius-xl); background: var(--surface-inverse); color: var(--text-inverse)" aria-label="Status">
+      <span class="id-bubble" style="width: 72px; height: 72px; right: -18px; top: -18px"></span>
+      <span class="label-sm" style="color: var(--inverse-accent)">Step 4 of 5</span>
+      <h2 class="headline">Out for delivery</h2>
+      <p class="body">Arriving today, 4 – 8 PM</p>
+    </section>
+    <div class="rowcard">
+      <span class="avatar">RK</span>
+      <span style="flex: 1; display: grid"><span class="title">Ravi K.</span><span class="caption muted">Bringing your clothes back</span></span>
+      <a class="id-iconbtn" href="#call-partner" aria-label="Call Ravi" style="color: var(--primary); box-shadow: inset 0 0 0 1px var(--border-strong)"><svg class="id-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z"></path></svg></a>
+    </div>
+    <section class="id-card" aria-label="Progress">
+      <ol class="id-timeline">
+        <li class="id-step is-done"><span class="id-step__dot"><svg class="id-icon sm" viewBox="0 0 24 24" aria-hidden="true"><path d="M20 6 9 17l-5-5"></path></svg></span><div><div class="id-step__title">Booked</div><div class="id-step__meta">Thu 1 Oct, 9:12 AM</div></div></li>
+        <li class="id-step is-done"><span class="id-step__dot"><svg class="id-icon sm" viewBox="0 0 24 24" aria-hidden="true"><path d="M20 6 9 17l-5-5"></path></svg></span><div><div class="id-step__title">Picked up</div><div class="id-step__meta">Thu 1 Oct, 5:40 PM</div></div></li>
+        <li class="id-step is-done"><span class="id-step__dot"><svg class="id-icon sm" viewBox="0 0 24 24" aria-hidden="true"><path d="M20 6 9 17l-5-5"></path></svg></span><div><div class="id-step__title">Ironing</div><div class="id-step__meta">Ready Sat, 11:20 AM</div></div></li>
+        <li class="id-step is-current"><span class="id-step__dot"></span><div><div class="id-step__title">Out for delivery</div><div class="id-step__meta">Ravi left at 4:10 PM</div></div></li>
+        <li class="id-step is-future"><span class="id-step__dot"></span><div><div class="id-step__title">Delivered</div></div></li>
+      </ol>
+    </section>
+    <div class="notice notice--warning">
+      <svg class="id-icon" viewBox="0 0 24 24" aria-hidden="true"><rect width="20" height="12" x="2" y="6" rx="2"></rect><circle cx="12" cy="12" r="2"></circle><path d="M6 12h.01M18 12h.01"></path></svg>
+      <span>₹180 is due. Pay Ravi in cash at the door, or pay online now.</span>
+    </div>
+  </main>
+  <div class="footer">
+    <a class="id-btn id-btn--primary id-btn--block" href="PayDue.dc.html">Pay ₹180 online</a>
+    <div class="safe-bottom" style="height: 26px"></div>
+  </div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"theme":{"editor":"enum","options":["light","dark"],"default":"light"},"$preview":{"width":390,"height":844}}'>
+class Component extends DCLogic {
+  renderVals() {
+    return { theme: this.props.theme ?? 'light' };
+  }
+}
+</script>
+</body>
+</html>

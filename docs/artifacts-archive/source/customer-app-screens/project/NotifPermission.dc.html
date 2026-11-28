@@ -1,0 +1,52 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Notification permission</title>
+<script src="./support.js"></script>
+<link rel="stylesheet" href="ds/irondost/tokens.css">
+<link rel="stylesheet" href="ds/irondost/components/bundle.css">
+<link rel="stylesheet" href="app.css">
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Outfit:wght@600;700&amp;family=Figtree:wght@400;500;600;700&amp;family=Geist+Mono:wght@500&amp;display=swap">
+<style>body{margin:0}</style>
+</helmet>
+<div class="scr" data-theme="{{theme}}" style="background: var(--surface)">
+  <div class="safe-top"></div>
+  <main class="main" style="justify-content: center; gap: 28px; padding: 24px">
+    <div style="position: relative; display: grid; gap: 10px; padding: 28px 16px; border-radius: var(--radius-xl); background: var(--surface-soft)" aria-hidden="true">
+      <span class="id-bubble" style="width: 28px; height: 28px; right: 18px; top: -10px"></span>
+      <span class="id-bubble" style="width: 14px; height: 14px; right: 52px; top: -18px"></span>
+      <div style="display: flex; gap: 12px; padding: 12px 14px; border-radius: var(--radius-lg); background: var(--surface); box-shadow: var(--shadow-raised)">
+        <img src="/_blob/16fb339d836eef355c8274e51fb53cdc" alt="" style="width: 36px; height: 36px; border-radius: 8px">
+        <span style="flex: 1; display: grid; gap: 2px"><span class="label-sm">IronDost <span class="caption muted" style="font-weight: 500">· now</span></span><span class="body">Ravi is on the way to collect your clothes.</span></span>
+      </div>
+      <div style="display: flex; gap: 12px; padding: 12px 14px; border-radius: var(--radius-lg); background: var(--surface); opacity: 0.7">
+        <img src="/_blob/16fb339d836eef355c8274e51fb53cdc" alt="" style="width: 36px; height: 36px; border-radius: 8px">
+        <span style="flex: 1; display: grid; gap: 2px"><span class="label-sm">IronDost <span class="caption muted" style="font-weight: 500">· Sat</span></span><span class="body">Order ID001042 is on its way.</span></span>
+      </div>
+    </div>
+    <div style="display: grid; gap: 8px; text-align: center">
+      <h1 class="headline">Know when we're at your door</h1>
+      <p class="body-lg muted">We'll tell you when a partner is on the way, when your clothes are ready and when they're delivered. Offers only if you want them.</p>
+    </div>
+  </main>
+  <div style="flex: none; display: grid; gap: 4px; padding: 12px 16px 0">
+    <a class="id-btn id-btn--primary id-btn--block" href="Main.dc.html"><svg class="id-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M10.268 21a2 2 0 0 0 3.464 0"></path><path d="M3.262 15.326A1 1 0 0 0 4 17h16a1 1 0 0 0 .74-1.673C19.41 13.956 18 12.499 18 8A6 6 0 0 0 6 8c0 4.499-1.411 5.956-2.738 7.326"></path></svg>Turn on notifications</a>
+    <a class="id-btn id-btn--text id-btn--block" href="Main.dc.html">Not now</a>
+  </div>
+  <div class="safe-bottom"></div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"theme":{"editor":"enum","options":["light","dark"],"default":"light"},"$preview":{"width":390,"height":844}}'>
+class Component extends DCLogic {
+  renderVals() {
+    return { theme: this.props.theme ?? 'light' };
+  }
+}
+</script>
+</body>
+</html>

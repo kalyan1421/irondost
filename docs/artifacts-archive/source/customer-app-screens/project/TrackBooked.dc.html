@@ -1,0 +1,64 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Tracking · booked, finding a partner</title>
+<script src="./support.js"></script>
+<link rel="stylesheet" href="ds/irondost/tokens.css">
+<link rel="stylesheet" href="ds/irondost/components/bundle.css">
+<link rel="stylesheet" href="app.css">
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Outfit:wght@600;700&amp;family=Figtree:wght@400;500;600;700&amp;family=Geist+Mono:wght@500&amp;display=swap">
+<style>body{margin:0}</style>
+</helmet>
+<div class="scr" data-theme="{{theme}}">
+  <div class="safe-top" style="background: var(--surface)"></div>
+  <header class="id-appbar" style="flex: none; box-shadow: inset 0 -1px 0 var(--border)">
+    <a class="id-iconbtn" href="Orders.dc.html" aria-label="Back"><svg class="id-icon lg" viewBox="0 0 24 24" aria-hidden="true"><path d="m12 19-7-7 7-7"></path><path d="M19 12H5"></path></svg></a>
+    <h1 class="id-appbar__title">Order <span style="font-family: var(--font-mono); font-weight: 500">ID001046</span></h1>
+    <a class="id-iconbtn" href="Help.dc.html" aria-label="Get help with this order"><svg class="id-icon lg" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="10"></circle><path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3"></path><path d="M12 17h.01"></path></svg></a>
+  </header>
+  <main class="main" style="padding-top: 16px; gap: 16px">
+    <section style="position: relative; overflow: hidden; display: grid; gap: 4px; padding: 20px; border-radius: var(--radius-xl); background: var(--surface-inverse); color: var(--text-inverse)" aria-label="Status">
+      <span class="id-bubble" style="width: 72px; height: 72px; right: -18px; top: -18px"></span>
+      <span class="label-sm" style="color: var(--inverse-accent)">Step 1 of 5</span>
+      <h2 class="headline">Booked</h2>
+      <p class="body">Pickup today, 4 – 8 PM</p>
+    </section>
+    <section class="id-card" aria-label="Progress">
+      <ol class="id-timeline">
+        <li class="id-step is-current"><span class="id-step__dot"></span><div><div class="id-step__title">Booked</div><div class="id-step__meta">Finding a partner near you</div></div></li>
+        <li class="id-step is-future"><span class="id-step__dot"></span><div><div class="id-step__title">Picked up</div><div class="id-step__meta">Today, 4 – 8 PM</div></div></li>
+        <li class="id-step is-future"><span class="id-step__dot"></span><div><div class="id-step__title">Ironing</div></div></li>
+        <li class="id-step is-future"><span class="id-step__dot"></span><div><div class="id-step__title">Out for delivery</div></div></li>
+        <li class="id-step is-future"><span class="id-step__dot"></span><div><div class="id-step__title">Delivered</div><div class="id-step__meta">Sat 3 Oct, 4 – 8 PM</div></div></li>
+      </ol>
+    </section>
+    <div class="notice notice--info">
+      <svg class="id-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M19 21v-2a4 4 0 0 0-4-4H9a4 4 0 0 0-4 4v2"></path><circle cx="12" cy="7" r="4"></circle></svg>
+      <span>You'll see your partner's name and number here once they accept.</span>
+    </div>
+    <a class="rowcard" href="Bill.dc.html">
+      <span style="flex: 1; display: grid"><span class="title">17 items · ₹248</span><span class="caption muted">Paid online</span></span>
+      <span class="label" style="color: var(--primary)">View bill</span>
+    </a>
+  </main>
+  <div class="footer">
+    <a class="id-btn id-btn--outline id-btn--block" href="CancelSheet.dc.html">Cancel order</a>
+    <p class="caption muted" style="text-align: center">Free to cancel until your clothes are picked up.</p>
+    <div class="safe-bottom" style="height: 18px"></div>
+  </div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"theme":{"editor":"enum","options":["light","dark"],"default":"light"},"$preview":{"width":390,"height":844}}'>
+class Component extends DCLogic {
+  renderVals() {
+    return { theme: this.props.theme ?? 'light' };
+  }
+}
+</script>
+</body>
+</html>

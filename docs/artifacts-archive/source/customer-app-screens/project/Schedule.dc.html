@@ -1,0 +1,65 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Pickup time</title>
+<script src="./support.js"></script>
+<link rel="stylesheet" href="ds/irondost/tokens.css">
+<link rel="stylesheet" href="ds/irondost/components/bundle.css">
+<link rel="stylesheet" href="app.css">
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Outfit:wght@600;700&amp;family=Figtree:wght@400;500;600;700&amp;family=Geist+Mono:wght@500&amp;display=swap">
+<style>body{margin:0}</style>
+</helmet>
+<div class="scr" data-theme="{{theme}}">
+  <div class="safe-top" style="background: var(--surface)"></div>
+  <header class="id-appbar" style="flex: none; box-shadow: inset 0 -1px 0 var(--border)">
+    <a class="id-iconbtn" href="Cart.dc.html" aria-label="Back"><svg class="id-icon lg" viewBox="0 0 24 24" aria-hidden="true"><path d="m12 19-7-7 7-7"></path><path d="M19 12H5"></path></svg></a>
+    <h1 class="id-appbar__title">Pickup time</h1>
+  </header>
+  <main class="main" style="padding-top: 20px; gap: 24px">
+    <section class="sec">
+      <div style="display: grid; gap: 2px">
+        <h2 class="title-lg">When should we collect?</h2>
+        <p class="body muted">Your partner arrives within the window you pick.</p>
+      </div>
+      <div class="id-dates" role="radiogroup" aria-label="Pickup date">
+        <span class="id-date is-selected" role="radio" aria-checked="true"><span class="id-date__dow">Today</span><span class="id-date__day">2</span></span>
+        <span class="id-date" role="radio" aria-checked="false"><span class="id-date__dow">Sat</span><span class="id-date__day">3</span></span>
+        <span class="id-date" role="radio" aria-checked="false"><span class="id-date__dow">Sun</span><span class="id-date__day">4</span></span>
+        <span class="id-date" role="radio" aria-checked="false"><span class="id-date__dow">Mon</span><span class="id-date__day">5</span></span>
+        <span class="id-date" role="radio" aria-checked="false"><span class="id-date__dow">Tue</span><span class="id-date__day">6</span></span>
+      </div>
+      <div class="id-slots" role="radiogroup" aria-label="Pickup window">
+        <span class="id-slot is-disabled" role="radio" aria-checked="false" aria-disabled="true"><span><span class="id-slot__name" style="display: block">Morning</span><span class="id-slot__time">7 – 11 AM · Closed</span></span><span class="id-radio"></span></span>
+        <span class="id-slot is-disabled" role="radio" aria-checked="false" aria-disabled="true"><span><span class="id-slot__name" style="display: block">Afternoon</span><span class="id-slot__time">11 AM – 4 PM · Closed</span></span><span class="id-radio"></span></span>
+        <span class="id-slot is-selected" role="radio" aria-checked="true"><span><span class="id-slot__name" style="display: block">Evening</span><span class="id-slot__time">4 – 8 PM</span></span><span class="id-radio is-on"></span></span>
+      </div>
+    </section>
+    <section class="sec">
+      <h2 class="title-lg">Delivery</h2>
+      <div class="rowcard">
+        <span class="tile40"><svg class="id-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M14 18V6a2 2 0 0 0-2-2H4a2 2 0 0 0-2 2v11a1 1 0 0 0 1 1h2"></path><path d="M15 18H9"></path><path d="M19 18h2a1 1 0 0 0 1-1v-3.65a1 1 0 0 0-.22-.624l-3.48-4.35A1 1 0 0 0 17.52 8H14"></path><circle cx="17" cy="18" r="2"></circle><circle cx="7" cy="18" r="2"></circle></svg></span>
+        <span style="flex: 1; display: grid"><span class="title">Sat 3 Oct, 4 – 8 PM</span><span class="caption muted">Earliest after ironing</span></span>
+        <a class="label" href="DeliverySlotSheet.dc.html">Change</a>
+      </div>
+    </section>
+  </main>
+  <div class="footer">
+    <a class="id-btn id-btn--primary id-btn--block" href="Checkout.dc.html">Continue</a>
+    <div class="safe-bottom" style="height: 26px"></div>
+  </div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"theme":{"editor":"enum","options":["light","dark"],"default":"light"},"$preview":{"width":390,"height":844}}'>
+class Component extends DCLogic {
+  renderVals() {
+    return { theme: this.props.theme ?? 'light' };
+  }
+}
+</script>
+</body>
+</html>

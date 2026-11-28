@@ -1,0 +1,88 @@
+{
+ "n": 5, "name": "Delivery", "en": "Delivery Day",
+ "hook_formula": "Before / after transformation",
+ "hook_text": "2 rojula mundu vs ippudu",
+ "cliff": "Kal Bunty ka date… aur shirt?",
+ "caption": "Ep 5/10 — Promise chesina rojuke delivery ✅ Kaani Bunty plan enti? 🤨 #DostUndiGa #IronDost #Hyderabad",
+ "clips": [
+  {
+   "id": "E5-C1", "title": "Before / after", "set": "FLAT",
+   "cast": ["RAVI"], "props": ["lucky_shirt"], "hook": true,
+   "beats": [
+    ["0–1.5 s", "Frame 1 in motion: extreme close-up of RAVI's fist crushing a badly crumpled navy-blue shirt with thin white checks, in harsh dull light by the clothes pile."],
+    ["1.5–2.5 s", "A fast whip-pan to the right across the room, motion-blurred, landing on the sunny window."],
+    ["2.5–5 s", "In slow motion the lucky shirt, now perfectly ironed with a sharp collar, snaps open on a hanger held up by RAVI in front of the sunny window. A soft puff of steam drifts off it and sunlight flares behind. RAVI, in a grey vest, closes his eyes in bliss."],
+    ["5–7.5 s", "RAVI brings the shirt close to his face and touches the freshly stitched second button with his fingertip, tapping it twice. His eyebrows shoot up in delight."],
+    ["7.5–10 s", "RAVI hugs the hanger to his chest, sways a little, and grins at the shirt like a proud father."]
+   ],
+   "camera": "Starts in an extreme close-up on the fist, whip-pans right to the window, then eases into a medium close-up of RAVI with the crisp shirt and pushes in slightly on the button. One continuous move.",
+   "lines": [
+    {"spk": "RAVI", "mode": "ON", "at": "3–4.5 s", "native": "అహాఆ…", "roman": "Ahaaa…", "en": "Ahhh…"},
+    {"spk": "RAVI", "mode": "ON", "at": "5.8–7.3 s", "native": "బటన్ కూడా?!", "roman": "Button kooda?!", "en": "Even the button?!"}
+   ],
+   "sound": "Fabric crunch at 0.0 s, whip-pan whoosh at 1.5 s, crisp fabric snap at 2.5 s, a soft choir 'aah' and steam hiss at 3 s, two button taps at 5.5 s. No music.",
+   "first": "RAVI's fist already squeezing the crumpled navy checked shirt in dull light.",
+   "last": "RAVI hugging the crisp navy checked shirt on its hanger in front of the sunny window, grinning.",
+   "edit_text": "0.2 s: '2 rojula mundu…' (big, top third). 2.6 s: '…ippudu'. 5.8 s: 'Loose button? Stitched ✓'",
+   "neg_extra": ["a face on any clothing", "creatures or monsters", "a visible cut instead of a whip-pan", "the shirt changing pattern or colour between before and after", "steam turning into smoke"]
+  },
+  {
+   "id": "E5-C2", "title": "Delivery and the showroom shirts", "set": "FLAT",
+   "cast": ["DOST", "RAVI"], "props": ["bag"],
+   "beats": [
+    ["0–2 s", "At the flat's front door, RAVI in a pressed formal shirt opens the door. DOST stands outside with a neat stack of plain royal-blue garment bags on hanger hooks and folded white bedsheets, calm smile."],
+    ["2–4.5 s", "DOST hands the bags over and speaks. RAVI takes them carefully in both arms, nodding."],
+    ["4.5–6 s", "DOST gives a small nod and steps back out of frame. RAVI turns, carries the bags to the sofa beside the door and lays one flat."],
+    ["6–10 s", "RAVI pulls the zip open: a row of crisp ironed shirts on hangers with sharp collars. His face lights up and he lifts one sleeve as he speaks, amazed."]
+   ],
+   "camera": "Static medium shot at the door that slowly pans with RAVI to the sofa and pushes in on the opening zip and his lit-up face. One continuous move.",
+   "lines": [
+    {"spk": "DOST", "mode": "ON", "at": "2–4.5 s", "native": "ఐరనింగ్ ఆర్డర్, రెండు రోజుల్లో, చెప్పినట్టు.", "roman": "Ironing order, rendu rojullo, cheppinattu.", "en": "Ironing order, in two days, as promised."},
+    {"spk": "RAVI", "mode": "ON", "at": "7–9.4 s", "native": "ఇవి నా షర్ట్స్ ఆ? షోరూమ్ లాగా ఉన్నాయి!", "roman": "Ivi naa shirts aa? Showroom laga unnayi!", "en": "These are my shirts? They look like a showroom!"}
+   ],
+   "sound": "Doorbell at 0.0 s, door latch click, garment bags rustling at 2.5 s, zip rip at 6 s. No music.",
+   "first": "RAVI opening the door to DOST holding the royal-blue garment bags and white bedsheets.",
+   "last": "Close on RAVI's amazed face over the open bag of crisp shirts.",
+   "edit_text": "2 s: small tag 'Ironing · 2 days'. Kinetic captions for both lines",
+   "neg_extra": ["a face on any clothing", "creatures or monsters", "any logo, print or text on the bags or DOST's polo", "DOST entering the flat"]
+  },
+  {
+   "id": "E5-C3", "title": "Paid, and Bunty feels the fabric", "set": "FLAT",
+   "cast": ["RAVI", "BUNTY"], "props": ["lucky_shirt"],
+   "beats": [
+    ["0–2.5 s", "In the foreground RAVI stands with his phone, tapping it with his thumb; the phone faces away from the camera and a royal-blue glow lights his face. He nods, satisfied."],
+    ["2.5–4.5 s", "RAVI walks out of frame to the left, still looking at the phone. Behind him, the navy checked lucky shirt hangs on the open almirah door."],
+    ["4.5–7 s", "BUNTY, in a crumpled maroon printed shirt, sidles up to the almirah, glances over his shoulder, and secretly rubs the shirt's sleeve between his thumb and fingers."],
+    ["7–10 s", "BUNTY's eyebrows rise, impressed, and he mutters; then he glances around guiltily and drops the sleeve as if it were hot."]
+   ],
+   "camera": "Starts on RAVI's blue-lit face in the foreground, racks focus past him to the almirah and slowly pushes in on BUNTY at the shirt. One continuous move.",
+   "lines": [
+    {"spk": "BUNTY", "mode": "ON", "at": "7.2–8.8 s", "native": "हौ… मस्त है.", "roman": "Hau… mast hai.", "en": "Yeah… it's nice."}
+   ],
+   "sound": "Two soft phone taps at 0.5 s, a payment 'ping' at 2 s, soft fabric rub at 5 s, BUNTY's guilty throat-clear at 9 s. No music.",
+   "first": "RAVI tapping his phone, royal-blue glow on his face, the shirt on the almirah door blurred behind.",
+   "last": "BUNTY dropping the sleeve and glancing around guiltily.",
+   "edit_text": "1.5 s: edit graphic beside the phone: order bill → 'Paid ✓' → 'Delivered ✓'",
+   "neg_extra": ["a face on any clothing", "creatures or monsters", "a readable phone screen, bill or payment UI", "RAVI noticing BUNTY"]
+  },
+  {
+   "id": "E5-C4", "title": "Baigan…", "set": "FLAT",
+   "cast": ["BUNTY"], "props": ["lucky_shirt"],
+   "beats": [
+    ["0–2.5 s", "BUNTY's trouser pocket buzzes. He pulls out his phone, which faces away from the camera; a royal-blue glow lights his face and his eyes go wide with surprise, then a delighted grin."],
+    ["2.5–5 s", "BUNTY turns to a plastic chair heaped with his own crumpled shirts, lifts one up by the collar; it hangs limp and wrinkled. His face falls and he whispers."],
+    ["5–7.5 s", "BUNTY drops the shirt back on the heap. His eyes slowly slide to the right, toward the open almirah where the crisp navy checked shirt hangs alone in a beam of sunlight."],
+    ["7.5–10 s", "Over BUNTY's shoulder the view pushes slowly toward the shirt in the beam of light, BUNTY's profile soft in the foreground, his eyes narrowing."]
+   ],
+   "camera": "Starts on BUNTY's blue-lit face, follows him to the chair, then a slow over-the-shoulder push toward the crisp shirt in the sunbeam. One continuous move.",
+   "lines": [
+    {"spk": "BUNTY", "mode": "ON", "at": "3.5–4.8 s", "native": "बैंगन…", "roman": "Baigan…", "en": "Damn…"}
+   ],
+   "sound": "Phone buzz and notification ding at 0.0 s, limp fabric flop at 3 s, a sneaky pizzicato from 6 s (sound effect plucks only). No music.",
+   "first": "BUNTY pulling his buzzing phone from his pocket, blue glow starting on his face.",
+   "last": "Over BUNTY's shoulder: the crisp navy checked shirt alone in a beam of light inside the almirah.",
+   "edit_text": "0.5 s: notification card slides down beside the phone: 'Ayesha 💕: Kal 7 baje, Paradise?'. Cliffhanger at 8 s: 'Kal Bunty ka date… aur shirt?' then the end card",
+   "neg_extra": ["a face on any clothing", "creatures or monsters", "a readable phone screen or chat", "Ayesha appearing on screen", "BUNTY touching the shirt in this clip"]
+  }
+ ]
+}

@@ -1,0 +1,52 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Basket · apply a code</title>
+<script src="./support.js"></script>
+<link rel="stylesheet" href="ds/irondost/tokens.css">
+<link rel="stylesheet" href="ds/irondost/components/bundle.css">
+<link rel="stylesheet" href="app.css">
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Outfit:wght@600;700&amp;family=Figtree:wght@400;500;600;700&amp;family=Geist+Mono:wght@500&amp;display=swap">
+<style>body{margin:0}</style>
+</helmet>
+<div class="scr" data-theme="{{theme}}">
+  <div class="under" aria-hidden="true">
+    <dc-import name="Cart" theme="{{theme}}" hint-size="390px,844px"></dc-import>
+  </div>
+  <a class="scrim" href="Cart.dc.html" aria-label="Close"></a>
+  <section class="sheet" role="dialog" aria-modal="true" aria-labelledby="code-title">
+    <span class="grabber"></span>
+    <h1 id="code-title" class="title-lg">Apply a code</h1>
+    <label class="id-field">
+      <span class="id-field__label">Promo code</span>
+      <span class="id-field__control is-focus"><input type="text" value="WELCOME" autocapitalize="characters" style="font-family: var(--font-mono)"><a class="label" href="Cart.dc.html">Apply</a></span>
+    </label>
+    <section class="sec" aria-label="Available for you">
+      <h2 class="label-sm muted">Available for you</h2>
+      <div class="id-addr" style="align-items: center; padding: 14px 16px">
+        <span style="flex: 1; display: grid; gap: 2px"><span class="order-id">WELCOME20</span><span class="body">20% off your first order</span><span class="caption muted">Up to ₹100 · Min. order ₹299</span></span>
+        <a class="id-btn id-btn--tonal" href="Cart.dc.html" style="height: 40px">Apply</a>
+      </div>
+      <div class="id-addr" style="align-items: center; padding: 14px 16px">
+        <span style="flex: 1; display: grid; gap: 2px"><span class="order-id">FRESH15</span><span class="body">15% off orders above ₹500</span><span class="caption" style="color: var(--warning)">Add ₹190 more to use this</span></span>
+        <span class="id-btn id-btn--tonal is-disabled" aria-disabled="true" style="height: 40px">Apply</span>
+      </div>
+    </section>
+    <div class="safe-bottom" style="margin-top: -16px"></div>
+  </section>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"theme":{"editor":"enum","options":["light","dark"],"default":"light"},"$preview":{"width":390,"height":844}}'>
+class Component extends DCLogic {
+  renderVals() {
+    return { theme: this.props.theme ?? 'light' };
+  }
+}
+</script>
+</body>
+</html>

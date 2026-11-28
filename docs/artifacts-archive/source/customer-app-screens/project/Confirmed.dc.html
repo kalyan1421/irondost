@@ -1,0 +1,53 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Pickup booked</title>
+<script src="./support.js"></script>
+<link rel="stylesheet" href="ds/irondost/tokens.css">
+<link rel="stylesheet" href="ds/irondost/components/bundle.css">
+<link rel="stylesheet" href="app.css">
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Outfit:wght@600;700&amp;family=Figtree:wght@400;500;600;700&amp;family=Geist+Mono:wght@500&amp;display=swap">
+<style>body{margin:0}</style>
+</helmet>
+<div class="scr" data-theme="{{theme}}">
+  <div class="safe-top"></div>
+  <main class="main" style="justify-content: center; gap: 24px; padding: 24px 16px">
+    <div style="display: grid; justify-items: center; gap: 16px; text-align: center">
+      <span style="position: relative; width: 96px; height: 96px; display: grid; place-items: center; border-radius: 50%; background: var(--success-soft); color: var(--success)">
+        <svg viewBox="0 0 24 24" width="48" height="48" aria-hidden="true" style="fill: none; stroke: currentColor; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round"><circle cx="12" cy="12" r="10"></circle><path d="m9 12 2 2 4-4"></path></svg>
+        <span class="id-bubble" style="width: 22px; height: 22px; right: -14px; top: 2px"></span>
+        <span class="id-bubble" style="width: 12px; height: 12px; right: -24px; top: 30px"></span>
+      </span>
+      <h1 class="headline">Pickup booked</h1>
+      <p class="body-lg muted" style="max-width: 310px">A partner will come today between 4 and 8 PM. We'll tell you when they're on the way.</p>
+    </div>
+    <section class="id-card" style="display: grid; gap: 12px" aria-label="Order summary">
+      <div class="id-order__head"><span class="order-id">ID001046</span><span class="id-chip id-chip--success"><svg class="id-icon sm" viewBox="0 0 24 24" aria-hidden="true"><path d="M20 6 9 17l-5-5"></path></svg>Paid ₹248</span></div>
+      <div class="id-order__slots" style="margin: 0">
+        <div><div class="id-kv__k">Pickup</div><div class="id-kv__v">Today, 4 – 8 PM</div></div>
+        <div><div class="id-kv__k">Delivery</div><div class="id-kv__v">Sat 3 Oct, 4 – 8 PM</div></div>
+      </div>
+      <p class="body muted">17 items · Home, Banjara Hills</p>
+    </section>
+  </main>
+  <div style="flex: none; display: grid; gap: 4px; padding: 12px 16px 0">
+    <a class="id-btn id-btn--primary id-btn--block" href="Track.dc.html">Track order</a>
+    <a class="id-btn id-btn--text id-btn--block" href="Main.dc.html">Back to home</a>
+  </div>
+  <div class="safe-bottom"></div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"theme":{"editor":"enum","options":["light","dark"],"default":"light"},"$preview":{"width":390,"height":844}}'>
+class Component extends DCLogic {
+  renderVals() {
+    return { theme: this.props.theme ?? 'light' };
+  }
+}
+</script>
+</body>
+</html>

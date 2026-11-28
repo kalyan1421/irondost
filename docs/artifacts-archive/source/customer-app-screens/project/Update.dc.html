@@ -1,0 +1,44 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Force update</title>
+<script src="./support.js"></script>
+<link rel="stylesheet" href="ds/irondost/tokens.css">
+<link rel="stylesheet" href="ds/irondost/components/bundle.css">
+<link rel="stylesheet" href="app.css">
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Outfit:wght@600;700&amp;family=Figtree:wght@400;500;600;700&amp;family=Geist+Mono:wght@500&amp;display=swap">
+<style>body{margin:0}</style>
+</helmet>
+<div class="scr" data-theme="{{theme}}" style="background: var(--surface)">
+  <div class="safe-top"></div>
+  <main class="main" style="justify-content: center; align-items: center; gap: 20px; padding: 24px; text-align: center">
+    <div style="position: relative; width: 168px; height: 168px">
+      <span style="position: absolute; inset: 0; border-radius: 50%; background: var(--surface-soft)"></span>
+      <img src="/_blob/16fb339d836eef355c8274e51fb53cdc" alt="" style="position: absolute; left: 24px; top: 24px; width: 120px; height: 120px">
+      <span class="id-bubble" style="width: 28px; height: 28px; right: -4px; top: 6px"></span>
+      <span class="id-bubble" style="width: 14px; height: 14px; right: 28px; top: -6px"></span>
+    </div>
+    <h1 class="headline">Time to update</h1>
+    <p class="body-lg muted" style="max-width: 300px">This version of IronDost is no longer supported. Updating takes a minute and keeps you signed in.</p>
+  </main>
+  <div style="flex: none; display: grid; gap: 8px; padding: 12px 16px 0">
+    <a class="id-btn id-btn--primary id-btn--block" href="#store">Update now</a>
+    <p class="caption muted" style="text-align: center">You have 1.0.0 · Latest is 1.2.0</p>
+  </div>
+  <div class="safe-bottom"></div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"theme":{"editor":"enum","options":["light","dark"],"default":"light"},"$preview":{"width":390,"height":844}}'>
+class Component extends DCLogic {
+  renderVals() {
+    return { theme: this.props.theme ?? 'light' };
+  }
+}
+</script>
+</body>
+</html>

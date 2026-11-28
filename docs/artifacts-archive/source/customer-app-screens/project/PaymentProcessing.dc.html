@@ -1,0 +1,43 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Payment · confirming</title>
+<script src="./support.js"></script>
+<link rel="stylesheet" href="ds/irondost/tokens.css">
+<link rel="stylesheet" href="ds/irondost/components/bundle.css">
+<link rel="stylesheet" href="app.css">
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Outfit:wght@600;700&amp;family=Figtree:wght@400;500;600;700&amp;family=Geist+Mono:wght@500&amp;display=swap">
+<style>body{margin:0}</style>
+</helmet>
+<div class="scr" data-theme="{{theme}}" style="background: var(--surface)">
+  <div class="safe-top"></div>
+  <main class="main" style="justify-content: center; align-items: center; gap: 16px; padding: 24px; text-align: center" role="status" aria-live="polite">
+    <span style="width: 120px; height: 120px; display: grid; place-items: center; border-radius: 50%; background: var(--primary-soft); color: var(--primary)">
+      <span class="id-spinner" style="width: 52px; height: 52px; border-width: 4px"></span>
+    </span>
+    <h1 class="headline" style="margin-top: 8px">Confirming your payment</h1>
+    <p class="body-lg muted" style="max-width: 300px">This takes a few seconds. Please keep the app open.</p>
+    <div class="id-card" style="display: grid; gap: 8px; width: 100%; margin-top: 8px; text-align: left">
+      <div class="id-bill__row"><span class="muted">Order</span><span class="order-id">ID001046</span></div>
+      <div class="id-bill__row"><span class="muted">Amount</span><span class="label">₹248</span></div>
+      <div class="id-bill__row"><span class="muted">Paid with</span><span>UPI</span></div>
+    </div>
+  </main>
+  <p class="caption muted" style="flex: none; display: flex; align-items: center; justify-content: center; gap: 6px; padding: 12px 16px 0"><svg class="id-icon sm" viewBox="0 0 24 24" aria-hidden="true"><path d="M20 13c0 5-3.5 7.5-7.66 8.95a1 1 0 0 1-.67-.01C7.5 20.5 4 18 4 13V6a1 1 0 0 1 1-1c2 0 4.5-1.2 6.24-2.72a1.17 1.17 0 0 1 1.52 0C14.51 3.81 17 5 19 5a1 1 0 0 1 1 1z"></path></svg>Secure payment by Razorpay</p>
+  <div class="safe-bottom"></div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"theme":{"editor":"enum","options":["light","dark"],"default":"light"},"$preview":{"width":390,"height":844}}'>
+class Component extends DCLogic {
+  renderVals() {
+    return { theme: this.props.theme ?? 'light' };
+  }
+}
+</script>
+</body>
+</html>

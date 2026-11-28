@@ -1,0 +1,56 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Pay what's due</title>
+<script src="./support.js"></script>
+<link rel="stylesheet" href="ds/irondost/tokens.css">
+<link rel="stylesheet" href="ds/irondost/components/bundle.css">
+<link rel="stylesheet" href="app.css">
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Outfit:wght@600;700&amp;family=Figtree:wght@400;500;600;700&amp;family=Geist+Mono:wght@500&amp;display=swap">
+<style>body{margin:0}</style>
+</helmet>
+<div class="scr" data-theme="{{theme}}">
+  <div class="under" aria-hidden="true">
+    <dc-import name="Track" theme="{{theme}}" hint-size="390px,844px"></dc-import>
+  </div>
+  <a class="scrim" href="Track.dc.html" aria-label="Close"></a>
+  <section class="sheet" role="dialog" aria-modal="true" aria-labelledby="pay-title">
+    <span class="grabber"></span>
+    <div style="display: grid; gap: 4px">
+      <h1 id="pay-title" class="title-lg">Pay ₹180 for <span style="font-family: var(--font-mono); font-weight: 500">ID001042</span></h1>
+      <p class="body muted">12 items, ironed. Delivery Sat 3 Oct, 4 – 8 PM.</p>
+    </div>
+    <div class="id-stack" role="radiogroup" aria-label="Payment method" style="gap: 8px">
+      <span class="id-choice is-selected" role="radio" aria-checked="true" style="padding: 14px 16px">
+        <span class="id-choice__icon"><svg class="id-icon" viewBox="0 0 24 24" aria-hidden="true"><rect width="14" height="20" x="5" y="2" rx="2" ry="2"></rect><path d="M12 18h.01"></path></svg></span>
+        <span style="flex: 1"><span class="id-choice__title" style="display: block">Pay online now</span><span class="id-choice__desc">UPI, cards and netbanking</span></span>
+        <span class="id-radio is-on"></span>
+      </span>
+      <span class="id-choice" role="radio" aria-checked="false" style="padding: 14px 16px">
+        <span class="id-choice__icon"><svg class="id-icon" viewBox="0 0 24 24" aria-hidden="true"><rect width="20" height="12" x="2" y="6" rx="2"></rect><circle cx="12" cy="12" r="2"></circle><path d="M6 12h.01M18 12h.01"></path></svg></span>
+        <span style="flex: 1"><span class="id-choice__title" style="display: block">Cash at delivery</span><span class="id-choice__desc">Pay your partner when the clothes come back</span></span>
+        <span class="id-radio"></span>
+      </span>
+    </div>
+    <div style="display: grid; gap: 8px">
+      <a class="id-btn id-btn--primary id-btn--block" href="Track.dc.html">Pay ₹180</a>
+      <p class="caption muted" style="display: flex; align-items: center; justify-content: center; gap: 6px"><svg class="id-icon sm" viewBox="0 0 24 24" aria-hidden="true"><path d="M20 13c0 5-3.5 7.5-7.66 8.95a1 1 0 0 1-.67-.01C7.5 20.5 4 18 4 13V6a1 1 0 0 1 1-1c2 0 4.5-1.2 6.24-2.72a1.17 1.17 0 0 1 1.52 0C14.51 3.81 17 5 19 5a1 1 0 0 1 1 1z"></path></svg>Secure payment by Razorpay</p>
+    </div>
+    <div class="safe-bottom" style="margin-top: -16px"></div>
+  </section>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"theme":{"editor":"enum","options":["light","dark"],"default":"light"},"$preview":{"width":390,"height":844}}'>
+class Component extends DCLogic {
+  renderVals() {
+    return { theme: this.props.theme ?? 'light' };
+  }
+}
+</script>
+</body>
+</html>

@@ -1,0 +1,87 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Home</title>
+<script src="./support.js"></script>
+<link rel="stylesheet" href="ds/irondost/tokens.css">
+<link rel="stylesheet" href="ds/irondost/components/bundle.css">
+<link rel="stylesheet" href="app.css">
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Outfit:wght@600;700&amp;family=Figtree:wght@400;500;600;700&amp;family=Geist+Mono:wght@500&amp;display=swap">
+<style>body{margin:0}</style>
+</helmet>
+<div class="scr" data-theme="{{theme}}">
+  <div class="safe-top" style="background: var(--surface)"></div>
+  <header class="id-appbar" style="flex: none; padding: 0 4px 0 16px">
+    <a href="AddressPicker.dc.html" style="flex: 1; display: grid; color: var(--text)">
+      <span class="caption muted">Pickup from</span>
+      <span class="title" style="display: flex; align-items: center; gap: 4px">Home · Banjara Hills <svg class="id-icon sm" viewBox="0 0 24 24" aria-hidden="true"><path d="m6 9 6 6 6-6"></path></svg></span>
+    </a>
+    <a class="id-iconbtn" href="Notifications.dc.html" aria-label="Notifications, 2 unread"><svg class="id-icon lg" viewBox="0 0 24 24" aria-hidden="true"><path d="M10.268 21a2 2 0 0 0 3.464 0"></path><path d="M3.262 15.326A1 1 0 0 0 4 17h16a1 1 0 0 0 .74-1.673C19.41 13.956 18 12.499 18 8A6 6 0 0 0 6 8c0 4.499-1.411 5.956-2.738 7.326"></path></svg><span class="id-dot"></span></a>
+  </header>
+  <main class="main" style="padding-top: 16px">
+    <section class="hero" aria-label="Book a pickup">
+      <span style="position: absolute; right: -36px; bottom: -44px; width: 184px; height: 184px; border-radius: 50%; background: var(--illo-foam)"></span>
+      <img src="/_blob/16fb339d836eef355c8274e51fb53cdc" alt="" style="position: absolute; right: -2px; bottom: -6px; width: 128px; height: 128px">
+      <span class="id-bubble" style="width: 26px; height: 26px; right: 132px; top: 22px"></span>
+      <span class="id-bubble" style="width: 14px; height: 14px; right: 104px; top: 54px"></span>
+      <span class="id-bubble" style="width: 40px; height: 40px; right: 24px; top: 16px"></span>
+      <h1 class="headline" style="position: relative; max-width: 210px">Fresh clothes, back at your door.</h1>
+      <p class="body" style="position: relative">Ironed and back in a day.</p>
+      <a class="id-btn" href="Catalogue.dc.html" style="position: relative; margin-top: 4px">Book a pickup <svg class="id-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="m9 18 6-6-6-6"></path></svg></a>
+    </section>
+    <section class="sec">
+      <div class="sec-head">
+        <h2 class="title-lg">Your order</h2>
+        <a class="label" href="Orders.dc.html">All orders</a>
+      </div>
+      <a class="rowcard" href="Track.dc.html">
+        <span class="tile40"><svg class="id-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M20.38 3.46 16 2a4 4 0 0 1-8 0L3.62 3.46a2 2 0 0 0-1.34 2.23l.58 3.47a1 1 0 0 0 .99.84H6v10c0 1.1.9 2 2 2h8a2 2 0 0 0 2-2V10h2.15a1 1 0 0 0 .99-.84l.58-3.47a2 2 0 0 0-1.34-2.23z"></path></svg></span>
+        <span style="flex: 1; display: grid; gap: 4px">
+          <span style="display: flex; align-items: center; gap: 8px"><span class="order-id">ID001042</span><span class="id-chip id-chip--info">Being ironed</span></span>
+          <span class="body muted">Back by Sat, 4 – 8 PM</span>
+        </span>
+        <svg class="id-icon" viewBox="0 0 24 24" aria-hidden="true" style="color: var(--text-muted)"><path d="m9 18 6-6-6-6"></path></svg>
+      </a>
+    </section>
+    <section class="sec">
+      <h2 class="title-lg">Services</h2>
+      <div class="svc-grid">
+        <a class="svc" href="Catalogue.dc.html"><span class="svc__icon"><svg class="id-icon lg" viewBox="0 0 24 24" aria-hidden="true"><path d="M20.38 3.46 16 2a4 4 0 0 1-8 0L3.62 3.46a2 2 0 0 0-1.34 2.23l.58 3.47a1 1 0 0 0 .99.84H6v10c0 1.1.9 2 2 2h8a2 2 0 0 0 2-2V10h2.15a1 1 0 0 0 .99-.84l.58-3.47a2 2 0 0 0-1.34-2.23z"></path></svg></span><span class="label">Ironing</span><span class="caption muted">from ₹10</span></a>
+        <a class="svc" href="Catalogue.dc.html"><span class="svc__icon"><svg class="id-icon lg" viewBox="0 0 24 24" aria-hidden="true"><path d="M3 6h3"></path><path d="M17 6h.01"></path><rect width="18" height="20" x="3" y="2" rx="2"></rect><circle cx="12" cy="13" r="5"></circle><path d="M12 18a2.5 2.5 0 0 0 0-5 2.5 2.5 0 0 1 0-5"></path></svg></span><span class="label">Wash &amp; iron</span><span class="caption muted">from ₹35</span></a>
+        <a class="svc" href="Catalogue.dc.html"><span class="svc__icon"><svg class="id-icon lg" viewBox="0 0 24 24" aria-hidden="true"><path d="M9.937 15.5A2 2 0 0 0 8.5 14.063l-6.135-1.582a.5.5 0 0 1 0-.962L8.5 9.936A2 2 0 0 0 9.937 8.5l1.582-6.135a.5.5 0 0 1 .963 0L14.063 8.5A2 2 0 0 0 15.5 9.937l6.135 1.581a.5.5 0 0 1 0 .964L15.5 14.063a2 2 0 0 0-1.437 1.437l-1.582 6.135a.5.5 0 0 1-.963 0z"></path></svg></span><span class="label">Dry cleaning</span><span class="caption muted">from ₹200</span></a>
+      </div>
+    </section>
+    <section class="id-promo" aria-label="Offer">
+      <span class="id-bubble" style="width: 110px; height: 110px; right: -30px; top: -30px"></span>
+      <span class="id-bubble" style="width: 22px; height: 22px; right: 44px; top: 70px"></span>
+      <span class="id-chip id-chip--offer" style="width: fit-content">New here</span>
+      <p class="id-promo__title">20% off your first order</p>
+      <p class="body muted">Up to ₹100 · Min. order ₹299</p>
+      <a class="id-promo__code" href="Offers.dc.html" aria-label="Copy code WELCOME20">WELCOME20 <svg class="id-icon sm" viewBox="0 0 24 24" aria-hidden="true"><rect width="14" height="14" x="8" y="8" rx="2" ry="2"></rect><path d="M4 16c-1.1 0-2-.9-2-2V4c0-1.1.9-2 2-2h10c1.1 0 2 .9 2 2"></path></svg></a>
+    </section>
+  </main>
+  <div class="navwrap">
+    <nav class="id-nav" aria-label="Main">
+      <a class="id-nav__item is-active" href="Main.dc.html" aria-current="page"><span class="id-nav__pill"><svg class="id-icon lg" viewBox="0 0 24 24" aria-hidden="true"><path d="M15 21v-8a1 1 0 0 0-1-1h-4a1 1 0 0 0-1 1v8"></path><path d="M3 10a2 2 0 0 1 .709-1.528l7-5.999a2 2 0 0 1 2.582 0l7 5.999A2 2 0 0 1 21 10v9a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"></path></svg></span>Home</a>
+      <a class="id-nav__item" href="Orders.dc.html"><span class="id-nav__pill"><svg class="id-icon lg" viewBox="0 0 24 24" aria-hidden="true"><path d="M11 21.73a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73z"></path><path d="M12 22V12"></path><path d="m3.3 7 7.703 4.734a2 2 0 0 0 1.994 0L20.7 7"></path><path d="m7.5 4.27 9 5.15"></path></svg></span>Orders</a>
+      <a class="id-nav__item" href="Offers.dc.html"><span class="id-nav__pill"><svg class="id-icon lg" viewBox="0 0 24 24" aria-hidden="true"><path d="M3.85 8.62a4 4 0 0 1 4.78-4.77 4 4 0 0 1 6.74 0 4 4 0 0 1 4.78 4.78 4 4 0 0 1 0 6.74 4 4 0 0 1-4.77 4.78 4 4 0 0 1-6.75 0 4 4 0 0 1-4.78-4.77 4 4 0 0 1 0-6.76Z"></path><path d="m15 9-6 6"></path><path d="M9 9h.01"></path><path d="M15 15h.01"></path></svg></span>Offers</a>
+      <a class="id-nav__item" href="Account.dc.html"><span class="id-nav__pill"><svg class="id-icon lg" viewBox="0 0 24 24" aria-hidden="true"><path d="M19 21v-2a4 4 0 0 0-4-4H9a4 4 0 0 0-4 4v2"></path><circle cx="12" cy="7" r="4"></circle></svg></span>Account</a>
+    </nav>
+    <div class="safe-bottom"></div>
+  </div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"theme":{"editor":"enum","options":["light","dark"],"default":"light"},"$preview":{"width":390,"height":844}}'>
+class Component extends DCLogic {
+  renderVals() {
+    return { theme: this.props.theme ?? 'light' };
+  }
+}
+</script>
+</body>
+</html>

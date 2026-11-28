@@ -1,0 +1,82 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Basket</title>
+<script src="./support.js"></script>
+<link rel="stylesheet" href="ds/irondost/tokens.css">
+<link rel="stylesheet" href="ds/irondost/components/bundle.css">
+<link rel="stylesheet" href="app.css">
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Outfit:wght@600;700&amp;family=Figtree:wght@400;500;600;700&amp;family=Geist+Mono:wght@500&amp;display=swap">
+<style>body{margin:0}</style>
+</helmet>
+<div class="scr" data-theme="{{theme}}">
+  <div class="safe-top" style="background: var(--surface)"></div>
+  <header class="id-appbar" style="flex: none; box-shadow: inset 0 -1px 0 var(--border)">
+    <a class="id-iconbtn" href="Catalogue.dc.html" aria-label="Back"><svg class="id-icon lg" viewBox="0 0 24 24" aria-hidden="true"><path d="m12 19-7-7 7-7"></path><path d="M19 12H5"></path></svg></a>
+    <h1 class="id-appbar__title">Basket</h1>
+  </header>
+  <main class="main" style="padding-top: 16px; gap: 16px">
+    <section class="id-card" style="padding: 4px 16px 0" aria-label="Items">
+      <div class="sec-head" style="padding: 12px 0 4px">
+        <h2 class="title">Ironing</h2>
+        <span class="caption muted">17 items</span>
+      </div>
+      <div class="id-item">
+        <span class="id-item__body"><span class="id-item__name">Shirt / T-shirt</span><span class="caption muted">₹15 each</span></span>
+        <span class="id-stepper" role="group" aria-label="Shirt / T-shirt, 10"><button aria-label="Remove one"><svg class="id-icon sm" viewBox="0 0 24 24" aria-hidden="true"><path d="M5 12h14"></path></svg></button><span class="id-stepper__count">10</span><button aria-label="Add one"><svg class="id-icon sm" viewBox="0 0 24 24" aria-hidden="true"><path d="M5 12h14"></path><path d="M12 5v14"></path></svg></button></span>
+        <span class="label" style="width: 52px; text-align: right; font-variant-numeric: tabular-nums">₹150</span>
+      </div>
+      <div class="id-item">
+        <span class="id-item__body"><span class="id-item__name">Trousers / Jeans</span><span class="caption muted">₹15 each</span></span>
+        <span class="id-stepper" role="group" aria-label="Trousers / Jeans, 4"><button aria-label="Remove one"><svg class="id-icon sm" viewBox="0 0 24 24" aria-hidden="true"><path d="M5 12h14"></path></svg></button><span class="id-stepper__count">4</span><button aria-label="Add one"><svg class="id-icon sm" viewBox="0 0 24 24" aria-hidden="true"><path d="M5 12h14"></path><path d="M12 5v14"></path></svg></button></span>
+        <span class="label" style="width: 52px; text-align: right; font-variant-numeric: tabular-nums">₹60</span>
+      </div>
+      <div class="id-item">
+        <span class="id-item__body"><span class="id-item__name">Saree</span><span class="caption muted">₹50 each</span></span>
+        <span class="id-stepper" role="group" aria-label="Saree, 1"><button aria-label="Remove one"><svg class="id-icon sm" viewBox="0 0 24 24" aria-hidden="true"><path d="M5 12h14"></path></svg></button><span class="id-stepper__count">1</span><button aria-label="Add one"><svg class="id-icon sm" viewBox="0 0 24 24" aria-hidden="true"><path d="M5 12h14"></path><path d="M12 5v14"></path></svg></button></span>
+        <span class="label" style="width: 52px; text-align: right; font-variant-numeric: tabular-nums">₹50</span>
+      </div>
+      <div class="id-item">
+        <span class="id-item__body"><span class="id-item__name">Bedsheet (single)</span><span class="caption muted">₹25 each</span></span>
+        <span class="id-stepper" role="group" aria-label="Bedsheet (single), 2"><button aria-label="Remove one"><svg class="id-icon sm" viewBox="0 0 24 24" aria-hidden="true"><path d="M5 12h14"></path></svg></button><span class="id-stepper__count">2</span><button aria-label="Add one"><svg class="id-icon sm" viewBox="0 0 24 24" aria-hidden="true"><path d="M5 12h14"></path><path d="M12 5v14"></path></svg></button></span>
+        <span class="label" style="width: 52px; text-align: right; font-variant-numeric: tabular-nums">₹50</span>
+      </div>
+      <div style="padding: 4px 0 8px">
+        <a class="id-btn id-btn--text" href="Catalogue.dc.html" style="padding: 0"><svg class="id-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M5 12h14"></path><path d="M12 5v14"></path></svg>Add more items</a>
+      </div>
+    </section>
+    <div class="notice notice--success" role="status">
+      <svg class="id-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M3.85 8.62a4 4 0 0 1 4.78-4.77 4 4 0 0 1 6.74 0 4 4 0 0 1 4.78 4.78 4 4 0 0 1 0 6.74 4 4 0 0 1-4.77 4.78 4 4 0 0 1-6.75 0 4 4 0 0 1-4.78-4.77 4 4 0 0 1 0-6.76Z"></path><path d="m15 9-6 6"></path><path d="M9 9h.01"></path><path d="M15 15h.01"></path></svg>
+      <span style="flex: 1"><b>WELCOME20</b> applied. You save ₹62.</span>
+      <a class="label" href="CouponSheet.dc.html">Change</a>
+    </div>
+    <section class="id-card" aria-label="Bill">
+      <div class="id-bill">
+        <div class="id-bill__row"><span>Items (17)</span><span>₹310</span></div>
+        <div class="id-bill__row id-bill__row--saving"><span>WELCOME20</span><span>−₹62</span></div>
+        <div class="id-bill__row id-bill__row--muted"><span>Pickup &amp; delivery</span><span>Free</span></div>
+        <div class="id-bill__total"><span>To pay</span><span>₹248</span></div>
+      </div>
+    </section>
+    <p class="caption muted">The final amount changes only if the count differs at pickup.</p>
+  </main>
+  <div class="footer">
+    <a class="id-btn id-btn--primary id-btn--block" href="Schedule.dc.html">Choose pickup time</a>
+    <div class="safe-bottom" style="height: 26px"></div>
+  </div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"theme":{"editor":"enum","options":["light","dark"],"default":"light"},"$preview":{"width":390,"height":844}}'>
+class Component extends DCLogic {
+  renderVals() {
+    return { theme: this.props.theme ?? 'light' };
+  }
+}
+</script>
+</body>
+</html>

@@ -1,0 +1,86 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Choose items</title>
+<script src="./support.js"></script>
+<link rel="stylesheet" href="ds/irondost/tokens.css">
+<link rel="stylesheet" href="ds/irondost/components/bundle.css">
+<link rel="stylesheet" href="app.css">
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Outfit:wght@600;700&amp;family=Figtree:wght@400;500;600;700&amp;family=Geist+Mono:wght@500&amp;display=swap">
+<style>body{margin:0}</style>
+</helmet>
+<div class="scr" data-theme="{{theme}}">
+  <div class="safe-top" style="background: var(--surface)"></div>
+  <header class="id-appbar" style="flex: none">
+    <a class="id-iconbtn" href="Main.dc.html" aria-label="Back"><svg class="id-icon lg" viewBox="0 0 24 24" aria-hidden="true"><path d="m12 19-7-7 7-7"></path><path d="M19 12H5"></path></svg></a>
+    <h1 class="id-appbar__title">Choose items</h1>
+    <a class="id-iconbtn" href="Search.dc.html" aria-label="Search items"><svg class="id-icon lg" viewBox="0 0 24 24" aria-hidden="true"><circle cx="11" cy="11" r="8"></circle><path d="m21 21-4.3-4.3"></path></svg></a>
+  </header>
+  <div style="flex: none; padding: 4px 16px 12px; background: var(--surface); box-shadow: inset 0 -1px 0 var(--border)">
+    <nav class="tabs" aria-label="Service">
+      <a class="tab is-active" href="Catalogue.dc.html" aria-current="page">Ironing</a>
+      <a class="tab" href="Catalogue.dc.html">Wash &amp; iron</a>
+      <a class="tab" href="Catalogue.dc.html">Dry cleaning</a>
+    </nav>
+  </div>
+  <main class="main" style="padding-top: 16px; gap: 16px">
+    <div class="notice notice--info">
+      <svg class="id-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M20.38 3.46 16 2a4 4 0 0 1-8 0L3.62 3.46a2 2 0 0 0-1.34 2.23l.58 3.47a1 1 0 0 0 .99.84H6v10c0 1.1.9 2 2 2h8a2 2 0 0 0 2-2V10h2.15a1 1 0 0 0 .99-.84l.58-3.47a2 2 0 0 0-1.34-2.23z"></path></svg>
+      <span>A rough count is fine. Your partner confirms it at pickup.</span>
+    </div>
+    <div class="id-card" style="padding: 0 16px">
+      <div class="id-item">
+        <span class="id-item__thumb"><svg class="id-icon lg" viewBox="0 0 24 24" aria-hidden="true"><path d="M20.38 3.46 16 2a4 4 0 0 1-8 0L3.62 3.46a2 2 0 0 0-1.34 2.23l.58 3.47a1 1 0 0 0 .99.84H6v10c0 1.1.9 2 2 2h8a2 2 0 0 0 2-2V10h2.15a1 1 0 0 0 .99-.84l.58-3.47a2 2 0 0 0-1.34-2.23z"></path></svg></span>
+        <span class="id-item__body"><span class="id-item__name">Shirt / T-shirt</span><span class="id-item__price">₹15</span><span class="id-item__unit">per piece</span></span>
+        <span class="id-stepper" role="group" aria-label="Shirt / T-shirt, 10 in basket"><button aria-label="Remove one"><svg class="id-icon sm" viewBox="0 0 24 24" aria-hidden="true"><path d="M5 12h14"></path></svg></button><span class="id-stepper__count">10</span><button aria-label="Add one"><svg class="id-icon sm" viewBox="0 0 24 24" aria-hidden="true"><path d="M5 12h14"></path><path d="M12 5v14"></path></svg></button></span>
+      </div>
+      <div class="id-item">
+        <span class="id-item__thumb"><svg class="id-icon lg" viewBox="0 0 24 24" aria-hidden="true"><path d="M20.38 3.46 16 2a4 4 0 0 1-8 0L3.62 3.46a2 2 0 0 0-1.34 2.23l.58 3.47a1 1 0 0 0 .99.84H6v10c0 1.1.9 2 2 2h8a2 2 0 0 0 2-2V10h2.15a1 1 0 0 0 .99-.84l.58-3.47a2 2 0 0 0-1.34-2.23z"></path></svg></span>
+        <span class="id-item__body"><span class="id-item__name">Trousers / Jeans</span><span class="id-item__price">₹15</span><span class="id-item__unit">per piece</span></span>
+        <span class="id-stepper" role="group" aria-label="Trousers / Jeans, 4 in basket"><button aria-label="Remove one"><svg class="id-icon sm" viewBox="0 0 24 24" aria-hidden="true"><path d="M5 12h14"></path></svg></button><span class="id-stepper__count">4</span><button aria-label="Add one"><svg class="id-icon sm" viewBox="0 0 24 24" aria-hidden="true"><path d="M5 12h14"></path><path d="M12 5v14"></path></svg></button></span>
+      </div>
+      <div class="id-item">
+        <span class="id-item__thumb"><svg class="id-icon lg" viewBox="0 0 24 24" aria-hidden="true"><path d="M20.38 3.46 16 2a4 4 0 0 1-8 0L3.62 3.46a2 2 0 0 0-1.34 2.23l.58 3.47a1 1 0 0 0 .99.84H6v10c0 1.1.9 2 2 2h8a2 2 0 0 0 2-2V10h2.15a1 1 0 0 0 .99-.84l.58-3.47a2 2 0 0 0-1.34-2.23z"></path></svg></span>
+        <span class="id-item__body"><span class="id-item__name">Kurta</span><span class="id-item__price">₹20</span><span class="id-item__unit">per piece</span></span>
+        <button class="id-add" aria-label="Add Kurta">ADD <svg class="id-icon sm" viewBox="0 0 24 24" aria-hidden="true"><path d="M5 12h14"></path><path d="M12 5v14"></path></svg></button>
+      </div>
+      <div class="id-item">
+        <span class="id-item__thumb"><svg class="id-icon lg" viewBox="0 0 24 24" aria-hidden="true"><path d="M20.38 3.46 16 2a4 4 0 0 1-8 0L3.62 3.46a2 2 0 0 0-1.34 2.23l.58 3.47a1 1 0 0 0 .99.84H6v10c0 1.1.9 2 2 2h8a2 2 0 0 0 2-2V10h2.15a1 1 0 0 0 .99-.84l.58-3.47a2 2 0 0 0-1.34-2.23z"></path></svg></span>
+        <span class="id-item__body"><span class="id-item__name">Saree</span><span class="id-item__price">₹50</span><span class="id-item__unit">per piece</span></span>
+        <span class="id-stepper" role="group" aria-label="Saree, 1 in basket"><button aria-label="Remove one"><svg class="id-icon sm" viewBox="0 0 24 24" aria-hidden="true"><path d="M5 12h14"></path></svg></button><span class="id-stepper__count">1</span><button aria-label="Add one"><svg class="id-icon sm" viewBox="0 0 24 24" aria-hidden="true"><path d="M5 12h14"></path><path d="M12 5v14"></path></svg></button></span>
+      </div>
+      <div class="id-item">
+        <span class="id-item__thumb"><svg class="id-icon lg" viewBox="0 0 24 24" aria-hidden="true"><path d="M20.38 3.46 16 2a4 4 0 0 1-8 0L3.62 3.46a2 2 0 0 0-1.34 2.23l.58 3.47a1 1 0 0 0 .99.84H6v10c0 1.1.9 2 2 2h8a2 2 0 0 0 2-2V10h2.15a1 1 0 0 0 .99-.84l.58-3.47a2 2 0 0 0-1.34-2.23z"></path></svg></span>
+        <span class="id-item__body"><span class="id-item__name">Dupatta</span><span class="id-item__price">₹10</span><span class="id-item__unit">per piece</span></span>
+        <button class="id-add" aria-label="Add Dupatta">ADD <svg class="id-icon sm" viewBox="0 0 24 24" aria-hidden="true"><path d="M5 12h14"></path><path d="M12 5v14"></path></svg></button>
+      </div>
+      <div class="id-item">
+        <span class="id-item__thumb"><svg class="id-icon lg" viewBox="0 0 24 24" aria-hidden="true"><path d="M20.38 3.46 16 2a4 4 0 0 1-8 0L3.62 3.46a2 2 0 0 0-1.34 2.23l.58 3.47a1 1 0 0 0 .99.84H6v10c0 1.1.9 2 2 2h8a2 2 0 0 0 2-2V10h2.15a1 1 0 0 0 .99-.84l.58-3.47a2 2 0 0 0-1.34-2.23z"></path></svg></span>
+        <span class="id-item__body"><span class="id-item__name">Bedsheet (single)</span><span class="id-item__price">₹25</span><span class="id-item__unit">per piece</span></span>
+        <span class="id-stepper" role="group" aria-label="Bedsheet (single), 2 in basket"><button aria-label="Remove one"><svg class="id-icon sm" viewBox="0 0 24 24" aria-hidden="true"><path d="M5 12h14"></path></svg></button><span class="id-stepper__count">2</span><button aria-label="Add one"><svg class="id-icon sm" viewBox="0 0 24 24" aria-hidden="true"><path d="M5 12h14"></path><path d="M12 5v14"></path></svg></button></span>
+      </div>
+    </div>
+  </main>
+  <div style="flex: none; border-radius: var(--radius-xl) var(--radius-xl) 0 0; background: var(--surface); box-shadow: var(--shadow-sheet)">
+    <div class="id-cartbar" style="background: transparent; box-shadow: none">
+      <div style="flex: 1"><div class="id-cartbar__count">17 items</div><div class="id-cartbar__total">₹310</div></div>
+      <a class="id-btn id-btn--primary" href="Cart.dc.html">Review basket <svg class="id-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="m9 18 6-6-6-6"></path></svg></a>
+    </div>
+    <div class="safe-bottom"></div>
+  </div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"theme":{"editor":"enum","options":["light","dark"],"default":"light"},"$preview":{"width":390,"height":844}}'>
+class Component extends DCLogic {
+  renderVals() {
+    return { theme: this.props.theme ?? 'light' };
+  }
+}
+</script>
+</body>
+</html>

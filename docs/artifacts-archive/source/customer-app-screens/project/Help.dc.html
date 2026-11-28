@@ -1,0 +1,59 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Help and support</title>
+<script src="./support.js"></script>
+<link rel="stylesheet" href="ds/irondost/tokens.css">
+<link rel="stylesheet" href="ds/irondost/components/bundle.css">
+<link rel="stylesheet" href="app.css">
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Outfit:wght@600;700&amp;family=Figtree:wght@400;500;600;700&amp;family=Geist+Mono:wght@500&amp;display=swap">
+<style>body{margin:0}</style>
+</helmet>
+<div class="scr" data-theme="{{theme}}">
+  <div class="safe-top" style="background: var(--surface)"></div>
+  <header class="id-appbar" style="flex: none; box-shadow: inset 0 -1px 0 var(--border)">
+    <a class="id-iconbtn" href="Account.dc.html" aria-label="Back"><svg class="id-icon lg" viewBox="0 0 24 24" aria-hidden="true"><path d="m12 19-7-7 7-7"></path><path d="M19 12H5"></path></svg></a>
+    <h1 class="id-appbar__title">Help and support</h1>
+  </header>
+  <main class="main" style="padding-top: 16px; gap: 20px">
+    <section class="sec" aria-label="Contact us">
+      <h2 class="label-sm muted">Talk to us</h2>
+      <nav class="id-list">
+        <a class="id-listrow" href="tel:+919063290012" style="min-height: 64px"><span class="tile40"><svg class="id-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z"></path></svg></span><span style="flex: 1; display: grid"><span class="title">Call us</span><span class="body muted">+91 90632 90012</span></span><svg class="id-icon sm" viewBox="0 0 24 24" aria-hidden="true"><path d="m9 18 6-6-6-6"></path></svg></a>
+        <a class="id-listrow" href="mailto:kalyan91333@gmail.com" style="min-height: 64px"><span class="tile40"><svg class="id-icon" viewBox="0 0 24 24" aria-hidden="true"><rect width="20" height="16" x="2" y="4" rx="2"></rect><path d="m22 7-8.97 5.7a1.94 1.94 0 0 1-2.06 0L2 7"></path></svg></span><span style="flex: 1; display: grid; min-width: 0"><span class="title">Email us</span><span class="body muted">kalyan91333@gmail.com</span></span><svg class="id-icon sm" viewBox="0 0 24 24" aria-hidden="true"><path d="m9 18 6-6-6-6"></path></svg></a>
+      </nav>
+    </section>
+    <section class="sec" aria-label="Common questions">
+      <h2 class="label-sm muted">Common questions</h2>
+      <div class="id-list">
+        <div style="display: grid; gap: 6px; padding: 14px 16px; border-bottom: 1px solid var(--border)">
+          <span style="display: flex; align-items: center; gap: 8px"><span class="title" style="flex: 1">When will my clothes come back?</span><svg class="id-icon" viewBox="0 0 24 24" aria-hidden="true" style="transform: rotate(180deg)"><path d="m6 9 6 6 6-6"></path></svg></span>
+          <p class="body muted">You pick the delivery window at checkout. The earliest is about 20 hours after pickup, so a morning pickup usually comes back the next evening.</p>
+        </div>
+        <div class="id-listrow"><span class="id-listrow__label">Can I change or cancel a pickup?</span><svg class="id-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="m6 9 6 6 6-6"></path></svg></div>
+        <div class="id-listrow"><span class="id-listrow__label">What if an item is damaged or missing?</span><svg class="id-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="m6 9 6 6 6-6"></path></svg></div>
+        <div class="id-listrow"><span class="id-listrow__label">How do refunds work?</span><svg class="id-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="m6 9 6 6 6-6"></path></svg></div>
+      </div>
+    </section>
+    <nav class="id-list" aria-label="Policies">
+      <a class="id-listrow" href="Legal.dc.html"><span class="id-listrow__label">Cancellation and refunds</span><svg class="id-icon sm" viewBox="0 0 24 24" aria-hidden="true"><path d="m9 18 6-6-6-6"></path></svg></a>
+      <a class="id-listrow" href="Legal.dc.html"><span class="id-listrow__label">Terms of service</span><svg class="id-icon sm" viewBox="0 0 24 24" aria-hidden="true"><path d="m9 18 6-6-6-6"></path></svg></a>
+    </nav>
+  </main>
+  <div class="safe-bottom"></div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"theme":{"editor":"enum","options":["light","dark"],"default":"light"},"$preview":{"width":390,"height":844}}'>
+class Component extends DCLogic {
+  renderVals() {
+    return { theme: this.props.theme ?? 'light' };
+  }
+}
+</script>
+</body>
+</html>

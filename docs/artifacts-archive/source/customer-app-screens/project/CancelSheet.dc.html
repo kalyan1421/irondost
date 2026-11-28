@@ -1,0 +1,54 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Tracking · cancel order</title>
+<script src="./support.js"></script>
+<link rel="stylesheet" href="ds/irondost/tokens.css">
+<link rel="stylesheet" href="ds/irondost/components/bundle.css">
+<link rel="stylesheet" href="app.css">
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Outfit:wght@600;700&amp;family=Figtree:wght@400;500;600;700&amp;family=Geist+Mono:wght@500&amp;display=swap">
+<style>body{margin:0}</style>
+</helmet>
+<div class="scr" data-theme="{{theme}}">
+  <div class="under" aria-hidden="true">
+    <dc-import name="TrackBooked" theme="{{theme}}" hint-size="390px,844px"></dc-import>
+  </div>
+  <a class="scrim" href="TrackBooked.dc.html" aria-label="Close"></a>
+  <section class="sheet" role="dialog" aria-modal="true" aria-labelledby="cancel-title">
+    <span class="grabber"></span>
+    <div style="display: grid; gap: 4px">
+      <h1 id="cancel-title" class="title-lg">Cancel this order?</h1>
+      <p class="body muted">Tell us why (optional). It helps us improve.</p>
+    </div>
+    <div class="id-slots" role="radiogroup" aria-label="Reason">
+      <span class="id-slot" role="radio" aria-checked="false" style="padding: 12px 16px"><span class="body-lg">I won't be at home</span><span class="id-radio"></span></span>
+      <span class="id-slot is-selected" role="radio" aria-checked="true" style="padding: 12px 16px"><span class="body-lg">I booked by mistake</span><span class="id-radio is-on"></span></span>
+      <span class="id-slot" role="radio" aria-checked="false" style="padding: 12px 16px"><span class="body-lg">The time doesn't suit me</span><span class="id-radio"></span></span>
+      <span class="id-slot" role="radio" aria-checked="false" style="padding: 12px 16px"><span class="body-lg">Something else</span><span class="id-radio"></span></span>
+    </div>
+    <div class="notice notice--info">
+      <svg class="id-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M3 12a9 9 0 0 1 9-9 9.75 9.75 0 0 1 6.74 2.74L21 8"></path><path d="M21 3v5h-5"></path><path d="M21 12a9 9 0 0 1-9 9 9.75 9.75 0 0 1-6.74-2.74L3 16"></path><path d="M8 16H3v5"></path></svg>
+      <span>You paid ₹248 online. It's refunded in full to the same account within 7–14 business days.</span>
+    </div>
+    <div style="display: grid; gap: 8px">
+      <a class="id-btn id-btn--danger id-btn--block" href="TrackCancelled.dc.html">Cancel order</a>
+      <a class="id-btn id-btn--outline id-btn--block" href="TrackBooked.dc.html">Keep order</a>
+    </div>
+    <div class="safe-bottom" style="margin-top: -16px"></div>
+  </section>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"theme":{"editor":"enum","options":["light","dark"],"default":"light"},"$preview":{"width":390,"height":844}}'>
+class Component extends DCLogic {
+  renderVals() {
+    return { theme: this.props.theme ?? 'light' };
+  }
+}
+</script>
+</body>
+</html>

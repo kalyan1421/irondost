@@ -1,0 +1,68 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Pin location · outside service area</title>
+<script src="./support.js"></script>
+<link rel="stylesheet" href="ds/irondost/tokens.css">
+<link rel="stylesheet" href="ds/irondost/components/bundle.css">
+<link rel="stylesheet" href="app.css">
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Outfit:wght@600;700&amp;family=Figtree:wght@400;500;600;700&amp;family=Geist+Mono:wght@500&amp;display=swap">
+<style>body{margin:0}</style>
+</helmet>
+<div class="scr" data-theme="{{theme}}">
+  <div class="map" role="img" aria-label="Map of Gachibowli with the pin on ISB Road">
+    <span class="map__block" style="left: 24px; top: 90px; width: 120px; height: 110px; background: var(--border)"></span>
+    <span class="map__block" style="left: 196px; top: 70px; width: 170px; height: 90px; background: var(--border)"></span>
+    <span class="map__block" style="left: 24px; top: 250px; width: 90px; height: 150px; background: var(--border)"></span>
+    <span class="map__block" style="left: 250px; top: 300px; width: 120px; height: 120px; background: var(--border)"></span>
+    <span class="map__park" style="left: 150px; top: 420px; width: 220px; height: 100px"></span>
+    <span class="map__road" style="left: 0; top: 214px; width: 390px; height: 22px"></span>
+    <span class="map__road" style="left: 160px; top: 0; width: 16px; height: 560px"></span>
+    <span class="map__road" style="left: 0; top: 440px; width: 150px; height: 14px"></span>
+  </div>
+  <div style="position: relative; flex: none">
+    <div class="safe-top"></div>
+    <div style="display: flex; align-items: center; gap: 8px; padding: 4px 16px">
+      <a class="id-iconbtn" href="Addresses.dc.html" aria-label="Back" style="flex: none; background: var(--surface); box-shadow: var(--shadow-raised)"><svg class="id-icon lg" viewBox="0 0 24 24" aria-hidden="true"><path d="m12 19-7-7 7-7"></path><path d="M19 12H5"></path></svg></a>
+      <label class="id-field__control" style="flex: 1; box-shadow: var(--shadow-raised)">
+        <svg class="id-icon" viewBox="0 0 24 24" aria-hidden="true" style="color: var(--text-muted)"><circle cx="11" cy="11" r="8"></circle><path d="m21 21-4.3-4.3"></path></svg>
+        <input type="search" placeholder="Search area, street or building" aria-label="Search for a place">
+      </label>
+    </div>
+  </div>
+  <div style="position: absolute; left: 0; right: 0; top: 196px; display: grid; justify-items: center; gap: 6px">
+    <span class="caption" style="padding: 6px 10px; border-radius: var(--radius-sm); background: var(--surface-inverse); color: var(--text-inverse)">Outside our area</span>
+    <svg viewBox="0 0 24 24" width="48" height="48" aria-hidden="true"><path d="M20 10c0 4.993-5.539 10.193-7.399 11.799a1 1 0 0 1-1.202 0C9.539 20.193 4 14.993 4 10a8 8 0 0 1 16 0" style="fill: var(--ink); stroke: var(--white); stroke-width: 1.5"></path><circle cx="12" cy="10" r="3" style="fill: var(--white)"></circle></svg>
+  </div>
+  <section class="sheet" aria-labelledby="area-title">
+    <span class="grabber"></span>
+    <div style="display: flex; gap: 12px; align-items: flex-start">
+      <span style="flex: none; width: 48px; height: 48px; display: grid; place-items: center; border-radius: 50%; background: var(--warning-soft); color: var(--warning)"><svg class="id-icon lg" viewBox="0 0 24 24" aria-hidden="true"><path d="M12.75 7.09a3 3 0 0 1 2.16 2.16"></path><path d="M17.072 17.072c-1.634 2.17-3.527 3.912-4.471 4.727a1 1 0 0 1-1.202 0C9.539 20.193 4 14.993 4 10a8 8 0 0 1 1.432-4.568"></path><path d="m2 2 20 20"></path><path d="M8.475 2.818A8 8 0 0 1 20 10c0 1.183-.31 2.377-.81 3.533"></path><path d="M9.13 9.13a3 3 0 0 0 3.74 3.74"></path></svg></span>
+      <div style="display: grid; gap: 4px">
+        <h1 id="area-title" class="title-lg">We're not in Gachibowli yet</h1>
+        <p class="body muted">ISB Road, Gachibowli, Hyderabad 500032</p>
+      </div>
+    </div>
+    <p class="body-lg">We can't pick up from here yet. Try another address, or save this one and book once we reach your area.</p>
+    <div style="display: grid; gap: 4px">
+      <a class="id-btn id-btn--primary id-btn--block" href="MapPin.dc.html">Change location</a>
+      <a class="id-btn id-btn--text id-btn--block" href="Addresses.dc.html">Save address anyway</a>
+    </div>
+    <div class="safe-bottom" style="margin-top: -16px"></div>
+  </section>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"theme":{"editor":"enum","options":["light","dark"],"default":"light"},"$preview":{"width":390,"height":844}}'>
+class Component extends DCLogic {
+  renderVals() {
+    return { theme: this.props.theme ?? 'light' };
+  }
+}
+</script>
+</body>
+</html>

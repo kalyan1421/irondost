@@ -1,0 +1,41 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Checkout · slot just closed</title>
+<script src="./support.js"></script>
+<link rel="stylesheet" href="ds/irondost/tokens.css">
+<link rel="stylesheet" href="ds/irondost/components/bundle.css">
+<link rel="stylesheet" href="app.css">
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Outfit:wght@600;700&amp;family=Figtree:wght@400;500;600;700&amp;family=Geist+Mono:wght@500&amp;display=swap">
+<style>body{margin:0}</style>
+</helmet>
+<div class="scr" data-theme="{{theme}}">
+  <div class="under" aria-hidden="true">
+    <dc-import name="Checkout" theme="{{theme}}" hint-size="390px,844px"></dc-import>
+  </div>
+  <span class="scrim"></span>
+  <section role="alertdialog" aria-modal="true" aria-labelledby="slot-title" aria-describedby="slot-body" style="position: absolute; left: 24px; right: 24px; top: 250px; display: grid; justify-items: center; gap: 12px; padding: 24px 20px 16px; border-radius: var(--radius-xl); background: var(--surface); box-shadow: var(--shadow-raised); text-align: center">
+    <span style="width: 56px; height: 56px; display: grid; place-items: center; border-radius: 50%; background: var(--warning-soft); color: var(--warning)"><svg class="id-icon lg" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="10"></circle><path d="M12 6v6l4 2"></path></svg></span>
+    <h1 id="slot-title" class="title-lg">That slot just closed</h1>
+    <p id="slot-body" class="body muted">Today's evening pickup isn't available any more. Pick another time. Your basket and code are kept, and you haven't been charged.</p>
+    <div style="display: grid; gap: 4px; width: 100%; margin-top: 4px">
+      <a class="id-btn id-btn--primary id-btn--block" href="Schedule.dc.html">Pick another time</a>
+      <a class="id-btn id-btn--text id-btn--block" href="Checkout.dc.html">Close</a>
+    </div>
+  </section>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"theme":{"editor":"enum","options":["light","dark"],"default":"light"},"$preview":{"width":390,"height":844}}'>
+class Component extends DCLogic {
+  renderVals() {
+    return { theme: this.props.theme ?? 'light' };
+  }
+}
+</script>
+</body>
+</html>

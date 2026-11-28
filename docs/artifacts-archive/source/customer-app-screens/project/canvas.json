@@ -1,0 +1,672 @@
+{
+  "v": 3,
+  "attachments": {},
+  "boards": {
+    "Account.dc.html": {
+      "h": 844,
+      "is_interactive": true,
+      "title": "Account",
+      "w": 390,
+      "x": 0,
+      "y": 3900
+    },
+    "AddressForm.dc.html": {
+      "h": 844,
+      "is_interactive": true,
+      "title": "Set up \u00b7 address details",
+      "w": 390,
+      "x": 2350,
+      "y": 0
+    },
+    "Addresses.dc.html": {
+      "h": 844,
+      "is_interactive": true,
+      "title": "Saved addresses",
+      "w": 390,
+      "x": 470,
+      "y": 3900
+    },
+    "Cart.dc.html": {
+      "h": 844,
+      "is_interactive": true,
+      "title": "Basket",
+      "w": 390,
+      "x": 940,
+      "y": 1300
+    },
+    "Catalogue.dc.html": {
+      "h": 844,
+      "is_interactive": true,
+      "title": "Choose items",
+      "w": 390,
+      "x": 470,
+      "y": 1300
+    },
+    "Checkout.dc.html": {
+      "h": 844,
+      "is_interactive": true,
+      "title": "Checkout",
+      "w": 390,
+      "x": 1880,
+      "y": 1300
+    },
+    "Confirmed.dc.html": {
+      "h": 844,
+      "is_interactive": true,
+      "title": "Pickup booked",
+      "w": 390,
+      "x": 2350,
+      "y": 1300
+    },
+    "DeleteAccount.dc.html": {
+      "h": 844,
+      "is_interactive": true,
+      "title": "Delete account",
+      "w": 390,
+      "x": 940,
+      "y": 3900
+    },
+    "EmptyOrders.dc.html": {
+      "h": 844,
+      "is_interactive": true,
+      "title": "Orders \u00b7 empty",
+      "w": 390,
+      "x": 1410,
+      "y": 3900
+    },
+    "HomeDark.dc.html": {
+      "h": 844,
+      "is_interactive": true,
+      "title": "Home \u00b7 dark",
+      "w": 390,
+      "x": 2350,
+      "y": 3900
+    },
+    "Login.dc.html": {
+      "h": 844,
+      "is_interactive": true,
+      "title": "Sign in \u00b7 mobile number",
+      "w": 390,
+      "x": 470,
+      "y": 0
+    },
+    "Main.dc.html": {
+      "h": 844,
+      "is_interactive": true,
+      "title": "Home",
+      "w": 390,
+      "x": 0,
+      "y": 1300
+    },
+    "MapPin.dc.html": {
+      "h": 844,
+      "is_interactive": true,
+      "title": "Set up \u00b7 pin location",
+      "w": 390,
+      "x": 1880,
+      "y": 0
+    },
+    "Notifications.dc.html": {
+      "h": 844,
+      "is_interactive": true,
+      "title": "Notifications",
+      "w": 390,
+      "x": 1410,
+      "y": 2600
+    },
+    "Offers.dc.html": {
+      "h": 844,
+      "is_interactive": true,
+      "title": "Offers",
+      "w": 390,
+      "x": 1880,
+      "y": 2600
+    },
+    "Orders.dc.html": {
+      "h": 844,
+      "is_interactive": true,
+      "title": "Orders",
+      "w": 390,
+      "x": 0,
+      "y": 2600
+    },
+    "Otp.dc.html": {
+      "h": 844,
+      "is_interactive": true,
+      "title": "Sign in \u00b7 OTP",
+      "w": 390,
+      "x": 940,
+      "y": 0
+    },
+    "PayDue.dc.html": {
+      "h": 844,
+      "is_interactive": true,
+      "title": "Pay what's due",
+      "w": 390,
+      "x": 940,
+      "y": 2600
+    },
+    "Profile.dc.html": {
+      "h": 844,
+      "is_interactive": true,
+      "title": "Set up \u00b7 name",
+      "w": 390,
+      "x": 1410,
+      "y": 0
+    },
+    "Schedule.dc.html": {
+      "h": 844,
+      "is_interactive": true,
+      "title": "Pickup time",
+      "w": 390,
+      "x": 1410,
+      "y": 1300
+    },
+    "Track.dc.html": {
+      "h": 844,
+      "is_interactive": true,
+      "title": "Order tracking",
+      "w": 390,
+      "x": 470,
+      "y": 2600
+    },
+    "TrackDark.dc.html": {
+      "h": 844,
+      "is_interactive": true,
+      "title": "Order tracking \u00b7 dark",
+      "w": 390,
+      "x": 2820,
+      "y": 3900
+    },
+    "Update.dc.html": {
+      "h": 844,
+      "title": "Force update",
+      "w": 390,
+      "x": 1880,
+      "y": 3900
+    },
+    "Welcome.dc.html": {
+      "h": 844,
+      "is_interactive": true,
+      "title": "Welcome",
+      "w": 390,
+      "x": 0,
+      "y": 0
+    },
+    "Splash.dc.html": {
+      "x": 0,
+      "y": 5200,
+      "w": 390,
+      "h": 844,
+      "title": "Launch screen"
+    },
+    "HomeLoading.dc.html": {
+      "x": 470,
+      "y": 5200,
+      "w": 390,
+      "h": 844,
+      "title": "Home \u00b7 loading"
+    },
+    "Offline.dc.html": {
+      "x": 940,
+      "y": 5200,
+      "w": 390,
+      "h": 844,
+      "title": "No internet",
+      "is_interactive": true
+    },
+    "OfflineBanner.dc.html": {
+      "x": 1410,
+      "y": 5200,
+      "w": 390,
+      "h": 844,
+      "title": "Home \u00b7 offline with saved data",
+      "is_interactive": true
+    },
+    "ServerDown.dc.html": {
+      "x": 1880,
+      "y": 5200,
+      "w": 390,
+      "h": 844,
+      "title": "Server unavailable",
+      "is_interactive": true
+    },
+    "ErrorGeneric.dc.html": {
+      "x": 2350,
+      "y": 5200,
+      "w": 390,
+      "h": 844,
+      "title": "Something went wrong",
+      "is_interactive": true
+    },
+    "CatalogueError.dc.html": {
+      "x": 2820,
+      "y": 5200,
+      "w": 390,
+      "h": 844,
+      "title": "Choose items \u00b7 failed to load",
+      "is_interactive": true
+    },
+    "AccountPaused.dc.html": {
+      "x": 3290,
+      "y": 5200,
+      "w": 390,
+      "h": 844,
+      "title": "Account paused",
+      "is_interactive": true
+    },
+    "NotifPermission.dc.html": {
+      "x": 3760,
+      "y": 5200,
+      "w": 390,
+      "h": 844,
+      "title": "Notification permission",
+      "is_interactive": true
+    },
+    "LoginError.dc.html": {
+      "x": 0,
+      "y": 6500,
+      "w": 390,
+      "h": 844,
+      "title": "Sign in \u00b7 invalid number",
+      "is_interactive": true
+    },
+    "OtpError.dc.html": {
+      "x": 470,
+      "y": 6500,
+      "w": 390,
+      "h": 844,
+      "title": "Sign in \u00b7 wrong code",
+      "is_interactive": true
+    },
+    "OtpLocked.dc.html": {
+      "x": 940,
+      "y": 6500,
+      "w": 390,
+      "h": 844,
+      "title": "Sign in \u00b7 too many tries",
+      "is_interactive": true
+    },
+    "LocationDenied.dc.html": {
+      "x": 1410,
+      "y": 6500,
+      "w": 390,
+      "h": 844,
+      "title": "Pin location \u00b7 location off",
+      "is_interactive": true
+    },
+    "OutOfArea.dc.html": {
+      "x": 1880,
+      "y": 6500,
+      "w": 390,
+      "h": 844,
+      "title": "Pin location \u00b7 outside service area",
+      "is_interactive": true
+    },
+    "AddressPicker.dc.html": {
+      "x": 2350,
+      "y": 6500,
+      "w": 390,
+      "h": 844,
+      "title": "Home \u00b7 switch address",
+      "is_interactive": true
+    },
+    "Search.dc.html": {
+      "x": 0,
+      "y": 7800,
+      "w": 390,
+      "h": 844,
+      "title": "Search \u00b7 no results",
+      "is_interactive": true
+    },
+    "EmptyBasket.dc.html": {
+      "x": 470,
+      "y": 7800,
+      "w": 390,
+      "h": 844,
+      "title": "Basket \u00b7 empty",
+      "is_interactive": true
+    },
+    "BasketIssues.dc.html": {
+      "x": 940,
+      "y": 7800,
+      "w": 390,
+      "h": 844,
+      "title": "Basket \u00b7 code expired, below minimum",
+      "is_interactive": true
+    },
+    "CouponSheet.dc.html": {
+      "x": 1410,
+      "y": 7800,
+      "w": 390,
+      "h": 844,
+      "title": "Basket \u00b7 apply a code",
+      "is_interactive": true
+    },
+    "NoSlots.dc.html": {
+      "x": 1880,
+      "y": 7800,
+      "w": 390,
+      "h": 844,
+      "title": "Pickup time \u00b7 none left today",
+      "is_interactive": true
+    },
+    "DeliverySlotSheet.dc.html": {
+      "x": 2350,
+      "y": 7800,
+      "w": 390,
+      "h": 844,
+      "title": "Pickup time \u00b7 change delivery",
+      "is_interactive": true
+    },
+    "SlotTaken.dc.html": {
+      "x": 2820,
+      "y": 7800,
+      "w": 390,
+      "h": 844,
+      "title": "Checkout \u00b7 slot just closed",
+      "is_interactive": true
+    },
+    "PaymentProcessing.dc.html": {
+      "x": 3290,
+      "y": 7800,
+      "w": 390,
+      "h": 844,
+      "title": "Payment \u00b7 confirming"
+    },
+    "PaymentFailed.dc.html": {
+      "x": 3760,
+      "y": 7800,
+      "w": 390,
+      "h": 844,
+      "title": "Payment \u00b7 failed",
+      "is_interactive": true
+    },
+    "OrdersPast.dc.html": {
+      "x": 0,
+      "y": 9100,
+      "w": 390,
+      "h": 844,
+      "title": "Orders \u00b7 past",
+      "is_interactive": true
+    },
+    "TrackBooked.dc.html": {
+      "x": 470,
+      "y": 9100,
+      "w": 390,
+      "h": 844,
+      "title": "Tracking \u00b7 booked, finding a partner",
+      "is_interactive": true
+    },
+    "TrackDelayed.dc.html": {
+      "x": 940,
+      "y": 9100,
+      "w": 390,
+      "h": 844,
+      "title": "Tracking \u00b7 pickup running late",
+      "is_interactive": true
+    },
+    "CancelSheet.dc.html": {
+      "x": 1410,
+      "y": 9100,
+      "w": 390,
+      "h": 844,
+      "title": "Tracking \u00b7 cancel order",
+      "is_interactive": true
+    },
+    "TrackOutForDelivery.dc.html": {
+      "x": 1880,
+      "y": 9100,
+      "w": 390,
+      "h": 844,
+      "title": "Tracking \u00b7 out for delivery",
+      "is_interactive": true
+    },
+    "TrackDelivered.dc.html": {
+      "x": 2350,
+      "y": 9100,
+      "w": 390,
+      "h": 844,
+      "title": "Tracking \u00b7 delivered",
+      "is_interactive": true
+    },
+    "TrackCancelled.dc.html": {
+      "x": 2820,
+      "y": 9100,
+      "w": 390,
+      "h": 844,
+      "title": "Tracking \u00b7 cancelled",
+      "is_interactive": true
+    },
+    "Bill.dc.html": {
+      "x": 3290,
+      "y": 9100,
+      "w": 390,
+      "h": 844,
+      "title": "Items and bill",
+      "is_interactive": true
+    },
+    "PaySuccess.dc.html": {
+      "x": 3760,
+      "y": 9100,
+      "w": 390,
+      "h": 844,
+      "title": "Payment \u00b7 received",
+      "is_interactive": true
+    },
+    "EditProfile.dc.html": {
+      "x": 0,
+      "y": 10400,
+      "w": 390,
+      "h": 844,
+      "title": "Edit profile",
+      "is_interactive": true
+    },
+    "Help.dc.html": {
+      "x": 470,
+      "y": 10400,
+      "w": 390,
+      "h": 844,
+      "title": "Help and support",
+      "is_interactive": true
+    },
+    "Legal.dc.html": {
+      "x": 940,
+      "y": 10400,
+      "w": 390,
+      "h": 844,
+      "title": "Cancellation and refunds",
+      "is_interactive": true
+    },
+    "LogoutSheet.dc.html": {
+      "x": 1410,
+      "y": 10400,
+      "w": 390,
+      "h": 844,
+      "title": "Log out",
+      "is_interactive": true
+    },
+    "DeleteBlocked.dc.html": {
+      "x": 1880,
+      "y": 10400,
+      "w": 390,
+      "h": 844,
+      "title": "Delete account \u00b7 orders in progress",
+      "is_interactive": true
+    },
+    "EmptyNotifications.dc.html": {
+      "x": 2350,
+      "y": 10400,
+      "w": 390,
+      "h": 844,
+      "title": "Notifications \u00b7 empty",
+      "is_interactive": true
+    },
+    "EmptyOffers.dc.html": {
+      "x": 2820,
+      "y": 10400,
+      "w": 390,
+      "h": 844,
+      "title": "Offers \u00b7 empty",
+      "is_interactive": true
+    }
+  },
+  "createdOnFiles": {
+    "at": "2026-10-02T12:50:00Z",
+    "v": 1
+  },
+  "designSystems": [
+    {
+      "artifact": "https://claude.ai/artifact/3TxmJdVqHnomwZHFxMu9bR",
+      "copiedAt": "2026-10-02T12:50:00Z",
+      "namespace": "irondost",
+      "title": "IronDost",
+      "version": "1790944210-515d"
+    }
+  ],
+  "launch": {
+    "view": "canvas"
+  },
+  "notes": {
+    "rowAccount": {
+      "kind": "title1",
+      "maxW": 3210,
+      "text": "4 \u00b7 Account, edge states and dark mode",
+      "w": 240,
+      "x": 0,
+      "y": 3600
+    },
+    "rowBook": {
+      "kind": "title1",
+      "maxW": 2740,
+      "text": "2 \u00b7 Book a pickup",
+      "w": 240,
+      "x": 0,
+      "y": 1000
+    },
+    "rowSignIn": {
+      "kind": "title1",
+      "maxW": 2740,
+      "text": "1 \u00b7 Sign in and set up",
+      "w": 240,
+      "x": 0,
+      "y": -300
+    },
+    "rowTrack": {
+      "kind": "title1",
+      "maxW": 2270,
+      "text": "3 \u00b7 Track and pay",
+      "w": 240,
+      "x": 0,
+      "y": 2300
+    },
+    "rowStates": {
+      "kind": "title1",
+      "maxW": 4150,
+      "text": "5 \u00b7 App states: launch, loading, offline and errors",
+      "w": 240,
+      "x": 0,
+      "y": 4900
+    },
+    "rowAuthStates": {
+      "kind": "title1",
+      "maxW": 2740,
+      "text": "6 \u00b7 Sign-in and address states",
+      "w": 240,
+      "x": 0,
+      "y": 6200
+    },
+    "rowBookStates": {
+      "kind": "title1",
+      "maxW": 4150,
+      "text": "7 \u00b7 Booking states",
+      "w": 240,
+      "x": 0,
+      "y": 7500
+    },
+    "rowOrderStates": {
+      "kind": "title1",
+      "maxW": 4150,
+      "text": "8 \u00b7 Order states",
+      "w": 240,
+      "x": 0,
+      "y": 8800
+    },
+    "rowAccountStates": {
+      "kind": "title1",
+      "maxW": 3210,
+      "text": "9 \u00b7 Account, help and empty states",
+      "w": 240,
+      "x": 0,
+      "y": 10100
+    }
+  },
+  "order": [
+    "Main.dc.html",
+    "Welcome.dc.html",
+    "Login.dc.html",
+    "Otp.dc.html",
+    "Profile.dc.html",
+    "MapPin.dc.html",
+    "AddressForm.dc.html",
+    "Catalogue.dc.html",
+    "Cart.dc.html",
+    "Schedule.dc.html",
+    "Checkout.dc.html",
+    "Confirmed.dc.html",
+    "Orders.dc.html",
+    "Track.dc.html",
+    "PayDue.dc.html",
+    "Notifications.dc.html",
+    "Offers.dc.html",
+    "Account.dc.html",
+    "Addresses.dc.html",
+    "DeleteAccount.dc.html",
+    "EmptyOrders.dc.html",
+    "Update.dc.html",
+    "HomeDark.dc.html",
+    "TrackDark.dc.html",
+    "Splash.dc.html",
+    "HomeLoading.dc.html",
+    "Offline.dc.html",
+    "OfflineBanner.dc.html",
+    "ServerDown.dc.html",
+    "ErrorGeneric.dc.html",
+    "CatalogueError.dc.html",
+    "AccountPaused.dc.html",
+    "NotifPermission.dc.html",
+    "LoginError.dc.html",
+    "OtpError.dc.html",
+    "OtpLocked.dc.html",
+    "LocationDenied.dc.html",
+    "OutOfArea.dc.html",
+    "AddressPicker.dc.html",
+    "Search.dc.html",
+    "EmptyBasket.dc.html",
+    "BasketIssues.dc.html",
+    "CouponSheet.dc.html",
+    "NoSlots.dc.html",
+    "DeliverySlotSheet.dc.html",
+    "SlotTaken.dc.html",
+    "PaymentProcessing.dc.html",
+    "PaymentFailed.dc.html",
+    "OrdersPast.dc.html",
+    "TrackBooked.dc.html",
+    "TrackDelayed.dc.html",
+    "CancelSheet.dc.html",
+    "TrackOutForDelivery.dc.html",
+    "TrackDelivered.dc.html",
+    "TrackCancelled.dc.html",
+    "Bill.dc.html",
+    "PaySuccess.dc.html",
+    "EditProfile.dc.html",
+    "Help.dc.html",
+    "Legal.dc.html",
+    "LogoutSheet.dc.html",
+    "DeleteBlocked.dc.html",
+    "EmptyNotifications.dc.html",
+    "EmptyOffers.dc.html"
+  ],
+  "pages": [],
+  "title": "IronDost customer app"
+}

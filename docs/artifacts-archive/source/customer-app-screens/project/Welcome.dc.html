@@ -1,0 +1,55 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Welcome</title>
+<script src="./support.js"></script>
+<link rel="stylesheet" href="ds/irondost/tokens.css">
+<link rel="stylesheet" href="ds/irondost/components/bundle.css">
+<link rel="stylesheet" href="app.css">
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Outfit:wght@600;700&amp;family=Figtree:wght@400;500;600;700&amp;family=Geist+Mono:wght@500&amp;display=swap">
+<style>body{margin:0}</style>
+</helmet>
+<div class="scr" data-theme="{{theme}}" style="background: var(--surface)">
+  <div class="safe-top"></div>
+  <div style="flex: none; display: flex; justify-content: center; padding-top: 12px">
+    <img src="/_blob/8140172134013a5783d5426d73f4297b" alt="IronDost" style="height: 36px; width: auto">
+  </div>
+  <main class="main" style="justify-content: center; gap: 28px; padding: 16px 24px">
+    <div style="position: relative; align-self: center; width: 208px; height: 208px">
+      <span style="position: absolute; inset: 0; border-radius: 50%; background: var(--surface-soft)"></span>
+      <img src="/_blob/16fb339d836eef355c8274e51fb53cdc" alt="" style="position: absolute; left: 32px; top: 32px; width: 144px; height: 144px">
+      <span class="id-bubble" style="width: 36px; height: 36px; right: -6px; top: 10px"></span>
+      <span class="id-bubble" style="width: 16px; height: 16px; right: 34px; top: -6px"></span>
+      <span class="id-bubble" style="width: 22px; height: 22px; left: 2px; bottom: 26px"></span>
+    </div>
+    <div style="display: grid; gap: 8px; text-align: center">
+      <h1 class="headline">Fresh clothes, back at your door.</h1>
+      <p class="body-lg muted">We pick up, iron and deliver. You choose the time.</p>
+    </div>
+    <ul style="list-style: none; margin: 0; padding: 0; display: grid; gap: 12px">
+      <li style="display: flex; align-items: center; gap: 12px"><span class="tile40"><svg class="id-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M14 18V6a2 2 0 0 0-2-2H4a2 2 0 0 0-2 2v11a1 1 0 0 0 1 1h2"></path><path d="M15 18H9"></path><path d="M19 18h2a1 1 0 0 0 1-1v-3.65a1 1 0 0 0-.22-.624l-3.48-4.35A1 1 0 0 0 17.52 8H14"></path><circle cx="17" cy="18" r="2"></circle><circle cx="7" cy="18" r="2"></circle></svg></span><span class="body">Pickup and delivery from your door</span></li>
+      <li style="display: flex; align-items: center; gap: 12px"><span class="tile40"><svg class="id-icon" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="10"></circle><path d="M12 6v6l4 2"></path></svg></span><span class="body">Ironed and back in about a day</span></li>
+      <li style="display: flex; align-items: center; gap: 12px"><span class="tile40"><svg class="id-icon" viewBox="0 0 24 24" aria-hidden="true"><rect width="20" height="12" x="2" y="6" rx="2"></rect><circle cx="12" cy="12" r="2"></circle><path d="M6 12h.01M18 12h.01"></path></svg></span><span class="body">Pay online or in cash at delivery</span></li>
+    </ul>
+  </main>
+  <div style="flex: none; display: grid; gap: 12px; padding: 8px 16px 0">
+    <a class="id-btn id-btn--primary id-btn--block" href="Login.dc.html">Get started</a>
+    <p class="caption muted" style="text-align: center">By continuing you agree to our <a href="Legal.dc.html">Terms</a> and <a href="Legal.dc.html">Privacy Policy</a>.</p>
+  </div>
+  <div class="safe-bottom"></div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"theme":{"editor":"enum","options":["light","dark"],"default":"light"},"$preview":{"width":390,"height":844}}'>
+class Component extends DCLogic {
+  renderVals() {
+    return { theme: this.props.theme ?? 'light' };
+  }
+}
+</script>
+</body>
+</html>

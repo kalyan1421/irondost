@@ -1,0 +1,245 @@
+<title>Irondost December Clip Plan</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Sora:wght@500;700&family=Inter:wght@400;500;600&family=JetBrains+Mono:wght@400&display=swap">
+<style>
+/* Layout: production sheet. Overview strip, then one shot-list per clip, then the posting calendar. */
+:root {
+  --bg:#F3F6FA; --surface:#FFFFFF; --ink:#0E1E3D; --muted:#5B6B86; --line:#DCE4EE;
+  --accent:#1F4FD1; --sky:#3FB8EA; --sun:#FFC93C; --soft:#E6EEF8;
+  --display:"Sora","Inter",system-ui,sans-serif; --body:"Inter",system-ui,sans-serif;
+  --mono:"JetBrains Mono",ui-monospace,Menlo,monospace;
+}
+@media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) {
+  --bg:#0A1428; --surface:#112040; --ink:#E8EEF8; --muted:#94A3BE; --line:#22355C;
+  --accent:#7EA2FF; --sky:#3FB8EA; --sun:#FFC93C; --soft:#17284C; color-scheme:dark; } }
+:root[data-theme="dark"] {
+  --bg:#0A1428; --surface:#112040; --ink:#E8EEF8; --muted:#94A3BE; --line:#22355C;
+  --accent:#7EA2FF; --sky:#3FB8EA; --sun:#FFC93C; --soft:#17284C; color-scheme:dark; }
+body { background:var(--bg); color:var(--ink); font-family:var(--body); line-height:1.55; font-size:15px; }
+.wrap { max-width:1080px; margin:0 auto; padding-block:36px 72px;
+  padding-left:max(16px, env(safe-area-inset-left, 0px)); padding-right:max(16px, env(safe-area-inset-right, 0px)); }
+h1 { font-family:var(--display); font-size:clamp(1.7rem,3.4vw,2.4rem); margin:0; text-wrap:balance; }
+h2 { font-family:var(--display); font-size:1.3rem; margin:0; text-wrap:balance; }
+h3 { font-family:var(--display); font-size:1.05rem; margin:0; }
+.lede { color:var(--muted); max-width:70ch; margin:10px 0 0; }
+code, .f { font-family:var(--mono); font-size:12px; }
+.f { color:var(--accent); word-break:break-all; }
+.eyebrow { font:600 11px var(--body); letter-spacing:.08em; text-transform:uppercase; color:var(--muted); }
+section { margin-top:44px; }
+.rules { display:grid; grid-template-columns:repeat(auto-fit,minmax(230px,1fr)); gap:12px; margin-top:16px; }
+.rule { background:var(--surface); border:1px solid var(--line); border-radius:10px; padding:14px 16px; min-width:0; }
+.rule b { display:block; font-family:var(--display); font-size:.95rem; margin-bottom:4px; }
+.rule p { margin:0; color:var(--muted); font-size:13.5px; }
+.over { overflow-x:auto; margin-top:14px; border:1px solid var(--line); border-radius:10px; background:var(--surface); }
+table { border-collapse:collapse; width:100%; font-size:13.5px; }
+th, td { text-align:left; padding:9px 12px; border-bottom:1px solid var(--line); vertical-align:top; }
+th { font:600 11px var(--body); letter-spacing:.06em; text-transform:uppercase; color:var(--muted); background:var(--soft); }
+tr:last-child td { border-bottom:0; }
+td.t { font-family:var(--mono); font-size:12px; white-space:nowrap; font-variant-numeric:tabular-nums; color:var(--muted); }
+.clip { margin-top:28px; background:var(--surface); border:1px solid var(--line); border-radius:12px; padding:20px; }
+.clip .over { background:var(--bg); }
+.head { display:flex; flex-wrap:wrap; align-items:baseline; gap:8px 14px; }
+.id { font:600 12px var(--mono); color:var(--bg); background:var(--ink); padding:2px 8px; border-radius:5px; }
+.tags { display:flex; flex-wrap:wrap; gap:6px; margin-top:10px; }
+.tag { font:500 12px var(--body); border:1px solid var(--line); border-radius:999px; padding:2px 10px; color:var(--muted); }
+.tag.fmt { color:var(--accent); border-color:currentColor; }
+.hook { margin:12px 0 0; padding-left:12px; border-left:3px solid var(--sun); font-size:14.5px; }
+.why { margin:8px 0 0; color:var(--muted); font-size:13.5px; max-width:75ch; }
+.say { font-weight:600; }
+.cal { display:grid; grid-template-columns:repeat(auto-fill,minmax(150px,1fr)); gap:10px; margin-top:14px; }
+.day { background:var(--surface); border:1px solid var(--line); border-radius:9px; padding:10px 12px; min-width:0; }
+.day .d { font:600 12px var(--mono); color:var(--muted); }
+.day .w { font-size:13.5px; margin-top:4px; }
+.day.new { border-color:var(--accent); }
+.day.new .d { color:var(--accent); }
+.day.old .w { color:var(--muted); }
+.key { display:flex; gap:16px; flex-wrap:wrap; font-size:12.5px; color:var(--muted); margin-top:10px; }
+.key i { display:inline-block; width:10px; height:10px; border-radius:3px; border:1.5px solid var(--accent); margin-right:6px; vertical-align:-1px; }
+.key i.o { border-color:var(--line); }
+ol.steps { padding-left:20px; margin:12px 0 0; display:grid; gap:6px; max-width:75ch; }
+</style>
+<div class="wrap">
+  <span class="eyebrow">Production plan · 24 Nov – 31 Dec 2026</span>
+  <h1>Irondost December Clip Plan</h1>
+  <p class="lede">Seven new clips built only from images already in <code>~/Downloads/Irondost-Clip-Assets</code>, plus a posting calendar that mixes them with the five reels already rendered in <code>docs/marketing/december-2026-pack/reels</code>. Every file name below matches the library, so you can search for it directly in your editor's media bin. Prices are from the live rate card used in the existing reels.</p>
+
+  <section>
+    <h2>House rules for every clip</h2>
+    <div class="rules">
+      <div class="rule"><b>Hook in the first 1.5 s</b><p>Text on screen from frame one. No logo intro on social clips.</p></div>
+      <div class="rule"><b>Same end card</b><p>Last 3–4 s: logo, Call/WhatsApp number, Play Store and App Store QR. Reuse the end card from the existing reels.</p></div>
+      <div class="rule"><b>Safe area for 9:16</b><p>Keep text inside the middle 1080×1420. Instagram covers the top 220 px and bottom 280 px.</p></div>
+      <div class="rule"><b>Motion</b><p>Stills get a slow 1.14→1.0 zoom per shot. Cuts on the beat, 0.3 s wipes only for before/after.</p></div>
+      <div class="rule"><b>Truthful copy</b><p>Only real prices, slots and areas. No review counts or order numbers until there are real ones.</p></div>
+    </div>
+  </section>
+
+  <section>
+    <h2>The seven clips at a glance</h2>
+    <div class="over"><table>
+      <thead><tr><th>ID</th><th>Clip</th><th>Format</th><th>Length</th><th>Job</th><th>Main images</th></tr></thead>
+      <tbody>
+        <tr><td class="t">C06</td><td>Creased to pressed</td><td>9:16 reel</td><td class="t">10 s</td><td>Show the result</td><td>Before/after scenes</td></tr>
+        <tr><td class="t">C07</td><td>The total, first</td><td>9:16 reel</td><td class="t">14 s</td><td>Trust: price before pickup</td><td>iOS store screens</td></tr>
+        <tr><td class="t">C08</td><td>Office week</td><td>9:16 reel</td><td class="t">11 s</td><td>Working professionals</td><td>Suit and blazer scenes</td></tr>
+        <tr><td class="t">C09</td><td>Saree care</td><td>9:16 reel</td><td class="t">17 s</td><td>Wedding season, save-worthy</td><td>Saree carousel + scenes</td></tr>
+        <tr><td class="t">C10</td><td>Door to door</td><td>16:9 film</td><td>22 s</td><td>Website, YouTube, WhatsApp</td><td>Story-step scenes</td></tr>
+        <tr><td class="t">C11</td><td>Christmas and New Year</td><td>9:16 story</td><td class="t">2 × 6 s</td><td>Seasonal reminder</td><td>Dec stories</td></tr>
+        <tr><td class="t">C12</td><td>Six-second bumper</td><td>9:16 + 1:1 ad</td><td class="t">6 s</td><td>Paid reach, recall</td><td>3D service icons, logo, QR</td></tr>
+      </tbody>
+    </table></div>
+  </section>
+
+  <section>
+    <h2>Shot lists</h2>
+
+    <article class="clip">
+      <div class="head"><span class="id">C06</span><h3>Creased to pressed</h3></div>
+      <div class="tags"><span class="tag fmt">1080×1920 · 9:16</span><span class="tag">10 s</span><span class="tag">Instagram Reel, YouTube Short</span><span class="tag">Folder 02_Scenes-Broll/story-steps + landscape-master</span></div>
+      <p class="hook">Hook 3: <span class="say">“Most people expect the laundry bill after the clothes are gone. Here it comes before.”</span> Use a shorter on-screen version: “Before. After. ₹15.”</p>
+      <p class="why">The square scenes crop cleanly to 9:16 from the centre. Use a hard left-to-right wipe between each pair so the change reads in one glance.</p>
+      <div class="over"><table>
+        <thead><tr><th>Time</th><th>Image</th><th>On screen</th><th>Motion</th></tr></thead>
+        <tbody>
+          <tr><td class="t">0.0–1.8</td><td class="f">scene_shirt-creased-flat_square_1254x1254.png</td><td>Before.</td><td>Slow zoom in</td></tr>
+          <tr><td class="t">1.8–3.6</td><td class="f">scene_shirt-pressed-flat_square_1254x1254.png</td><td>After. Shirt ironing ₹15.</td><td>0.3 s wipe in</td></tr>
+          <tr><td class="t">3.6–5.0</td><td class="f">scene_blazer-creased_square_1254x1254.png</td><td>Before.</td><td>Slow zoom in</td></tr>
+          <tr><td class="t">5.0–6.4</td><td class="f">scene_blazer-pressed_square_1254x1254.png</td><td>After. Blazer ₹200.</td><td>0.3 s wipe in</td></tr>
+          <tr><td class="t">6.4–10.0</td><td>End card</td><td>Picked up from your door. LB Nagar.</td><td>Logo and QR pop</td></tr>
+        </tbody>
+      </table></div>
+    </article>
+
+    <article class="clip">
+      <div class="head"><span class="id">C07</span><h3>The total, first</h3></div>
+      <div class="tags"><span class="tag fmt">1080×1920 · 9:16</span><span class="tag">14 s</span><span class="tag">Instagram Reel, WhatsApp Status</span><span class="tag">Folder 06_App-Screens/store-ios</span></div>
+      <p class="hook">Hook 1: <span class="say">“There is one screen most laundry services would rather you never saw: the total, before anyone touches your clothes.”</span></p>
+      <p class="why">Put each store screenshot inside a phone frame on the navy brand ground and scroll it 140 px upward. The basket screen gets the longest hold because it is the point of the clip.</p>
+      <div class="over"><table>
+        <thead><tr><th>Time</th><th>Image</th><th>On screen</th><th>Motion</th></tr></thead>
+        <tbody>
+          <tr><td class="t">0.0–2.4</td><td class="f">scene_app-table_vertical_565x941.webp</td><td>The screen most laundries never show you.</td><td>Zoom in, upscale 2× before use</td></tr>
+          <tr><td class="t">2.4–4.6</td><td class="f">screen_01-services_vertical_1260x2736.png</td><td>1. Add your clothes.</td><td>Phone slides up</td></tr>
+          <tr><td class="t">4.6–7.8</td><td class="f">screen_02-basket_vertical_1260x2736.png</td><td>2. See the total first.</td><td>Hold, then highlight the total</td></tr>
+          <tr><td class="t">7.8–10.0</td><td class="f">screen_03-pickup_vertical_1260x2736.png</td><td>3. Pick a slot: 7–11, 11–4, 4–8.</td><td>Scroll up</td></tr>
+          <tr><td class="t">10.0–14.0</td><td>End card</td><td>Get the IronDost app.</td><td>QR codes pop</td></tr>
+        </tbody>
+      </table></div>
+    </article>
+
+    <article class="clip">
+      <div class="head"><span class="id">C08</span><h3>Office week</h3></div>
+      <div class="tags"><span class="tag fmt">1080×1920 · 9:16</span><span class="tag">11 s</span><span class="tag">Instagram Reel, LinkedIn</span><span class="tag">Folder 02_Scenes-Broll/vertical-crops</span></div>
+      <p class="hook">Hook 9: <span class="say">“Monday, 8 am. The shirt is already pressed, and you did not touch an iron.”</span></p>
+      <p class="why">The vertical crops are 565 px wide, which is soft at 1080. Crop the 1672×941 landscape masters to 9:16 yourself, or upscale the crops 2× before export.</p>
+      <div class="over"><table>
+        <thead><tr><th>Time</th><th>Image</th><th>On screen</th><th>Motion</th></tr></thead>
+        <tbody>
+          <tr><td class="t">0.0–2.4</td><td class="f">scene_hero-suit-cover_landscape_1672x941.png</td><td>Monday, 8 am.</td><td>Crop to 9:16, slow push in</td></tr>
+          <tr><td class="t">2.4–4.6</td><td class="f">scene_suit-steam_landscape_1672x941.png</td><td>Already pressed.</td><td>Crop to 9:16, pan left</td></tr>
+          <tr><td class="t">4.6–7.2</td><td class="f">story_office-week_vertical_1080x1920.jpg</td><td>(poster carries its own copy)</td><td>Gentle zoom</td></tr>
+          <tr><td class="t">7.2–11.0</td><td>End card</td><td>Suit ₹350 · Blazer ₹200. Book a pickup.</td><td>Logo and QR pop</td></tr>
+        </tbody>
+      </table></div>
+    </article>
+
+    <article class="clip">
+      <div class="head"><span class="id">C09</span><h3>Saree care</h3></div>
+      <div class="tags"><span class="tag fmt">1080×1920 · 9:16</span><span class="tag">17 s</span><span class="tag">Instagram Reel, Facebook</span><span class="tag">Folder 07_Social-Posts/carousels</span></div>
+      <p class="hook">Opening line: <span class="say">“Wedding this month? Read this before you iron that silk saree.”</span></p>
+      <p class="why">The carousel slides are 4:5. Place each one centred on a 9:16 navy ground with the logo above. Hold every slide about 2 s so people can read it, and tell them to pause.</p>
+      <div class="over"><table>
+        <thead><tr><th>Time</th><th>Image</th><th>On screen</th><th>Motion</th></tr></thead>
+        <tbody>
+          <tr><td class="t">0.0–2.2</td><td class="f">scene_saree-zari_landscape_1672x941.png</td><td>Wedding this month?</td><td>Crop to 9:16 on the zari border, push in</td></tr>
+          <tr><td class="t">2.2–14.2</td><td class="f">carousel_saree-care-01 … -06_portrait_1080x1350.jpg</td><td>(slides carry their own copy)</td><td>2 s each, slide left</td></tr>
+          <tr><td class="t">14.2–17.0</td><td>End card</td><td>Saree ₹50 · Silk saree dry clean ₹250.</td><td>Use <span class="f">scene_folded-sarees_portrait_1122x1402.png</span> behind the card</td></tr>
+        </tbody>
+      </table></div>
+    </article>
+
+    <article class="clip">
+      <div class="head"><span class="id">C10</span><h3>Door to door</h3></div>
+      <div class="tags"><span class="tag fmt">1920×1080 · 16:9</span><span class="tag">22 s</span><span class="tag">Website hero, YouTube, WhatsApp share</span><span class="tag">Folder 02_Scenes-Broll/story-steps</span></div>
+      <p class="hook">Hook 10: <span class="say">“We pick up. We press. We bring it back.”</span></p>
+      <p class="why">This is the one landscape clip. The story-step scenes are already 1536×1024 and in order, so the film is mostly cutting them on the beat with one line of text each.</p>
+      <div class="over"><table>
+        <thead><tr><th>Time</th><th>Image</th><th>On screen</th><th>Motion</th></tr></thead>
+        <tbody>
+          <tr><td class="t">0.0–2.6</td><td class="f">scene_pile-chair_landscape_1536x1024.png</td><td>Every home has the chair.</td><td>Push in</td></tr>
+          <tr><td class="t">2.6–5.0</td><td class="f">scene_doorstep-handover_landscape_1536x1024.png</td><td>We pick up.</td><td>Pan right</td></tr>
+          <tr><td class="t">5.0–7.6</td><td class="f">scene_pressing-closeup_landscape_1536x1024.png</td><td>We press.</td><td>Push in</td></tr>
+          <tr><td class="t">7.6–10.0</td><td class="f">scene_pressed-stack_landscape_1536x1024.png</td><td>Every piece counted.</td><td>Pan left</td></tr>
+          <tr><td class="t">10.0–12.4</td><td class="f">scene_counting-table_landscape_1536x1024.png</td><td>(no text)</td><td>Push in</td></tr>
+          <tr><td class="t">12.4–15.0</td><td class="f">scene_packed-order_landscape_1536x1024.png</td><td>Packed.</td><td>Pull out</td></tr>
+          <tr><td class="t">15.0–17.6</td><td class="f">scene_delivery-door_landscape_1672x941.png</td><td>We bring it back.</td><td>Push in</td></tr>
+          <tr><td class="t">17.6–22.0</td><td class="f">store_header-3840x1646_landscape_3840x1646.png</td><td>IronDost · LB Nagar · Get the app</td><td>Logo lockup, QR bottom right</td></tr>
+        </tbody>
+      </table></div>
+    </article>
+
+    <article class="clip">
+      <div class="head"><span class="id">C11</span><h3>Christmas and New Year</h3></div>
+      <div class="tags"><span class="tag fmt">1080×1920 · 9:16</span><span class="tag">2 × 6 s</span><span class="tag">Instagram and WhatsApp Story</span><span class="tag">Folder 07_Social-Posts/story-9x16-dec</span></div>
+      <p class="why">The fastest wins in the plan. The stories are finished designs, so each clip is the poster with a slow zoom, a 1 s logo sting from <span class="f">logo_reverse_landscape_2400x585.png</span>, and a link sticker added in the app.</p>
+      <div class="over"><table>
+        <thead><tr><th>Time</th><th>Image</th><th>Motion</th></tr></thead>
+        <tbody>
+          <tr><td class="t">0.0–5.0</td><td class="f">story_christmas_vertical_1080x1920.jpg</td><td>Zoom 1.08→1.0</td></tr>
+          <tr><td class="t">5.0–6.0</td><td class="f">logo_reverse_landscape_2400x585.png</td><td>Fade up on navy</td></tr>
+          <tr><td class="t">0.0–5.0</td><td class="f">story_new-year_vertical_1080x1920.jpg</td><td>Zoom 1.08→1.0</td></tr>
+          <tr><td class="t">5.0–6.0</td><td class="f">logo_reverse_landscape_2400x585.png</td><td>Fade up on navy</td></tr>
+        </tbody>
+      </table></div>
+    </article>
+
+    <article class="clip">
+      <div class="head"><span class="id">C12</span><h3>Six-second bumper</h3></div>
+      <div class="tags"><span class="tag fmt">1080×1920 and 1080×1080</span><span class="tag">6 s</span><span class="tag">Meta and YouTube ads</span><span class="tag">Folders 04, 01, 08</span></div>
+      <p class="hook">Hook 4: <span class="say">“Shirt ₹15. Trousers ₹15. Saree ₹50.”</span></p>
+      <div class="over"><table>
+        <thead><tr><th>Time</th><th>Image</th><th>On screen</th><th>Motion</th></tr></thead>
+        <tbody>
+          <tr><td class="t">0.0–1.5</td><td class="f">item_shirt-tshirt-transparent_square_1254x1254.png</td><td>Shirt ₹15.</td><td>Pop in</td></tr>
+          <tr><td class="t">1.5–3.0</td><td class="f">item_trousers-jeans_square_1254x1254.png · item_saree_square_1254x1254.png</td><td>Trousers ₹15. Saree ₹50.</td><td>Pop in, stagger 0.2 s</td></tr>
+          <tr><td class="t">3.0–4.5</td><td class="f">service_ironing-3d … service_wash-and-iron-3d … service_dry-cleaning-3d</td><td>Picked up from your door.</td><td>Three icons rise in</td></tr>
+          <tr><td class="t">4.5–6.0</td><td class="f">logo_reverse_landscape_2400x585.png · qr_app-link_square_900x900.png</td><td>IronDost, LB Nagar</td><td>Hold</td></tr>
+        </tbody>
+      </table></div>
+    </article>
+  </section>
+
+  <section>
+    <h2>Posting calendar</h2>
+    <p class="lede">Three posts a week: Monday, Wednesday, Saturday. New clips in blue; the five existing reels fill the gaps.</p>
+    <div class="key"><span><i></i>New clip from this plan</span><span><i class="o"></i>Existing reel, already rendered</span></div>
+    <div class="cal">
+      <div class="day old"><div class="d">Mon 24 Nov</div><div class="w">reel-01-price</div></div>
+      <div class="day new"><div class="d">Wed 26 Nov</div><div class="w">C06 Creased to pressed</div></div>
+      <div class="day old"><div class="d">Sat 29 Nov</div><div class="w">reel-02-pile</div></div>
+      <div class="day new"><div class="d">Mon 1 Dec</div><div class="w">C07 The total, first</div></div>
+      <div class="day new"><div class="d">Wed 3 Dec</div><div class="w">C10 Door to door (website + YouTube)</div></div>
+      <div class="day old"><div class="d">Sat 6 Dec</div><div class="w">reel-04-wedding</div></div>
+      <div class="day new"><div class="d">Mon 8 Dec</div><div class="w">C08 Office week</div></div>
+      <div class="day new"><div class="d">Wed 10 Dec</div><div class="w">C09 Saree care</div></div>
+      <div class="day old"><div class="d">Sat 13 Dec</div><div class="w">reel-03-how</div></div>
+      <div class="day new"><div class="d">Mon 15 Dec</div><div class="w">C12 Bumper, start ads</div></div>
+      <div class="day old"><div class="d">Wed 17 Dec</div><div class="w">reel-05-pg</div></div>
+      <div class="day new"><div class="d">Sat 20 Dec</div><div class="w">C06 repost as a Story</div></div>
+      <div class="day new"><div class="d">Tue 23 Dec</div><div class="w">C11 Christmas story</div></div>
+      <div class="day old"><div class="d">Sat 27 Dec</div><div class="w">reel-01-price (best performer)</div></div>
+      <div class="day new"><div class="d">Tue 30 Dec</div><div class="w">C11 New Year story</div></div>
+    </div>
+  </section>
+
+  <section>
+    <h2>Build order</h2>
+    <ol class="steps">
+      <li><b>This week:</b> C06 and C07. They use the sharpest images and need no new copy.</li>
+      <li><b>Next week:</b> C10. It is the only landscape piece, and it can replace the website hero video.</li>
+      <li><b>By 5 Dec:</b> C08 and C09, ahead of wedding season.</li>
+      <li><b>By 12 Dec:</b> C12 and both C11 stories, so ads and holiday posts are ready before the rush.</li>
+      <li><b>Every Monday:</b> check which clip had the most saves and shares, and repost the winner as a Story.</li>
+    </ol>
+  </section>
+</div>

@@ -1,0 +1,94 @@
+{
+ "n": 3, "name": "Pocket", "en": "The Pocket",
+ "hook_formula": "Slow-motion action",
+ "hook_text": "Chelli engagement ring. 1 second.",
+ "cliff": "Amma parcel… daarilo undi.",
+ "caption": "Ep 3/10 · Every pocket checked ✅ Amma parcel vastundi 😅 #DostUndiGa #IronDost #HyderabadReels #TeluguComedy #AIVideo",
+ "clips": [
+  {
+   "id": "E3-C1", "title": "The dive", "set": "FLAT",
+   "cast": ["RAVI", "DOST"], "props": ["ring_box", "lucky_shirt"], "hook": true,
+   "beats": [
+    ["0–1.5 s", "Super slow motion on frame 1: the small red velvet ring box flies through the air over the living-room mosaic floor, knocked from DOST's palm by RAVI's panicked grab. RAVI, in grey vest and checked lungi, is already launching into a cricket-fielder dive from the left."],
+    ["1.5–3.5 s", "RAVI is fully horizontal mid-air, one arm stretched toward the tumbling box, the toothbrush flying out of his mouth. DOST, kneeling at the right with the navy checked shirt in his other hand, leans back, eyes wide."],
+    ["3.5–5.5 s", "RAVI's fingers close around the ring box a hand's width above the floor. He lands on his back and slides across the mosaic, clutching the box to his chest."],
+    ["5.5–8 s", "RAVI lies flat, chest heaving, eyes shut in relief. DOST lets out a breath and a small smile."],
+    ["8–10 s", "RAVI laughs weakly at the ceiling and speaks, still clutching the box."]
+   ],
+   "camera": "Slow-motion tracking shot following the flying box down, then tilting into a top-down view of RAVI on the floor with DOST at the edge of frame. One continuous move.",
+   "lines": [
+    {"spk": "RAVI", "mode": "ON", "at": "1.5–3 s", "native": "పట్టుకో!", "roman": "Pattukooo!", "en": "Catch it!"},
+    {"spk": "RAVI", "mode": "ON", "at": "7.5–9.5 s", "native": "అమ్మ చంపేస్తుంది…", "roman": "Amma champestundi…", "en": "Mummy would have killed me…"}
+   ],
+   "sound": "Whoosh and slow-motion bass hit at 0.0 s, toothbrush clatter at 3 s, body slide squeak at 4 s, Ravi's heavy breathing at 5.5 s. No music.",
+   "first": "The red ring box mid-air, RAVI already leaving the ground in his dive.",
+   "last": "Top-down: RAVI on his back clutching the ring box to his chest, DOST smiling at the frame edge.",
+   "edit_text": "0.3 s: 'Chelli engagement ring.' 1 s: '1 second.' (big, top third); a red circle on the box at 4 s",
+   "neg_extra": ["a face on any clothing", "creatures or monsters", "the ring box opening or the ring falling out", "the ring box turning into a phone or a ball", "RAVI's body twisting unnaturally in the dive"]
+  },
+  {
+   "id": "E3-C2", "title": "We check every pocket", "set": "FLAT",
+   "cast": ["DOST", "RAVI", "BUNTY"], "props": ["ring_box", "lucky_shirt"],
+   "beats": [
+    ["0–3 s", "DOST kneels beside RAVI on the floor, one hand on his own chest, sincere and calm, the navy checked shirt folded over his other forearm. RAVI sits up, still clutching the ring box."],
+    ["3–5.5 s", "DOST gives a small reassuring nod while speaking. RAVI's shoulders drop with relief."],
+    ["5.5–6.5 s", "RAVI tucks the ring box safely into his lungi waistband and pats it, nodding gratefully at DOST."],
+    ["6.5–9.5 s", "BUNTY leans on the bedroom doorframe in the background, blanket over his shoulders, arms folded, slowly nodding with raised eyebrows, impressed."],
+    ["9.5–10 s", "RAVI glances back at BUNTY with a tired, told-you-so smile."]
+   ],
+   "camera": "Slow push-in on DOST and RAVI at floor level, then a gentle rise to bring BUNTY in the doorway into focus. One continuous move.",
+   "lines": [
+    {"spk": "DOST", "mode": "ON", "at": "0.5–2.5 s", "native": "ప్రతి పాకెట్ చెక్ చేస్తాం సార్.", "roman": "Prathi pocket check chestam sir.", "en": "We check every pocket, sir."},
+    {"spk": "DOST", "mode": "ON", "at": "3–5.5 s", "native": "మీ వస్తువులు మీ దగ్గరే ఉండాలి.", "roman": "Mee vastuvulu mee daggare undali.", "en": "Your things should stay with you."},
+    {"spk": "BUNTY", "mode": "ON", "at": "7–9.5 s", "native": "भाई… ये बंदे सच्चे हैं.", "roman": "Bhai… ye bande sachche hain.", "en": "Bro… these people are honest."}
+   ],
+   "sound": "Ravi's long exhale at 0.0 s, a soft pat on the waistband at 6 s, the doorframe creak as Bunty leans at 6.5 s. No music.",
+   "first": "DOST already kneeling with his hand on his chest, RAVI sitting up with the ring box.",
+   "last": "BUNTY nodding in the doorway, DOST and RAVI in the foreground, RAVI smiling back at him.",
+   "edit_text": "At 1 s: 'Prathi pocket check ✓' badge; kinetic captions for all lines",
+   "neg_extra": ["a face on any clothing", "creatures or monsters", "more than three people", "the ring box opening", "BUNTY's face distorting while nodding"]
+  },
+  {
+   "id": "E3-C3", "title": "Two days, three days", "set": "FLAT",
+   "cast": ["DOST", "RAVI", "BUNTY"], "props": ["bag"],
+   "beats": [
+    ["0–2.5 s", "At the open front door DOST lifts two full plain royal-blue garment bags onto his shoulder and turns back to RAVI in the doorway."],
+    ["2.5–5 s", "DOST speaks with a calm smile. RAVI nods, relieved."],
+    ["5–6.5 s", "DOST walks off down the corridor. RAVI waves from the doorway; the phone in his hand buzzes. He lifts it, its back to the camera, and his smile drops as he listens."],
+    ["6.5–9.5 s", "BUNTY steps into frame beside RAVI, sees his face, shrugs with both palms up and grins as he speaks."],
+    ["9.5–10 s", "RAVI shoots BUNTY a helpless look, phone still at his ear."]
+   ],
+   "camera": "Medium shot from inside the flat looking out through the doorway, slowly pushing in to a two-shot of RAVI and BUNTY with DOST small in the corridor behind. One continuous move.",
+   "lines": [
+    {"spk": "DOST", "mode": "ON", "at": "2.5–5 s", "native": "ఐరనింగ్ రెండు రోజుల్లో, లాండ్రీ మూడు రోజుల్లో, సార్.", "roman": "Ironing rendu rojullo, laundry moodu rojullo, sir.", "en": "Ironing in two days, laundry in three, sir."},
+    {"spk": "BUNTY", "mode": "ON", "at": "7–9 s", "native": "अब तो दोस्त ही बचाएगा.", "roman": "Ab toh Dost hi bachayega.", "en": "Now only Dost can save you."}
+   ],
+   "sound": "Bags thumping onto the shoulder at 0.0 s, footsteps fading at 5 s, phone vibration buzz at 5.5 s, Amma's voice faintly murmuring from the phone at 6 s (no words heard). No music.",
+   "first": "DOST mid-lift swinging the blue bags onto his shoulder at the door.",
+   "last": "RAVI with the phone at his ear looking helplessly at a grinning BUNTY, DOST small in the corridor.",
+   "edit_text": "At 3 s: 'Ironing: 2 days · Laundry: 3 days'; at 5.5 s: 'Amma calling…' bubble by the phone",
+   "neg_extra": ["a face on any clothing", "creatures or monsters", "a visible phone or call screen", "print or logo on the garment bags", "DOST's face distorting as he turns"]
+  },
+  {
+   "id": "E3-C4", "title": "Amma's parcel on the bus", "set": "BUS",
+   "cast": ["AMMA"], "props": ["saree", "pancha"],
+   "beats": [
+    ["0–2.5 s", "Light rain on a wet highway. Tracking alongside a red-and-white state bus as it splashes through puddles. On the roof carrier a cardboard parcel tied with plastic rope bounces."],
+    ["2.5–5 s", "The camera rises to roof height. Through a torn corner of the parcel's plastic cover, a fold of maroon silk with a wide gold zari border and a cream silk cloth with a thin gold border peek out."],
+    ["5–7.5 s", "The bus hits a pothole; the parcel jumps and slides toward the edge of the roof carrier, the plastic flapping in the wind."],
+    ["7.5–10 s", "The rope snaps taut and the parcel stops right at the edge. Rain drips off it as the camera holds close on the parcel and the bus keeps moving."]
+   ],
+   "camera": "Side tracking shot alongside the moving bus that rises to roof level and pushes in to a close-up of the parcel. One continuous move.",
+   "lines": [
+    {"spk": "AMMA", "mode": "OFF", "at": "0.5–3 s", "native": "రవీ, నా పట్టు చీరలు, నాన్న పంచె…", "roman": "Ravi, naa pattu cheeralu, naanna pancha…", "en": "Ravi, my silk sarees, Dad's dhoti…"},
+    {"spk": "AMMA", "mode": "OFF", "at": "3.5–5.5 s", "native": "బస్ లో పంపుతున్నా!", "roman": "Bus lo pamputunna!", "en": "I'm sending them on the bus!"},
+    {"spk": "AMMA", "mode": "OFF", "at": "7–9 s", "native": "అవి కూడా రెడీ చెయ్యి!", "roman": "Avi kooda ready cheyyi!", "en": "Get them ready too!"}
+   ],
+   "sound": "Rain and tyre splash at 0.0 s, Amma's voice slightly tinny like a phone call, bus horn at 5 s, plastic flapping at 6 s, rope creak at 7.5 s. No music.",
+   "first": "The bus already moving through rain, the parcel bouncing on the roof.",
+   "last": "Close-up of the rain-soaked parcel stopped at the edge of the roof carrier, maroon and gold peeking out.",
+   "edit_text": "Cliffhanger at 8.5 s: 'Amma parcel… daarilo undi.' then the end card",
+   "neg_extra": ["a face on any clothing", "creatures or monsters", "any writing, destination board or number plate on the bus", "AMMA or any passenger visible", "the parcel falling off the bus", "labels or handwriting on the parcel"]
+  }
+ ]
+}
