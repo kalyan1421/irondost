@@ -1,3 +1,4 @@
+import '../analytics/analytics.dart';
 import 'dart:async';
 import 'dart:convert';
 
@@ -126,6 +127,7 @@ class BasketController extends Notifier<Basket> {
       if (kept.length >= maxLines) break;
       if (e.value > 0) kept[e.key] = e.value.clamp(1, maxPerItem);
     }
+    _noteStart(kept);
     state = Basket(lines: kept);
     _save();
   }
@@ -144,8 +146,14 @@ class BasketController extends Notifier<Basket> {
   }
 
   void _set(Map<String, int> lines) {
+    _noteStart(lines);
     state = Basket(lines: lines, promoCode: lines.isEmpty ? null : state.promoCode);
     _save();
+  }
+
+  /// The first piece in an empty basket.
+  void _noteStart(Map<String, int> lines) {
+    if (state.isEmpty && lines.isNotEmpty) ref.read(analyticsProvider).log(Funnel.basketStarted);
   }
 
   void _save() {

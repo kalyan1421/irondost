@@ -70,3 +70,40 @@ List<TimelineStep> buildTimeline(OrderDto o, {String? today}) {
     ),
   ];
 }
+
+/// What the customer can do at the stage the order is at.
+enum StageAction {
+  /// Before pickup: tell the workshop how to treat the clothes.
+  careNote,
+
+  /// A new total is waiting for the customer's OK.
+  approvePrice,
+
+  /// After delivery: something wrong with an item.
+  reportIssue,
+}
+
+/// One line on what is happening to the order right now, in the customer's words.
+String nowLine(OrderDto o) => switch (o.status) {
+      OrderStatus.pending => o.dispatchFailedAt != null
+          ? "We're still finding a partner for your pickup"
+          : "We're lining up a partner to collect your clothes",
+      OrderStatus.pickupAssigned => 'Your partner is on the way to collect your clothes',
+      OrderStatus.pickedUp => 'Your clothes are on their way to our workshop',
+      OrderStatus.processing => 'Your clothes are being washed, ironed and cared for',
+      OrderStatus.readyForDelivery => 'Every piece has been checked by hand and packed',
+      OrderStatus.deliveryAssigned => 'A partner will bring your clothes back soon',
+      OrderStatus.outForDelivery => 'Your clothes are on their way back to you',
+      OrderStatus.delivered => 'Delivered: fresh clothes, ready to wear',
+      OrderStatus.cancelled => 'This order was cancelled',
+      OrderStatus.$unknown => "We're updating this order",
+    };
+
+/// The action that fits where the order is: approving a new price comes first whenever one waits, then a care note
+/// before pickup, then reporting a problem after delivery.
+StageAction? stageAction(OrderDto o) {
+  if (o.adjustments?.any((a) => a.status == AdjustmentStatus.pendingCustomer) ?? false) return StageAction.approvePrice;
+  if (o.status == OrderStatus.pending || o.status == OrderStatus.pickupAssigned) return StageAction.careNote;
+  if (o.status == OrderStatus.delivered) return StageAction.reportIssue;
+  return null;
+}

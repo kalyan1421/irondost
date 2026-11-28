@@ -2,6 +2,7 @@ import 'dart:async';
 
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../../app/links.dart';
 import '../../app/routes.dart';
 import '../../data/api_client.dart';
 import '../basket/basket.dart';
@@ -12,8 +13,12 @@ import '../orders/orders_list.dart';
 import 'device_registrar.dart';
 import 'push_source.dart';
 
-/// Where tapping a notification should go: its order, the offers, else the inbox.
+/// Where tapping a notification should go: the campaign's `link` (an in-app route, or an `https://` page for the
+/// browser), else its report, its order, the offers, else the inbox.
 String routeForPush(PushMessage m) {
+  final link = resolveLink(m.data['link']);
+  if (link is AppLink) return link.route;
+  if (link is WebLink) return link.uri.toString();
   final issueId = m.data['issueId'];
   if (issueId != null && issueId.isNotEmpty) return Routes.issue(issueId);
   final orderId = m.orderId;

@@ -24,9 +24,10 @@
 	<string>$(FLUTTER_BUILD_NAME)</string>
 	<key>CFBundleSignature</key>
 	<string>????</string>
-	<!-- The app has no deep links. Left on, Flutter hands every incoming URL to the router, including the
-	     callback Firebase uses to return from its phone-number check, and the router sends the customer
-	     back to Welcome before the code screen can open. Firebase still receives its own URLs. -->
+	<!-- Off on purpose. Left on, Flutter hands every incoming URL to the router, including the callback
+	     Firebase uses to return from its phone-number check, and the router sends the customer back to
+	     Welcome before the code screen can open. Universal Links for irondost.in reach the app through
+	     app_links instead (lib/app/links.dart), which ignores every other URL. Firebase still receives its own. -->
 	<key>FlutterDeepLinkingEnabled</key>
 	<false/>
 	<key>CFBundleURLTypes</key>

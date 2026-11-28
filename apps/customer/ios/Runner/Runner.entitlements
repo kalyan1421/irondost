@@ -5,5 +5,12 @@
 	<!-- Push notifications. Xcode swaps this to "production" for App Store and TestFlight builds. -->
 	<key>aps-environment</key>
 	<string>development</string>
+	<!-- Universal Links: irondost.in/get, /offers, /o/<orderId>, /r/<code> open the app. Verified against
+	     https://irondost.in/.well-known/apple-app-site-association (see docs/deep-links.md). -->
+	<key>com.apple.developer.associated-domains</key>
+	<array>
+		<string>applinks:irondost.in</string>
+		<string>applinks:www.irondost.in</string>
+	</array>
 </dict>
 </plist>

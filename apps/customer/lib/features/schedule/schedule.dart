@@ -1,3 +1,4 @@
+import '../analytics/analytics.dart';
 import 'package:dio/dio.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
@@ -80,6 +81,12 @@ abstract class _PicksController extends Notifier<ScheduleChoice> implements Sche
 class ScheduleChoiceController extends _PicksController {
   @override
   ScheduleChoice build() => const ScheduleChoice();
+
+  @override
+  void pickPickup(SlotOptionDto option) {
+    super.pickPickup(option);
+    ref.read(analyticsProvider).log(Funnel.slotPicked, {'slot': option.slot.json ?? '', 'date': option.date});
+  }
 
   /// After an order is placed.
   void clear() => state = const ScheduleChoice();

@@ -3,13 +3,23 @@ import 'package:lucide_icons_flutter/lucide_icons.dart';
 
 import '../../core/order_timeline.dart';
 import '../theme.dart';
+import 'service_art.dart';
 
 /// The vertical progress list on an order: done steps filled with a tick, the current one ringed,
-/// later ones hollow, joined by a line that fills as steps complete.
+/// later ones hollow, joined by a line that fills as steps complete. With [art], each step carries its picture, in full
+/// colour once reached and faded before; [now] (what is happening and what to do) sits under the current step.
 class OrderTimeline extends StatelessWidget {
-  const OrderTimeline({super.key, required this.steps});
+  const OrderTimeline({super.key, required this.steps, this.art, this.now});
 
   final List<TimelineStep> steps;
+
+  /// One picture per step, in order.
+  final List<ServiceArt>? art;
+
+  final Widget? now;
+
+  /// The pictures for Booked, Picked up, Cleaning, Out for delivery, Delivered.
+  static const stageArt = [ServiceArt.pickupBag, ServiceArt.laundry, ServiceArt.ironing, ServiceArt.washFold, ServiceArt.shirt];
 
   @override
   Widget build(BuildContext context) {
@@ -52,11 +62,23 @@ class OrderTimeline extends StatelessWidget {
                               ),
                             ),
                             if (step.meta != null) Text(step.state == ProgressState.future ? 'Estimated · ${step.meta!}' : step.meta!, style: t.caption.copyWith(color: c.textMuted)),
+                            if (now != null && i == current) ...[
+                              const SizedBox(height: IdSpace.s3),
+                              now!,
+                            ],
                           ],
                         ),
                       ),
                     ),
                   ),
+                  if (art != null && i < art!.length) ...[
+                    const SizedBox(width: IdSpace.s2),
+                    Opacity(
+                      key: ValueKey('stage-art-$i-${step.state.name}'),
+                      opacity: step.state == ProgressState.future ? 0.3 : 1,
+                      child: ServiceArtImage(art![i], size: i == current ? 56 : 40),
+                    ),
+                  ],
                 ],
               ),
             ),

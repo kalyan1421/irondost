@@ -33,7 +33,7 @@ void main() {
     ApiFailure? getFailure,
   }) async {
     tester.view
-      ..physicalSize = const Size(390 * 3, 1000 * 3)
+      ..physicalSize = const Size(390 * 3, 1400 * 3)
       ..devicePixelRatio = 3;
     addTearDown(tester.view.reset);
     final repo = FakeOrderRepository()

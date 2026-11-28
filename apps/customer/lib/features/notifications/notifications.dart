@@ -41,6 +41,21 @@ String? notificationOrderId(NotificationDto n) {
   return data is Map && data['orderId'] is String ? data['orderId'] as String : null;
 }
 
+String? _dataString(NotificationDto n, String key) {
+  final data = n.data;
+  final v = data is Map ? data[key] : null;
+  return v is String && v.trim().isNotEmpty ? v.trim() : null;
+}
+
+/// Where a campaign notification points: an in-app path (`/offers`, `/orders/<id>`…) or an `https://` page.
+String? notificationLink(NotificationDto n) => _dataString(n, 'link');
+
+/// The campaign's picture, https only.
+String? notificationImageUrl(NotificationDto n) {
+  final url = _dataString(n, 'imageUrl');
+  return url != null && url.startsWith('https://') ? url : null;
+}
+
 class NotificationList {
   const NotificationList({required this.items, required this.total, required this.unread, this.loadingMore = false, this.moreFailed = false});
 

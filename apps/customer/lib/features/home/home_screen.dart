@@ -29,6 +29,7 @@ import '../offers/promotions.dart';
 import '../orders/order_detail_screen.dart' show bookAgain;
 import '../orders/orders_list.dart';
 import 'banners.dart';
+import 'first_pickup.dart';
 import 'how_it_works.dart';
 import 'offer_banners.dart';
 
@@ -154,6 +155,7 @@ class HomeScreen extends ConsumerWidget {
               ],
               const _SearchPill(),
               const SizedBox(height: IdSpace.s5),
+              const FirstPickupCard(),
               const _PromoBanner(),
               const SizedBox(height: _sectionGap),
               const _SectionTitle('Everything for your clothes'),

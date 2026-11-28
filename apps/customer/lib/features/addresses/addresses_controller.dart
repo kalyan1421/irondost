@@ -1,3 +1,4 @@
+import '../analytics/analytics.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../data/api_client.dart';
@@ -27,6 +28,7 @@ class AddressesController extends AsyncNotifier<List<AddressDto>> {
 
   Future<AddressDto> add(CreateAddressDto dto) async {
     final created = await _repo.create(dto);
+    ref.read(analyticsProvider).log(Funnel.addressSaved, {'serviceable': created.serviceable ? 1 : 0});
     await _reload();
     return created;
   }

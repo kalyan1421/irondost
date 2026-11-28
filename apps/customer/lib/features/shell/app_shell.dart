@@ -3,13 +3,16 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:lucide_icons_flutter/lucide_icons.dart';
 
+import '../../app/links.dart';
 import '../../data/reachability.dart';
 import '../basket/basket.dart';
 import '../issues/issues.dart';
 import '../../design/theme.dart';
 import '../push/push_handler.dart';
 import '../push/push_source.dart';
+import '../orders/order_milestones.dart';
 import '../realtime/realtime.dart';
+import 'open_target.dart';
 import 'offline_banner.dart';
 
 /// Bottom navigation: Home, Orders, Basket, Profile. Each tab keeps its own back stack;
@@ -24,6 +27,8 @@ class AppShell extends ConsumerWidget {
     // Live order updates for as long as the tabs are on screen.
     ref.watch(realtimeSyncProvider);
     ref.watch(issuePhotoRecoveryProvider);
+    // Deliveries seen for the first time: analytics, and the one-time store rating prompt.
+    ref.watch(orderMilestonesProvider);
     // Pushes while the tabs are on screen: a banner for one arriving, navigation for one tapped.
     ref
       ..watch(pushHandlerProvider)
@@ -33,12 +38,21 @@ class AppShell extends ConsumerWidget {
       ..listen(pushTapProvider, (_, route) {
         if (route == null) return;
         ref.read(pushTapProvider.notifier).done();
-        context.push(route);
+        openTarget(context, ref, route);
       })
       // Back online: reload what the tabs show, so the banner going away leaves current data behind it.
       ..listen(reachabilityProvider, (was, now) {
         if (now && was == false) refreshAfterReconnect(ref);
       });
+    // A website link (App Links / Universal Links), possibly from before sign-in: acted on once the tabs are up.
+    final link = ref.watch(pendingLinkProvider);
+    if (link != null) {
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        if (!context.mounted || ref.read(pendingLinkProvider) != link) return;
+        ref.read(pendingLinkProvider.notifier).done();
+        openTarget(context, ref, link);
+      });
+    }
     final basketCount = ref.watch(basketProvider.select((b) => b.count));
     return Scaffold(
       extendBody: false,
@@ -222,7 +236,7 @@ void _showBanner(BuildContext context, WidgetRef ref, PushMessage message) {
         ),
         action: SnackBarAction(
           label: 'View',
-          onPressed: () => context.push(routeForPush(message)),
+          onPressed: () => openTarget(context, ref, routeForPush(message)),
         ),
       ),
     );

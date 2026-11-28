@@ -74,6 +74,9 @@ abstract final class Routes {
   static const offers = '/offers';
   static const account = '/account';
 
+  /// Paths that only arrive from links (the website, campaign pushes); the router turns each into a screen above.
+  static const linkRoutes = ['/get', '/r/:code', '/o/:id', '/orders/:id', '/catalogue'];
+
   static const publicLegalRoutes = {
     '/legal/terms',
     '/legal/privacy',

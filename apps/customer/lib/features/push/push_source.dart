@@ -10,11 +10,18 @@ class PushMessage {
   final String? title;
   final String? body;
 
-  /// The server's data fields: `type`, `orderId`, `status`, `orderNumber`.
+  /// The server's data fields: `type`, `orderId`, `status`, `orderNumber`; for an admin campaign
+  /// `{type: 'campaign', campaignId, link, imageUrl}`.
   final Map<String, String> data;
 
   String? get orderId => data['orderId'];
   String get type => data['type'] ?? '';
+
+  /// The picture a campaign carries, if any (https only).
+  String? get imageUrl {
+    final url = data['imageUrl']?.trim();
+    return url != null && url.startsWith('https://') ? url : null;
+  }
 }
 
 enum PushPermission {
@@ -48,11 +55,18 @@ class FirebasePushSource implements PushSource {
 
   FirebaseMessaging get _fcm => FirebaseMessaging.instance;
 
-  static PushMessage _from(RemoteMessage m) => PushMessage(
-        title: m.notification?.title,
-        body: m.notification?.body,
-        data: {for (final e in m.data.entries) e.key: '${e.value}'},
-      );
+  static PushMessage _from(RemoteMessage m) {
+    final image = m.notification?.android?.imageUrl ?? m.notification?.apple?.imageUrl;
+    return PushMessage(
+      title: m.notification?.title,
+      body: m.notification?.body,
+      data: {
+        // The notification's own picture stands in when the data leaves it out.
+        if (image != null && image.isNotEmpty) 'imageUrl': image,
+        for (final e in m.data.entries) e.key: '${e.value}',
+      },
+    );
+  }
 
   static PushPermission _status(AuthorizationStatus s) => switch (s) {
         AuthorizationStatus.authorized || AuthorizationStatus.provisional => PushPermission.granted,

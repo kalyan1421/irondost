@@ -67,6 +67,12 @@ class HelpScreen extends ConsumerWidget {
           IdListGroup(
             children: [
               _ContactRow(
+                icon: LucideIcons.messageCircle,
+                title: 'Chat on WhatsApp',
+                detail: 'Usually the quickest reply',
+                onTap: () => Support.whatsapp(support.phone, context: context, fallback: support),
+              ),
+              _ContactRow(
                 icon: LucideIcons.phone,
                 title: 'Call us',
                 detail: IndianPhone.display(support.phone),

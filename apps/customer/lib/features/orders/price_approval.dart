@@ -48,11 +48,18 @@ class PriceApprovalCard extends StatelessWidget {
         Text('${rupees(request.oldTotalPaise)} → ${rupees(request.newTotalPaise)}', style: context.text.bodyLg),
         Text(pending ? 'Your accepted bill stays unchanged until you approve.' : request.status == AdjustmentStatus.approved
           ? 'The approved bill now applies.' : 'Your original bill stands.', style: context.text.body),
-        IdButton.outline(label: 'Review price change', onPressed: () => showIdSheet<void>(context,
-          builder: (_) => _ApprovalSheet(order: order, request: request))),
+        IdButton.outline(label: 'Review price change', onPressed: () => showPriceApproval(context, order)),
       ],
     )));
   }
+}
+
+/// The sheet to approve or decline the price change waiting on [order] (the newest request when none waits).
+Future<void> showPriceApproval(BuildContext context, OrderDto order) {
+  final requests = order.adjustments ?? const <OrderAdjustmentDto>[];
+  if (requests.isEmpty) return Future.value();
+  final request = requests.where((r) => r.status == AdjustmentStatus.pendingCustomer).firstOrNull ?? requests.first;
+  return showIdSheet<void>(context, builder: (_) => _ApprovalSheet(order: order, request: request));
 }
 
 class _ApprovalSheet extends ConsumerStatefulWidget {

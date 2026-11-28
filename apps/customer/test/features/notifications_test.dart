@@ -9,6 +9,7 @@ import 'package:irondost_customer/data/api_client.dart';
 import 'package:irondost_customer/features/auth/session.dart';
 import 'package:irondost_customer/features/notifications/notifications.dart';
 import 'package:irondost_customer/features/notifications/notifications_screen.dart';
+import 'package:irondost_customer/features/support/support.dart';
 
 import '../helpers.dart';
 
@@ -98,7 +99,7 @@ void main() {
   group('the screen', () {
     final now = DateTime.now().toUtc();
 
-    Future<(GoRouter, FakeNotificationRepository)> pump(WidgetTester tester, void Function(FakeNotificationRepository) seed) async {
+    Future<(GoRouter, FakeNotificationRepository)> pump(WidgetTester tester, void Function(FakeNotificationRepository) seed, {Future<bool> Function(Uri)? launcher}) async {
       tester.view
         ..physicalSize = const Size(390 * 3, 844 * 3)
         ..devicePixelRatio = 3;
@@ -114,7 +115,11 @@ void main() {
         },
         initial: Routes.notifications,
       );
-      await tester.pumpWidget(themedRouter(router, overrides: [notificationRepositoryProvider.overrideWithValue(repo), sessionProvider.overrideWith(SignedInSession.new)]));
+      await tester.pumpWidget(themedRouter(router, overrides: [
+        notificationRepositoryProvider.overrideWithValue(repo),
+        sessionProvider.overrideWith(SignedInSession.new),
+        if (launcher != null) supportLauncherProvider.overrideWithValue(launcher),
+      ]));
       await tester.pumpAndSettle();
       return (router, repo);
     }
@@ -149,6 +154,36 @@ void main() {
       await tester.tap(find.text('20% off'));
       await tester.pumpAndSettle();
       expect(router.state.matchedLocation, Routes.offers);
+    });
+
+    testWidgets('a campaign shows its picture and opens its link', (tester) async {
+      final (router, repo) = await pump(
+        tester,
+        (r) => r.inbox.add(testNotification('c1', type: 'campaign', title: 'Diwali: 20% off ironing', body: 'This week only',
+            data: const {'campaignId': 'cmp1', 'link': '/orders/o-9', 'imageUrl': 'https://cdn.example/diwali.webp'}, createdAt: now)),
+      );
+      expect(find.byKey(const ValueKey('notification-image')), findsOneWidget);
+      await tester.tap(find.text('Diwali: 20% off ironing'));
+      await tester.pumpAndSettle();
+      expect(repo.markedRead, ['c1']);
+      expect(router.state.matchedLocation, Routes.order('o-9'));
+    });
+
+    testWidgets('a campaign linking to a web page opens the browser', (tester) async {
+      final launched = <Uri>[];
+      final (router, _) = await pump(
+        tester,
+        (r) => r.inbox.add(testNotification('c2', type: 'campaign', title: 'Follow us', data: const {'link': 'https://instagram.com/irondost'}, createdAt: now)),
+        launcher: (uri) async {
+          launched.add(uri);
+          return true;
+        },
+      );
+      expect(find.byKey(const ValueKey('notification-image')), findsNothing);
+      await tester.tap(find.text('Follow us'));
+      await tester.pumpAndSettle();
+      expect(launched, [Uri.parse('https://instagram.com/irondost')]);
+      expect(router.state.matchedLocation, Routes.notifications);
     });
 
     testWidgets('Mark all read clears the button and the dots', (tester) async {

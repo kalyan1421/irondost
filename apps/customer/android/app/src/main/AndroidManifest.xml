@@ -30,6 +30,23 @@
                 <action android:name="android.intent.action.MAIN"/>
                 <category android:name="android.intent.category.LAUNCHER"/>
             </intent-filter>
+            <!-- Android App Links: irondost.in/get, /offers, /o/<orderId>, /r/<code> open the app. Verified against
+                 https://irondost.in/.well-known/assetlinks.json (see docs/deep-links.md). -->
+            <intent-filter android:autoVerify="true">
+                <action android:name="android.intent.action.VIEW" />
+                <category android:name="android.intent.category.DEFAULT" />
+                <category android:name="android.intent.category.BROWSABLE" />
+                <data android:scheme="https" />
+                <data android:host="irondost.in" />
+                <data android:host="www.irondost.in" />
+                <data android:path="/get" />
+                <data android:path="/offers" />
+                <data android:pathPrefix="/o/" />
+                <data android:pathPrefix="/r/" />
+            </intent-filter>
+            <!-- Links reach the app through app_links (lib/app/links.dart), not Flutter's own deep linking, which would
+                 hand every URL to the router. -->
+            <meta-data android:name="flutter_deeplinking_enabled" android:value="false" />
         </activity>
         <!-- Google Maps SDK for Android key, from android/secrets.properties (not committed). -->
         <meta-data

@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:lucide_icons_flutter/lucide_icons.dart';
 
+import '../../app/links.dart';
 import '../../app/routes.dart';
 import '../../core/slots.dart';
 import '../../data/api_client.dart';
@@ -10,6 +11,7 @@ import '../../design/theme.dart';
 import '../../design/widgets/id_button.dart';
 import '../../design/widgets/state_view.dart';
 import '../../design/widgets/surfaces.dart';
+import '../shell/open_target.dart';
 import 'notifications.dart';
 
 /// The inbox: what happened to the customer's orders and payments, newest first, grouped Today / Earlier.
@@ -46,6 +48,11 @@ class _NotificationsScreenState extends ConsumerState<NotificationsScreen> {
 
   void _open(NotificationDto n) {
     ref.read(notificationsProvider.notifier).markRead(n.id);
+    final link = ref.read(linkOpenerProvider).targetFor(notificationLink(n));
+    if (link != null) {
+      openTarget(context, ref, link);
+      return;
+    }
     final orderId = notificationOrderId(n);
     if (orderId != null) {
       context.push(Routes.order(orderId));
@@ -239,6 +246,10 @@ class _Row extends StatelessWidget {
                   ),
                   const SizedBox(height: 2),
                   Text(n.body, style: t.body.copyWith(color: c.textMuted)),
+                  if (notificationImageUrl(n) case final image?) ...[
+                    const SizedBox(height: IdSpace.s2),
+                    _CampaignImage(url: image),
+                  ],
                   const SizedBox(height: 2),
                   Text(
                     notificationTime(n.createdAt),
@@ -277,6 +288,7 @@ class _Row extends StatelessWidget {
     if (n.type == 'refund_failed') {
       return (LucideIcons.circleAlert, c.warning);
     }
+    if (n.type == 'campaign') return (LucideIcons.megaphone, c.primary);
     if (n.type.contains('offer') || n.type.contains('promo')) {
       return (LucideIcons.badgePercent, c.textMuted);
     }
@@ -296,6 +308,29 @@ class _Row extends StatelessWidget {
     };
     return (icon, c.primary);
   }
+}
+
+/// A campaign's picture: a wide rounded banner. A picture that fails to load leaves a plain tile.
+class _CampaignImage extends StatelessWidget {
+  const _CampaignImage({required this.url});
+  final String url;
+
+  @override
+  Widget build(BuildContext context) => ClipRRect(
+        key: const ValueKey('notification-image'),
+        borderRadius: BorderRadius.circular(IdRadius.md),
+        child: AspectRatio(
+          aspectRatio: 2,
+          child: Image.network(
+            url,
+            fit: BoxFit.cover,
+            excludeFromSemantics: true,
+            loadingBuilder: (context, child, progress) =>
+                progress == null ? child : ColoredBox(color: context.colors.surfaceSoft),
+            errorBuilder: (context, _, _) => ColoredBox(color: context.colors.surfaceSoft),
+          ),
+        ),
+      );
 }
 
 class _Skeleton extends StatelessWidget {

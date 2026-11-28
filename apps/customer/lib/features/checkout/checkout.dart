@@ -1,3 +1,4 @@
+import '../analytics/analytics.dart';
 import 'dart:convert';
 
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -126,7 +127,9 @@ class CheckoutController extends Notifier<CheckoutState> {
 
     state = state.copyWith(placing: true, clearProblem: true);
     try {
+      final earlier = _ordersBefore();
       final order = await ref.read(orderRepositoryProvider).place(dto, idempotencyKey: _key!);
+      _logPlaced(order, earlier);
       _placed();
       return order;
     } on ApiFailure catch (e) {
@@ -135,6 +138,26 @@ class CheckoutController extends Notifier<CheckoutState> {
       state = state.copyWith(placing: false, problem: problem);
       return null;
     }
+  }
+
+  /// Orders the customer had before this one, as far as the loaded lists know. Null when they have not loaded.
+  int? _ordersBefore() {
+    final active = ref.read(ordersListProvider(Scope.active)).value;
+    final past = ref.read(ordersListProvider(Scope.past)).value;
+    if (active == null && past == null) return null;
+    return (active?.total ?? 0) + (past?.total ?? 0);
+  }
+
+  void _logPlaced(OrderDto order, int? earlier) {
+    final analytics = ref.read(analyticsProvider);
+    final params = <String, Object>{
+      'value': order.totalPaise / 100,
+      'currency': 'INR',
+      'payment_method': order.paymentMethod.json ?? '',
+      'order_number': order.orderNumber,
+    };
+    analytics.log(Funnel.orderPlaced, params);
+    if (earlier == 1) analytics.log(Funnel.secondOrder, params);
   }
 
   /// The order exists: start the next basket from scratch.

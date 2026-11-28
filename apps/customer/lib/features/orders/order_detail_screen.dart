@@ -8,7 +8,6 @@ import '../../core/money.dart';
 import '../../core/order_status.dart';
 import '../../core/order_text.dart';
 import '../../core/text_wrap.dart';
-import '../../core/order_timeline.dart';
 import '../../core/phone.dart';
 import '../../core/slots.dart';
 import '../../data/api_client.dart';
@@ -16,7 +15,6 @@ import '../../design/theme.dart';
 import '../../design/widgets/alert_sheet.dart';
 import '../../design/widgets/id_button.dart';
 import '../../design/widgets/id_sheet.dart';
-import '../../design/widgets/order_timeline.dart';
 import '../../design/widgets/state_view.dart';
 import '../../design/widgets/surfaces.dart';
 import '../basket/basket.dart';
@@ -24,6 +22,7 @@ import '../support/support.dart';
 import 'cancel_order.dart';
 import 'care_note_view.dart';
 import 'order_repository.dart';
+import 'order_stage.dart';
 import 'pay_due.dart';
 import 'refund_list.dart';
 import 'reschedule_order.dart';
@@ -126,6 +125,14 @@ class OrderDetailScreen extends ConsumerWidget {
                   value: changesLeft(order.reschedulesRemaining),
                   onTap: () => context.push(Routes.reschedule(order.id), extra: order),
                 ),
+              IdListRow(
+                icon: LucideIcons.messageCircle,
+                label: 'Chat on WhatsApp',
+                onTap: () {
+                  final support = Support.of(ref);
+                  Support.whatsapp(support.phone, context: context, fallback: support, orderNumber: order.orderNumber);
+                },
+              ),
               if (order.status != OrderStatus.cancelled) IdListRow(icon: LucideIcons.messageSquare, label: 'Report a problem', onTap: () => context.push(Routes.report(order.id))),
               IdListRow(icon: LucideIcons.messagesSquare, label: 'Reports for this order', onTap: () => context.push('${Routes.issues}?orderId=${order.id}')),
             ]),
@@ -218,7 +225,7 @@ class OrderDetailScreen extends ConsumerWidget {
         _DelayedNotice(order: order),
         const SizedBox(height: IdSpace.s4),
       ],
-      IdCard(child: OrderTimeline(steps: buildTimeline(order))),
+      OrderStages(order: order),
       if (partner != null) ...[
         const SizedBox(height: IdSpace.s4),
         _PartnerRow(
@@ -246,6 +253,8 @@ class OrderDetailScreen extends ConsumerWidget {
     final paid = order.paymentStatus == PaymentStatus.paid;
     final paymentColor = paid ? c.success : c.warning;
     return [
+      DeliveredStage(order: order),
+      const SizedBox(height: IdSpace.s4),
       IdCard(
         child: Column(
           children: [
@@ -479,6 +488,13 @@ Future<void> showOrderHelp(
           ),
           const SizedBox(height: IdSpace.s4),
           IdButton(
+            label: 'Chat on WhatsApp',
+            icon: LucideIcons.messageCircle,
+            expand: true,
+            onPressed: () => Support.whatsapp(support.phone, context: context, fallback: support, orderNumber: order.orderNumber),
+          ),
+          const SizedBox(height: IdSpace.s2),
+          IdButton.outline(
             label: 'Call ${IndianPhone.display(support.phone)}',
             icon: LucideIcons.phone,
             expand: true,

@@ -3,6 +3,8 @@ import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../design/theme.dart';
+import '../features/analytics/analytics.dart';
+import 'links.dart';
 import 'router.dart';
 
 class IronDostApp extends ConsumerWidget {
@@ -13,6 +15,10 @@ class IronDostApp extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
+    // For the whole life of the app: website links, and "app opened" with where the install came from.
+    ref
+      ..watch(deepLinkListenerProvider)
+      ..watch(appOpenAnalyticsProvider);
     return MaterialApp.router(
       title: 'IronDost',
       debugShowCheckedModeBanner: false,

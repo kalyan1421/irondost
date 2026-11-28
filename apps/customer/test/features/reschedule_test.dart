@@ -99,6 +99,9 @@ void main() {
   Finder reviewButton() => find.widgetWithText(FilledButton, 'Review change');
   Future<void> openScreen(WidgetTester tester) async {
     await tester.scrollUntilVisible(find.text('Change pickup time'), 200, scrollable: find.byType(Scrollable).first);
+    // Clear of the footer buttons, which sit over the bottom of the list.
+    await tester.drag(find.byType(Scrollable).first, const Offset(0, -300));
+    await tester.pumpAndSettle();
     await tester.tap(find.text('Change pickup time'));
     await tester.pumpAndSettle();
   }

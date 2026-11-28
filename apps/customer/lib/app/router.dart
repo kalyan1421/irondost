@@ -40,6 +40,7 @@ import '../features/orders/reschedule_order.dart';
 import '../features/shell/app_shell.dart';
 import '../features/startup/startup.dart';
 import '../features/system/system_screens.dart';
+import 'links.dart';
 import 'redirect.dart';
 import 'routes.dart';
 
@@ -90,6 +91,18 @@ final routerProvider = Provider<GoRouter>((ref) {
         routes: [GoRoute(path: 'search', builder: (_, _) => const SearchScreen())],
       ),
       GoRoute(path: Routes.offers, builder: (_, _) => const OffersScreen()),
+      // Website paths (irondost.in/get, /o/<orderId>, /r/<code>…) and campaign links in the app's own words. Each keeps
+      // what it carried (source, campaign, referral code) and goes to the screen it means.
+      for (final path in Routes.linkRoutes)
+        GoRoute(
+          path: path,
+          redirect: (_, state) {
+            final link = appLinkFor(state.uri);
+            if (link == null) return Routes.home;
+            ref.read(linkOpenerProvider).capture(link);
+            return link.route;
+          },
+        ),
       // Choosing a time and paying open over the tabs, full screen, from the Basket tab.
       GoRoute(
         path: Routes.schedule,

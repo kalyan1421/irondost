@@ -9,6 +9,7 @@ import 'package:irondost_customer/design/theme.dart';
 import 'package:irondost_customer/data/api_client.dart';
 import 'package:irondost_customer/features/account/account_repository.dart';
 import 'package:irondost_customer/features/addresses/address_repository.dart';
+import 'package:irondost_customer/features/analytics/analytics.dart';
 import 'package:irondost_customer/features/addresses/location_service.dart';
 import 'package:irondost_customer/features/addresses/place.dart';
 import 'package:irondost_customer/features/auth/auth_repository.dart';
@@ -789,4 +790,20 @@ class FakeAccountRepository implements AccountRepository {
     if (failure != null) throw failure!;
     deleted++;
   }
+}
+
+// ── Analytics ──────────────────────────────────────────────────────────────
+
+/// Keeps every event and user property instead of sending them to Firebase.
+class RecordingAnalytics implements AnalyticsSink {
+  final events = <(String, Map<String, Object>)>[];
+  final properties = <String, String?>{};
+
+  List<String> get names => [for (final e in events) e.$1];
+
+  @override
+  Future<void> log(String name, [Map<String, Object> params = const {}]) async => events.add((name, params));
+
+  @override
+  Future<void> setUserProperty(String name, String? value) async => properties[name] = value;
 }

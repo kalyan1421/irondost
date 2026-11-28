@@ -73,6 +73,19 @@ void main() {
     expect(routeForPush(const PushMessage(data: {'orderId': ''})), Routes.notifications);
   });
 
+  test('a campaign opens its link: a screen in the app, or a web page', () {
+    PushMessage campaign(String link) => PushMessage(data: {'type': 'campaign', 'campaignId': 'c1', 'link': link, 'imageUrl': 'https://cdn.example/diwali.webp'});
+    expect(routeForPush(campaign('/offers')), Routes.offers);
+    expect(routeForPush(campaign('/orders/o-9')), Routes.order('o-9'));
+    expect(routeForPush(campaign('/catalogue')), Routes.book);
+    expect(routeForPush(campaign('https://irondost.in/offers')), Routes.offers);
+    expect(routeForPush(campaign('https://instagram.com/irondost')), 'https://instagram.com/irondost');
+    // A link the app cannot open falls back to the inbox, like any other notification.
+    expect(routeForPush(campaign('/somewhere-new')), Routes.notifications);
+    expect(campaign('/offers').imageUrl, 'https://cdn.example/diwali.webp');
+    expect(const PushMessage(data: {'imageUrl': 'http://insecure.example/a.png'}).imageUrl, isNull);
+  });
+
   group('while the app is open', () {
     late _FakePush push;
     late FakeOrderRepository orders;
