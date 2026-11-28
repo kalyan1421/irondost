@@ -11,6 +11,12 @@ import { priceList } from "@/lib/prices";
 const shirtItem = priceList.find((c) => c.slug === "ironing")?.items.find((i) => i.name.toLowerCase().startsWith("shirt"));
 const shirtNow = shirtItem ? (shirtItem.offer ?? shirtItem.price) : 0;
 const shirtLine = shirtItem?.offer ? `₹${shirtItem.offer} on the current offer (₹${shirtItem.price} regular)` : `₹${shirtNow}`;
+const priceOf = (category: string, name: string) => {
+  const i = priceList.find((c) => c.slug === category)?.items.find((x) => x.name.toLowerCase().startsWith(name.toLowerCase()));
+  return i ? (i.offer ?? i.price) : 0;
+};
+const washShirtNow = priceOf("wash-and-iron", "shirt");
+const suitNow = priceOf("dry-cleaning", "suit");
 
 export type PostSection = {
   heading: string;
@@ -40,6 +46,182 @@ const areas =
   "LB Nagar, Dilsukhnagar, Chaitanyapuri, Saroornagar, Mansoorabad, Nagole, Bandlaguda, Vanasthalipuram, Karmanghat, Champapet, Santosh Nagar and Saidabad";
 
 export const posts: Post[] = [
+  {
+    slug: "how-to-pack-your-laundry-bag-for-pickup",
+    image: { src: "doorstep-handover", alt: "A cloth bag of clothes being handed over at an apartment door for an IronDost laundry pickup." },
+    related: ["wash-and-iron-or-dry-clean-which-fabric", "will-laundry-bill-change-after-pickup", "how-doorstep-ironing-pickup-works"],
+    title: "How to pack your laundry bag for pickup",
+    description:
+      "Empty the pockets, keep dry cleaning apart, set aside anything that may lose colour, and count roughly by type. Five minutes before an IronDost laundry pickup.",
+    published: "2026-11-20",
+    updated: "2026-11-20",
+    answer:
+      "Empty every pocket, keep anything for dry cleaning in a separate bag, set aside new or dark clothes that may lose colour, and count your clothes roughly by type. Then show your partner any stains at the door. It takes about five minutes and helps your laundry come back the way you want it.",
+    sections: [
+      {
+        heading: "1. Empty the pockets",
+        paragraphs: [
+          "Check every pocket for pens, cash, cards, keys, tissues and earphones. A pen or a tissue left in one shirt can mark or cover a whole load. Take off belts, brooches and anything that can be removed.",
+        ],
+      },
+      {
+        heading: "2. Keep each service apart",
+        bullets: [
+          "Laundry (wash and iron): everyday shirts, T-shirts, trousers, jeans and bedsheets.",
+          "Ironing only: clean clothes that just need pressing.",
+          "Dry cleaning: suits, blazers, silk sarees, and anything with zari, embroidery, beadwork or sequins.",
+        ],
+        paragraphs: ["One bag per service makes the count at your door quick and stops a silk saree ending up with the laundry."],
+      },
+      {
+        heading: "3. Set aside anything that may lose colour",
+        paragraphs: [
+          "New clothes and deep colours, especially reds, dark blues and new denim, can bleed in their first washes. Keep them on top of the bag and tell your partner, so we know to keep them apart from lighter clothes.",
+        ],
+      },
+      {
+        heading: "4. Point out stains",
+        paragraphs: [
+          "Show your partner each stain at the door and say what it is if you know: oil, curry, ink, mud. We will try to remove it, but we cannot promise it. Stains that have been washed and dried at home before are harder to shift.",
+        ],
+      },
+      {
+        heading: "5. Count roughly by type",
+        paragraphs: [
+          "In the app, add a rough count of each item: shirts, trousers, bedsheets. It does not have to be exact. Your partner counts the clothes with you at the door, and the total changes only if the count is different from what you entered.",
+        ],
+      },
+    ],
+    faq: [
+      {
+        q: "Do I have to count exactly?",
+        a: "No. A rough count is fine. The count is agreed with you at your door, before anything is washed, and you see the new total if it changes.",
+      },
+      {
+        q: "Can I send towels or home clothes?",
+        a: "Yes, as Wash & Fold: washed and folded, no ironing. Its prices are not on the rate card yet, so ask us before you book.",
+      },
+    ],
+  },
+  {
+    slug: "wash-and-iron-or-dry-clean-which-fabric",
+    image: { src: "saree-zari", alt: "Hands folding a maroon silk saree with a gold zari border, the kind of piece that goes to dry cleaning." },
+    related: ["how-to-pack-your-laundry-bag-for-pickup", "silk-saree-dry-cleaning-what-to-tell-us"],
+    title: "Wash & iron or dry clean: which does this fabric need?",
+    description:
+      "Cotton, denim and everyday synthetics usually go in the wash. Silk, wool suits and anything with zari or embroidery go to dry cleaning. Check the care label first.",
+    published: "2026-11-20",
+    updated: "2026-11-20",
+    answer:
+      "Everyday cotton, polycotton, denim and most synthetic clothes can be washed and ironed. Silk sarees, wool suits and blazers, and anything with zari, embroidery, beadwork or sequins should be dry-cleaned. The care label inside the garment is the first thing to check, and when it is missing or unclear, ask us before pickup.",
+    sections: [
+      {
+        heading: "Read the care label",
+        bullets: [
+          "A tub of water: the garment can be washed. A number inside it is the highest water temperature in °C.",
+          "A tub with a hand in it: hand wash only. Tell us when you hand it over.",
+          "A crossed-out tub: do not wash.",
+          "A circle: dry clean. \"Dry clean only\" in words means the same.",
+        ],
+      },
+      {
+        heading: "Usually wash and iron",
+        bullets: [
+          "Cotton and polycotton shirts and T-shirts",
+          "Trousers and jeans",
+          "Everyday cotton kurtas and salwars",
+          "Bedsheets and pillow covers",
+        ],
+        paragraphs: [`Wash and iron is per piece, from ₹${washShirtNow} for a shirt, and you see every price in the app before you confirm.`],
+      },
+      {
+        heading: "Usually dry cleaning",
+        bullets: [
+          "Suits, blazers and other tailored jackets",
+          "Silk sarees and silk blouses",
+          "Wool and wool-blend clothes",
+          "Anything with zari, embroidery, beadwork, sequins or mirror work",
+          "Lehengas and heavy occasion wear",
+        ],
+        paragraphs: [
+          `Dry cleaning is priced higher than washing: a two-piece suit is ₹${suitNow}. The full list is on our prices page.`,
+        ],
+      },
+      {
+        heading: "Only needs pressing?",
+        paragraphs: [
+          "If a garment is already clean and just creased, choose ironing instead. It costs less than wash and iron, and it suits most clothes, including sarees. Tell us about zari or embroidery so it is pressed at a lower heat.",
+        ],
+      },
+      {
+        heading: "Not sure?",
+        paragraphs: [
+          "Send a photo of the garment and its label on WhatsApp before pickup, or ask your partner at the door. We would rather check first than put the wrong thing in a machine.",
+        ],
+      },
+    ],
+    faq: [
+      {
+        q: "Can a silk saree go in the wash?",
+        a: "We send silk sarees to dry cleaning, not the machine. If it is clean and only creased, saree ironing is enough.",
+      },
+      {
+        q: "What if there is no care label?",
+        a: "Tell us what the fabric is if you know, or send a photo. If in doubt, dry cleaning is the safer choice for anything delicate or embellished.",
+      },
+    ],
+  },
+  {
+    slug: "monsoon-laundry-why-clothes-wont-dry",
+    image: { src: "finished-bed", alt: "Pressed shirts and folded clothes laid out on a bed, dry and ready to wear." },
+    related: ["how-to-pack-your-laundry-bag-for-pickup", "wash-and-iron-or-dry-clean-which-fabric"],
+    title: "Monsoon laundry: why clothes won't dry, and what we do",
+    description:
+      "In the monsoon, damp air and little airflow keep clothes wet for hours and leave a musty smell. Why it happens, what helps at home, and how IronDost handles laundry.",
+    published: "2026-11-20",
+    updated: "2026-11-20",
+    answer:
+      "Clothes dry when water in the fabric evaporates into the air. In the monsoon the air is already full of moisture, so evaporation is slow, and indoors there is little airflow to carry it away. Clothes that stay damp for hours start to smell musty. With IronDost, your laundry is washed in our own machines and the owner checks every load by hand before it is ironed, folded and packed.",
+    sections: [
+      {
+        heading: "Why clothes stay wet",
+        bullets: [
+          "Humid air: when the air already holds a lot of moisture, it takes up water from wet clothes slowly.",
+          "No sun and no breeze: clothes hung indoors or on a covered balcony get little moving air.",
+          "Thick fabrics: jeans, towels and bedsheets hold more water and take the longest.",
+          "Crowded racks: clothes touching each other trap damp air between them.",
+        ],
+      },
+      {
+        heading: "Why damp clothes smell",
+        paragraphs: [
+          "The musty smell comes from mould and bacteria that grow on fabric that stays damp too long. Once it sets in, it can come back each time the clothes get warm or a little damp again, so it is easier to prevent than to remove.",
+        ],
+      },
+      {
+        heading: "What helps at home",
+        bullets: [
+          "Run an extra spin so less water is left in the clothes.",
+          "Space clothes out on the rack, with a gap between each piece.",
+          "Use a fan, and keep a window open if the air outside is drier.",
+          "Hang thick items like jeans and towels on their own, where the air moves most.",
+          "Never fold or store clothes that still feel cool or damp.",
+        ],
+      },
+      {
+        heading: "What we do",
+        paragraphs: [
+          "Your laundry is washed in IronDost's own machines, not sent out. The owner checks every load by hand before it is ironed or folded, and nothing goes into a bag until it has passed that check.",
+        ],
+      },
+    ],
+    faq: [
+      {
+        q: "Does ironing help damp clothes?",
+        a: "It drives out a little moisture, but ironing clothes that are still damp can set creases and trap the smell. Clothes should be dry before they are pressed.",
+      },
+    ],
+  },
   {
     slug: "how-doorstep-ironing-pickup-works",
     image: { src: "doorstep-handover", alt: "A cloth bag of clothes being handed over at an apartment door for an IronDost pickup." },

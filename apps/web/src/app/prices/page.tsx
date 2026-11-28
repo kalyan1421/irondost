@@ -11,12 +11,12 @@ const now = (i?: PriceItem) => (i ? (i.offer ?? i.price) : undefined);
 
 const shirt = find("ironing", "shirt");
 const saree = find("ironing", "saree");
-const washShirt = priceList[1]?.items[0];
+const washShirt = find("wash-and-iron", "shirt");
 const suit = priceList.find((c) => c.name.toLowerCase().includes("dry"))?.items[0];
 
 export const metadata: Metadata = {
-  title: "Ironing and laundry prices in LB Nagar, Hyderabad",
-  description: `Shirt ironing ₹${now(shirt)}, saree ₹${now(saree)}, wash and iron from ₹${now(washShirt)}, suit dry cleaning ₹${now(suit)}. The full IronDost rate card, with doorstep pickup around LB Nagar.`,
+  title: "Laundry and ironing prices in LB Nagar, Hyderabad",
+  description: `Laundry (wash and iron) from ₹${now(washShirt)} a shirt, shirt ironing ₹${now(shirt)}, saree ₹${now(saree)}, suit dry cleaning ₹${now(suit)}. The full IronDost rate card, with doorstep pickup around LB Nagar.`,
   alternates: { canonical: "/prices" },
 };
 
@@ -53,21 +53,21 @@ export default function PricesPage() {
   return (
     <div className="mx-auto max-w-3xl px-4 py-14 sm:px-6 sm:py-20">
       <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd).replace(/</g, "\\u003c") }} />
-      <h1 className="font-display text-4xl font-bold tracking-tight sm:text-5xl">IronDost prices: ironing, wash and iron, and dry cleaning</h1>
+      <h1 className="font-display text-4xl font-bold tracking-tight sm:text-5xl">IronDost prices: laundry, ironing and dry cleaning</h1>
       <p className="mt-4 text-muted">
         Updated <time dateTime={pricesUpdated}>{formatDate(pricesUpdated)}</time> · Per piece · Around LB Nagar, Hyderabad
       </p>
       <p className="mt-6 text-xl leading-relaxed">
-        Shirt ironing costs {rupees(now(shirt) ?? 0)} a piece
-        {shirt?.offer ? ` on the current offer (${rupees(shirt.price)} regular)` : ""}, saree ironing {rupees(now(saree) ?? 0)}, wash and iron
-        from {rupees(now(washShirt) ?? 0)}, and suit dry cleaning {rupees(now(suit) ?? 0)}. You see every price and the total in the app
+        Laundry, washed and ironed, costs {rupees(now(washShirt) ?? 0)} a shirt. Shirt ironing alone is {rupees(now(shirt) ?? 0)} a piece
+        {shirt?.offer ? ` on the current offer (${rupees(shirt.price)} regular)` : ""}, saree ironing {rupees(now(saree) ?? 0)}, and suit dry
+        cleaning {rupees(now(suit) ?? 0)}. You see every price and the total in the app
         before you confirm, and we pick up from your door.
       </p>
 
       {priceList.map((c) => (
         <section key={c.slug} className="mt-12" aria-labelledby={`prices-${c.slug}`}>
           <h2 id={`prices-${c.slug}`} className="font-display text-2xl font-semibold">
-            {c.name.replace("&", "and")} prices
+            {c.slug === "wash-and-iron" ? "Laundry: wash and iron prices" : `${c.name.replace("&", "and")} prices`}
           </h2>
           <table className="mt-4 w-full overflow-hidden rounded-2xl text-left text-lg ring-1 ring-ring">
             <thead className="bg-mist text-base">
@@ -98,6 +98,14 @@ export default function PricesPage() {
               ))}
             </tbody>
           </table>
+          {c.slug === "wash-and-iron" && (
+            <p className="mt-3 text-muted">
+              Washed in our own machines and checked by hand. Wash & Fold prices are not on the rate card yet: ask us before you book.{" "}
+              <Link href="/laundry" className="font-semibold text-royal underline-offset-4 hover:underline">
+                About our laundry
+              </Link>
+            </p>
+          )}
           {c.slug.includes("dry") && <p className="mt-3 text-muted">We will try to remove stains, but we cannot promise it.</p>}
         </section>
       ))}

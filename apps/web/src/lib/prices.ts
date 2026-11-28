@@ -2,6 +2,8 @@
  * The rate card, copied from the live catalogue (GET /v1/catalog on the production API) on 19 November 2026.
  * The app is the source of truth. When a price changes in the admin, update this file and `pricesUpdated` the same day.
  * Amounts are whole rupees. `offer` is the current offer price, shown with the regular price struck through.
+ * Order is display order: laundry (Wash & Iron) first, since laundry is the main service from 20 November 2026.
+ * Wash & Fold is not listed: its prices are not confirmed yet. Add it here only once the owner sets them in the admin.
  */
 export type PriceItem = { name: string; unit: string; price: number; offer: number | null };
 export type PriceCategory = { name: string; slug: string; items: PriceItem[] };
@@ -9,6 +11,30 @@ export type PriceCategory = { name: string; slug: string; items: PriceItem[] };
 export const pricesUpdated = "2026-11-19";
 
 export const priceList: PriceCategory[] = [
+  {
+    "name": "Wash & Iron",
+    "slug": "wash-and-iron",
+    "items": [
+      {
+        "name": "Shirt / T-shirt",
+        "unit": "PIECE",
+        "price": 35,
+        "offer": null
+      },
+      {
+        "name": "Trousers / Jeans",
+        "unit": "PIECE",
+        "price": 40,
+        "offer": null
+      },
+      {
+        "name": "Bedsheet (double)",
+        "unit": "PIECE",
+        "price": 70,
+        "offer": null
+      }
+    ]
+  },
   {
     "name": "Ironing",
     "slug": "ironing",
@@ -47,30 +73,6 @@ export const priceList: PriceCategory[] = [
         "name": "Bedsheet (single)",
         "unit": "PIECE",
         "price": 25,
-        "offer": null
-      }
-    ]
-  },
-  {
-    "name": "Wash & Iron",
-    "slug": "wash-and-iron",
-    "items": [
-      {
-        "name": "Shirt / T-shirt",
-        "unit": "PIECE",
-        "price": 35,
-        "offer": null
-      },
-      {
-        "name": "Trousers / Jeans",
-        "unit": "PIECE",
-        "price": 40,
-        "offer": null
-      },
-      {
-        "name": "Bedsheet (double)",
-        "unit": "PIECE",
-        "price": 70,
         "offer": null
       }
     ]

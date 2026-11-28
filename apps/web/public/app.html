@@ -1,0 +1,42 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<!--
+  https://irondost.in/app — the target of the single "Download the app" QR code on reels, posters and flyers.
+  The redirect runs first, in <head>, before anything is drawn: iPhone/iPad → App Store, Android → Google Play.
+  Laptops and anything else fall through to the two buttons below. Keep the store links in step with apps/web/src/lib/site.ts.
+-->
+<script>
+(function () {
+  var ua = navigator.userAgent || "";
+  var ios = /iPhone|iPad|iPod/i.test(ua) || (navigator.platform === "MacIntel" && navigator.maxTouchPoints > 1);
+  var android = /Android/i.test(ua);
+  // Android first: an Android user agent is never an Apple device, while the iPad check below looks at touch points.
+  if (android) location.replace("https://play.google.com/store/apps/details?id=com.irondost.customer&referrer=utm_source%3Dqr%26utm_medium%3Dsocial%26utm_campaign%3Dapp_link");
+  else if (ios) location.replace("https://apps.apple.com/in/app/irondost-laundry-ironing/id6819166862");
+})();
+</script>
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="robots" content="noindex">
+<title>Get the IronDost app</title>
+<style>
+  body{margin:0;min-height:100vh;display:grid;place-items:center;background:#F4F7FE;color:#0E1E3D;font-family:system-ui,-apple-system,"Segoe UI",sans-serif;padding:24px;box-sizing:border-box}
+  main{max-width:420px;width:100%;text-align:center;display:grid;gap:16px}
+  img{width:220px;margin:0 auto 8px}
+  h1{font-size:28px;margin:0}
+  p{margin:0;color:#5A6A8C}
+  a{display:block;padding:16px;border-radius:16px;font-weight:700;font-size:18px;text-decoration:none;color:#fff}
+  .play{background:#1F4FD1}.apple{background:#0E1E3D}
+</style>
+</head>
+<body>
+<main>
+  <img src="/brand/irondost-logo.svg" alt="IronDost">
+  <h1>Get the IronDost app</h1>
+  <p>Choose your phone:</p>
+  <a class="play" href="https://play.google.com/store/apps/details?id=com.irondost.customer&amp;referrer=utm_source%3Dqr%26utm_medium%3Dsocial%26utm_campaign%3Dapp_link">Android · Google Play</a>
+  <a class="apple" href="https://apps.apple.com/in/app/irondost-laundry-ironing/id6819166862">iPhone · App Store</a>
+</main>
+</body>
+</html>

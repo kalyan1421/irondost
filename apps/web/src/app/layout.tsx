@@ -11,7 +11,7 @@ const outfit = Outfit({ variable: "--font-outfit", subsets: ["latin"] });
 
 export const metadata: Metadata = {
   metadataBase: new URL(site.url),
-  title: { default: `${site.name}: ironing, washing and dry cleaning at your door`, template: `%s · ${site.name}` },
+  title: { default: `${site.name}: laundry, ironing and dry cleaning at your door`, template: `%s · ${site.name}` },
   description: site.description,
   openGraph: {
     type: "website",

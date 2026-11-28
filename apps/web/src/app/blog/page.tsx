@@ -4,7 +4,7 @@ import { GuideCards } from "@/components/guide-cards";
 export const metadata: Metadata = {
   title: "Guides",
   description:
-    "Plain answers about doorstep ironing, laundry and dry cleaning around LB Nagar, Hyderabad: how pickup works, areas we serve, saree care and billing.",
+    "Plain answers about doorstep laundry, ironing and dry cleaning around LB Nagar, Hyderabad: packing a laundry bag, fabric care, how pickup works, areas and billing.",
   alternates: { canonical: "/blog" },
 };
 

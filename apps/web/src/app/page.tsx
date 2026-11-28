@@ -4,11 +4,12 @@ import Link from "next/link";
 import { GuideCards } from "@/components/guide-cards";
 import { Journey } from "@/components/journey/journey";
 import { StoreButtons } from "@/components/store-buttons";
+import { areaServed, localities } from "@/lib/areas";
 import { site } from "@/lib/site";
 
-const title = "Ironing, Laundry and Dry Cleaning Pickup in LB Nagar, Hyderabad";
+const title = "Laundry Pickup in LB Nagar, Hyderabad: Wash and Iron, Ironing, Dry Cleaning";
 const description =
-  "IronDost picks up from your door in LB Nagar, Dilsukhnagar, Nagole, Vanasthalipuram and nearby, and brings your clothes back ironed, washed or dry-cleaned, usually the next day. Book a pickup in the app.";
+  "Laundry picked up from your door in LB Nagar, Dilsukhnagar, Nagole, Vanasthalipuram and nearby, washed in our own machines and priced per piece. Ironing and dry cleaning too. Book a pickup in the app.";
 
 export const metadata: Metadata = {
   title: { absolute: `${title} | ${site.name}` },
@@ -17,30 +18,29 @@ export const metadata: Metadata = {
   openGraph: { title: `${title} | ${site.name}`, description },
 };
 
-const localities = [
-  { pin: "500074", names: ["LB Nagar"] },
-  { pin: "500060", names: ["Dilsukhnagar", "Chaitanyapuri"] },
-  { pin: "500035", names: ["Saroornagar", "HUDA Complex"] },
-  { pin: "500068", names: ["Mansoorabad", "Nagole", "Bandlaguda"] },
-  { pin: "500070", names: ["Vanasthalipuram"] },
-  { pin: "500079", names: ["Karmanghat", "Champapet"] },
-  { pin: "500059", names: ["Santosh Nagar", "Saidabad"] },
-];
-
 const steps = [
-  { title: "Choose your clothes", body: "Ironing, wash and iron, or dry cleaning. A rough count is fine." },
+  { title: "Choose your clothes", body: "Laundry, ironing or dry cleaning. A rough count is fine." },
   { title: "Pick a window", body: "7 to 11 am, 11 am to 4 pm or 4 to 8 pm, every day." },
   { title: "Hand over at your door", body: "Your partner counts the clothes with you before anything leaves." },
   { title: "Back at your door", body: "Usually the next day. Pay online or in cash when it arrives." },
 ];
 
 const services = [
-  { icon: Sparkles, name: "Dry cleaning", body: "Suits, blazers, silk sarees and anything with zari, embroidery or beadwork." },
+  {
+    icon: WashingMachine,
+    name: "Laundry",
+    body: "Wash & Iron for everyday clothes and bedsheets, washed in our own machines, ironed, and checked by hand before they come back.",
+    href: "/laundry",
+  },
   { icon: Shirt, name: "Ironing", body: "Shirts, trousers, kurtas, sarees and more, pressed and brought back on a hanger or folded." },
-  { icon: WashingMachine, name: "Wash and iron", body: "Everyday clothes and bedsheets, washed, dried and ironed." },
+  { icon: Sparkles, name: "Dry cleaning", body: "Suits, blazers, silk sarees and anything with zari, embroidery or beadwork." },
 ];
 
 const faqs = [
+  {
+    q: "Who washes my laundry?",
+    a: "We do, in IronDost's own machines. The owner checks every load by hand before it goes back to you.",
+  },
   {
     q: "When will my clothes come back?",
     a: "Usually the next day. You choose the delivery window when you book, and dry cleaning can take longer: ask us if you need it for a date.",
@@ -69,14 +69,16 @@ const jsonLd = {
   image: `${site.url}/redesign/hero-suit-cover.webp`,
   telephone: site.phone.tel,
   email: site.email,
-  areaServed: [
-    ...localities.flatMap((l) => l.names.map((name) => ({ "@type": "Place", name: `${name}, Hyderabad`, address: { "@type": "PostalAddress", postalCode: l.pin, addressLocality: "Hyderabad", addressRegion: "Telangana", addressCountry: "IN" } }))),
-    {
-      "@type": "GeoCircle",
-      geoMidpoint: { "@type": "GeoCoordinates", latitude: 17.3457, longitude: 78.5522 },
-      geoRadius: "6000",
-    },
-  ],
+  areaServed,
+  hasOfferCatalog: {
+    "@type": "OfferCatalog",
+    name: "Services",
+    itemListElement: [
+      { "@type": "Offer", itemOffered: { "@type": "Service", name: "Laundry: wash and iron", url: `${site.url}/laundry` } },
+      { "@type": "Offer", itemOffered: { "@type": "Service", name: "Ironing", url: `${site.url}/prices` } },
+      { "@type": "Offer", itemOffered: { "@type": "Service", name: "Dry cleaning", url: `${site.url}/prices` } },
+    ],
+  },
   sameAs: [site.playStoreUrl, site.appStoreUrl].filter(Boolean),
   parentOrganization: { "@type": "Organization", name: site.company },
 };
@@ -112,8 +114,8 @@ export default function HomePage() {
           <div>
             <h2 className="font-display text-5xl font-bold tracking-tight sm:text-6xl">Book a pickup</h2>
             <p className="mt-5 max-w-xl text-xl leading-relaxed text-white/85">
-              {site.name} picks up your clothes from your door around LB Nagar, Hyderabad, and brings them back ironed, washed or
-              dry-cleaned, usually the next day. Book in the app in a minute, see every price before you confirm, and pay online or in
+              {site.name} picks up your laundry from your door around LB Nagar, Hyderabad, washes it in our own machines and brings
+              it back ironed and checked by hand. Ironing and dry cleaning too. Book in the app in a minute, see every price before you confirm, and pay online or in
               cash at delivery.
             </p>
             <div className="mt-9">
@@ -163,13 +165,18 @@ export default function HomePage() {
           <h2 className="font-display text-4xl font-bold tracking-tight sm:text-5xl">What we do</h2>
           <p className="mt-4 max-w-2xl text-xl text-muted">Prices are per piece and shown in the app before you book.</p>
           <ul className="mt-12 grid gap-6 md:grid-cols-3">
-            {services.map(({ icon: Icon, name, body }) => (
+            {services.map(({ icon: Icon, name, body, href }) => (
               <li key={name} className="rounded-3xl bg-white p-8 ring-1 ring-ring">
                 <span className="flex size-14 items-center justify-center rounded-2xl bg-mist text-royal">
                   <Icon aria-hidden className="size-7" />
                 </span>
                 <h3 className="mt-6 font-display text-2xl font-semibold">{name}</h3>
                 <p className="mt-2 text-lg leading-relaxed text-muted">{body}</p>
+                {href && (
+                  <Link href={href} className="mt-4 inline-block font-semibold text-royal underline-offset-4 hover:underline">
+                    Laundry prices and how we wash
+                  </Link>
+                )}
               </li>
             ))}
           </ul>

@@ -3,7 +3,7 @@ export const site = {
   name: "IronDost",
   tagline: "Fresh clothes, back at your door.",
   description:
-    "IronDost picks up your clothes, irons, washes or dry-cleans them, and delivers them back to your door in Hyderabad. Pay online or in cash.",
+    "IronDost picks up your laundry from your door in Hyderabad, washes and irons it in our own machines, and brings it back. Ironing and dry cleaning too. Priced per piece; pay online or in cash.",
   company: "Cloud Ironing Factory Private Limited",
   area: "Hyderabad",
   phone: { display: "+91 79934 34932", tel: "+917993434932" },

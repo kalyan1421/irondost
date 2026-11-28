@@ -3,6 +3,7 @@ import Link from "next/link";
 import { BrandLogo } from "./brand-logo";
 
 const links = [
+  { href: "/laundry", label: "Laundry" },
   { href: "/#how-it-works", label: "How it works" },
   { href: "/#services", label: "Services" },
   { href: "/#areas", label: "Areas" },
@@ -20,9 +21,9 @@ export function SiteHeader() {
           <BrandLogo height={34} />
         </Link>
 
-        <nav aria-label="Main" className="hidden items-center gap-7 md:flex">
+        <nav aria-label="Main" className="hidden items-center gap-5 lg:flex xl:gap-7">
           {links.map((l) => (
-            <Link key={l.href} href={l.href} className="font-medium text-ink hover:text-royal">
+            <Link key={l.href} href={l.href} className="whitespace-nowrap font-medium text-ink hover:text-royal">
               {l.label}
             </Link>
           ))}
@@ -31,12 +32,12 @@ export function SiteHeader() {
         <div className="flex items-center gap-2">
           <Link
             href="/#book"
-            className="rounded-xl bg-royal px-4 py-2.5 font-semibold text-white hover:bg-royal-dark"
+            className="whitespace-nowrap rounded-xl bg-royal px-4 py-2.5 font-semibold text-white hover:bg-royal-dark"
           >
             Book a pickup
           </Link>
           {/* No JavaScript needed: a details element opens and closes the menu. */}
-          <details className="relative md:hidden">
+          <details className="relative lg:hidden">
             <summary
               aria-label="Menu"
               className="flex size-11 cursor-pointer items-center justify-center rounded-xl border border-ring text-ink"

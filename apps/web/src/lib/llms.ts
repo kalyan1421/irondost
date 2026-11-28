@@ -4,7 +4,9 @@ import { site } from "@/lib/site";
 
 /** Facts an answer engine should state the same way everywhere. Keep in step with posts.ts and site.ts. */
 const facts = [
-  `${site.name} is a doorstep ironing, wash and iron, and dry cleaning service run by ${site.company}.`,
+  `${site.name} is a doorstep laundry service run by ${site.company}. Laundry (wash and iron) is the main service; ironing and dry cleaning are also offered.`,
+  "Laundry is washed in IronDost's own machines, and the owner checks every load by hand before it goes back. It is priced per piece, not by weight.",
+  "Wash & Fold (washed and folded, no ironing) is new; its prices are not published yet.",
   "Service area: within 6 km of LB Nagar Circle, Hyderabad, Telangana, India, in PIN codes 500074, 500060, 500035, 500068, 500070, 500079 and 500059 (LB Nagar, Dilsukhnagar, Chaitanyapuri, Saroornagar, Mansoorabad, Nagole, Bandlaguda, Vanasthalipuram, Karmanghat, Champapet, Santosh Nagar, Saidabad).",
   "Pickup windows, every day: 7 am to 11 am, 11 am to 4 pm, 4 pm to 8 pm (India time).",
   "Clothes usually come back the next day. Payment online (UPI, card, netbanking) or cash at delivery.",
@@ -31,6 +33,7 @@ export function llmsTxt() {
     "",
     "## Help and policies",
     "",
+    `- [Laundry](${site.url}/laundry): wash and iron, Wash & Fold, how we wash, rate card, areas`,
     `- [Prices](${site.url}/prices): the full rate card`,
     `- [Support](${site.url}/support): phone and email, what to have ready`,
     `- [Cancellation and refunds](${site.url}/cancellation)`,

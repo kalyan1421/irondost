@@ -6,7 +6,7 @@ import { StoreButtons } from "@/components/store-buttons";
 
 /**
  * The homepage journey: one continuous camera move through the story the owner asked for
- * (a suit or saree dry-cleaned properly, the app, pickup and delivery, then what it costs).
+ * (laundry first, then a suit or saree dry-cleaned properly, the app, pickup and delivery, then what it costs).
  *
  * One sticky stage holds every scene at once. Scroll drives a single number; each scene's photo keeps a slow
  * push-in and dissolves into the next while the push-in carries on, so there is no cut and no pinned block.
@@ -47,12 +47,13 @@ const scenes: Scene[] = [
     pan: [1.5, 0],
     copy: (
       <>
-        <p className="journey-kicker">Ironing · Wash and iron · Dry cleaning · LB Nagar, Hyderabad</p>
+        <p className="journey-kicker">Laundry · Ironing · Dry cleaning · LB Nagar, Hyderabad</p>
         <h1 className="journey-title">
-          Your best suit and silk saree, <span className="text-royal">dry-cleaned properly.</span>
+          Laundry picked up from your door, <span className="text-royal">priced per piece.</span>
         </h1>
         <p className="journey-body">
-          IronDost picks up from your door and brings everything back pressed, usually the next day. You book in the app in a minute.
+          Washed in our own machines, ironed, and checked by hand before it comes back. Ironing and dry cleaning too. You see every price
+          in the app before you confirm.
         </p>
         <a href="#book" className="journey-cta">
           Book a pickup

@@ -11,13 +11,23 @@ export function SiteFooter() {
         <div>
           <BrandLogo reverse height={36} />
           <p className="mt-4 max-w-xs text-white/80">
-            Ironing, washing and dry cleaning, picked up from and delivered to your door in {site.area}.
+            Laundry, ironing and dry cleaning, picked up from and delivered to your door in {site.area}.
           </p>
         </div>
 
         <nav aria-label="Policies and help">
           <h2 className="font-display text-lg font-semibold">Help and policies</h2>
           <ul className="mt-4 space-y-2.5">
+            <li>
+              <Link href="/laundry" className="text-white/80 hover:text-white">
+                Laundry
+              </Link>
+            </li>
+            <li>
+              <Link href="/prices" className="text-white/80 hover:text-white">
+                Prices
+              </Link>
+            </li>
             <li>
               <Link href="/support" className="text-white/80 hover:text-white">
                 Support
